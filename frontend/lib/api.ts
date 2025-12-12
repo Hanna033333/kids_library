@@ -1,23 +1,6 @@
+import type { Book, BooksResponse } from "./types";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-export interface Book {
-  id: number;
-  title: string;
-  author: string | null;
-  publisher: string | null;
-  isbn: string | null;
-  pangyo_callno: string | null;
-  age: string | null;
-  description: string | null;
-}
-
-export interface BooksResponse {
-  data: Book[];
-  total: number;
-  page: number;
-  limit: number;
-  total_pages: number;
-}
 
 export async function searchBooks(
   query?: string,

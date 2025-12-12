@@ -1,4 +1,4 @@
-import { Book } from "@/lib/api";
+import { Book } from "@/lib/types";
 
 interface BookItemProps {
   book: Book;
