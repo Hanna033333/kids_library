@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+requests
+beautifulsoup4
+python-dotenv
+supabase
+fuzzywuzzy
+python-Levenshtein
+rapidfuzz
+aiohttp
+pandas
+openpyxl
