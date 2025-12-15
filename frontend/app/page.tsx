@@ -43,9 +43,6 @@ export default function Home() {
           sortFilter={sortFilter}
         />
       </div>
-      <div className="text-center text-xs text-muted-foreground mt-4">
-        UI Version: 2.0 (Yellow Theme)
-      </div>
     </main>
   );
 }
