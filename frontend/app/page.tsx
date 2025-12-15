@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import SearchBar from "@/components/SearchBar";
 import FilterBar from "@/components/FilterBar";
 import BookList from "@/components/BookList";
@@ -10,26 +10,26 @@ export default function Home() {
   const [ageFilter, setAgeFilter] = useState("");
   const [sortFilter, setSortFilter] = useState("pangyo_callno");
 
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-  };
+  }, []);
 
-  const handleAgeChange = (age: string) => {
+  const handleAgeChange = useCallback((age: string) => {
     setAgeFilter(age);
-  };
+  }, []);
 
-  const handleSortChange = (sort: string) => {
+  const handleSortChange = useCallback((sort: string) => {
     setSortFilter(sort);
-  };
+  }, []);
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-background">
       {/* 검색 바 */}
       <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
 
       {/* 필터 바 */}
-      <FilterBar 
-        selectedAge={ageFilter} 
+      <FilterBar
+        selectedAge={ageFilter}
         onAgeChange={handleAgeChange}
         selectedSort={sortFilter}
         onSortChange={handleSortChange}
@@ -37,11 +37,14 @@ export default function Home() {
 
       {/* 책 리스트 */}
       <div className="w-full max-w-7xl mx-auto py-4 md:py-6">
-        <BookList 
-          searchQuery={searchQuery || undefined} 
+        <BookList
+          searchQuery={searchQuery || undefined}
           ageFilter={ageFilter || undefined}
           sortFilter={sortFilter}
         />
+      </div>
+      <div className="text-center text-xs text-muted-foreground mt-4">
+        UI Version: 2.0 (Yellow Theme)
       </div>
     </main>
   );

@@ -10,6 +10,7 @@ export interface Book {
   isbn: string | null;
   pangyo_callno: string | null;
   age: string | null;
+  category: string | null;
 }
 
 export interface BooksResponse {

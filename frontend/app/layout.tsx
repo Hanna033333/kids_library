@@ -1,10 +1,12 @@
+"use client";
+
 import type { Metadata } from "next";
 import "./globals.css";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 
-export const metadata: Metadata = {
-  title: "Kids Library - 아동 도서 검색",
-  description: "판교 도서관 아동 도서 검색",
-};
+// Note: metadata export removed because this is now a client component
+// Move metadata to a separate metadata.ts file if needed
 
 export default function RootLayout({
   children,
@@ -13,7 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body>
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      </body>
     </html>
   );
 }

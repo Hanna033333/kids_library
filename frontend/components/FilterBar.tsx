@@ -22,11 +22,11 @@ const SORT_OPTIONS = [
 
 export default function FilterBar({ selectedAge, onAgeChange, selectedSort, onSortChange }: FilterBarProps) {
   return (
-    <div className="w-full bg-gray-50 border-b border-gray-200 px-4 py-3">
+    <div className="w-full bg-muted border-b border-border px-4 py-3">
       <div className="w-full max-w-4xl mx-auto space-y-3">
         {/* 연령대 필터 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 md:text-base">
+          <label className="block text-sm font-medium text-foreground mb-2 md:text-base">
             연령대
           </label>
           <div className="flex flex-wrap gap-2 md:gap-3">
@@ -34,11 +34,10 @@ export default function FilterBar({ selectedAge, onAgeChange, selectedSort, onSo
               <button
                 key={option.value}
                 onClick={() => onAgeChange(option.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedAge === option.value
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedAge === option.value
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background text-foreground border border-input hover:bg-accent"
+                  }`}
               >
                 {option.label}
               </button>
@@ -48,7 +47,7 @@ export default function FilterBar({ selectedAge, onAgeChange, selectedSort, onSo
 
         {/* 정렬 필터 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 md:text-base">
+          <label className="block text-sm font-medium text-foreground mb-2 md:text-base">
             정렬
           </label>
           <div className="flex flex-wrap gap-2 md:gap-3">
@@ -56,11 +55,10 @@ export default function FilterBar({ selectedAge, onAgeChange, selectedSort, onSo
               <button
                 key={option.value}
                 onClick={() => onSortChange(option.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedSort === option.value
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedSort === option.value
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background text-foreground border border-input hover:bg-accent"
+                  }`}
               >
                 {option.label}
               </button>

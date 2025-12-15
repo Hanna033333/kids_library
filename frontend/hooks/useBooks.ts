@@ -3,8 +3,8 @@
  */
 "use client";
 
-import { useState, useEffect } from "react";
-import { Book, BooksResponse } from "@/lib/types";
+import { useQuery } from "@tanstack/react-query";
+import { BooksResponse } from "@/lib/types";
 import { searchBooks, getBooks } from "@/lib/api";
 
 interface UseBooksParams {
@@ -22,44 +22,27 @@ export function useBooks({
   page,
   limit = 10,
 }: UseBooksParams) {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  // Create a unique query key based on all parameters
+  const queryKey = ["books", searchQuery, ageFilter, sortFilter, page, limit];
 
-  useEffect(() => {
-    loadBooks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, searchQuery, ageFilter, sortFilter]);
-
-  const loadBooks = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response: BooksResponse = searchQuery
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey,
+    queryFn: async (): Promise<BooksResponse> => {
+      return searchQuery
         ? await searchBooks(searchQuery, ageFilter || undefined, sortFilter, page, limit)
         : await getBooks(ageFilter || undefined, sortFilter, page, limit);
-
-      setBooks(response.data);
-      setTotal(response.total);
-      setTotalPages(response.total_pages);
-    } catch (err) {
-      console.error("Failed to load books:", err);
-      setError("책 목록을 불러오는데 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    // Keep data fresh for 30 seconds
+    staleTime: 30 * 1000,
+  });
 
   return {
-    books,
-    loading,
-    error,
-    total,
-    totalPages,
-    reload: loadBooks,
+    books: data?.data || [],
+    loading: isLoading,
+    error: error ? "책 목록을 불러오는데 실패했습니다." : null,
+    total: data?.total || 0,
+    totalPages: data?.total_pages || 0,
+    reload: refetch,
   };
 }
 

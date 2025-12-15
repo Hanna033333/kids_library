@@ -50,13 +50,13 @@ export default function Pagination({
   };
 
   return (
-    <div className="px-4 py-6 bg-white border-t border-gray-200">
+    <div className="px-4 py-6 bg-background border-t border-border">
       <div className="flex justify-center items-center gap-2 flex-wrap">
         {/* 이전 페이지 버튼 */}
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1 || loading}
-          className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-3 py-2 text-sm font-medium border border-input text-foreground bg-background rounded-md hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           이전
         </button>
@@ -65,7 +65,7 @@ export default function Pagination({
         {getPageNumbers().map((pageNum, index) => {
           if (pageNum === "...") {
             return (
-              <span key={`ellipsis-${index}`} className="px-2 text-gray-400">
+              <span key={`ellipsis-${index}`} className="px-2 text-muted-foreground">
                 ...
               </span>
             );
@@ -74,12 +74,11 @@ export default function Pagination({
             <button
               key={pageNum}
               onClick={() => onPageChange(pageNum as number)}
-              disabled={loading}
-              className={`px-3 py-2 text-sm border rounded-md transition-colors ${
-                currentPage === pageNum
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              }`}
+              disabled={currentPage === pageNum}
+              className={`px-3 py-2 text-sm font-medium border rounded-md transition-colors ${currentPage === pageNum
+                ? "bg-primary text-primary-foreground border-primary cursor-default"
+                : "border-input text-foreground bg-background hover:bg-accent active:bg-accent"
+                } ${loading && currentPage !== pageNum ? "pointer-events-none" : ""}`}
             >
               {pageNum}
             </button>
@@ -90,7 +89,7 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages || loading}
-          className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-3 py-2 text-sm font-medium border border-input text-foreground bg-background rounded-md hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           다음
         </button>

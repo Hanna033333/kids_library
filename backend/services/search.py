@@ -15,7 +15,8 @@ def build_search_query(
     - 정렬
     """
     # 기본 쿼리: pangyo_callno가 있는 책만
-    query = supabase.table("childbook_items").select("*", count="exact")
+    # count="planned" 사용으로 성능 최적화 (예상 개수 사용)
+    query = supabase.table("childbook_items").select("*", count="planned")
     query = query.not_.is_("pangyo_callno", "null")
     query = query.neq("pangyo_callno", "없음")
     

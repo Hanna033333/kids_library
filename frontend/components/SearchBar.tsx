@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -10,13 +10,22 @@ interface SearchBarProps {
 export default function SearchBar({ onSearch, initialQuery = "" }: SearchBarProps) {
   const [query, setQuery] = useState(initialQuery);
 
+  // Debounce search: wait 300ms after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onSearch(query);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query, onSearch]);
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSearch(query);
   };
 
   return (
-    <div className="w-full sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
+    <div className="w-full sticky top-0 z-10 bg-background border-b border-border px-4 py-3 shadow-sm">
       <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto">
         <div className="relative">
           <input
@@ -24,11 +33,11 @@ export default function SearchBar({ onSearch, initialQuery = "" }: SearchBarProp
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="검색어를 입력해주세요"
-            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 pr-12 bg-background text-foreground border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
           />
           <button
             type="submit"
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-gray-700"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
