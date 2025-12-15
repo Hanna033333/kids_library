@@ -6,33 +6,38 @@ interface BookItemProps {
 
 export default function BookItem({ book }: BookItemProps) {
   return (
-    <div className="p-4 border-b border-border hover:bg-accent/50 transition-colors">
-      {/* 책 제목 */}
-      <h3 className="text-base font-semibold text-foreground mb-2">
-        {book.title}
-      </h3>
+    <div className="p-5 border-b border-border bg-card/50 hover:bg-accent/30 transition-colors">
+      {/* 1. 상단 태그 (분류, 연령) */}
+      <div className="flex gap-2 mb-2">
+        {book.category && (
+          <span className="text-[11px] px-1.5 py-0.5 rounded-sm bg-muted text-muted-foreground font-medium">
+            {book.category}
+          </span>
+        )}
+        {book.age && (
+          <span className="text-[11px] px-1.5 py-0.5 rounded-sm bg-muted text-muted-foreground font-medium">
+            {book.age}
+          </span>
+        )}
+      </div>
 
-      {/* 책 정보 */}
-      <div className="space-y-1">
-        {book.author && (
-          <p className="text-sm text-muted-foreground">저자: {book.author}</p>
+      {/* 2. 메인 정보 (제목, 청구기호) */}
+      <div className="mb-3">
+        <h3 className="text-xl font-bold text-foreground leading-tight mb-1">
+          {book.title}
+        </h3>
+        {book.pangyo_callno && (
+          <p className="text-lg font-bold text-primary-foreground tracking-tight">
+            {book.pangyo_callno}
+          </p>
         )}
-        {book.publisher && (
-          <p className="text-sm text-muted-foreground">출판사: {book.publisher}</p>
-        )}
-        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-          {book.age && (
-            <span className="text-xs text-muted-foreground font-medium">연령: {book.age}</span>
-          )}
-          {book.category && (
-            <span className="text-xs text-muted-foreground font-medium">분류: {book.category}</span>
-          )}
-          {book.pangyo_callno && (
-            <span className="text-xs text-muted-foreground font-medium">
-              청구기호: {book.pangyo_callno}
-            </span>
-          )}
-        </div>
+      </div>
+
+      {/* 3. 하단 메타 정보 (저자, 출판사) */}
+      <div className="flex items-center text-sm text-muted-foreground gap-2">
+        <span className="truncate max-w-[150px]">{book.author}</span>
+        <span className="w-px h-3 bg-border"></span>
+        <span className="truncate">{book.publisher}</span>
       </div>
     </div>
   );

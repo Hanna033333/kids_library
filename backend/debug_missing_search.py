@@ -49,5 +49,5 @@ def search_full_callno(title):
         print(f"Error: {e}")
 
 if __name__ == "__main__":
-    # ISBN from Batch 2 sample: 가족 123
-    search_full_callno("9788990614018")
+    # Search by Author '문명예' to find '봉숭아 통통통'
+    search_full_callno("문명예")
