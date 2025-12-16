@@ -78,3 +78,4 @@ def search_books_service(
         "total_pages": (result.count + limit - 1) // limit if hasattr(result, 'count') and result.count else 1
     }
 
+

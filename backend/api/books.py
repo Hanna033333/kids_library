@@ -42,3 +42,4 @@ def get_books():
     data = supabase.table("childbook_items").select("*").order("title").execute()
     return data.data
 
+

@@ -50,46 +50,48 @@ export default function Pagination({
   };
 
   return (
-    <div className="px-4 py-6 bg-background border-t border-border">
-      <div className="flex justify-center items-center gap-2 flex-wrap">
+    <div className="px-4 py-8 flex justify-center">
+      <div className="flex items-center gap-1">
         {/* 이전 페이지 버튼 */}
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1 || loading}
-          className="px-3 py-2 text-sm font-medium border border-input text-foreground bg-background rounded-md hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
           이전
         </button>
 
         {/* 페이지 번호 */}
-        {getPageNumbers().map((pageNum, index) => {
-          if (pageNum === "...") {
+        <div className="flex items-center gap-1 mx-1">
+          {getPageNumbers().map((pageNum, index) => {
+            if (pageNum === "...") {
+              return (
+                <span key={`ellipsis-${index}`} className="w-8 flex justify-center text-gray-300 text-xs">
+                  ...
+                </span>
+              );
+            }
             return (
-              <span key={`ellipsis-${index}`} className="px-2 text-muted-foreground">
-                ...
-              </span>
+              <button
+                key={pageNum}
+                onClick={() => onPageChange(pageNum as number)}
+                disabled={currentPage === pageNum}
+                className={`min-w-[32px] h-8 px-1 flex items-center justify-center text-sm font-bold rounded-lg transition-all ${currentPage === pageNum
+                  ? "bg-[#F59E0B] text-white shadow-md shadow-gray-200"
+                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                  } ${loading && currentPage !== pageNum ? "pointer-events-none" : ""}`}
+              >
+                {pageNum}
+              </button>
             );
-          }
-          return (
-            <button
-              key={pageNum}
-              onClick={() => onPageChange(pageNum as number)}
-              disabled={currentPage === pageNum}
-              className={`px-3 py-2 text-sm font-medium border rounded-md transition-colors ${currentPage === pageNum
-                ? "bg-primary text-primary-foreground border-primary cursor-default"
-                : "border-input text-foreground bg-background hover:bg-accent active:bg-accent"
-                } ${loading && currentPage !== pageNum ? "pointer-events-none" : ""}`}
-            >
-              {pageNum}
-            </button>
-          );
-        })}
+          })}
+        </div>
 
         {/* 다음 페이지 버튼 */}
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages || loading}
-          className="px-3 py-2 text-sm font-medium border border-input text-foreground bg-background rounded-md hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
           다음
         </button>
@@ -97,4 +99,5 @@ export default function Pagination({
     </div>
   );
 }
+
 

@@ -65,3 +65,4 @@ NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET") or env_vars.get("NAVER_CL
 DATA4LIBRARY_KEY = os.getenv("DATA4LIBRARY_KEY") or env_vars.get("DATA4LIBRARY_KEY")
 ALADIN_TTB_KEY = os.getenv("ALADIN_TTB_KEY") or env_vars.get("ALADIN_TTB_KEY")
 
+

@@ -31,3 +31,4 @@ class BooksListResponse(BaseModel):
     limit: int
     total_pages: int
 
+

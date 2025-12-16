@@ -31,8 +31,8 @@ export default function FilterBar({ selectedAge, onAgeChange, selectedSort, onSo
             <button
               key={option.value}
               onClick={() => onAgeChange(option.value)}
-              className={`whitespace-nowrap px-4 py-2 rounded-full text-[13px] font-bold transition-all ${selectedAge === option.value
-                ? "bg-[#F59E0B] text-white shadow-md shadow-yellow-200"
+              className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${selectedAge === option.value
+                ? "bg-[#F59E0B] text-white shadow-md shadow-gray-200"
                 : "bg-white text-gray-500 border border-gray-100 hover:bg-gray-50 hover:text-gray-900"
                 }`}
             >
@@ -47,7 +47,7 @@ export default function FilterBar({ selectedAge, onAgeChange, selectedSort, onSo
             <button
               key={option.value}
               onClick={() => onSortChange(option.value)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedSort === option.value
+              className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors ${selectedSort === option.value
                 ? "text-[#F59E0B] bg-yellow-50"
                 : "text-gray-400 hover:text-gray-600"
                 }`}

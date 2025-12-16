@@ -42,12 +42,11 @@ export default function BookList({
   };
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto">
+    <div className="w-full max-w-[1200px] mx-auto px-4">
       {/* 상태 표시 (Cleaner) */}
       <div className="mb-4 px-1 flex flex-col gap-2">
         <div className="flex items-center justify-between text-sm text-gray-500 font-medium">
-          <span>총 <span className="text-gray-900 font-bold">{total.toLocaleString()}</span>권의 책</span>
-          <span>{page} / {totalPages} 페이지</span>
+          <span>총 <span className="font-bold">{total.toLocaleString()}</span>권</span>
         </div>
 
 

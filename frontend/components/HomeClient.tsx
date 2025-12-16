@@ -29,6 +29,15 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
     return (
         <main className="min-h-screen">
+            {/* Header / Logo */}
+            <header className="w-full bg-white border-b border-gray-100 flex items-center justify-center py-5">
+                <img 
+                    src="/logo.png" 
+                    alt="책방구" 
+                    className="h-12 w-auto"
+                />
+            </header>
+
             {/* 검색 바 */}
             <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
 
