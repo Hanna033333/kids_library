@@ -4,34 +4,36 @@ import { useState, useEffect } from "react";
 import BookItem from "./BookItem";
 import Pagination from "./Pagination";
 import { useBooks } from "@/hooks/useBooks";
+import { BooksResponse } from "@/lib/types";
 
 interface BookListProps {
   searchQuery?: string;
   ageFilter?: string;
   sortFilter?: string;
+  initialData?: BooksResponse;
 }
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 24; // Increased for grid layout (e.g., 4x6)
 
 export default function BookList({
   searchQuery,
   ageFilter,
   sortFilter = "pangyo_callno",
+  initialData,
 }: BookListProps) {
   const [page, setPage] = useState(1);
 
-  // 검색어나 필터 변경 시 첫 페이지로 리셋
   useEffect(() => {
     setPage(1);
   }, [searchQuery, ageFilter, sortFilter]);
 
-  // 커스텀 훅으로 데이터 로딩
   const { books, loading, error, total, totalPages } = useBooks({
     searchQuery,
     ageFilter,
     sortFilter,
     page,
     limit: ITEMS_PER_PAGE,
+    initialData,
   });
 
   const handlePageChange = (newPage: number) => {
@@ -40,42 +42,53 @@ export default function BookList({
   };
 
   return (
-    <div className="w-full">
-      {/* 상태 표시 */}
-      <div className="px-4 py-3 text-sm text-gray-600 bg-gray-50 border-b border-gray-200">
-        총 {total.toLocaleString()}권 (페이지 {page} / {totalPages})
+    <div className="w-full max-w-[1200px] mx-auto">
+      {/* 상태 표시 (Cleaner) */}
+      <div className="mb-4 px-1 flex flex-col gap-2">
+        <div className="flex items-center justify-between text-sm text-gray-500 font-medium">
+          <span>총 <span className="text-gray-900 font-bold">{total.toLocaleString()}</span>권의 책</span>
+          <span>{page} / {totalPages} 페이지</span>
+        </div>
+
+
       </div>
 
       {/* 에러 표시 */}
       {error && (
-        <div className="px-4 py-12 text-center">
-          <p className="text-red-500">{error}</p>
+        <div className="py-20 text-center bg-white rounded-xl shadow-sm">
+          <p className="text-red-500 font-medium mb-2">데이터를 불러오지 못했습니다.</p>
+          <p className="text-sm text-gray-400">{error}</p>
         </div>
       )}
 
-      {/* 책 리스트 */}
-      <div className="bg-white">
-        {loading && books.length === 0 ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="text-gray-500">로딩 중...</div>
-          </div>
-        ) : books.length === 0 ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="text-gray-500">검색 결과가 없습니다.</div>
-          </div>
-        ) : (
-          books.map((book) => <BookItem key={book.id} book={book} />)
-        )}
-      </div>
+      {/* 책 리스트 그리드 */}
+      {loading && books.length === 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+          {/* Skeleton Loading Effect can be added here, for now simple loading */}
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="aspect-[1/1.6] bg-gray-200 rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      ) : books.length === 0 ? (
+        <div className="py-32 text-center bg-white rounded-2xl border border-dashed border-gray-200">
+          <div className="text-gray-400 text-lg">검색 결과가 없습니다.</div>
+          <div className="text-gray-300 text-sm mt-1">다른 검색어로 시도해보세요.</div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+          {books.map((book) => <BookItem key={book.id} book={book} />)}
+        </div>
+      )}
 
       {/* 페이지네이션 */}
-      <Pagination
-        currentPage={page}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        loading={loading}
-      />
+      <div className="mt-12 mb-20">
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          loading={loading}
+        />
+      </div>
     </div>
   );
 }
-

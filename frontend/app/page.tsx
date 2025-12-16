@@ -1,49 +1,35 @@
-"use client";
+import HomeClient from "@/components/HomeClient";
+import { BooksResponse } from "@/lib/types";
 
-import { useState, useCallback } from "react";
-import SearchBar from "@/components/SearchBar";
-import FilterBar from "@/components/FilterBar";
-import BookList from "@/components/BookList";
+// Force dynamic rendering since we are fetching data
+export const dynamic = "force-dynamic";
 
-export default function Home() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [ageFilter, setAgeFilter] = useState("");
-  const [sortFilter, setSortFilter] = useState("pangyo_callno");
+async function getInitialBooks(): Promise<BooksResponse> {
+  try {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+    console.log(`Fetching initial books from ${API_URL}...`);
 
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-  }, []);
+    // Server-side fetch needs absolute URL
+    // Also ensuring no-cache to get fresh data or handling revalidation
+    const res = await fetch(`${API_URL}/api/books/list?page=1&limit=24&sort=pangyo_callno`, {
+      cache: 'no-store', // Always fetch fresh data for now, or use revalidate
+    });
 
-  const handleAgeChange = useCallback((age: string) => {
-    setAgeFilter(age);
-  }, []);
+    if (!res.ok) {
+      console.error("Failed to fetch initial books:", res.status, res.statusText);
+      // Return empty structure on failure to prevent crash
+      return { data: [], total: 0, page: 1, limit: 10, total_pages: 0 };
+    }
 
-  const handleSortChange = useCallback((sort: string) => {
-    setSortFilter(sort);
-  }, []);
-
-  return (
-    <main className="min-h-screen bg-background">
-      {/* 검색 바 */}
-      <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
-
-      {/* 필터 바 */}
-      <FilterBar
-        selectedAge={ageFilter}
-        onAgeChange={handleAgeChange}
-        selectedSort={sortFilter}
-        onSortChange={handleSortChange}
-      />
-
-      {/* 책 리스트 */}
-      <div className="w-full max-w-7xl mx-auto py-4 md:py-6">
-        <BookList
-          searchQuery={searchQuery || undefined}
-          ageFilter={ageFilter || undefined}
-          sortFilter={sortFilter}
-        />
-      </div>
-    </main>
-  );
+    return res.json();
+  } catch (error) {
+    console.error("Error fetching initial books:", error);
+    return { data: [], total: 0, page: 1, limit: 10, total_pages: 0 };
+  }
 }
 
+export default async function Home() {
+  const initialData = await getInitialBooks();
+
+  return <HomeClient initialData={initialData} />;
+}

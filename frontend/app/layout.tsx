@@ -15,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body>
+      <body className="bg-[#F7F7F7] min-h-screen text-gray-900">
         <QueryClientProvider client={queryClient}>
           {children}
         </QueryClientProvider>

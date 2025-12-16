@@ -11,6 +11,7 @@ export interface Book {
   pangyo_callno: string | null;
   age: string | null;
   category: string | null;
+  image_url: string | null;
 }
 
 export interface BooksResponse {

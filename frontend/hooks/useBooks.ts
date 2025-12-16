@@ -13,6 +13,7 @@ interface UseBooksParams {
   sortFilter?: string;
   page: number;
   limit?: number;
+  initialData?: BooksResponse;
 }
 
 export function useBooks({
@@ -21,6 +22,7 @@ export function useBooks({
   sortFilter = "pangyo_callno",
   page,
   limit = 10,
+  initialData,
 }: UseBooksParams) {
   // Create a unique query key based on all parameters
   const queryKey = ["books", searchQuery, ageFilter, sortFilter, page, limit];
@@ -34,6 +36,8 @@ export function useBooks({
     },
     // Keep data fresh for 30 seconds
     staleTime: 30 * 1000,
+    // Use initialData only if provided and we are on the first page with no filters
+    initialData: (searchQuery || ageFilter || page > 1) ? undefined : initialData,
   });
 
   return {
