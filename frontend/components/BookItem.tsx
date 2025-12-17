@@ -60,19 +60,6 @@ export default function BookItem({ book }: BookItemProps) {
               {displayAge}
             </span>
           )}
-          {/* 대출 상태 뱃지 */}
-          {book.loan_status && (
-            <span
-              className={`text-[11px] px-2 py-0.5 rounded-full font-bold shadow-sm backdrop-blur-sm ${book.loan_status.available === true
-                  ? 'bg-green-500 text-white'
-                  : book.loan_status.available === false
-                    ? 'bg-red-500 text-white'
-                    : 'bg-gray-300 text-gray-600'
-                }`}
-            >
-              {book.loan_status.status}
-            </span>
-          )}
         </div>
       </div>
 
@@ -88,9 +75,13 @@ export default function BookItem({ book }: BookItemProps) {
           </p>
         )}
 
-        <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs text-gray-400 font-medium">
-          <span className="truncate max-w-[50%]">{book.author}</span>
-          <span className="truncate max-w-[40%]">{book.publisher}</span>
+        <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
+          <span className="text-gray-400 truncate max-w-[60%]">{book.publisher}</span>
+          {book.loan_status && (
+            <span className={`${book.loan_status.available ? "text-green-600" : "text-red-500"} font-bold`}>
+              {book.loan_status.status}
+            </span>
+          )}
         </div>
       </div>
     </div>
