@@ -44,6 +44,17 @@ def get_books():
     return data.data
 
 
+@router.get("/debug/env")
+def check_env():
+    """환경변수 설정 확인 (디버그용)"""
+    from core.config import DATA4LIBRARY_KEY
+    return {
+        "DATA4LIBRARY_KEY_exists": DATA4LIBRARY_KEY is not None,
+        "DATA4LIBRARY_KEY_length": len(DATA4LIBRARY_KEY) if DATA4LIBRARY_KEY else 0,
+        "DATA4LIBRARY_KEY_preview": DATA4LIBRARY_KEY[:10] + "..." if DATA4LIBRARY_KEY else "NOT SET"
+    }
+
+
 @router.post("/loan-status")
 async def get_loan_status(book_ids: List[int] = Body(..., description="책 ID 리스트")):
     """
