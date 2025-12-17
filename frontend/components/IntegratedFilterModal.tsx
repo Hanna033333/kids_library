@@ -13,6 +13,8 @@ interface IntegratedFilterModalProps {
     onAgeChange: (age: string) => void;
     selectedSort: string;
     onSortChange: (sort: string) => void;
+    showAvailableOnly: boolean;
+    onAvailabilityChange: (val: boolean) => void;
 }
 
 const CATEGORY_OPTIONS = [
@@ -36,11 +38,13 @@ export default function IntegratedFilterModal({
     isOpen, onClose,
     selectedCategory, onCategoryChange,
     selectedAge, onAgeChange,
-    selectedSort, onSortChange
+    selectedSort, onSortChange,
+    showAvailableOnly, onAvailabilityChange
 }: IntegratedFilterModalProps) {
     const [localCategory, setLocalCategory] = useState(selectedCategory);
     const [localAge, setLocalAge] = useState(selectedAge);
     const [localSort, setLocalSort] = useState(selectedSort);
+    const [localAvailable, setLocalAvailable] = useState(showAvailableOnly);
 
     // Sync state when modal opens
     useEffect(() => {
@@ -48,13 +52,15 @@ export default function IntegratedFilterModal({
             setLocalCategory(selectedCategory);
             setLocalAge(selectedAge);
             setLocalSort(selectedSort);
+            setLocalAvailable(showAvailableOnly);
         }
-    }, [isOpen, selectedCategory, selectedAge, selectedSort]);
+    }, [isOpen, selectedCategory, selectedAge, selectedSort, showAvailableOnly]);
 
     const handleApply = () => {
         onCategoryChange(localCategory);
         onAgeChange(localAge);
         onSortChange(localSort);
+        onAvailabilityChange(localAvailable);
         onClose();
     };
 
@@ -85,7 +91,25 @@ export default function IntegratedFilterModal({
 
                     {/* 정렬 */}
                     <section>
-                        <h3 className="text-sm font-bold text-gray-900 mb-3">정렬 기준</h3>
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-bold text-gray-900">정렬 및 보기 설정</h3>
+                        </div>
+
+                        <div className="bg-gray-50 rounded-2xl p-4 mb-4">
+                            <label className="flex items-center justify-between cursor-pointer">
+                                <span className="text-[15px] font-bold text-gray-700">대출 가능한 책만 보기</span>
+                                <div className="relative">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={localAvailable}
+                                        onChange={(e) => setLocalAvailable(e.target.checked)}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                                </div>
+                            </label>
+                        </div>
+
                         <div className="flex flex-col gap-2">
                             {SORT_OPTIONS.map((option) => (
                                 <label key={option.value} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors">
@@ -114,8 +138,8 @@ export default function IntegratedFilterModal({
                                     key={option.value}
                                     onClick={() => handleAgeToggle(option.value)}
                                     className={`px-4 py-2 rounded-full text-[15px] font-medium transition-all border ${localAge === option.value
-                                            ? "bg-gray-900 text-white border-gray-900"
-                                            : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                                        ? "bg-gray-900 text-white border-gray-900"
+                                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
                                         }`}
                                 >
                                     {option.label}
@@ -136,8 +160,8 @@ export default function IntegratedFilterModal({
                                     key={cat}
                                     onClick={() => setLocalCategory(cat)}
                                     className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${localCategory === cat
-                                            ? "bg-amber-100 text-amber-700 font-bold"
-                                            : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                                        ? "bg-amber-100 text-amber-700 font-bold"
+                                        : "bg-gray-50 text-gray-600 hover:bg-gray-100"
                                         }`}
                                 >
                                     {cat}

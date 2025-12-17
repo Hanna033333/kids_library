@@ -78,6 +78,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 onAgeChange={handleAgeChange}
                 selectedSort={sortFilter}
                 onSortChange={handleSortChange}
+                showAvailableOnly={showAvailableOnly}
+                onAvailabilityChange={handleAvailabilityChange}
             />
 
             {/* 책 리스트 */}
