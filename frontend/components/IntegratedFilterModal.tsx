@@ -125,8 +125,8 @@ export default function IntegratedFilterModal({
                                 <button
                                     key={cat}
                                     onClick={() => setLocalCategory(cat)}
-                                    className={`px-3.5 py-2 rounded-lg text-[15px] font-medium transition-all duration-200 border ${localCategory === cat
-                                        ? "bg-gray-900 text-white border-gray-900 shadow-md transform scale-[1.02]"
+                                    className={`px-5 py-2.5 rounded-full text-[15px] font-medium transition-all duration-200 border ${localCategory === cat
+                                        ? "bg-gray-900 text-white border-gray-900 shadow-md shadow-gray-200 transform scale-[1.02]"
                                         : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                                         }`}
                                 >
@@ -150,7 +150,7 @@ export default function IntegratedFilterModal({
                                             key={option.value}
                                             onClick={() => handleAgeToggle(option.value)}
                                             className={`px-4 py-2 rounded-full text-[15px] font-medium transition-all duration-200 border ${localAge === option.value
-                                                ? "bg-[#F59E0B] text-white border-[#F59E0B] shadow-md transform scale-[1.02]"
+                                                ? "bg-[#F59E0B] text-white border-[#F59E0B] shadow-md shadow-gray-200 transform scale-[1.02]"
                                                 : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                                                 }`}
                                         >
@@ -171,8 +171,8 @@ export default function IntegratedFilterModal({
                                         <button
                                             key={option.value}
                                             onClick={() => setLocalSort(option.value)}
-                                            className={`flex-1 flex items-center justify-center py-3 px-4 rounded-xl border font-medium transition-all duration-200 ${localSort === option.value
-                                                    ? "bg-amber-50 border-[#F59E0B] text-[#d97706] ring-1 ring-[#F59E0B]"
+                                            className={`flex-1 flex items-center justify-center py-3 px-4 rounded-full border font-medium transition-all duration-200 ${localSort === option.value
+                                                    ? "bg-[#F59E0B] border-[#F59E0B] text-white shadow-md shadow-gray-200"
                                                     : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
                                                 }`}
                                         >
@@ -201,7 +201,7 @@ export default function IntegratedFilterModal({
                         <button
                             onClick={handleApply}
                             disabled={loadingCount}
-                            className="flex-1 px-6 py-3.5 rounded-xl bg-[#F59E0B] text-white font-bold text-base shadow-lg shadow-amber-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait"
+                            className="flex-1 px-6 py-3.5 rounded-xl bg-[#F59E0B] text-white font-bold text-base shadow-lg shadow-gray-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait"
                         >
                             {loadingCount ? (
                                 <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>

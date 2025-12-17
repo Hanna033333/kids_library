@@ -56,7 +56,7 @@ export default function FilterBar({
               key={option.value}
               onClick={() => handleAgeToggle(option.value)}
               className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${selectedAge === option.value
-                ? "bg-[#F59E0B] text-white border-[#F59E0B] shadow-md shadow-amber-100"
+                ? "bg-[#F59E0B] text-white border-[#F59E0B] shadow-md shadow-gray-200"
                 : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-900"
                 }`}
             >
