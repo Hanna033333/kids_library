@@ -3,7 +3,6 @@ import asyncio
 import aiohttp
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
-import xml.etree.ElementTree as ET
 from core.config import DATA4LIBRARY_KEY
 
 
@@ -12,7 +11,7 @@ LOAN_CACHE: Dict[str, tuple[Dict, datetime]] = {}
 CACHE_TTL = timedelta(minutes=1)
 
 # 판교 도서관 코드
-PANGYO_LIB_CODE = "MA0003"
+PANGYO_LIB_CODE = "141231"
 
 
 def get_cached_loan(isbn: str) -> Optional[Dict]:
@@ -48,34 +47,34 @@ async def fetch_loan_status_single(
     if cached:
         return cached
     
-    # API 호출
-    url = "http://data4library.kr/api/loanItemSrch"
+    # bookExist API 호출 (실시간 대출 가능 여부)
+    url = "http://data4library.kr/api/bookExist"
     params = {
         "authKey": DATA4LIBRARY_KEY,
+        "libCode": PANGYO_LIB_CODE,
         "isbn13": isbn,
-        "format": "xml"
+        "format": "json"
     }
     
     try:
-        async with session.get(url, params=params, timeout=3) as response:
-            text = await response.text()
+        async with session.get(url, params=params, timeout=5) as response:
+            data = await response.json()
             
-            # XML 파싱
-            root = ET.fromstring(text)
+            # 응답 파싱
+            result_data = data.get("response", {}).get("result", {})
+            has_book = result_data.get("hasBook", "N")
+            loan_available = result_data.get("loanAvailable", "N")
             
-            # 대출 가능 여부 확인
-            loan_available = root.find(".//loanAvailable")
-            
-            if loan_available is not None and loan_available.text:
+            if has_book == "Y":
                 result = {
-                    "available": loan_available.text == "Y",
-                    "status": "대출가능" if loan_available.text == "Y" else "대출중",
+                    "available": loan_available == "Y",
+                    "status": "대출가능" if loan_available == "Y" else "대출중",
                     "updated_at": datetime.now().isoformat()
                 }
             else:
                 result = {
                     "available": None,
-                    "status": "정보없음",
+                    "status": "미소장",
                     "updated_at": datetime.now().isoformat()
                 }
             
