@@ -31,17 +31,17 @@ export default function FilterBar({
   };
 
   return (
-    <div className="w-full px-4 py-2 mb-2">
-      <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between gap-4">
+    <div className="w-full px-4 pb-2 mb-2">
+      <div className="w-full max-w-[1200px] mx-auto flex flex-col gap-2">
 
-        {/* Left: Scrollable Filters (Category & Age) */}
-        <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide py-1 flex-1 pr-4">
+        {/* Row 1: Category & Age Filters (Scrollable) */}
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
           {/* 카테고리 버튼 */}
           <button
             onClick={onCategoryClick}
             className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-all border ${selectedCategory && selectedCategory !== "전체"
               ? "bg-gray-900 text-white border-gray-900 shadow-md"
-              : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+              : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-900"
               }`}
           >
             <span>{selectedCategory && selectedCategory !== "전체" ? selectedCategory : "카테고리"}</span>
@@ -50,43 +50,38 @@ export default function FilterBar({
             </svg>
           </button>
 
-          <div className="w-px h-6 bg-gray-200 flex-shrink-0"></div>
-
           {/* 연령대 필터 */}
-          <div className="flex items-center gap-2">
-            {AGE_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => handleAgeToggle(option.value)}
-                className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${selectedAge === option.value
-                  ? "bg-[#F59E0B] text-white border-[#F59E0B] shadow-md shadow-amber-100"
-                  : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700"
-                  }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          {AGE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => handleAgeToggle(option.value)}
+              className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${selectedAge === option.value
+                ? "bg-[#F59E0B] text-white border-[#F59E0B] shadow-md shadow-amber-100"
+                : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-900"
+                }`}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
 
-        {/* Right: Fixed Loan Toggle (Separated) */}
-        <label className="flex items-center gap-2 cursor-pointer select-none flex-shrink-0 pl-2 border-l border-gray-100">
-          <div className="relative">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              checked={showAvailableOnly}
-              onChange={(e) => onAvailabilityChange(e.target.checked)}
-            />
-            <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
-          </div>
-          <span className={`text-[13px] font-bold ${showAvailableOnly ? "text-green-600" : "text-gray-500"} hidden md:inline`}>
-            대출가능
-          </span>
-          <span className={`text-[13px] font-bold ${showAvailableOnly ? "text-green-600" : "text-gray-500"} md:hidden`}>
-            가능
-          </span>
-        </label>
+        {/* Row 2: Loan Toggle (Right aligned) */}
+        <div className="flex justify-end px-1">
+          <label className="flex items-center gap-2 cursor-pointer select-none bg-white px-3 py-1.5 rounded-full border border-gray-100/50 hover:bg-gray-50 transition-colors">
+            <div className="relative">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={showAvailableOnly}
+                onChange={(e) => onAvailabilityChange(e.target.checked)}
+              />
+              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+            </div>
+            <span className={`text-[13px] font-bold ${showAvailableOnly ? "text-green-600" : "text-gray-500"}`}>
+              대출가능만
+            </span>
+          </label>
+        </div>
       </div>
     </div>
   );

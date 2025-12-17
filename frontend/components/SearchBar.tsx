@@ -26,7 +26,7 @@ export default function SearchBar({ onSearch, initialQuery = "", onFilterClick }
   };
 
   return (
-    <div className="w-full sticky top-0 z-20 bg-[#F7F7F7]/95 backdrop-blur-sm border-b border-gray-200/50 px-4 py-4 transition-all">
+    <div className="w-full sticky top-0 z-20 bg-[#F7F7F7]/95 backdrop-blur-sm px-4 py-4 transition-all">
       <form onSubmit={handleSubmit} className="w-full max-w-[1200px] mx-auto flex gap-3">
         <div className="relative group flex-1">
           <input
