@@ -1,0 +1,297 @@
+{
+  "response": {
+    "request": {
+      "libCode": "141231",
+      "type": "all",
+      "pageNo": "1",
+      "pageSize": "10"
+    },
+    "libNm": "성남시 판교도서관",
+    "pageNo": 1,
+    "pageSize": 10,
+    "numFound": 188063,
+    "resultNum": 10,
+    "docs": [
+      {
+        "doc": {
+          "bookname": "약이 되는 세월",
+          "authors": "박경리 지음",
+          "publisher": "다산책방",
+          "publication_year": "2025",
+          "isbn13": "9791130663074",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/35791/74/cover200/k002036351_2.jpg",
+          "addition_symbol": "03810",
+          "vol": "1",
+          "class_no": "814.6",
+          "class_nm": "문학 > 한국문학 > 수필",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㅂ172ㅂ",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-15"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "아무튼, 야구",
+          "authors": "김영글 지음",
+          "publisher": "위고",
+          "publication_year": "2025",
+          "isbn13": "9791193044353",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/37561/35/cover200/k202032425_1.jpg",
+          "addition_symbol": "02810",
+          "vol": "79",
+          "class_no": "808.9",
+          "class_nm": "문학 > 문학 > 전집, 총서",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㅇ141",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-15"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "손자병법",
+          "authors": "손자 지음",
+          "publisher": "현대지성",
+          "publication_year": "2025",
+          "isbn13": "9791139728002",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/37298/6/cover200/k292031545_1.jpg",
+          "addition_symbol": "03910",
+          "vol": "69",
+          "class_no": "082",
+          "class_nm": "총류 > 일반 전집, 총서 > 2인 이상의 일반 전집, 총서",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㅎ531",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": "2"
+              }
+            }
+          ],
+          "reg_date": "2025-12-15"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "비트코인 슈퍼 사이클 2026",
+          "authors": "신민철(처리형) 지음",
+          "publisher": "거인의 정원",
+          "publication_year": "2025",
+          "isbn13": "9791193869314",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/36902/62/cover200/k702030011_1.jpg",
+          "addition_symbol": "03320",
+          "vol": "2026",
+          "class_no": "327.2",
+          "class_nm": "사회과학 > 경제학 > 금융",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㅅ832ㅂ",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": "2"
+              }
+            }
+          ],
+          "reg_date": "2025-12-15"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "벌거벗은 한국사",
+          "authors": "tvN STORY 〈벌거벗은 한국사〉 제작팀 지음",
+          "publisher": "프런트페이지",
+          "publication_year": "2022",
+          "isbn13": "9791197871214",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/29990/64/cover/k792838158_1.jpg",
+          "addition_symbol": "04910",
+          "vol": "1",
+          "class_no": "911",
+          "class_nm": "역사 > 아시아(아세아) > 한국",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㅌ96ㅂ",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": "2"
+              }
+            }
+          ],
+          "reg_date": "2025-12-15"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "무덤의 천사",
+          "authors": "이디스 워튼 지음",
+          "publisher": "민음사",
+          "publication_year": "2025",
+          "isbn13": "9788937431371",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/37254/94/cover200/8937431378_1.jpg",
+          "addition_symbol": "04800",
+          "vol": "29",
+          "class_no": "808.3",
+          "class_nm": "문학 > 문학 > 전집, 총서",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㅅ998ㅁ",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-15"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "자존감 혁명",
+          "authors": "강지윤 [외]지음",
+          "publisher": "21세기북스(북이십일 21세기북스)",
+          "publication_year": "2025",
+          "isbn13": "9791173571619",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/36117/20/cover200/k632038160_1.jpg",
+          "addition_symbol": "04180",
+          "vol": "2",
+          "class_no": "180",
+          "class_nm": "철학 > 심리학 > 심리학",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㄴ77",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": "2"
+              }
+            }
+          ],
+          "reg_date": "2025-12-15"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "황석영의 어린이 민담집",
+          "authors": "황석영 글 최명미 그림",
+          "publisher": "휴먼큐브",
+          "publication_year": "2023",
+          "isbn13": "9791165383831",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/33669/21/cover/k542939736_1.jpg",
+          "addition_symbol": "74810",
+          "vol": "14",
+          "class_no": "388.111",
+          "class_nm": "사회과학 > 풍속, 민속학 > 민간전승",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "아",
+                "separate_shelf_name": "아",
+                "book_code": "ㅎ753ㅎ",
+                "shelf_loc_code": "P02",
+                "shelf_loc_name": "[판교]제1어린이열람실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-15"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "황석영의 어린이 민담집",
+          "authors": "황석영 글 최준규 그림",
+          "publisher": "휴먼큐브",
+          "publication_year": "2023",
+          "isbn13": "9791165383824",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/33464/13/cover/k772938849_1.jpg",
+          "addition_symbol": "74810",
+          "vol": "13",
+          "class_no": "388.111",
+          "class_nm": "사회과학 > 풍속, 민속학 > 민간전승",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "아",
+                "separate_shelf_name": "아",
+                "book_code": "ㅎ753ㅎ",
+                "shelf_loc_code": "P02",
+                "shelf_loc_name": "[판교]제1어린이열람실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-15"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "황석영의 어린이 민담집",
+          "authors": "황석영 글 최명미 그림",
+          "publisher": "휴먼큐브",
+          "publication_year": "2023",
+          "isbn13": "9791165383800",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/33279/23/cover/k192938876_1.jpg",
+          "addition_symbol": "74810",
+          "vol": "12",
+          "class_no": "388.111",
+          "class_nm": "사회과학 > 풍속, 민속학 > 민간전승",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "아",
+                "separate_shelf_name": "아",
+                "book_code": "ㅎ753ㅎ",
+                "shelf_loc_code": "P02",
+                "shelf_loc_name": "[판교]제1어린이열람실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-15"
+        }
+      }
+    ]
+  }
+}

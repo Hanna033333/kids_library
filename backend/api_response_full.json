@@ -1,0 +1,1404 @@
+{
+  "response": {
+    "pageNo": "1",
+    "pageSize": "100",
+    "numFound": 245,
+    "resultNum": 100,
+    "libs": [
+      {
+        "lib": {
+          "libCode": "141143",
+          "libName": "가평군 설악도서관",
+          "address": "경기도 가평군 설악면 자잠로 65",
+          "tel": "031-580-4313",
+          "fax": "031-580-2289",
+          "latitude": "37.683239",
+          "longitude": "127.4908736",
+          "homepage": "https://www.gaplib.go.kr",
+          "closed": "신정, 설연휴, 추석연휴",
+          "operatingTime": "평일 09:00~22:00, 주말 10:00~18:00(자료실 운영기준)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141105",
+          "libName": "가평군 조종도서관",
+          "address": "경기도 가평군 조종면 조종희망로26번길 22",
+          "tel": "031-580-4303",
+          "fax": "031-580-2329",
+          "latitude": "37.818321",
+          "longitude": "127.3529165",
+          "homepage": "https://www.gaplib.go.kr",
+          "closed": "신정, 설연휴, 추석연휴",
+          "operatingTime": "평일 09:00~22:00, 주말 10:00~18:00(자료실 운영기준)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141004",
+          "libName": "경기도교육청과천도서관",
+          "address": "경기도 과천시 도서관길 36",
+          "tel": "02-3677-0371",
+          "fax": "02-504-7532",
+          "latitude": "37.432262",
+          "longitude": "126.9965747",
+          "homepage": "https://lib.goe.go.kr/kwa/",
+          "closed": "매주 월요일 / 일요일을 제외한 관공서의 공휴일, 필요에 따라 관장이 지정한 날",
+          "operatingTime": "평일 9:00~22:00 / 주말(토,일) 9:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141005",
+          "libName": "경기도교육청광주도서관",
+          "address": "경기도 광주시 경안안길58번길 3",
+          "tel": "031-768-6923",
+          "fax": "031-768-6925",
+          "latitude": "37.4108381",
+          "longitude": "127.2552863",
+          "homepage": "https://lib.goe.go.kr/gj/",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "평일 9:00~20:00 / 주말 9:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141008",
+          "libName": "경기도교육청성남도서관",
+          "address": "경기도 성남시 수정구 공원로370번길 26",
+          "tel": "031-730-3500",
+          "fax": "031-734-4395",
+          "latitude": "37.2979705",
+          "longitude": "127.0232861",
+          "homepage": "https://lib.goe.go.kr/sn/index.do",
+          "closed": "매주 월요일 / 국가공휴일",
+          "operatingTime": "09:00 ~ 22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141012",
+          "libName": "경기도교육청여주가남도서관",
+          "address": "경기도 여주시 가남읍 태평2길 28-7",
+          "tel": "031-882-1066",
+          "fax": "031-886-2611",
+          "latitude": "37.2041633",
+          "longitude": "127.5461529",
+          "homepage": "https://lib.goe.go.kr/gn/index.do",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "평일 9:00~20:00 / 주말 9:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141106",
+          "libName": "경기도교육청의정부도서관",
+          "address": "경기도 의정부시 체육로 265-25",
+          "tel": "031-836-9504",
+          "fax": "031-836-9510",
+          "latitude": "37.763362",
+          "longitude": "127.036438",
+          "homepage": "https://lib.goe.go.kr/ujb/index.do",
+          "closed": "매주 월요일 / 관공서의 공휴일에 관한 규정에서 정한 공휴일(다만, 일요일은 개관하되, 일요일과 다른 공휴일이 겹치는 경우에는 휴관)",
+          "operatingTime": "주말: 9시~17시, 평일: 종합자료실-9시~20시, 어린이자료실-9시~18시"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141010",
+          "libName": "경기도교육청중앙도서관",
+          "address": "경기도 수원시 장안구 조원로 18",
+          "tel": "031-240-4064",
+          "fax": "031-245-3681",
+          "latitude": "37.2979705",
+          "longitude": "127.0232861",
+          "homepage": "https://lib.goe.go.kr/gg/",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "평일 9:00~18:00 / 주말 9:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141141",
+          "libName": "경기도교육청평생학습관",
+          "address": "경기도 수원시 권선구 권중로 55",
+          "tel": "031-259-1029",
+          "fax": "031-259-1079",
+          "latitude": "37.2522357",
+          "longitude": "127.0321226",
+          "homepage": "https://lib.goe.go.kr/gglec/",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "평일 9:00~20:00 / 주말 9:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141009",
+          "libName": "경기도교육청평택도서관",
+          "address": "경기도 평택시 서정북로125번길 103",
+          "tel": "031-8054-8401",
+          "fax": "031-667-6548",
+          "latitude": "37.0730819",
+          "longitude": "127.0626649",
+          "homepage": "https://lib.goe.go.kr/pt/",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "평일 08:00~22:00 / 주말 9:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141017",
+          "libName": "경기도교육청포천도서관",
+          "address": "경기도 포천시 중앙로 92-6",
+          "tel": "031-536-9590",
+          "fax": "031-531-8754",
+          "latitude": "37.8944791",
+          "longitude": "127.2018087",
+          "homepage": "https://lib.goe.go.kr/pc/",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "평일  09:00~20:00 / 주말 09:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141130",
+          "libName": "경기도교육청화성도서관",
+          "address": "경기도 화성시 향남읍 발안로 85-10",
+          "tel": "031-369-5700",
+          "fax": "031-366-2936",
+          "latitude": "37.1331056",
+          "longitude": "126.9201978",
+          "homepage": "https://lib.goe.go.kr/hs/",
+          "closed": "매주 월요일 / 법정 공휴일",
+          "operatingTime": "화~금 09:00~20:00, 토~일 09:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141574",
+          "libName": "고양시립가좌도서관",
+          "address": "경기도 고양시 일산서구 가좌3로 16",
+          "tel": "031-8075-9380",
+          "fax": "031-911-1328",
+          "latitude": "37.6861719",
+          "longitude": "126.7202262",
+          "homepage": "https://www.goyanglib.or.kr/MT/index.do",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "열람실 : 하절기 (3월~10월) 07:00~23:00, 동절기 (11월~2월) 08:00~23:00 / 종합자료실, 연속간행물실, 디지털자료실 : (월~목) 09:00~22:00, (토~일) 09:00~18:00 / 어린이자료실 : 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141657",
+          "libName": "고양시립높빛도서관",
+          "address": "경기도 고양시 덕양구 푸른마을로 34-8",
+          "tel": "031-8075-9393",
+          "fax": "031-8075-4893",
+          "latitude": "37.7105651",
+          "longitude": "126.9056069",
+          "homepage": "https://www.goyanglib.or.kr/MV/index.do",
+          "closed": "매주 금요일",
+          "operatingTime": "평일: 종합자료실(09:00~22:00), 어린이자료실(09:00~18:00) / 주말 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141139",
+          "libName": "고양시립대화도서관",
+          "address": "경기도 고양시 일산서구 일산로 689",
+          "tel": "031-8075-9130",
+          "fax": "031-911-4276",
+          "latitude": "37.6809678",
+          "longitude": "126.753923",
+          "homepage": "https://www.goyanglib.or.kr/MJ/index.do",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "자료실 화~금 09:00~22:00 / 토,일 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141398",
+          "libName": "고양시립덕이도서관",
+          "address": "경기도 고양시 일산서구 하이파크로 128",
+          "tel": "031-8075-9320",
+          "fax": "031-911-2936",
+          "latitude": "37.7029746",
+          "longitude": "126.754531",
+          "homepage": "https://www.goyanglib.or.kr/MN/index.do",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "열람실 07:00(동절기08:00) / 자료실 09:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141055",
+          "libName": "고양시립마두도서관",
+          "address": "경기도 고양시 일산동구 일산로 355",
+          "tel": "031-8075-9067",
+          "fax": "031-901-5894",
+          "latitude": "37.6664887",
+          "longitude": "126.782103",
+          "homepage": "https://www.goyanglib.or.kr/MA/index.do",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "평일 09:00~22:00 주말 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141073",
+          "libName": "고양시립백석도서관",
+          "fax": "031-901-4621",
+          "latitude": "37.6472487",
+          "longitude": "126.793775",
+          "closed": "2026. 3. 까지 휴관(2026.3. 재개관 예정)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141635",
+          "libName": "고양시립별꿈도서관",
+          "address": "경기도 고양시 덕양구 고양대로 1937",
+          "tel": "031-8075-9305",
+          "fax": "031-8075-4893",
+          "latitude": "37.6534467",
+          "longitude": "126.8519658",
+          "homepage": "https://www.goyanglib.or.kr/MQ/index.do",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "자료실 화~금 10:00~19:00, 토~일 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141555",
+          "libName": "고양시립삼송도서관",
+          "address": "경기도 고양시 덕양구 덕수천1로 73",
+          "tel": "031-8075-9360",
+          "fax": "02-381-4590",
+          "latitude": "37.6488432",
+          "longitude": "126.884639",
+          "homepage": "https://www.goyanglib.or.kr/MP/index.do",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "평일 09:00~22:00, 주말 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141388",
+          "libName": "고양시립식사도서관",
+          "address": "경기도 고양시 일산동구 위시티2로 43-6",
+          "tel": "031-8075-9190",
+          "fax": "031-965-5297",
+          "latitude": "37.6760845",
+          "longitude": "126.815918",
+          "homepage": "https://www.goyanglib.or.kr/MM/index.do",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "자료실 평일 09:00~22:00 (*어린이자료실 09:00~18:00) / 주말 09:00~18:00 "
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141546",
+          "libName": "고양시립신원도서관",
+          "address": "경기도 고양시 덕양구 신원2로 24",
+          "tel": "031-8075-9340",
+          "fax": "02-371-1380",
+          "latitude": "37.6663747",
+          "longitude": "126.886347",
+          "homepage": "https://www.goyanglib.or.kr/MO/index.do",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "자료실 평일 09:00~22:00 / 주말 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141123",
+          "libName": "고양시립아람누리도서관",
+          "address": "경기도 고양시 일산동구 중앙로 1286",
+          "tel": "031-8075-9038",
+          "fax": "031-901-0294",
+          "latitude": "37.6615541",
+          "longitude": "126.7745",
+          "homepage": "https://www.goyanglib.or.kr/MF/index.do",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "평일 ( 09:00 ~ 22:00 ) / 주말 ( 09:00 ~ 18:00 )"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141631",
+          "libName": "고양시립일산도서관",
+          "address": "경기도 고양시 일산서구 고양대로 586-65",
+          "tel": "031-8075-9420",
+          "fax": "031-924-6269",
+          "latitude": "37.6850421",
+          "longitude": "126.7642552",
+          "homepage": "https://www.goyanglib.or.kr/MU/index.do",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "자료실 화~금 09:00~22:00, 토~일 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141124",
+          "libName": "고양시립주엽어린이도서관",
+          "address": "경기도 고양시 일산서구 주엽로 104",
+          "tel": "031-8075-9168",
+          "fax": "031-911-3218",
+          "latitude": "37.6684857",
+          "longitude": "126.756534",
+          "homepage": "https://www.goyanglib.or.kr/MG/index.do",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "9:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141150",
+          "libName": "고양시립풍동도서관",
+          "address": "경기도 고양시 일산동구 숲속마을로 108",
+          "tel": "031-8075-9148",
+          "fax": "031-901-8317",
+          "latitude": "37.6705562",
+          "longitude": "126.795196",
+          "homepage": "https://www.goyanglib.or.kr/ML/index.do",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "평일 09:00~22:00 / 주말 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141140",
+          "libName": "고양시립한뫼도서관",
+          "address": "경기도 고양시 일산서구 탄중로 284",
+          "tel": "031-8075-9115",
+          "fax": "031-975-1952",
+          "latitude": "37.6935842",
+          "longitude": "126.776286",
+          "homepage": "https://www.goyanglib.or.kr/MK/index.do",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "열람실 : 07:00(동절기 08:00), 자료실 : 09:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141018",
+          "libName": "고양시립행신도서관",
+          "address": "경기도 고양시 덕양구 행당로33번길 25-6",
+          "tel": "031-8075-9240",
+          "fax": "031-938-4673",
+          "latitude": "37.6207524",
+          "longitude": "126.828326",
+          "homepage": "https://www.goyanglib.or.kr/MB/index.do",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "평일 09:00~22:00, 주말 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141126",
+          "libName": "고양시립행신어린이도서관",
+          "address": "경기도 고양시 덕양구 소원로181번길 42",
+          "tel": "031-8075-9278",
+          "fax": "031-938-2395",
+          "latitude": "37.6147771",
+          "longitude": "126.843475",
+          "homepage": "https://www.goyanglib.or.kr/MH/index.do",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141072",
+          "libName": "고양시립화정도서관",
+          "address": "경기도 고양시 덕양구 은빛로77번길 8",
+          "tel": "031-8075-9215",
+          "fax": "031-965-5093",
+          "latitude": "37.637831",
+          "longitude": "126.837192",
+          "homepage": "https://www.goyanglib.or.kr/ME/index.do",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "자료실 월~목 09:00~22:00, 토~일 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141125",
+          "libName": "고양시립화정어린이도서관",
+          "address": "경기도 고양시 덕양구 화신로 323",
+          "tel": "031-8075-9299",
+          "fax": "031-938-2394",
+          "latitude": "37.6328887",
+          "longitude": "126.826242",
+          "homepage": "https://www.goyanglib.or.kr/MI/index.do",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "09:00 ~ 18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141591",
+          "libName": "고촌도서관",
+          "address": "경기도 김포시 고촌읍 장차로 14",
+          "tel": "031-5186-4850",
+          "fax": "031-981-6910",
+          "latitude": "37.6032053",
+          "longitude": "126.7711481",
+          "homepage": "http://www.gimpo.go.kr/lib/index.do",
+          "closed": "매주 금요일 / 일요일을 제외한 법정공휴일",
+          "operatingTime": "평일 09:00~22:00, 주말 09:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "741297",
+          "libName": "고현초꿈키움도서관",
+          "address": "경기도 오산시 남부대로 459",
+          "tel": "031-8036-6550",
+          "fax": "-",
+          "latitude": "37.1336377",
+          "longitude": "127.0854297",
+          "homepage": "-",
+          "closed": "매월 둘째주, 넷째주 월요일 / 신정, 설 연휴, 추석 연휴, 설 추석 연휴와 이어지는 토요일, 일요일, 특별한 사유로 필요하다고 인정하는 날",
+          "operatingTime": "평일 09:00~20:00 / 주말 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "741089",
+          "libName": "광남작은도서관",
+          "address": "경기도 광주시 회안대로 350-17",
+          "tel": "031-760-8745",
+          "fax": "031-760-1435",
+          "latitude": "37.3855352",
+          "longitude": "127.2365257",
+          "homepage": "https://lib.gjcity.go.kr/slib",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "화~일(주6일) 09:00~21:00, 토~일 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141080",
+          "libName": "광명시광명도서관",
+          "address": "경기도 광명시 원광명안로 48",
+          "tel": "02-2680-6541",
+          "fax": "02-2680-6531",
+          "latitude": "37.4653018",
+          "longitude": "126.8513075",
+          "homepage": "https://gmlib.gm.go.kr/",
+          "closed": "매주 금요일 / 법정공휴일, 도서관 사정으로 임시로 정하는 휴일",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141561",
+          "libName": "광명시소하도서관",
+          "address": "경기도 광명시 소하일로 7",
+          "tel": "02-2680-0900",
+          "fax": "02-2680-0919",
+          "latitude": "37.4454883",
+          "longitude": "126.8880089",
+          "homepage": "https://gmlib.gm.go.kr/",
+          "closed": "매주 월요일 / 법정공휴일, 도서관 사정으로 임시로 정하는 휴일",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141613",
+          "libName": "광명시연서도서관",
+          "address": "경기도 광명시 연서일로 10",
+          "tel": "02-2680-6630",
+          "fax": "02-2680-6640",
+          "latitude": "37.482755",
+          "longitude": "126.8646514",
+          "homepage": "https://gmlib.gm.go.kr",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "평일 09:00~22:00, 주말 09:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141405",
+          "libName": "광명시철산도서관",
+          "address": "경기도 광명시 철산로 56",
+          "tel": "02-2680-6820",
+          "fax": "02-2680-6826",
+          "latitude": "37.4769575",
+          "longitude": "126.8723412",
+          "homepage": "https://gmlib.gm.go.kr/",
+          "closed": "매주 월요일 / 법정공휴일, 도서관 사정으로 임시로 정하는 휴일",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141155",
+          "libName": "광명시충현도서관",
+          "address": "경기도 광명시 충현로42번길 19",
+          "tel": "02-2680-6111",
+          "fax": "02-2680-6113",
+          "latitude": "37.4340114",
+          "longitude": "126.8847294",
+          "homepage": "https://gmlib.gm.go.kr/",
+          "closed": "매주 금요일 / 법정공휴일, 도서관 사정으로 임시로 정하는 휴일",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141019",
+          "libName": "광명시하안도서관",
+          "address": "경기도 광명시 철망산로 46",
+          "tel": "02-2680-2871",
+          "fax": "02-2680-2877",
+          "latitude": "37.4676204",
+          "longitude": "126.8735159",
+          "homepage": "https://gmlib.gm.go.kr/",
+          "closed": "매주 금요일 / 법정공휴일(공휴일과 일요일이 겹칠 경우 휴관), 도서관 사정으로 임시로 정하는 휴일",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141235",
+          "libName": "광주시립곤지암도서관",
+          "address": "경기도 광주시 곤지암읍 곤지암로11번길 47",
+          "tel": "031-760-5666",
+          "fax": "031-760-1435",
+          "latitude": "37.3489171",
+          "longitude": "127.3410147",
+          "homepage": "https://lib.gjcity.go.kr/gj",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "열람실(08시~22시), 문헌자료실(09시~22시,토&middot;일 09시~18시), 어린이자료실/전자정보실(09시~18시), 3층 휴게실(09시~20시)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141576",
+          "libName": "광주시립능평도서관",
+          "address": "경기도 광주시 창뜰아랫길 6",
+          "tel": "031-760-5912",
+          "fax": "031-760-1435",
+          "latitude": "37.3496999",
+          "longitude": "127.1671923",
+          "homepage": "https://lib.gjcity.go.kr/np",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "운영시간 열람실(08시~22시/휴관일 전체휴관), 문헌자료실(09시~22시,토&middot;일 09시~18시)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141236",
+          "libName": "광주시립오포도서관",
+          "address": "경기도 광주시 태봉로 193",
+          "tel": "031-760-5697",
+          "fax": "031-760-1435",
+          "latitude": "37.3692382",
+          "longitude": "127.2312356",
+          "homepage": "https://lib.gjcity.go.kr/op",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "문학자료실(09시~22시, 토&middot;일 09시~18시) , 일반자료실 및 전자정보실(09시~22시, 토&middot;일 09시~18시), 어린이 자료실(09시~18시)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141114",
+          "libName": "광주시립중앙도서관",
+          "address": "경기도 광주시 문화로 82",
+          "tel": "031-760-5678",
+          "fax": "031-760-1435",
+          "latitude": "37.4105616",
+          "longitude": "127.2528784",
+          "homepage": "https://lib.gjcity.go.kr",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "열람실(멀티미디어실) 08~22시, 문헌자료실 평일 09~ 22시, 주말 09~18시, 어린이자료실 09~18시 / 휴관일, 공휴일, 신정, 구정(설날) 및 추석 연휴 기간에는 전체(열람실 포함) 휴관 / 중앙도서관은 월요일에도 열람실1, 열람실2, 멀티미디어실 운영 (운영시간 09~18시)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141512",
+          "libName": "광주시립초월도서관",
+          "address": "경기도 광주시 초월읍 무들로 3-26",
+          "tel": "031-760-5688",
+          "fax": "031-760-1435",
+          "latitude": "37.3870605",
+          "longitude": "127.2909196",
+          "homepage": "https://lib.gjcity.go.kr/cw",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "열람실(08시~22시/휴관일 09시~18시), 문헌자료실(09시~22시,토·일 09시~18시)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141020",
+          "libName": "구리시립 교문방정환도서관",
+          "address": "경기도 구리시 안골로30번길 45",
+          "tel": "031-550-2593",
+          "fax": "031-550-2595",
+          "latitude": "37.5951497",
+          "longitude": "127.13455",
+          "homepage": "http://www.gurilib.go.kr/",
+          "closed": "매월 첫째주, 셋째주 금요일 / 신정, 설&middot;추석 당일 전체 휴관 / 법정공휴일 자료실 휴관",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141070",
+          "libName": "구리시립 인창도서관",
+          "address": "경기도 구리시 건원대로34번길 90",
+          "tel": "031-550-2936",
+          "fax": "031-550-2939",
+          "latitude": "37.6050723",
+          "longitude": "127.1456099",
+          "homepage": "http://www.gurilib.go.kr/",
+          "closed": "매월 둘째주, 넷째주 월요일 / 신정, 설&middot;추석 당일 전체 휴관 / 법정공휴일 자료실 휴관(열람실 09:00~18:00 운영)",
+          "operatingTime": "자료실 : 평일 09:00~22:00, 주말 09:00~17:00 / 열람실 : 평일 08:00~23:00, 주말 08:00~22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141135",
+          "libName": "군포시중앙도서관",
+          "address": "경기도 군포시 수리산로 79",
+          "tel": "031-390-8866",
+          "fax": "031-390-8867",
+          "latitude": "37.3551341",
+          "longitude": "126.9157442",
+          "homepage": "https://www.gunpolib.go.kr/",
+          "closed": "매주 금요일 / 법정공휴일, 신정, 구정, 추석연휴는 전체 휴관",
+          "operatingTime": "월~목 09:00~22:00, 토~일 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "741001",
+          "libName": "글마루작은도서관",
+          "address": "경기도 부천시 경인옛로38번길 41",
+          "tel": "032-346-3451",
+          "fax": "-",
+          "latitude": "37.4789141",
+          "longitude": "126.796399",
+          "homepage": "https://www.bcl.go.kr/",
+          "closed": "매주 토요일, 일요일 / 법정공휴일",
+          "operatingTime": "월~금요일 운영 09:00~18:00 (점심시간 휴무 13:00~14:00)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141268",
+          "libName": "금곡작은도서관",
+          "address": "경기도 파주시 법원읍 술이홀로 1315",
+          "tel": "031-959-9506",
+          "latitude": "37.8846186",
+          "longitude": "126.8778329",
+          "homepage": "https://lib.paju.go.kr",
+          "closed": "매주 월요일, 일요일 / 법정공휴일",
+          "operatingTime": "평일 및 주말 10:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141239",
+          "libName": "기흥도서관",
+          "address": "경기도 용인시 기흥구 기흥로116번길 10",
+          "tel": "031-6193-1440",
+          "fax": "031-6193-1469",
+          "latitude": "37.2862231",
+          "longitude": "127.1141009",
+          "homepage": "http://lib.yongin.go.kr/giheung/",
+          "closed": "-",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141599",
+          "libName": "남사도서관",
+          "address": "경기도 용인시 처인구 남사읍 한숲로 61",
+          "tel": "031-6193-1370",
+          "fax": "031-6193-1389",
+          "latitude": "37.1523515",
+          "longitude": "127.1726883",
+          "homepage": "https://lib.yongin.go.kr/namsa",
+          "closed": "-",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141137",
+          "libName": "남양주시 별내도서관",
+          "address": "경기도 남양주시 별내면 청학로 86-1",
+          "tel": "031-590-8808",
+          "fax": "031-590-8809",
+          "latitude": "37.7081965",
+          "longitude": "127.1177053",
+          "homepage": "http://lib.nyj.go.kr/bnae/",
+          "closed": "매월 두번째, 네번째 금요일 / 1.1일, 설연휴, 추석연휴(대체공휴일 포함)",
+          "operatingTime": "09:00 ~ 22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141568",
+          "libName": "남양주시 별빛도서관",
+          "address": "경기도 남양주시 별내중앙로 102",
+          "tel": "031-590-5350",
+          "fax": "-",
+          "latitude": "37.6509135",
+          "longitude": "127.1204532",
+          "homepage": "http://lib.nyj.go.kr/bbit/",
+          "closed": "매월 첫번째, 세번째 월요일 / 1.1일, 설연휴, 추석연휴(대체공휴일 포함)",
+          "operatingTime": "09:00~22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141625",
+          "libName": "남양주시 이석영뉴미디어도서관",
+          "address": "경기도 남양주시 화도읍 맷돌로 84",
+          "tel": "031-595-8390",
+          "fax": "0507-804-7361",
+          "latitude": "37.658042",
+          "longitude": "127.2952154",
+          "homepage": "https://lib.nyj.go.kr/lsy",
+          "closed": "매월 두번째, 네번째 금요일 / 1월 1일, 설날·추석연휴",
+          "operatingTime": "평일 09:00~22:00, 주말 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141035",
+          "libName": "남양주시 정약용도서관",
+          "address": "경기도 남양주시 다산중앙로82번안길 138",
+          "tel": "031-590-2586",
+          "fax": "031-590-2879",
+          "latitude": "37.5859178",
+          "longitude": "127.1707352",
+          "homepage": "https://lib.nyj.go.kr/jyy",
+          "closed": "매월 첫번째, 세번째 금요일 / 1.1일, 설연휴, 추석연휴(대체공휴일 포함)",
+          "operatingTime": "자료실 09:00~22:00 (어린이자료실 09:00~18:00)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141091",
+          "libName": "남양주시 진건도서관",
+          "address": "경기도 남양주시 진건읍 진건오남로 41-25",
+          "tel": "031-590-8260",
+          "fax": "031-590-8259",
+          "latitude": "37.6550996",
+          "longitude": "127.1774145",
+          "homepage": "http://lib.nyj.go.kr/jingeon/",
+          "closed": "매월 두번째, 네번째 금요일 / 1.1일, 설연휴, 추석연휴(대체공휴일 포함)",
+          "operatingTime": "09:00 ~ 22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141521",
+          "libName": "남양주시 진접도서관",
+          "address": "경기도 남양주시 진접읍 금강로 1554-11",
+          "tel": "031-590-5310",
+          "fax": "031-590-5309",
+          "latitude": "37.7306138",
+          "longitude": "127.193936",
+          "homepage": "http://lib.nyj.go.kr/jinjeop/",
+          "closed": "매월 첫번째, 세번째 월요일 / 1.1일, 설연휴, 추석연휴(대체공휴일 포함)",
+          "operatingTime": "09:00 - 22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141536",
+          "libName": "남양주시 진접푸른숲도서관",
+          "address": "경기도 남양주시 진접읍 해밀예당2로 35",
+          "tel": "031-590-5330",
+          "fax": "031-590-5329",
+          "latitude": "37.7153353",
+          "longitude": "127.1926723",
+          "homepage": "http://lib.nyj.go.kr/jinjeopgw/",
+          "closed": "매월 두번째, 네번째 월요일 / 1.1일, 설연휴, 추석연휴(대체공휴일 포함)",
+          "operatingTime": "09:00~22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141401",
+          "libName": "남양주시 퇴계원도서관",
+          "address": "경기도 남양주시 퇴계원읍 도제원로 12",
+          "tel": "031-590-3910",
+          "fax": "031-590-8883",
+          "latitude": "37.6490687",
+          "longitude": "127.1455537",
+          "homepage": "http://lib.nyj.go.kr/toegyewon/",
+          "closed": "매월 두번째, 네번째 월요일 / 1.1일, 설연휴, 추석연휴(대체공휴일 포함)",
+          "operatingTime": "09:00 ~ 22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141175",
+          "libName": "남양주시 평내도서관",
+          "address": "경기도 남양주시 의안로 134",
+          "tel": "031-590-8562",
+          "fax": "031-590-8559",
+          "latitude": "37.6417066",
+          "longitude": "127.2388929",
+          "homepage": "http://lib.nyj.go.kr/pynae/",
+          "closed": "매월 첫번째, 세번째 월요일 / 1.1일, 설연휴, 추석연휴(대체공휴일 포함)",
+          "operatingTime": "09:00 ~ 22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141585",
+          "libName": "남양주시 호평도서관",
+          "address": "경기도 남양주시 천마산로 67",
+          "tel": "031-590-8340",
+          "fax": "-",
+          "latitude": "37.6675666",
+          "longitude": "127.2481052",
+          "homepage": "https://lib.nyj.go.kr/hp/",
+          "closed": "매월 두번째, 네번째 월요일 / 1.1일, 설연휴, 추석연휴(대체공휴일 포함)",
+          "operatingTime": "09:00~22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141071",
+          "libName": "남양주시 화도도서관",
+          "address": "경기도 남양주시 화도읍 수레로1260번길 33",
+          "tel": "031-590-4587",
+          "fax": "031-590-4588",
+          "latitude": "37.6500989",
+          "longitude": "127.3058023",
+          "homepage": "http://lib.nyj.go.kr/hwado/",
+          "closed": "매월 첫번째, 세번째 금요일 / 1.1일, 설연휴, 추석연휴(대체공휴일 포함)",
+          "operatingTime": "09:00~22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141083",
+          "libName": "느티나무도서관",
+          "address": "경기도 용인시 수지구 수풍로116번길 22",
+          "tel": "031-262-3494",
+          "fax": "031-262-6124",
+          "latitude": "37.3340177",
+          "longitude": "127.096092",
+          "homepage": "http://www.neutinamu.org/",
+          "closed": "매주 월요일, 목요일 / 법정공휴일",
+          "operatingTime": "화,수,금,토 오전 10시 ~ 오후 9시 / 일요일 오후 1시 ~ 오후 6시"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141189",
+          "libName": "다문화작은도서관",
+          "address": "경기도 안산시 단원구 부부로 43",
+          "tel": "031-493-2661",
+          "fax": "-",
+          "latitude": "37.332383",
+          "longitude": "126.790301",
+          "homepage": "http://lib.ansan.go.kr/smalllib",
+          "closed": "매주 월요일 / 국경일(법정공휴일)",
+          "operatingTime": "09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141446",
+          "libName": "대월작은도서관",
+          "address": "경기도 이천시 대월면 사동로 1-10",
+          "tel": "031-637-0997",
+          "latitude": "37.2298164",
+          "longitude": "127.4921844",
+          "homepage": "http://small.icheonlib.go.kr",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141089",
+          "libName": "동두천꿈나무정보도서관",
+          "address": "경기도 동두천시 지행로 38",
+          "tel": "031-860-3281",
+          "fax": "031-860-2574",
+          "latitude": "37.8921183",
+          "longitude": "127.0513705",
+          "homepage": "https://lib.ddc.go.kr/",
+          "closed": "매주 금요일 / 법정 공휴일, 설날, 추석",
+          "operatingTime": "09:00 -18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141022",
+          "libName": "동두천시립도서관",
+          "address": "경기도 동두천시 상패로 60",
+          "tel": "031-860-3261",
+          "fax": "031-860-2568",
+          "latitude": "37.9068364",
+          "longitude": "127.0474073",
+          "homepage": "https://lib.ddc.go.kr/",
+          "closed": "매주 월요일, 법정공휴일 / 학습실, 커뮤니티실: 1월 1일, 설·추석연휴",
+          "operatingTime": "(자료실) 화~일 9:00~18:00 / 학습실) 월 8:00~18:00, 화~일 8:00~22:00 "
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141667",
+          "libName": "동두천오르빛도서관",
+          "address": "경기도 동두천시 동두천로 314",
+          "tel": "031-860-2707",
+          "fax": "031-860-2574",
+          "latitude": "37.8981436",
+          "longitude": "127.0550319",
+          "homepage": "https://lib.ddc.go.kr",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "월-목 09:00~18:00(4-5층), 월-목 09:00~21:00(6층), 주말 09:00~18:00(4-6층)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141160",
+          "libName": "동백도서관",
+          "address": "경기도 용인시 기흥구 동백3로 80",
+          "tel": "031-6193-1310",
+          "fax": "-",
+          "latitude": "37.2740661",
+          "longitude": "127.1581171",
+          "homepage": "http://lib.yongin.go.kr/dongbaek/",
+          "closed": "-",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141640",
+          "libName": "마산도서관",
+          "address": "경기도 김포시 김포한강7로22번길 174-6",
+          "tel": "031-5186-4890",
+          "fax": "031-5186-4899",
+          "latitude": "37.6342473",
+          "longitude": "126.7370613",
+          "homepage": "https://www.gimpo.go.kr/masan/index.do",
+          "closed": "매주 월요일 / 일요일을 제외한 법정공휴일",
+          "operatingTime": "평일 09:00~22:00, 주말 09:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "741461",
+          "libName": "모당공원작은도서관",
+          "address": "경기도 고양시 일산동구 중산로 73-2, 모당공원 내",
+          "tel": "070-4244-7442",
+          "fax": "-",
+          "latitude": "37.6778914",
+          "longitude": "126.7814611",
+          "homepage": "https://www.goyanglib.or.kr",
+          "closed": "매주 월요일, 일요일 / 법정공휴일",
+          "operatingTime": "월~토 09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141389",
+          "libName": "모현도서관",
+          "address": "경기도 용인시 처인구 모현읍 백옥대로 2378",
+          "tel": "031-6193-1330",
+          "fax": "-",
+          "latitude": "37.3356296",
+          "longitude": "127.2496605",
+          "homepage": "http://lib.yongin.go.kr/mohyeon/",
+          "closed": "-",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "741203",
+          "libName": "무지개도서관",
+          "address": "경기도 오산시 청호로 23-22, 105동 놀이터 안",
+          "tel": "031-8036-6549",
+          "fax": "-",
+          "latitude": "37.1298897",
+          "longitude": "127.0822459",
+          "homepage": "-",
+          "closed": "매월 둘째주, 넷째주 월요일 / 신정, 설 연휴, 추석 연휴, 설 추석 연휴와 이어지는 토요일, 일요일, 특별한 사유로 필요하다고 인정하는 날",
+          "operatingTime": "평일 09:00~18:00 / 주말 10:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141185",
+          "libName": "민들레홀씨작은도서관",
+          "address": "경기도 부천시 상동로117번길 48",
+          "tel": "032-322-9702",
+          "fax": "-",
+          "latitude": "37.50819",
+          "longitude": "126.75087",
+          "homepage": "https://www.bcl.go.kr",
+          "closed": "매주 토요일, 일요일 / 법정공휴일",
+          "operatingTime": "점심시간 미운영 : 12:30 ~ 13:30"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141390",
+          "libName": "보라도서관",
+          "address": "경기도 용인시 기흥구 한보라2로 116 (보라동)",
+          "tel": "031-6193-1490",
+          "fax": "-",
+          "latitude": "37.2483772",
+          "longitude": "127.1090488",
+          "homepage": "http://lib.yongin.go.kr/bora/",
+          "closed": "-",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141186",
+          "libName": "복사꽃필무렵작은도서관",
+          "address": "경기도 부천시 성주로249번길 19, 2층",
+          "tel": "032-665-6053",
+          "fax": "-",
+          "latitude": "37.480664",
+          "longitude": "126.780105",
+          "homepage": "http://www.bcl.go.kr/",
+          "closed": "매주 토,일요일 / 법정공휴일",
+          "operatingTime": "평일 9시~18시 (점심시간 12:00-13:00)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141112",
+          "libName": "부곡글고운도서관",
+          "address": "경기도 의왕시 부곡시장길 75",
+          "tel": "031-345-3155",
+          "fax": "-",
+          "latitude": "37.3184983",
+          "longitude": "126.956818",
+          "homepage": "http://www.uwlib.or.kr/",
+          "closed": "매주 월요일, 일요일 / 법정공휴일",
+          "operatingTime": "09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141065",
+          "libName": "부천시립꿈빛도서관",
+          "address": "경기도 부천시 신흥로275번길 19",
+          "tel": "032-625-4622",
+          "fax": "032-625-4639",
+          "latitude": "37.50817",
+          "longitude": "126.773731",
+          "homepage": "https://www.bcl.go.kr",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "07:00~22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141248",
+          "libName": "부천시립꿈여울도서관",
+          "address": "경기도 부천시 까치로 103",
+          "tel": "032-625-4688",
+          "fax": "032-625-4699",
+          "latitude": "37.5155641",
+          "longitude": "126.805529",
+          "homepage": "http://www.bcl.go.kr/",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "월요일-목요일 09:00-21:00 / 토-일요일 09:00-17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141583",
+          "libName": "부천시립도당도서관",
+          "address": "경기도 부천시 부천로 360",
+          "tel": "032-625-4500",
+          "fax": "032-625-4504",
+          "latitude": "37.5191835",
+          "longitude": "126.7919202",
+          "homepage": "http://www.bcl.go.kr/",
+          "closed": "매주 월요일, 일요일 / 법정공휴일",
+          "operatingTime": "화-토요일 10:00~19:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141652",
+          "libName": "부천시립별빛마루도서관",
+          "address": "경기도 부천시 옥길로 105",
+          "tel": "032-625-9780",
+          "fax": "-",
+          "latitude": "37.4651126",
+          "longitude": "126.8199948",
+          "homepage": "https://www.bcl.go.kr",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "평일 09:00~22:00, 주말 09:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141056",
+          "libName": "부천시립북부도서관",
+          "address": "경기도 부천시 삼작로301번길 5",
+          "tel": "032-625-4605",
+          "fax": "032-625-4619",
+          "latitude": "37.5205458",
+          "longitude": "126.794658",
+          "homepage": "http://www.bcl.go.kr/",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "열람실 07:00~22:00 자료실 09:00~18:00(평일) 09:00~17:00(주말)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141321",
+          "libName": "부천시립상동도서관",
+          "address": "경기도 부천시 상이로 12",
+          "tel": "032-625-4705",
+          "fax": "032-625-4559",
+          "latitude": "37.4900669",
+          "longitude": "126.7446997",
+          "homepage": "http://www.bcl.go.kr/",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "자료실-평일09:00~22:00 토일09:00~17:00 / 열람실-07:00~22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141651",
+          "libName": "부천시립수주도서관",
+          "address": "경기도 부천시 고리울로8번길 77",
+          "tel": "032-625-4330",
+          "fax": "-",
+          "latitude": "37.5255334",
+          "longitude": "126.816524",
+          "homepage": "https://www.bcl.go.kr",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "평일 09:00~22:00, 주말 09:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141043",
+          "libName": "부천시립심곡도서관",
+          "address": "경기도 부천시 성무로 24",
+          "tel": "032-625-4588",
+          "fax": "032-625-4599",
+          "latitude": "37.4803981",
+          "longitude": "126.783837",
+          "homepage": "http://www.bcl.go.kr/",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "평일 09:00~22:00, 주말 09:00~17:00   ※ 9/1(월) 심곡도서관 재개관"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141603",
+          "libName": "부천시립역곡도서관",
+          "address": "경기도 부천시 지봉로51번길 54",
+          "tel": "032-625-4594",
+          "fax": "032-625-4579",
+          "latitude": "37.4886425",
+          "longitude": "126.8026956",
+          "homepage": "http://www.bcl.go.kr/",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "화~일 7:00~21:00 (안내데스크 평일(화~금) 9:00~18:00 / 주말(토,일) 9:00~17:00)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141660",
+          "libName": "부천시립역곡밝은도서관",
+          "address": "경기도 부천시 경인로 536번길 37",
+          "tel": "-",
+          "fax": "-",
+          "latitude": "37.4841734",
+          "longitude": "126.8170313",
+          "homepage": "https://www.bcl.go.kr",
+          "closed": "매주 토요일 / 법정공휴일",
+          "operatingTime": "평일 10:00~19:00, 주말 09:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141584",
+          "libName": "부천시립오정도서관",
+          "address": "경기도 부천시 성오로 172",
+          "tel": "032-625-4106",
+          "fax": "032-625-4119",
+          "latitude": "37.528314",
+          "longitude": "126.7960717",
+          "homepage": "http://www.bcl.go.kr/",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141535",
+          "libName": "부천시립원미도서관",
+          "address": "경기도 부천시 소사로 456",
+          "tel": "032-625-4723",
+          "fax": "032-625-4719",
+          "latitude": "37.4990095",
+          "longitude": "126.798221",
+          "homepage": "http://www.bcl.go.kr/",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "자료실-화~금(09:00-22:00), 토~일(09:00-17:00), 열람실- 07:00-22:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141115",
+          "libName": "부천시립책마루도서관",
+          "address": "경기도 부천시 심중로 121",
+          "tel": "032-625-4645",
+          "fax": "032-625-4649",
+          "latitude": "37.4939282",
+          "longitude": "126.770049",
+          "homepage": "http://www.bcl.go.kr/",
+          "closed": "매주 월요일 / 법정공휴일",
+          "operatingTime": "09:00 ~ 18:00 (토.일 09:00~17:00)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141151",
+          "libName": "부천시립한울빛도서관",
+          "address": "경기도 부천시 소사로 107",
+          "tel": "032-625-4670",
+          "fax": "032-625-4679",
+          "latitude": "37.4679263",
+          "longitude": "126.796549",
+          "homepage": "http://www.bcl.go.kr/",
+          "closed": "매주 금요일 / 법정공휴일",
+          "operatingTime": "월-목(아동자료실 09:00-18:00, 종합자료실 09:00-22:00) 토-일(09:00-17:00)"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "741223",
+          "libName": "부천행정정보도서관 시정담벼락",
+          "address": "경기도 부천시 길주로 210",
+          "tel": "-",
+          "fax": "-",
+          "latitude": "37.5034813",
+          "longitude": "126.7658019",
+          "homepage": "http://bcsl.go.kr/",
+          "closed": "-",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "741094",
+          "libName": "북내작은도서관",
+          "address": "경기도 여주시 북내면 여강로 337-38",
+          "tel": "031-887-3317",
+          "fax": "031-884-0768",
+          "latitude": "37.3275858",
+          "longitude": "127.6833952",
+          "homepage": "http://www.yjlib.go.kr",
+          "closed": "매주 월요일",
+          "operatingTime": "화~금: 10:00~ 19:00 / 토~일 : 09:00 ~ 18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141190",
+          "libName": "사2동 꿈을키우는도서관",
+          "address": "경기도 안산시 상록구 영화5길 15",
+          "tel": "031-417-2707",
+          "fax": "-",
+          "latitude": "37.27974",
+          "longitude": "126.8511",
+          "homepage": "http://lib.ansan.go.kr/smalllib",
+          "closed": "매주 월요일 / 국경일(법정공휴일)",
+          "operatingTime": "09:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141198",
+          "libName": "사랑나무가족도서관",
+          "address": "경기도 부천시 계남로 336, 2층(부천시노동자종합복지관)",
+          "tel": "032-661-3034",
+          "fax": "-",
+          "latitude": "37.50069",
+          "longitude": "126.78288",
+          "homepage": "https://www.bcl.go.kr",
+          "closed": "매주 토요일, 일요일 / 법정공휴일",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "741533",
+          "libName": "상동어울마당작은도서관",
+          "address": "경기도 부천시 석천로16번길 50, 2층",
+          "tel": "032-612-5615",
+          "fax": "032-612-5616",
+          "latitude": "37.4888402",
+          "longitude": "126.7627195",
+          "homepage": "https://www.bcl.go.kr",
+          "closed": "매주 토요일, 일요일 / 법정공휴일",
+          "operatingTime": "월-금 9:00~18:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141556",
+          "libName": "상현도서관",
+          "address": "경기도 용인시 수지구 법조로 232",
+          "tel": "031-6193-1670",
+          "fax": "031-6193-1679",
+          "latitude": "37.2993199",
+          "longitude": "127.0735488",
+          "homepage": "http://lib.yongin.go.kr/sanghyeon/",
+          "closed": "-",
+          "operatingTime": "-"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141643",
+          "libName": "서농도서관",
+          "address": "경기도 용인시 기흥구 서천서로 83",
+          "tel": "031-324-4533",
+          "fax": "031-324-4529",
+          "latitude": "37.2375781",
+          "longitude": "127.0688748",
+          "homepage": "https://lib.yongin.go.kr/seonong",
+          "closed": "매월 첫째주, 셋째주 월요일",
+          "operatingTime": "평일 09:00~22:00, 주말 09:00~17:00"
+        }
+      },
+      {
+        "lib": {
+          "libCode": "141320",
+          "libName": "서정작은도서관",
+          "address": "경기도 평택시 서정로 202",
+          "tel": "031-611-3764",
+          "fax": "-",
+          "latitude": "37.0661624",
+          "longitude": "127.0557558",
+          "homepage": "https://www.ptlib.go.kr/sjsmall/index.do",
+          "closed": "매주 토요일, 일요일 / 국경일, 국가가 정한 공휴일, 기타 관장이 인정하는 날",
+          "operatingTime": "월~금 12시~19시"
+        }
+      }
+    ]
+  }
+}

@@ -33,3 +33,19 @@ def read_root():
         "version": "1.0.0",
         "docs": "/docs"
     }
+
+@app.get("/check-ip")
+async def check_ip():
+    """
+    서버의 외부 IP 확인 (Render 배포 시 IP 등록용)
+    """
+    import aiohttp
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://api.ipify.org?format=json") as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    return {"ip": data.get("ip"), "message": "이 IP를 도서관 API 센터에 등록하세요."}
+                return {"error": "IP 확인 실패"}
+    except Exception as e:
+        return {"error": str(e)}

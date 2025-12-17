@@ -10,10 +10,14 @@ function normalizeAge(rawAge: string): string {
   if (!rawAge) return "";
   const age = rawAge.replace(/\s/g, ""); // Remove spaces
 
-  if (["0~3세", "영유아", "3세"].some(k => age.includes(k))) return "0-3세";
-  if (["4~7세", "5세", "6세", "7세", "유아"].some(k => age.includes(k))) return "4-7세";
-  if (["8~13세", "8세", "9세", "10세", "11세", "12세", "13세", "초등"].some(k => age.includes(k))) return "8-12세";
-  if (["청소년", "13세+", "14세"].some(k => age.includes(k))) return "13세+";
+  // 특수 케이스: "8~13세"는 초등으로 분류
+  if (age.includes("8~13세")) return "8-12세";
+
+  // 높은 연령부터 체크하여 하위 연령 문자열 포함 문제 해결 (예: "13세"에 "3세"가 포함되는 문제)
+  if (["청소년", "13세", "14세", "15세", "16세", "17세", "18세", "성인"].some(k => age.includes(k))) return "13세+";
+  if (["초등", "8세", "9세", "10세", "11세", "12세"].some(k => age.includes(k))) return "8-12세";
+  if (["유아", "유치", "4세", "5세", "6세", "7세"].some(k => age.includes(k))) return "4-7세";
+  if (["영유아", "0세", "1세", "2세", "3세"].some(k => age.includes(k))) return "0-3세";
 
   return rawAge; // Return original if no match
 }
@@ -58,14 +62,13 @@ export default function BookItem({ book }: BookItemProps) {
           )}
           {/* 대출 상태 뱃지 */}
           {book.loan_status && (
-            <span 
-              className={`text-[11px] px-2 py-0.5 rounded-full font-bold shadow-sm backdrop-blur-sm ${
-                book.loan_status.available === true
+            <span
+              className={`text-[11px] px-2 py-0.5 rounded-full font-bold shadow-sm backdrop-blur-sm ${book.loan_status.available === true
                   ? 'bg-green-500 text-white'
                   : book.loan_status.available === false
-                  ? 'bg-red-500 text-white'
-                  : 'bg-gray-300 text-gray-600'
-              }`}
+                    ? 'bg-red-500 text-white'
+                    : 'bg-gray-300 text-gray-600'
+                }`}
             >
               {book.loan_status.status}
             </span>
