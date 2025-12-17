@@ -6,12 +6,13 @@ from typing import Optional
 def build_search_query(
     q: Optional[str] = None,
     age: Optional[str] = None,
+    category: Optional[str] = None,
     sort: str = "pangyo_callno"
 ):
     """
     책 검색 쿼리 빌더
     - pangyo_callno가 있는 책만 필터링
-    - 검색어 및 연령 필터링
+    - 검색어, 연령, 카테고리 필터링
     - 정렬
     """
     # 기본 쿼리: pangyo_callno가 있는 책만
@@ -19,6 +20,10 @@ def build_search_query(
     query = supabase.table("childbook_items").select("*", count="planned")
     query = query.not_.is_("pangyo_callno", "null")
     query = query.neq("pangyo_callno", "없음")
+    
+    # 카테고리 필터링
+    if category and category != "전체":
+        query = query.eq("category", category)
     
     # 검색어 필터링
     if q:
@@ -53,6 +58,7 @@ def build_search_query(
 def search_books_service(
     q: Optional[str] = None,
     age: Optional[str] = None,
+    category: Optional[str] = None,
     sort: str = "pangyo_callno",
     page: int = 1,
     limit: int = 20
@@ -61,7 +67,7 @@ def search_books_service(
     책 검색 및 필터링 서비스
     """
     # 쿼리 빌드
-    query = build_search_query(q=q, age=age, sort=sort)
+    query = build_search_query(q=q, age=age, category=category, sort=sort)
     
     # 페이지네이션
     offset = (page - 1) * limit

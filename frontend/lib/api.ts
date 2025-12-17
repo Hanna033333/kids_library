@@ -5,6 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 export async function searchBooks(
   query?: string,
   age?: string,
+  category?: string,
   sort?: string,
   page: number = 1,
   limit: number = 20
@@ -12,6 +13,7 @@ export async function searchBooks(
   const params = new URLSearchParams();
   if (query) params.append("q", query);
   if (age) params.append("age", age);
+  if (category && category !== "전체") params.append("category", category);
   if (sort) params.append("sort", sort);
   params.append("page", page.toString());
   params.append("limit", limit.toString());
@@ -25,12 +27,14 @@ export async function searchBooks(
 
 export async function getBooks(
   age?: string,
+  category?: string,
   sort?: string,
   page: number = 1,
   limit: number = 20
 ): Promise<BooksResponse> {
   const params = new URLSearchParams();
   if (age) params.append("age", age);
+  if (category && category !== "전체") params.append("category", category);
   if (sort) params.append("sort", sort);
   params.append("page", page.toString());
   params.append("limit", limit.toString());
@@ -52,11 +56,11 @@ export async function fetchLoanStatuses(
     },
     body: JSON.stringify(bookIds),
   });
-  
+
   if (!response.ok) {
     throw new Error("Failed to fetch loan statuses");
   }
-  
+
   return response.json();
 }
 
