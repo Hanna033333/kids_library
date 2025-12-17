@@ -8,7 +8,7 @@ from core.config import DATA4LIBRARY_KEY
 
 # 인메모리 캐시 (1분 TTL)
 LOAN_CACHE: Dict[str, tuple[Dict, datetime]] = {}
-CACHE_TTL = timedelta(minutes=1)
+CACHE_TTL = timedelta(minutes=10)
 
 # 판교 도서관 코드
 PANGYO_LIB_CODE = "141231"
