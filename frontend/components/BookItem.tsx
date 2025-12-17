@@ -56,26 +56,10 @@ export default function BookItem({ book }: BookItemProps) {
               {displayAge}
             </span>
           )}
-        </div>
-      </div>
-
-      {/* 2. 정보 영역 (하단) */}
-      <div className="flex-1 p-4 flex flex-col items-start bg-white">
-        <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight">
-          {book.title}
-        </h3>
-
-        <div className="flex items-center gap-2 mb-3">
-          {book.pangyo_callno && (
-            <p className="text-[15px] font-extrabold text-[#F59E0B] tracking-tight">
-              {book.pangyo_callno}
-            </p>
-          )}
-          
           {/* 대출 상태 뱃지 */}
           {book.loan_status && (
             <span 
-              className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+              className={`text-[11px] px-2 py-0.5 rounded-full font-bold shadow-sm backdrop-blur-sm ${
                 book.loan_status.available === true
                   ? 'bg-green-500 text-white'
                   : book.loan_status.available === false
@@ -87,6 +71,19 @@ export default function BookItem({ book }: BookItemProps) {
             </span>
           )}
         </div>
+      </div>
+
+      {/* 2. 정보 영역 (하단) */}
+      <div className="flex-1 p-4 flex flex-col items-start bg-white">
+        <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight">
+          {book.title}
+        </h3>
+
+        {book.pangyo_callno && (
+          <p className="text-[15px] font-extrabold text-[#F59E0B] tracking-tight mb-3 truncate">
+            {book.pangyo_callno}
+          </p>
+        )}
 
         <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs text-gray-400 font-medium">
           <span className="truncate max-w-[50%]">{book.author}</span>
