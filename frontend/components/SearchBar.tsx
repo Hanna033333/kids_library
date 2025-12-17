@@ -42,10 +42,10 @@ export default function SearchBar({ onSearch, initialQuery = "", onFilterClick }
         <button
           type="button"
           onClick={onFilterClick}
-          className="bg-white p-3 rounded-2xl shadow-[0_2px_15px_rgba(0,0,0,0.04)] border border-transparent hover:border-gray-200 active:scale-95 transition-all text-gray-700"
+          className="p-3 rounded-2xl hover:bg-gray-100 active:scale-95 transition-all text-gray-500 hover:text-gray-900"
           aria-label="필터 열기"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="4" x2="20" y1="21" y2="21" />
             <line x1="4" x2="20" y1="3" y2="3" />
             <line x1="4" x2="20" y1="12" y2="12" />

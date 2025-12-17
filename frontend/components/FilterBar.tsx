@@ -67,7 +67,7 @@ export default function FilterBar({
 
         {/* Row 2: Loan Toggle (Right aligned) */}
         <div className="flex justify-end px-1">
-          <label className="flex items-center gap-2 cursor-pointer select-none bg-white px-3 py-1.5 rounded-full border border-gray-100/50 hover:bg-gray-50 transition-colors">
+          <label className="flex items-center gap-2 cursor-pointer select-none px-2 py-1.5 transition-colors">
             <div className="relative">
               <input
                 type="checkbox"
