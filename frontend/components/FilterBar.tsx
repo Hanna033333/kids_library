@@ -5,8 +5,6 @@ interface FilterBarProps {
   onAgeChange: (age: string) => void;
   selectedCategory: string;
   onCategoryClick: () => void; // Opens modal
-  showAvailableOnly: boolean;
-  onAvailabilityChange: (available: boolean) => void;
 }
 
 const AGE_OPTIONS = [
@@ -19,7 +17,6 @@ const AGE_OPTIONS = [
 export default function FilterBar({
   selectedAge, onAgeChange,
   selectedCategory, onCategoryClick,
-  showAvailableOnly, onAvailabilityChange
 }: FilterBarProps) {
 
   const handleAgeToggle = (ageVal: string) => {
@@ -32,15 +29,15 @@ export default function FilterBar({
 
   return (
     <div className="w-full px-4 pb-2 mb-2">
-      <div className="w-full max-w-[1200px] mx-auto flex flex-col gap-2">
+      <div className="w-full max-w-[1200px] mx-auto">
 
-        {/* Row 1: Category & Age Filters (Scrollable) */}
+        {/* Scrollable Filters */}
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
           {/* 카테고리 버튼 */}
           <button
             onClick={onCategoryClick}
             className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-all border ${selectedCategory && selectedCategory !== "전체"
-              ? "bg-gray-900 text-white border-gray-900 shadow-md"
+              ? "bg-gray-900 text-white border-gray-900 shadow-md shadow-gray-200"
               : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-900"
               }`}
           >
@@ -63,24 +60,6 @@ export default function FilterBar({
               {option.label}
             </button>
           ))}
-        </div>
-
-        {/* Row 2: Loan Toggle (Right aligned) */}
-        <div className="flex justify-end px-1">
-          <label className="flex items-center gap-2 cursor-pointer select-none px-2 py-1.5 transition-colors">
-            <div className="relative">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={showAvailableOnly}
-                onChange={(e) => onAvailabilityChange(e.target.checked)}
-              />
-              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
-            </div>
-            <span className={`text-[13px] font-bold ${showAvailableOnly ? "text-green-600" : "text-gray-500"}`}>
-              대출가능만
-            </span>
-          </label>
         </div>
       </div>
     </div>

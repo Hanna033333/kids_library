@@ -172,8 +172,8 @@ export default function IntegratedFilterModal({
                                             key={option.value}
                                             onClick={() => setLocalSort(option.value)}
                                             className={`flex-1 flex items-center justify-center py-3 px-4 rounded-full border font-medium transition-all duration-200 ${localSort === option.value
-                                                    ? "bg-[#F59E0B] border-[#F59E0B] text-white shadow-md shadow-gray-200"
-                                                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
+                                                ? "bg-[#F59E0B] border-[#F59E0B] text-white shadow-md shadow-gray-200"
+                                                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
                                                 }`}
                                         >
                                             {option.label}

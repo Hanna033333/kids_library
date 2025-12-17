@@ -17,7 +17,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     const [ageFilter, setAgeFilter] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("전체");
     const [sortFilter, setSortFilter] = useState("pangyo_callno");
-    const [showAvailableOnly, setShowAvailableOnly] = useState(false);
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [filterModalMode, setFilterModalMode] = useState<"integrated" | "category">("integrated");
 
@@ -35,10 +34,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
     const handleSortChange = useCallback((sort: string) => {
         setSortFilter(sort);
-    }, []);
-
-    const handleAvailabilityChange = useCallback((available: boolean) => {
-        setShowAvailableOnly(available);
     }, []);
 
     const openIntegratedFilter = () => {
@@ -75,8 +70,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 onAgeChange={handleAgeChange}
                 selectedCategory={categoryFilter}
                 onCategoryClick={openCategoryFilter}
-                showAvailableOnly={showAvailableOnly}
-                onAvailabilityChange={handleAvailabilityChange}
             />
 
             {/* 통합 필터 모달 */}
@@ -100,7 +93,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                     ageFilter={ageFilter || undefined}
                     categoryFilter={categoryFilter === "전체" ? undefined : categoryFilter}
                     sortFilter={sortFilter}
-                    showAvailableOnly={showAvailableOnly}
                     initialData={initialData}
                 />
             </div>

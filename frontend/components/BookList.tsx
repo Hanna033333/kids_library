@@ -12,7 +12,6 @@ interface BookListProps {
   ageFilter?: string;
   categoryFilter?: string;
   sortFilter?: string;
-  showAvailableOnly?: boolean;
   initialData?: BooksResponse;
 }
 
@@ -23,7 +22,6 @@ export default function BookList({
   ageFilter,
   categoryFilter,
   sortFilter = "pangyo_callno",
-  showAvailableOnly = false,
   initialData,
 }: BookListProps) {
   const [page, setPage] = useState(1);
@@ -80,22 +78,13 @@ export default function BookList({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // 대출 가능 여부 필터링 (클라이언트 사이드)
-  const displayedBooks = showAvailableOnly
-    ? booksWithLoan.filter(book => book.loan_status?.available === true)
-    : booksWithLoan;
-
   return (
     <div className="w-full max-w-[1200px] mx-auto px-4">
       {/* 상태 표시 (Cleaner) */}
       <div className="mb-4 px-1 flex flex-col gap-2">
         <div className="flex items-center justify-between text-sm text-gray-500 font-medium">
           <span>
-            {showAvailableOnly ? (
-              <>대출 가능한 책 <span className="font-bold text-green-600">{displayedBooks.length}</span>권 (전체 <span className="font-bold">{total.toLocaleString()}</span>권 중)</>
-            ) : (
-              <>총 <span className="font-bold">{total.toLocaleString()}</span>권</>
-            )}
+            총 <span className="font-bold text-gray-900">{total.toLocaleString()}</span>권
           </span>
         </div>
       </div>
@@ -111,30 +100,28 @@ export default function BookList({
       {/* 책 리스트 그리드 */}
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-          {/* Skeleton Loading Effect can be added here, for now simple loading */}
+          {/* Skeleton Loading Effect */}
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="aspect-[1/1.6] bg-gray-200 rounded-2xl animate-pulse" />
           ))}
         </div>
-      ) : displayedBooks.length === 0 ? (
+      ) : booksWithLoan.length === 0 ? (
         <div className="py-32 text-center bg-white rounded-2xl border border-dashed border-gray-200">
           <div className="text-gray-400 text-lg">
-            {showAvailableOnly && booksWithLoan.length > 0
-              ? "대출 가능한 책이 없습니다."
-              : "검색 결과가 없습니다."}
+            검색 결과가 없습니다.
           </div>
           <div className="text-gray-300 text-sm mt-1">
-            {showAvailableOnly ? "필터 조건을 변경해보세요." : "다른 검색어로 시도해보세요."}
+            다른 검색어로 시도해보세요.
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-          {displayedBooks.map((book) => <BookItem key={book.id} book={book} />)}
+          {booksWithLoan.map((book) => <BookItem key={book.id} book={book} />)}
         </div>
       )}
 
-      {/* 페이지네이션 (필터링 상태에선 페이지네이션이 전체 데이터 기준이라 조금 어색할 수 있지만 유지) */}
-      {!loading && !showAvailableOnly && (
+      {/* 페이지네이션 */}
+      {!loading && (
         <div className="mt-12 mb-20">
           <Pagination
             currentPage={page}

@@ -120,8 +120,8 @@ async def fetch_loan_status_batch(books: List[Dict]) -> Dict[int, Dict]:
     if not books_with_isbn:
         return {}
     
-    # 병렬 조회 (세마포어로 동시 요청 제한)
-    semaphore = asyncio.Semaphore(5)  # 한 번에 5개씩만 요청
+    # 병렬 조회 (세마포어로 동시 요청 제한 - 속도 향상)
+    semaphore = asyncio.Semaphore(20)  # 동시 요청 20개로 증량
 
     async def fetch_with_sem(session, isbn):
         async with semaphore:
