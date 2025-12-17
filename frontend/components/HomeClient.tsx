@@ -19,6 +19,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     const [sortFilter, setSortFilter] = useState("pangyo_callno");
     const [showAvailableOnly, setShowAvailableOnly] = useState(false);
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const [filterModalMode, setFilterModalMode] = useState<"integrated" | "category">("integrated");
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
@@ -40,6 +41,16 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         setShowAvailableOnly(available);
     }, []);
 
+    const openIntegratedFilter = () => {
+        setFilterModalMode("integrated");
+        setIsFilterModalOpen(true);
+    };
+
+    const openCategoryFilter = () => {
+        setFilterModalMode("category");
+        setIsFilterModalOpen(true);
+    };
+
     return (
         <main className="min-h-screen">
             {/* Header / Logo */}
@@ -55,7 +66,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             <SearchBar
                 onSearch={handleSearch}
                 initialQuery={searchQuery}
-                onFilterClick={() => setIsFilterModalOpen(true)}
+                onFilterClick={openIntegratedFilter}
             />
 
             {/* 필터 바 (간소화) */}
@@ -63,7 +74,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 selectedAge={ageFilter}
                 onAgeChange={handleAgeChange}
                 selectedCategory={categoryFilter}
-                onCategoryClick={() => setIsFilterModalOpen(true)}
+                onCategoryClick={openCategoryFilter}
                 showAvailableOnly={showAvailableOnly}
                 onAvailabilityChange={handleAvailabilityChange}
             />
@@ -72,14 +83,14 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             <IntegratedFilterModal
                 isOpen={isFilterModalOpen}
                 onClose={() => setIsFilterModalOpen(false)}
+                mode={filterModalMode}
+                searchQuery={searchQuery}
                 selectedCategory={categoryFilter}
                 onCategoryChange={handleCategoryChange}
                 selectedAge={ageFilter}
                 onAgeChange={handleAgeChange}
                 selectedSort={sortFilter}
                 onSortChange={handleSortChange}
-                showAvailableOnly={showAvailableOnly}
-                onAvailabilityChange={handleAvailabilityChange}
             />
 
             {/* 책 리스트 */}
