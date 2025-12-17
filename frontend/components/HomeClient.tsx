@@ -6,6 +6,8 @@ import FilterBar from "@/components/FilterBar";
 import BookList from "@/components/BookList";
 import { BooksResponse } from "@/lib/types";
 
+import IntegratedFilterModal from "@/components/IntegratedFilterModal";
+
 interface HomeClientProps {
     initialData: BooksResponse;
 }
@@ -16,6 +18,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     const [categoryFilter, setCategoryFilter] = useState("전체");
     const [sortFilter, setSortFilter] = useState("pangyo_callno");
     const [showAvailableOnly, setShowAvailableOnly] = useState(false);
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
@@ -49,18 +52,32 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             </header>
 
             {/* 검색 바 */}
-            <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
+            <SearchBar
+                onSearch={handleSearch}
+                initialQuery={searchQuery}
+                onFilterClick={() => setIsFilterModalOpen(true)}
+            />
 
-            {/* 필터 바 */}
+            {/* 필터 바 (간소화) */}
             <FilterBar
                 selectedAge={ageFilter}
                 onAgeChange={handleAgeChange}
                 selectedCategory={categoryFilter}
-                onCategoryChange={handleCategoryChange}
-                selectedSort={sortFilter}
-                onSortChange={handleSortChange}
+                onCategoryClick={() => setIsFilterModalOpen(true)}
                 showAvailableOnly={showAvailableOnly}
                 onAvailabilityChange={handleAvailabilityChange}
+            />
+
+            {/* 통합 필터 모달 */}
+            <IntegratedFilterModal
+                isOpen={isFilterModalOpen}
+                onClose={() => setIsFilterModalOpen(false)}
+                selectedCategory={categoryFilter}
+                onCategoryChange={handleCategoryChange}
+                selectedAge={ageFilter}
+                onAgeChange={handleAgeChange}
+                selectedSort={sortFilter}
+                onSortChange={handleSortChange}
             />
 
             {/* 책 리스트 */}
