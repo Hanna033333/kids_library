@@ -1,7 +1,9 @@
 """책 검색 및 조회 API 라우터"""
-from fastapi import APIRouter, Query
-from typing import Optional
+from fastapi import APIRouter, Query, Body
+from typing import Optional, List
 from services.search import search_books_service
+from services.loan_status import fetch_loan_status_batch
+from core.database import supabase
 
 router = APIRouter(prefix="/api/books", tags=["books"])
 
@@ -38,9 +40,31 @@ def get_books():
     """
     전체 목록 조회 (기존 API - 호환성 유지)
     """
-    from core.database import supabase
     data = supabase.table("childbook_items").select("*").order("title").execute()
     return data.data
+
+
+@router.post("/loan-status")
+async def get_loan_status(book_ids: List[int] = Body(..., description="책 ID 리스트")):
+    """
+    여러 책의 대출 정보를 병렬로 조회
+    
+    Args:
+        book_ids: 조회할 책 ID 리스트
+        
+    Returns:
+        {book_id: loan_info} 형태의 딕셔너리
+    """
+    # DB에서 책 정보 조회 (ISBN 필요)
+    books_data = supabase.table("childbook_items").select("id, isbn").in_("id", book_ids).execute()
+    
+    if not books_data.data:
+        return {}
+    
+    # 대출 정보 병렬 조회
+    loan_statuses = await fetch_loan_status_batch(books_data.data)
+    
+    return loan_statuses
 
 
 

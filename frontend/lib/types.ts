@@ -12,6 +12,13 @@ export interface Book {
   age: string | null;
   category: string | null;
   image_url: string | null;
+  loan_status?: LoanStatus | null;
+}
+
+export interface LoanStatus {
+  available: boolean | null;
+  status: string;
+  updated_at?: string;
 }
 
 export interface BooksResponse {

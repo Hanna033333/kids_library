@@ -65,11 +65,28 @@ export default function BookItem({ book }: BookItemProps) {
           {book.title}
         </h3>
 
-        {book.pangyo_callno && (
-          <p className="text-[15px] font-extrabold text-[#F59E0B] tracking-tight mb-3">
-            {book.pangyo_callno}
-          </p>
-        )}
+        <div className="flex items-center gap-2 mb-3">
+          {book.pangyo_callno && (
+            <p className="text-[15px] font-extrabold text-[#F59E0B] tracking-tight">
+              {book.pangyo_callno}
+            </p>
+          )}
+          
+          {/* 대출 상태 뱃지 */}
+          {book.loan_status && (
+            <span 
+              className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                book.loan_status.available === true
+                  ? 'bg-green-500 text-white'
+                  : book.loan_status.available === false
+                  ? 'bg-red-500 text-white'
+                  : 'bg-gray-300 text-gray-600'
+              }`}
+            >
+              {book.loan_status.status}
+            </span>
+          )}
+        </div>
 
         <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs text-gray-400 font-medium">
           <span className="truncate max-w-[50%]">{book.author}</span>
