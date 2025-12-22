@@ -69,20 +69,19 @@ export default function BookItem({ book }: BookItemProps) {
           {book.title}
         </h3>
 
-        {book.pangyo_callno && (
-          <p className="text-[15px] font-extrabold text-[#F59E0B] tracking-tight mb-3 truncate">
-            {book.pangyo_callno}
-          </p>
-        )}
+        <p className="text-[15px] font-extrabold text-[#F59E0B] tracking-tight mb-3 truncate">
+          {book.pangyo_callno}
+          {book.vol && `-${book.vol}`}
+        </p>
 
         <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
           <span className="text-gray-400 truncate max-w-[60%]">{book.publisher}</span>
           {book.loan_status && (
             <span className={`px-2 py-1 rounded-full text-[11px] font-bold leading-none text-center ${book.loan_status.available === true
-                ? "bg-green-100 text-green-700"
-                : book.loan_status.available === false
-                  ? "bg-red-100 text-red-700"
-                  : "bg-gray-100 text-gray-500"
+              ? "bg-green-100 text-green-700"
+              : book.loan_status.available === false
+                ? "bg-red-100 text-red-700"
+                : "bg-gray-100 text-gray-500"
               }`}>
               {book.loan_status.status}
             </span>

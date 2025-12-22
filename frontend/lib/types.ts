@@ -9,6 +9,7 @@ export interface Book {
   publisher: string | null;
   isbn: string | null;
   pangyo_callno: string | null;
+  vol: string | null;
   age: string | null;
   category: string | null;
   image_url: string | null;
