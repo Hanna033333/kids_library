@@ -1,0 +1,23 @@
+﻿
+--- Testing API: srchLibLendingBook | Params: ['libCode', 'isbn13', 'authKey', 'format'] ---
+Status: 404
+Error: Expecting value: line 1 column 1 (char 0)
+
+--- Testing API: srchBooks | Params: ['libCode', 'isbn13', 'authKey', 'format'] ---
+Status: 200
+NumFound: 1
+Match: 검은 새  | 이수지 글·그림
+
+--- Testing API: srchBooks | Params: ['libCode', 'keyword', 'authKey', 'format'] ---
+Status: 200
+NumFound: 0
+
+--- Testing API: itemSrch | Params: ['libCode', 'isbn13', 'authKey', 'format'] ---
+Status: 200
+API Error: 검색조건(기간) 오류입니다.
+NumFound: 0
+
+--- Testing API: itemSrch | Params: ['libCode', 'type', 'isbn13', 'authKey', 'format'] ---
+Status: 200
+API Error: 검색조건(기간) 오류입니다.
+NumFound: 0

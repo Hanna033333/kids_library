@@ -64,3 +64,29 @@ export async function fetchLoanStatuses(
   return response.json();
 }
 
+export async function getBooksByIds(bookIds: number[]): Promise<Book[]> {
+  if (bookIds.length === 0) return [];
+  const response = await fetch(`${API_BASE_URL}/api/books/by-ids`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(bookIds),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch books by ids");
+  }
+
+  return response.json();
+}
+
+export async function getBookById(id: number): Promise<Book | null> {
+  const response = await fetch(`${API_BASE_URL}/api/books/${id}`);
+  if (!response.ok) {
+    if (response.status === 404) return null;
+    throw new Error("Failed to fetch book detail");
+  }
+  return response.json();
+}
+

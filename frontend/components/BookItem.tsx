@@ -1,5 +1,6 @@
 import { Book } from "@/lib/types";
-import { ImageOff } from "lucide-react";
+import { ImageOff, Tags } from "lucide-react";
+import Link from "next/link";
 
 interface BookItemProps {
   book: Book;
@@ -26,7 +27,10 @@ export default function BookItem({ book }: BookItemProps) {
   const displayAge = normalizeAge(book.age || "");
 
   return (
-    <div className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md h-full group">
+    <Link
+      href={`/book/${book.id}`}
+      className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md h-full group"
+    >
       {/* 1. 이미지 영역 (상단) */}
       <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
         {book.image_url ? (
@@ -51,7 +55,7 @@ export default function BookItem({ book }: BookItemProps) {
         {/* 태그 (이미지 위에 오버레이) */}
         <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
           {book.category && (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/90 text-gray-600 font-bold shadow-sm backdrop-blur-sm">
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/90 text-gray-600 font-bold shadow-sm backdrop-blur-sm flex items-center gap-1">
               {book.category}
             </span>
           )}
@@ -65,7 +69,7 @@ export default function BookItem({ book }: BookItemProps) {
 
       {/* 2. 정보 영역 (하단) */}
       <div className="flex-1 p-4 flex flex-col items-start bg-white">
-        <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight">
+        <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight group-hover:text-blue-600 transition-colors">
           {book.title}
         </h3>
 
@@ -88,6 +92,6 @@ export default function BookItem({ book }: BookItemProps) {
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

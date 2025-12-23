@@ -80,4 +80,76 @@ async def get_loan_status(book_ids: List[int] = Body(..., description="책 ID �
     return loan_statuses
 
 
+@router.post("/by-ids")
+async def get_books_by_ids(book_ids: List[int] = Body(..., description="책 ID 리스트")):
+    """
+    여러 책의 상세 정보를 ID로 조회
+    """
+    print(f"DEBUG: get_books_by_ids called with: {book_ids}")
+    if not book_ids:
+        return []
+
+    data = supabase.table("childbook_items").select("*").in_("id", book_ids).execute()
+
+    # 순서 유지 (입력받은 ID 순서대로)
+    id_map = {book['id']: book for book in data.data}
+    ordered_data = [id_map[bid] for bid in book_ids if bid in id_map]
+
+    return ordered_data
+
+
+@router.get("/{book_id}")
+async def get_book_detail(book_id: int):
+    """
+    책 상세 정보 및 찜 횟수 조회
+    """
+    # 1. 책 정보 조회
+    book_data = supabase.table("childbook_items").select("*").eq("id", book_id).execute()
+
+    if not book_data.data:
+        # FastAPI에서 404 처리를 위해 HTTPException을 쓸 수도 있지만 심플하게 구현
+        return None
+
+    book = book_data.data[0]
+
+    # 2. 알라딘 API 도서 소개 정보 (Caching)
+    # DB에 설명이 없으면 알라딘 API에서 가져와서 저장
+    if not book.get("description"):
+        isbn = book.get("isbn")
+        if isbn:
+            try:
+                from core.config import ALADIN_TTB_KEY
+                import requests
+                
+                # 알라딘 ItemLookUp API 사용
+                url = "http://www.aladin.co.kr/ttb/api/ItemLookUp.aspx"
+                params = {
+                    "ttbkey": ALADIN_TTB_KEY,
+                    "itemIdType": "ISBN13" if len(isbn) == 13 else "ISBN",
+                    "ItemId": isbn,
+                    "output": "js",
+                    "Version": "20131101",
+                    "OptResult": "description"
+                }
+                
+                response = requests.get(url, params=params, timeout=5)
+                if response.status_code == 200:
+                    data = response.json()
+                    items = data.get("item", [])
+                    if items:
+                        description = items[0].get("description")
+                        if description:
+                            # DB 업데이트 (백그라운드 처리 대신 즉시 업데이트로 단순화)
+                            supabase.table("childbook_items").update({"description": description}).eq("id", book_id).execute()
+                            book["description"] = description
+            except Exception as e:
+                print(f"Error fetching Aladin description: {e}")
+
+    # 3. 찜 횟수 조회 (Count)
+    count_data = supabase.table("user_saved_books").select("id", count="exact").eq("book_id", book_id).execute()
+    book["save_count"] = count_data.count if count_data.count is not None else 0
+
+    return book
+
+
 

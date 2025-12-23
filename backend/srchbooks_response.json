@@ -1,0 +1,32 @@
+{
+  "response": {
+    "request": {
+      "isbn13": "9788949110066",
+      "sort": "loan_count",
+      "direction": "desc",
+      "exactMatch": false,
+      "pageNo": 1,
+      "pageSize": 20,
+      "format": "json"
+    },
+    "numFound": 1,
+    "docs": [
+      {
+        "doc": {
+          "bookname": "달 사람",
+          "authors": "토미 웅거러 글·그림 ;김정하 옮김",
+          "publisher": "비룡소",
+          "publication_year": "2005",
+          "isbn13": "9788949110066",
+          "addition_symbol": "77840",
+          "vol": "",
+          "class_no": "853",
+          "class_nm": "문학 > 독일문학 > 소설",
+          "bookImageURL": "http://image.aladin.co.kr/product/3/54/cover/8949110067_2.jpg",
+          "bookDtlUrl": "https://data4library.kr/bookV?seq=327521",
+          "loan_count": "22193"
+        }
+      }
+    ]
+  }
+}

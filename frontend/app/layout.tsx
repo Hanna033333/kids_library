@@ -8,6 +8,8 @@ import { queryClient } from "@/lib/queryClient";
 // Note: metadata export removed because this is now a client component
 // Move metadata to a separate metadata.ts file if needed
 
+import { AuthProvider } from "@/context/AuthContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -16,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="bg-[#F7F7F7] min-h-screen text-gray-900">
-        <QueryClientProvider client={queryClient}>
-          {children}
-        </QueryClientProvider>
+        <AuthProvider>
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        </AuthProvider>
       </body>
     </html>
   );

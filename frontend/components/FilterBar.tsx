@@ -36,7 +36,7 @@ export default function FilterBar({
           {/* 카테고리 버튼 */}
           <button
             onClick={onCategoryClick}
-            className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-all border ${selectedCategory && selectedCategory !== "전체"
+            className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all border ${selectedCategory && selectedCategory !== "전체"
               ? "bg-gray-900 text-white border-gray-900 shadow-md shadow-gray-200"
               : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-900"
               }`}
@@ -52,7 +52,7 @@ export default function FilterBar({
             <button
               key={option.value}
               onClick={() => handleAgeToggle(option.value)}
-              className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${selectedAge === option.value
+              className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold transition-all border ${selectedAge === option.value
                 ? "bg-[#F59E0B] text-white border-[#F59E0B] shadow-md shadow-gray-200"
                 : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-900"
                 }`}

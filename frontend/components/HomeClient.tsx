@@ -5,11 +5,14 @@ import SearchBar from "@/components/SearchBar";
 import FilterBar from "@/components/FilterBar";
 import BookList from "@/components/BookList";
 import { BooksResponse } from "@/lib/types";
+import { useAuth } from "@/context/AuthContext";
+import { LogIn, User, LogOut, Bookmark } from "lucide-react";
+import Link from "next/link";
 
 import IntegratedFilterModal from "@/components/IntegratedFilterModal";
 
 interface HomeClientProps {
-    initialData: BooksResponse;
+    initialData?: BooksResponse;
 }
 
 export default function HomeClient({ initialData }: HomeClientProps) {
@@ -19,6 +22,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     const [sortFilter, setSortFilter] = useState("pangyo_callno");
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [filterModalMode, setFilterModalMode] = useState<"integrated" | "category">("integrated");
+    const { user, signOut } = useAuth();
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
@@ -49,12 +53,49 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     return (
         <main className="min-h-screen">
             {/* Header / Logo */}
-            <header className="w-full bg-white border-b border-gray-100 flex items-center justify-center py-5">
-                <img
-                    src="/logo.png"
-                    alt="책방구"
-                    className="h-12 w-auto"
-                />
+            <header className="w-full bg-white border-b border-gray-100 flex items-center justify-between px-6 py-4 sticky top-0 z-50">
+                <div className="w-1/3"></div>
+                <div className="w-1/3 flex justify-center">
+                    <Link href="/" className="relative inline-flex items-center">
+                        <img
+                            src="/logo.png"
+                            alt="책방구"
+                            className="h-10 w-auto"
+                        />
+                        <span className="absolute -top-1 -right-7 text-gray-500 text-[10px] font-bold leading-none italic">
+                            beta
+                        </span>
+                    </Link>
+                </div>
+                <div className="w-1/3 flex justify-end items-center gap-4">
+                    {user ? (
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href="/my-library"
+                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600 flex items-center gap-1 text-sm font-medium"
+                                title="내 서재"
+                            >
+                                <Bookmark className="w-5 h-5" />
+                                <span className="hidden sm:inline">내 서재</span>
+                            </Link>
+                            <button
+                                onClick={() => signOut()}
+                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
+                                title="로그아웃"
+                            >
+                                <LogOut className="w-5 h-5" />
+                            </button>
+                        </div>
+                    ) : (
+                        <Link
+                            href="/auth"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-sm shadow-blue-100 font-medium text-sm"
+                        >
+                            <LogIn className="w-4 h-4" />
+                            <span>로그인</span>
+                        </Link>
+                    )}
+                </div>
             </header>
 
             {/* 검색 바 */}

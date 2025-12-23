@@ -102,14 +102,14 @@ export default function IntegratedFilterModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="w-full md:max-w-md bg-white rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom md:slide-in-from-bottom-10 duration-300">
+            <div className="w-full md:max-w-md bg-white rounded-t-xl md:rounded-xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom md:slide-in-from-bottom-10 duration-300">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                     <h2 className="text-lg font-bold text-gray-900">
                         {mode === "category" ? "카테고리 선택" : "검색 필터"}
                     </h2>
-                    <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-900 rounded-full hover:bg-gray-100 transition-colors">
+                    <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -125,7 +125,7 @@ export default function IntegratedFilterModal({
                                 <button
                                     key={cat}
                                     onClick={() => setLocalCategory(cat)}
-                                    className={`px-5 py-2.5 rounded-full text-[15px] font-medium transition-all duration-200 border ${localCategory === cat
+                                    className={`px-5 py-2.5 rounded-lg text-[15px] font-medium transition-all duration-200 border ${localCategory === cat
                                         ? "bg-gray-900 text-white border-gray-900 shadow-md shadow-gray-200 transform scale-[1.02]"
                                         : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                                         }`}
@@ -149,7 +149,7 @@ export default function IntegratedFilterModal({
                                         <button
                                             key={option.value}
                                             onClick={() => handleAgeToggle(option.value)}
-                                            className={`px-4 py-2 rounded-full text-[15px] font-medium transition-all duration-200 border ${localAge === option.value
+                                            className={`px-4 py-2 rounded-lg text-[15px] font-medium transition-all duration-200 border ${localAge === option.value
                                                 ? "bg-[#F59E0B] text-white border-[#F59E0B] shadow-md shadow-gray-200 transform scale-[1.02]"
                                                 : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                                                 }`}
@@ -171,7 +171,7 @@ export default function IntegratedFilterModal({
                                         <button
                                             key={option.value}
                                             onClick={() => setLocalSort(option.value)}
-                                            className={`flex-1 flex items-center justify-center py-3 px-4 rounded-full border font-medium transition-all duration-200 ${localSort === option.value
+                                            className={`flex-1 flex items-center justify-center py-3 px-4 rounded-lg border font-medium transition-all duration-200 ${localSort === option.value
                                                 ? "bg-[#F59E0B] border-[#F59E0B] text-white shadow-md shadow-gray-200"
                                                 : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
                                                 }`}

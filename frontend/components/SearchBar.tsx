@@ -34,7 +34,7 @@ export default function SearchBar({ onSearch, initialQuery = "", onFilterClick }
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="어떤 책을 찾으시나요?"
-            className="w-full px-5 py-3 pl-12 bg-white text-gray-900 placeholder:text-gray-400 border border-transparent rounded-2xl shadow-[0_2px_15px_rgba(0,0,0,0.04)] focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/20 focus:scale-[1.01] transition-all"
+            className="w-full px-5 py-3 pl-12 bg-white text-gray-900 placeholder:text-gray-400 border border-transparent rounded-lg shadow-[0_2px_15px_rgba(0,0,0,0.04)] focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/20 focus:scale-[1.01] transition-all"
           />
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-[#F59E0B] transition-colors" />
         </div>
@@ -42,7 +42,7 @@ export default function SearchBar({ onSearch, initialQuery = "", onFilterClick }
         <button
           type="button"
           onClick={onFilterClick}
-          className="p-3 rounded-2xl hover:bg-gray-100 active:scale-95 transition-all text-gray-500 hover:text-gray-900"
+          className="p-3 rounded-lg hover:bg-gray-100 active:scale-95 transition-all text-gray-500 hover:text-gray-900"
           aria-label="필터 열기"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

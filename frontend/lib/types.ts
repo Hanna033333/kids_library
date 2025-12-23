@@ -13,6 +13,8 @@ export interface Book {
   age: string | null;
   category: string | null;
   image_url: string | null;
+  description: string | null;
+  save_count?: number;
   loan_status?: LoanStatus | null;
 }
 
