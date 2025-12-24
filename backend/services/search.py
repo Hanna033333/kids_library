@@ -21,6 +21,9 @@ def build_search_query(
     query = query.not_.is_("pangyo_callno", "null")
     query = query.neq("pangyo_callno", "없음")
     
+    # 숨김 처리된 책 제외
+    query = query.or_("is_hidden.is.null,is_hidden.eq.false")
+    
     # 카테고리 필터링
     if category and category != "전체":
         query = query.eq("category", category)

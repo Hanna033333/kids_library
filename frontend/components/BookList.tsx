@@ -27,7 +27,6 @@ export default function BookList({
   const [page, setPage] = useState(1);
   const [allBooks, setAllBooks] = useState<Book[]>([]);
   const [booksWithLoan, setBooksWithLoan] = useState<Book[]>([]);
-  const [loadingLoan, setLoadingLoan] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -76,24 +75,24 @@ export default function BookList({
   // Fetch loan statuses for displayed books
   useEffect(() => {
     if (allBooks.length > 0) {
+      // Immediately show books without loan status
       setBooksWithLoan(allBooks);
 
-      setLoadingLoan(true);
+      // Fetch loan statuses in background
       const bookIds = allBooks.map(b => b.id);
 
       fetchLoanStatuses(bookIds)
         .then(loanStatuses => {
-          const updatedBooks = allBooks.map(book => ({
-            ...book,
-            loan_status: loanStatuses[book.id] || null
-          }));
-          setBooksWithLoan(updatedBooks);
+          // Update books with loan status when ready
+          setBooksWithLoan(prevBooks =>
+            prevBooks.map(book => ({
+              ...book,
+              loan_status: loanStatuses[book.id] || book.loan_status || null
+            }))
+          );
         })
         .catch(err => {
           console.error('Failed to fetch loan statuses:', err);
-        })
-        .finally(() => {
-          setLoadingLoan(false);
         });
     } else {
       setBooksWithLoan([]);
@@ -163,7 +162,7 @@ export default function BookList({
             ))}
           </div>
         </div>
-      ) : booksWithLoan.length === 0 ? (
+      ) : allBooks.length === 0 ? (
         <div className="py-32 text-center bg-white rounded-2xl border border-dashed border-gray-200">
           <div className="text-gray-400 text-lg">
             검색 결과가 없습니다.

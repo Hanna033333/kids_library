@@ -1,0 +1,48 @@
+{
+  "response": {
+    "request": {
+      "libCode": "141231",
+      "startDt": "2015-01-01",
+      "endDt": "2025-12-31",
+      "isbn13": "9791190136952",
+      "pageNo": "1",
+      "pageSize": "50",
+      "format": "json"
+    },
+    "libNm": "성남시 판교도서관",
+    "pageNo": 1,
+    "pageSize": 50,
+    "numFound": 1,
+    "resultNum": 1,
+    "docs": [
+      {
+        "doc": {
+          "bookname": "(세계 시민으로 살아가는 어린이를 위한) 아프리카 안내서",
+          "authors": "킴 차카네차 지음;마요와 알라비 그림;박미준 옮김",
+          "publisher": "원더박스",
+          "publication_year": "2023",
+          "isbn13": "9791190136952",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/31105/18/cover/k532831636_1.jpg",
+          "addition_symbol": "73930",
+          "vol": "",
+          "class_no": "930",
+          "class_nm": "역사 > 아프리카 > 아프리카",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "아",
+                "separate_shelf_name": "아",
+                "book_code": "ㅊ146ㅇ",
+                "shelf_loc_code": "P03",
+                "shelf_loc_name": "[판교]제2어린이열람실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2023-03-15"
+        }
+      }
+    ]
+  }
+}

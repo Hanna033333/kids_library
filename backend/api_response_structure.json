@@ -1,0 +1,300 @@
+{
+  "response": {
+    "request": {
+      "libCode": "141231",
+      "startDt": "2015-01-01",
+      "endDt": "2025-12-31",
+      "type": "ISBN",
+      "pageNo": "1",
+      "pageSize": "10",
+      "format": "json"
+    },
+    "libNm": "성남시 판교도서관",
+    "pageNo": 1,
+    "pageSize": 10,
+    "numFound": 106119,
+    "resultNum": 10,
+    "docs": [
+      {
+        "doc": {
+          "bookname": "중대재해처벌법 실무와 최신 동향",
+          "authors": "김병현",
+          "publisher": "메디치미디어",
+          "publication_year": "2025",
+          "isbn13": "9791157064724",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/37211/29/cover200/k762031594_1.jpg",
+          "addition_symbol": "93360",
+          "vol": "",
+          "class_no": "530.98",
+          "class_nm": "기술과학 > 공학, 공업일반 > 공학, 공업일반",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㄱ744ㅈ",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-23"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "살아가는 길",
+          "authors": "강태용 [지음]",
+          "publisher": "하움출판사",
+          "publication_year": "2024",
+          "isbn13": "9791194276425",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/35340/50/cover200/k762035689_1.jpg",
+          "addition_symbol": "03810",
+          "vol": "",
+          "class_no": "811.7",
+          "class_nm": "문학 > 한국문학 > 시",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㄱ266ㅅ",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-23"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "여름의 비행운",
+          "authors": "이혜령 글",
+          "publisher": "소원나무",
+          "publication_year": "2025",
+          "isbn13": "9791174760449",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/37458/97/cover200/k582032814_2.jpg",
+          "addition_symbol": "44810",
+          "vol": "9",
+          "class_no": "808.9",
+          "class_nm": "문학 > 문학 > 전집, 총서",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㅅ432",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-19"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "(리얼) 호주",
+          "authors": "박선영 지음",
+          "publisher": "한빛라이프",
+          "publication_year": "2025",
+          "isbn13": "9791194725251",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/37499/4/cover200/k162032720_1.jpg",
+          "addition_symbol": "14980",
+          "vol": "10",
+          "class_no": "980.24",
+          "class_nm": "역사 > 지리 > 지리",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㄹ944ㅎ4",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-19"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "나의 리을 이야기",
+          "authors": "신소영 지음",
+          "publisher": "씨드북(주)",
+          "publication_year": "2025",
+          "isbn13": "9791160517354",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/37536/49/cover200/k002032022_1.jpg",
+          "addition_symbol": "43810",
+          "vol": "2",
+          "class_no": "813.7",
+          "class_nm": "문학 > 한국문학 > 소설",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㄷ49ㅆ",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-19"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "국어 교과서 작품 읽기 : 중2 시",
+          "authors": "신미나",
+          "publisher": "창비",
+          "publication_year": "2025",
+          "isbn13": "9788936431624",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/37625/64/cover200/8936431625_1.jpg",
+          "addition_symbol": "44810",
+          "vol": "6",
+          "class_no": "376.5471",
+          "class_nm": "사회과학 > 교육학 > 중등교육",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㄱ514ㅊ4",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-19"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "(2025) 김승옥문학상 수상작품집",
+          "authors": "최은미 [외]지음",
+          "publisher": "문학동네",
+          "publication_year": "2025",
+          "isbn13": "9791141602642",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/37461/41/cover200/k422032910_1.jpg",
+          "addition_symbol": "03810",
+          "vol": "2025",
+          "class_no": "813.7082",
+          "class_nm": "문학 > 한국문학 > 소설",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㄱ813",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-19"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "초등 1학년 공부, 책읽기가 전부다",
+          "authors": "송재환 지음",
+          "publisher": "위즈덤하우스",
+          "publication_year": "2025",
+          "isbn13": "9791171713394",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/35573/68/cover200/k452036570_1.jpg",
+          "addition_symbol": "13590",
+          "vol": "",
+          "class_no": "029.8",
+          "class_nm": "총류 > 문헌정보학 > 독서 및 정보매체의 이용",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㅅ588ㅊ3",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-19"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "헤세와 융, 영혼의 편지",
+          "authors": "미구엘 세라노 지음 박광자, 이미선 [공]옮김",
+          "publisher": "생각지도",
+          "publication_year": "2025",
+          "isbn13": "9791187875536",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/37515/77/cover200/k792032826_1.jpg",
+          "addition_symbol": "03100",
+          "vol": "",
+          "class_no": "185.51",
+          "class_nm": "철학 > 심리학 > 생리심리학",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㅅ378ㅎ",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-19"
+        }
+      },
+      {
+        "doc": {
+          "bookname": "헤르만 헤세와 인생 산책",
+          "authors": "헤르만 헤세 지음 김이섭 편역",
+          "publisher": "유노콘텐츠그룹",
+          "publication_year": "2024",
+          "isbn13": "9791171830619",
+          "set_isbn13": "",
+          "bookImageURL": "https://image.aladin.co.kr/product/35056/69/cover200/k542934093_1.jpg",
+          "addition_symbol": "03850",
+          "vol": "",
+          "class_no": "199.1",
+          "class_nm": "철학 > 윤리학, 도덕철학 > 도덕훈, 교훈",
+          "callNumbers": [
+            {
+              "callNumber": {
+                "separate_shelf_code": "",
+                "separate_shelf_name": "",
+                "book_code": "ㅎ499ㅎ",
+                "shelf_loc_code": "P01",
+                "shelf_loc_name": "[판교]문헌정보실",
+                "copy_code": ""
+              }
+            }
+          ],
+          "reg_date": "2025-12-19"
+        }
+      }
+    ]
+  }
+}

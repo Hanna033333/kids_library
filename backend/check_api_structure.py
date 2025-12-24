@@ -1,4 +1,4 @@
-"""API 파라미터 테스트 - isbn13 사용"""
+"""API 응답 구조 확인"""
 import requests
 import json
 from core.config import DATA4LIBRARY_KEY
@@ -24,11 +24,12 @@ url = "http://data4library.kr/api/itemSrch"
 params = {
     "authKey": DATA4LIBRARY_KEY,
     "libCode": PANGYO_LIB_CODE,
-    "isbn13": isbn,  # isbn13 파라미터 사용
+    "type": "ISBN",
+    "keyword": isbn,
     "startDt": "2000-01-01",
     "endDt": "2025-12-31",
     "pageNo": 1,
-    "pageSize": 50,
+    "pageSize": 10,
     "format": "json"
 }
 
@@ -36,20 +37,20 @@ resp = requests.get(url, params=params, timeout=10)
 data = resp.json()
 
 # JSON 저장
-with open('api_isbn13_test.json', 'w', encoding='utf-8') as f:
+with open('api_response_structure.json', 'w', encoding='utf-8') as f:
     json.dump(data, f, ensure_ascii=False, indent=2)
 
-print(f"Response saved")
-print(f"numFound: {data.get('response', {}).get('numFound', 0)}")
-print(f"resultNum: {data.get('response', {}).get('resultNum', 0)}\n")
+print(f"Response saved to api_response_structure.json")
+print(f"\nResponse keys: {list(data.keys())}")
 
-docs = data.get("response", {}).get("docs", [])
-if docs:
-    print(f"Found {len(docs)} items:")
-    for i, d in enumerate(docs[:5], 1):
-        doc = d.get("doc", {})
-        print(f"\n{i}. {doc.get('bookname', '')}")
-        print(f"   ISBN: {doc.get('isbn13', '')}")
-        print(f"   vol: '{doc.get('vol', '')}'")
-else:
-    print("No results")
+if 'response' in data:
+    print(f"Response.response keys: {list(data['response'].keys())}")
+    
+    if 'docs' in data['response']:
+        docs = data['response']['docs']
+        print(f"\nNumber of docs: {len(docs)}")
+        if docs:
+            print(f"First doc keys: {list(docs[0].keys())}")
+            if 'doc' in docs[0]:
+                print(f"First doc.doc keys: {list(docs[0]['doc'].keys())}")
+                print(f"\nvol field: '{docs[0]['doc'].get('vol', 'NOT FOUND')}'")

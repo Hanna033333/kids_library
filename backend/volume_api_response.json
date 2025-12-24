@@ -1,0 +1,17 @@
+{
+  "response": {
+    "request": {
+      "libCode": "141231",
+      "startDt": "2020-12-25",
+      "endDt": "2025-12-24",
+      "isbn13": "9788949162010",
+      "pageSize": "100",
+      "format": "json"
+    },
+    "libNm": "성남시 판교도서관",
+    "pageNo": 1,
+    "pageSize": 100,
+    "numFound": 0,
+    "resultNum": 0
+  }
+}
