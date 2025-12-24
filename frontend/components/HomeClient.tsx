@@ -62,7 +62,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                             alt="책방구"
                             className="h-10 w-auto"
                         />
-                        <span className="absolute -top-1 -right-7 text-gray-500 text-[10px] font-bold leading-none italic">
+                        <span className="absolute top-1 -right-9 text-gray-400 text-xs font-bold leading-none italic">
                             beta
                         </span>
                     </Link>
@@ -89,10 +89,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                     ) : (
                         <Link
                             href="/auth"
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-sm shadow-blue-100 font-medium text-sm"
+                            className="px-3 py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all shadow-sm font-medium text-sm"
                         >
-                            <LogIn className="w-4 h-4" />
-                            <span>로그인</span>
+                            로그인
                         </Link>
                     )}
                 </div>

@@ -1,4 +1,4 @@
-import { Book } from "@/lib/types";
+﻿import { Book } from "@/lib/types";
 import { ImageOff, Tags } from "lucide-react";
 import Link from "next/link";
 
@@ -69,7 +69,7 @@ export default function BookItem({ book }: BookItemProps) {
 
       {/* 2. 정보 영역 (하단) */}
       <div className="flex-1 p-4 flex flex-col items-start bg-white">
-        <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight group-hover:text-blue-600 transition-colors">
+        <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight group-hover:text-gray-700 transition-colors">
           {book.title}
         </h3>
 
