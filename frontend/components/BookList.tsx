@@ -72,31 +72,68 @@ export default function BookList({
     }
   }, [books, loading, isMobile, page]);
 
-  // Fetch loan statuses for displayed books
+  // Lazy load loan statuses for visible books only
   useEffect(() => {
-    if (allBooks.length > 0) {
-      // Immediately show books without loan status
-      setBooksWithLoan(allBooks);
-
-      // Fetch loan statuses in background
-      const bookIds = allBooks.map(b => b.id);
-
-      fetchLoanStatuses(bookIds)
-        .then(loanStatuses => {
-          // Update books with loan status when ready
-          setBooksWithLoan(prevBooks =>
-            prevBooks.map(book => ({
-              ...book,
-              loan_status: loanStatuses[book.id] || book.loan_status || null
-            }))
-          );
-        })
-        .catch(err => {
-          console.error('Failed to fetch loan statuses:', err);
-        });
-    } else {
+    if (allBooks.length === 0) {
       setBooksWithLoan([]);
+      return;
     }
+
+    // Immediately show books without loan status
+    setBooksWithLoan(allBooks);
+
+    // Track which books have had their loan status fetched
+    const fetchedBookIds = new Set<number>();
+
+    // Intersection Observer to detect visible books
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleBookIds: number[] = [];
+
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const bookId = parseInt(entry.target.getAttribute('data-book-id') || '0');
+            if (bookId && !fetchedBookIds.has(bookId)) {
+              visibleBookIds.push(bookId);
+              fetchedBookIds.add(bookId);
+            }
+          }
+        });
+
+        // Fetch loan status for newly visible books
+        if (visibleBookIds.length > 0) {
+          fetchLoanStatuses(visibleBookIds)
+            .then(loanStatuses => {
+              setBooksWithLoan(prevBooks =>
+                prevBooks.map(book => {
+                  if (visibleBookIds.includes(book.id)) {
+                    return {
+                      ...book,
+                      loan_status: loanStatuses[book.id] || book.loan_status || null
+                    };
+                  }
+                  return book;
+                })
+              );
+            })
+            .catch(err => {
+              console.error('Failed to fetch loan statuses:', err);
+            });
+        }
+      },
+      {
+        rootMargin: '100px', // Start loading slightly before book becomes visible
+        threshold: 0.1
+      }
+    );
+
+    // Observe all book items
+    const bookElements = document.querySelectorAll('[data-book-id]');
+    bookElements.forEach(el => observer.observe(el));
+
+    return () => {
+      observer.disconnect();
+    };
   }, [allBooks]);
 
   // Infinite scroll for mobile
@@ -174,7 +211,11 @@ export default function BookList({
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-            {booksWithLoan.map((book) => <BookItem key={book.id} book={book} />)}
+            {booksWithLoan.map((book) => (
+              <div key={book.id} data-book-id={book.id}>
+                <BookItem book={book} />
+              </div>
+            ))}
           </div>
 
           {/* Infinite scroll trigger for mobile */}

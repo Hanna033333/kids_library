@@ -69,8 +69,45 @@ def search_books_service(
     """
     책 검색 및 필터링 서비스
     """
-    # 쿼리 빌드
-    query = build_search_query(q=q, age=age, category=category, sort=sort)
+    # 필요한 컬럼만 선택 (성능 최적화)
+    columns = "id,title,author,publisher,pangyo_callno,vol,category,age,image_url"
+    
+    # 쿼리 빌드 - estimated count 사용 (훨씬 빠름)
+    query = supabase.table("childbook_items").select(columns, count="estimated")
+    query = query.not_.is_("pangyo_callno", "null")
+    query = query.neq("pangyo_callno", "없음")
+    query = query.or_("is_hidden.is.null,is_hidden.eq.false")
+    
+    # 카테고리 필터링
+    if category and category != "전체":
+        query = query.eq("category", category)
+    
+    # 검색어 필터링
+    if q:
+        q = q.strip()
+        if q:
+            query = query.or_(f"title.ilike.%{q}%,author.ilike.%{q}%")
+    
+    # 연령 필터링
+    if age:
+        age = age.strip()
+        if age:
+            if age == "0-3":
+                query = query.or_(f"age.ilike.%0세%,age.ilike.%1세%,age.ilike.%2세%,age.ilike.%3세%,age.ilike.%{age}%")
+            elif age == "4-7":
+                query = query.or_(f"age.ilike.%4세%,age.ilike.%5세%,age.ilike.%6세%,age.ilike.%7세%,age.ilike.%{age}%")
+            elif age == "8-12":
+                query = query.or_(f"age.ilike.%8세%,age.ilike.%9세%,age.ilike.%10세%,age.ilike.%11세%,age.ilike.%12세%,age.ilike.%{age}%")
+            elif age == "13+":
+                query = query.or_(f"age.ilike.%13세%,age.ilike.%13%")
+            else:
+                query = query.ilike("age", f"%{age}%")
+    
+    # 정렬
+    if sort == "title":
+        query = query.order("title")
+    else:  # 기본값: pangyo_callno
+        query = query.order("pangyo_callno")
     
     # 페이지네이션
     offset = (page - 1) * limit
