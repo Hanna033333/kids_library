@@ -41,18 +41,26 @@ export default function BookDetailPage() {
                 const data = await getBookById(bookId)
                 if (!data) {
                     setBook(null)
+                    setIsLoading(false)
                     return
                 }
 
-                // Fetch loan status
-                const loanStatuses = await fetchLoanStatuses([bookId])
-                const bookWithLoan = {
-                    ...data,
-                    loan_status: loanStatuses[bookId] || null
-                }
-
-                setBook(bookWithLoan)
+                // Display book immediately without loan status
+                setBook(data)
                 setSaveCount(data.save_count || 0)
+                setIsLoading(false)
+
+                // Fetch loan status in background (progressive loading)
+                fetchLoanStatuses([bookId])
+                    .then(loanStatuses => {
+                        setBook(prev => prev ? {
+                            ...prev,
+                            loan_status: loanStatuses[bookId] || null
+                        } : null)
+                    })
+                    .catch(err => {
+                        console.error('Failed to fetch loan status:', err)
+                    })
 
                 // Check if saved
                 if (user) {
@@ -66,7 +74,6 @@ export default function BookDetailPage() {
                 }
             } catch (err) {
                 console.error('Failed to fetch book detail:', err)
-            } finally {
                 setIsLoading(false)
             }
         }
@@ -179,15 +186,27 @@ export default function BookDetailPage() {
                                     <span className="font-black text-2xl text-gray-900 tracking-tight">
                                         {book.pangyo_callno}{book.vol ? `-${book.vol}` : ''}
                                     </span>
-                                    {book.loan_status && (
+                                    {book.loan_status ? (
                                         <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${book.loan_status.available
                                             ? "bg-green-50 text-green-700 border-green-200"
                                             : "bg-red-50 text-red-700 border-red-200"
                                             }`}>
                                             {book.loan_status.status}
                                         </span>
+                                    ) : (
+                                        <span className="px-2.5 py-1 rounded-lg text-xs bg-gray-100 text-gray-400 border border-gray-200 animate-pulse">
+                                            확인중
+                                        </span>
                                     )}
                                 </div>
+                                <a
+                                    href="https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-gray-400 hover:text-gray-600 underline mt-1.5 inline-block"
+                                >
+                                    청구기호 다른가요?
+                                </a>
                             </div>
                         </div>
 

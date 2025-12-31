@@ -6,9 +6,9 @@ from datetime import datetime, timedelta
 from core.config import DATA4LIBRARY_KEY
 
 
-# 인메모리 캐시 (1분 TTL)
+# 인메모리 캐시 (30분 TTL)
 LOAN_CACHE: Dict[str, tuple[Dict, datetime]] = {}
-CACHE_TTL = timedelta(minutes=10)
+CACHE_TTL = timedelta(minutes=30)
 
 # 판교 도서관 코드
 PANGYO_LIB_CODE = "141231"
@@ -57,7 +57,7 @@ async def fetch_loan_status_single(
     }
     
     try:
-        async with session.get(url, params=params, timeout=5) as response:
+        async with session.get(url, params=params, timeout=3) as response:
             data = await response.json()
             
             # 응답 파싱

@@ -132,7 +132,7 @@ async def get_book_detail(book_id: int):
                     "OptResult": "description"
                 }
                 
-                response = requests.get(url, params=params, timeout=5)
+                response = requests.get(url, params=params, timeout=3)
                 if response.status_code == 200:
                     data = response.json()
                     items = data.get("item", [])
