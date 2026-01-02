@@ -185,18 +185,15 @@ export default function BookDetailPage() {
                                     <span className="font-black text-2xl text-gray-900 tracking-tight">
                                         {book.pangyo_callno}{book.vol ? `-${book.vol}` : ''}
                                     </span>
-                                    {book.loan_status ? (
+                                    {book.loan_status && (
                                         <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${book.loan_status.available
                                             ? "bg-green-50 text-green-700 border-green-200"
                                             : "bg-red-50 text-red-700 border-red-200"
                                             }`}>
                                             {book.loan_status.status}
                                         </span>
-                                    ) : (
-                                        <span className="px-2.5 py-1 rounded-lg text-xs bg-gray-100 text-gray-400 border border-gray-200 animate-pulse">
-                                            확인중
-                                        </span>
                                     )}
+
                                 </div>
                                 <a
                                     href="https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog"
