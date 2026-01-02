@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Add current directory (backend) to sys.path to ensure 'services', 'api', etc. are found
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.books import router as books_router
