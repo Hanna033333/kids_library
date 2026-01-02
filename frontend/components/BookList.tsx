@@ -74,18 +74,33 @@ export default function BookList({
     }
   }, [books, loading, isMobile, page]);
 
+  // Track which books have had their loan status fetched
+  const fetchedBookIds = useRef<Set<number>>(new Set());
+
+  // Reset fetched status when filters change
+  useEffect(() => {
+    fetchedBookIds.current.clear();
+  }, [searchQuery, ageFilter, categoryFilter, sortFilter]);
+
+  // Sync booksWithLoan with allBooks, preserving existing statuses
+  useEffect(() => {
+    setBooksWithLoan(prev => {
+      const prevMap = new Map(prev.map(b => [b.id, b]));
+      return allBooks.map(b => {
+        const existing = prevMap.get(b.id);
+        // If we have existing status, keep it. Otherwise satisfy type with null/undefined logic
+        if (existing && existing.loan_status) {
+          return { ...b, loan_status: existing.loan_status };
+        }
+        return b;
+      });
+    });
+  }, [allBooks]);
+
   // Lazy load loan statuses for visible books only
   useEffect(() => {
-    if (allBooks.length === 0) {
-      setBooksWithLoan([]);
-      return;
-    }
-
-    // Immediately show books without loan status
-    setBooksWithLoan(allBooks);
-
-    // Track which books have had their loan status fetched
-    const fetchedBookIds = new Set<number>();
+    // Only set up observer if we have books
+    if (booksWithLoan.length === 0) return;
 
     // Intersection Observer to detect visible books
     const observer = new IntersectionObserver(
@@ -95,9 +110,9 @@ export default function BookList({
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const bookId = parseInt(entry.target.getAttribute('data-book-id') || '0');
-            if (bookId && !fetchedBookIds.has(bookId)) {
+            if (bookId && !fetchedBookIds.current.has(bookId)) {
               visibleBookIds.push(bookId);
-              fetchedBookIds.add(bookId);
+              fetchedBookIds.current.add(bookId);
             }
           }
         });
@@ -156,7 +171,13 @@ export default function BookList({
     return () => {
       observer.disconnect();
     };
-  }, [allBooks]);
+    // Re-run observer when booksWithLoan actually changes LENGTH (to attach to new elements)
+    // But be careful not to re-run on STATUS change alone if possible? 
+    // Actually, if we use [booksWithLoan.length], we handle appends.
+    // If status updates, we re-render, but observer doesn't need re-init.
+    // But data-book-id elements are re-rendered.
+    // It's safer to re-observe.
+  }, [booksWithLoan.length]);
 
   // Infinite scroll for mobile
   useEffect(() => {
