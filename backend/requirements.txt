@@ -8,5 +8,4 @@ fuzzywuzzy
 python-Levenshtein
 rapidfuzz
 aiohttp
-pandas
-openpyxl
+
