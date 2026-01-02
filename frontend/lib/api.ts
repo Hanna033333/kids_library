@@ -19,7 +19,7 @@ export async function searchBooks(
   params.append("limit", limit.toString());
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/books/search?${params}`, {
@@ -51,7 +51,7 @@ export async function getBooks(
   params.append("limit", limit.toString());
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/books/list?${params}`, {
@@ -72,7 +72,7 @@ export async function fetchLoanStatuses(
   bookIds: number[]
 ): Promise<Record<number, LoanStatus>> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 10초 타임아웃
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/books/loan-status`, {

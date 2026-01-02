@@ -262,19 +262,32 @@ export default function BookList({
           </div>
 
           {/* Infinite scroll trigger for mobile */}
-          {isMobile && page < totalPages && (
+          {isMobile && page < totalPages && !loading && !error && (
             <div ref={observerTarget} className="py-8 flex justify-center">
               <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
             </div>
           )}
 
           {/* Loading more indicator for mobile */}
-          {isMobile && isFetchingMore && (
+          {isMobile && isFetchingMore && !error && (
             <div className="py-8 flex justify-center">
               <div className="flex items-center gap-2 text-gray-500">
                 <div className="w-5 h-5 border-3 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
                 <span className="text-sm font-medium">더 불러오는 중...</span>
               </div>
+            </div>
+          )}
+
+          {/* Retry button for mobile error */}
+          {isMobile && error && (
+            <div className="py-8 flex justify-center flex-col items-center gap-2">
+              <p className="text-sm text-red-500">불러오기 실패</p>
+              <button
+                onClick={() => handlePageChange(page)} // Retry current page
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200"
+              >
+                다시 시도
+              </button>
             </div>
           )}
         </>
