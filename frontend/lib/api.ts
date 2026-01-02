@@ -18,11 +18,22 @@ export async function searchBooks(
   params.append("page", page.toString());
   params.append("limit", limit.toString());
 
-  const response = await fetch(`${API_BASE_URL}/api/books/search?${params}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch books");
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/books/search?${params}`, {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if (!response.ok) {
+      throw new Error("Failed to fetch books");
+    }
+    return response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
   }
-  return response.json();
 }
 
 export async function getBooks(
@@ -39,11 +50,22 @@ export async function getBooks(
   params.append("page", page.toString());
   params.append("limit", limit.toString());
 
-  const response = await fetch(`${API_BASE_URL}/api/books/list?${params}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch books");
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/books/list?${params}`, {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if (!response.ok) {
+      throw new Error("Failed to fetch books");
+    }
+    return response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
   }
-  return response.json();
 }
 
 export async function fetchLoanStatuses(

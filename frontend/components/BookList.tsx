@@ -60,13 +60,15 @@ export default function BookList({
 
   // Update books list (mobile: append, desktop: replace)
   useEffect(() => {
-    if (books.length > 0 && !loading) {
-      if (isMobile && page > 1) {
-        // Mobile: append new books
-        setAllBooks(prev => [...prev, ...books]);
-      } else {
-        // Desktop or first page: replace
-        setAllBooks(books);
+    if (!loading) {
+      if (books.length > 0) {
+        if (isMobile && page > 1) {
+          // Mobile: append new books
+          setAllBooks(prev => [...prev, ...books]);
+        } else {
+          // Desktop or first page: replace
+          setAllBooks(books);
+        }
       }
       setIsFetchingMore(false);
     }
