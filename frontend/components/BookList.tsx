@@ -100,26 +100,34 @@ export default function BookList({
           }
         });
 
-        // Fetch loan status for newly visible books
+        // Fetch loan status in chunks (Progressive Rendering)
         if (visibleBookIds.length > 0) {
-          fetchLoanStatuses(visibleBookIds)
-            .then(loanStatuses => {
-              setBooksWithLoan(prevBooks =>
-                prevBooks.map(book => {
-                  if (visibleBookIds.includes(book.id)) {
-                    return {
-                      ...book,
-                      loan_status: loanStatuses[book.id] || book.loan_status || null
-                    };
-                  }
-                  return book;
-                })
-              );
-            })
-            .catch(err => {
-              console.error('Failed to fetch loan statuses:', err);
-            });
+          const chunkSize = 6;
+          for (let i = 0; i < visibleBookIds.length; i += chunkSize) {
+            const chunk = visibleBookIds.slice(i, i + chunkSize);
+
+            // Fire request for this chunk
+            fetchLoanStatuses(chunk)
+              .then(loanStatuses => {
+                setBooksWithLoan(prevBooks =>
+                  prevBooks.map(book => {
+                    // Update only if this book was in the chunk
+                    if (chunk.includes(book.id)) {
+                      return {
+                        ...book,
+                        loan_status: loanStatuses[book.id] || book.loan_status || null
+                      };
+                    }
+                    return book;
+                  })
+                );
+              })
+              .catch(err => {
+                console.error('Failed to fetch loan statuses chunk:', err);
+              });
+          }
         }
+
       },
       {
         rootMargin: '100px', // Start loading slightly before book becomes visible
