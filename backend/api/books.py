@@ -166,7 +166,7 @@ async def test_lib_connection():
     params = {
         "authKey": DATA4LIBRARY_KEY,
         "libCode": "141231", # 판교도서관
-        "isbn13": "9788936434122", # 테스트용 ISBN (예: 채식주의자)
+        "isbn13": "9788936434120", # 테스트용 ISBN (채식주의자) - 검증된 ISBN 사용
         "format": "json"
     }
     
