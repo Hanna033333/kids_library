@@ -124,6 +124,18 @@ export default function BookList({
               })
               .catch(err => {
                 console.error('Failed to fetch loan statuses chunk:', err);
+                // 에러 발생 시 UI에 표시
+                setBooksWithLoan(prevBooks =>
+                  prevBooks.map(book => {
+                    if (chunk.includes(book.id)) {
+                      return {
+                        ...book,
+                        loan_status: { available: null, status: "통신오류", updated_at: new Date().toISOString() }
+                      };
+                    }
+                    return book;
+                  })
+                );
               });
           }
         }

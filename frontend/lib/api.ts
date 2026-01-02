@@ -49,19 +49,30 @@ export async function getBooks(
 export async function fetchLoanStatuses(
   bookIds: number[]
 ): Promise<Record<number, LoanStatus>> {
-  const response = await fetch(`${API_BASE_URL}/api/books/loan-status`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(bookIds),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch loan statuses");
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/books/loan-status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(bookIds),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch loan statuses");
+    }
+
+    return response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
   }
-
-  return response.json();
 }
 
 export async function getBooksByIds(bookIds: number[]): Promise<Book[]> {
