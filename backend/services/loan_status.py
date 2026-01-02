@@ -11,7 +11,21 @@ LOAN_CACHE: Dict[str, tuple[Dict, datetime]] = {}
 CACHE_TTL = timedelta(minutes=30)
 
 # 판교 도서관 코드
+
+# 판교 도서관 코드
 PANGYO_LIB_CODE = "141231"
+
+# 전역 세마포어 (Lazy Init)
+GLOBAL_SEMAPHORE: Optional[asyncio.Semaphore] = None
+
+def get_semaphore() -> asyncio.Semaphore:
+    """전역 세마포어 반환 (없으면 생성)"""
+    global GLOBAL_SEMAPHORE
+    if GLOBAL_SEMAPHORE is None:
+        # 동시 요청 수를 5로 제한 (안정성 최우선)
+        GLOBAL_SEMAPHORE = asyncio.Semaphore(5)
+    return GLOBAL_SEMAPHORE
+
 
 
 def get_cached_loan(isbn: str) -> Optional[Dict]:
@@ -120,9 +134,8 @@ async def fetch_loan_status_batch(books: List[Dict]) -> Dict[int, Dict]:
     if not books_with_isbn:
         return {}
     
-    # 병렬 조회 (세마포어로 동시 요청 제한 - 속도 향상)
-    # 5개는 너무 느림(10초+), 10개로 상향 조정
-    semaphore = asyncio.Semaphore(10) 
+    # 병렬 조회 (전역 세마포어로 동시 요청 제한)
+    semaphore = get_semaphore()
 
     async def fetch_with_sem(session, isbn):
         async with semaphore:
