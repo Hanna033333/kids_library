@@ -121,13 +121,16 @@ async def fetch_loan_status_batch(books: List[Dict]) -> Dict[int, Dict]:
         return {}
     
     # 병렬 조회 (세마포어로 동시 요청 제한 - 속도 향상)
-    semaphore = asyncio.Semaphore(20)  # 동시 요청 20개로 증량
+    # 20개는 외부 API에 부담을 주어 오히려 느려질 수 있으므로 5개로 조정
+    semaphore = asyncio.Semaphore(5) 
 
     async def fetch_with_sem(session, isbn):
         async with semaphore:
             return await fetch_loan_status_single(session, isbn)
 
-    async with aiohttp.ClientSession() as session:
+    # 타임아웃 설정을 포함한 세션
+    timeout = aiohttp.ClientTimeout(total=10)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         tasks = [
             fetch_with_sem(session, book['isbn'])
             for book in books_with_isbn
@@ -161,5 +164,6 @@ async def fetch_loan_status_batch(books: List[Dict]) -> Dict[int, Dict]:
             }
     
     return loan_info
+
 
 
