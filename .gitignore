@@ -55,3 +55,7 @@ collect_log.txt
 *.bak
 *.cache
 
+
+# Dump and detailed logs
+childbook_items_dump_*.json
+bulk_scrape_log_*.txt

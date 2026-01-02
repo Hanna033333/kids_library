@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { LogIn, UserPlus, Mail, Lock, Loader2 } from 'lucide-react'
@@ -13,6 +13,13 @@ export default function AuthPage() {
     const [error, setError] = useState<string | null>(null)
     const router = useRouter()
     const supabase = createClient()
+
+    // 베타 기간 접근 제한
+    useEffect(() => {
+        alert('베타 기간에는 로그인 및 회원가입을 지원하지 않습니다.');
+        router.push('/');
+    }, [router]);
+
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault()

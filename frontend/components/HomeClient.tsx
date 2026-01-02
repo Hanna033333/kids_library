@@ -68,7 +68,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                     </Link>
                 </div>
                 <div className="w-1/3 flex justify-end items-center gap-4">
-                    {user ? (
+                    {user && (
                         <div className="flex items-center gap-3">
                             <Link
                                 href="/my-library"
@@ -86,16 +86,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                                 <LogOut className="w-5 h-5" />
                             </button>
                         </div>
-                    ) : (
-                        <Link
-                            href="/auth"
-                            className="px-3 py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all shadow-sm font-medium text-sm"
-                        >
-                            로그인
-                        </Link>
                     )}
                 </div>
             </header>
+
 
             {/* 검색 바 */}
             <SearchBar

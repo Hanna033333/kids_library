@@ -136,11 +136,30 @@ async def fetch_loan_status_batch(books: List[Dict]) -> Dict[int, Dict]:
         # 모든 요청 실행
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        # 결과 매핑
-        loan_info = {}
-        for book, result in zip(books_with_isbn, results):
-            if not isinstance(result, Exception):
-                loan_info[book['id']] = result
-        
-        return loan_info
+    # 결과 매핑
+    loan_info = {}
+    
+    # 1. ISBN이 있는 책들의 결과 매핑
+    for book, result in zip(books_with_isbn, results):
+        if not isinstance(result, Exception):
+            loan_info[book['id']] = result
+        else:
+            loan_info[book['id']] = {
+                "available": None,
+                "status": "확인불가",
+                "error": str(result),
+                "updated_at": datetime.now().isoformat()
+            }
+            
+    # 2. ISBN이 없는 책이나 결과가 누락된 책 처리
+    for book in books:
+        if book['id'] not in loan_info:
+            loan_info[book['id']] = {
+                "available": None,
+                "status": "정보없음", # ISBN 없음 등
+                "updated_at": datetime.now().isoformat()
+            }
+    
+    return loan_info
+
 

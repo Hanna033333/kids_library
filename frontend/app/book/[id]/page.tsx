@@ -83,11 +83,10 @@ export default function BookDetailPage() {
 
     const handleToggleSave = async () => {
         if (!user) {
-            if (confirm('로그인이 필요한 기능입니다. 로그인 페이지로 이동할까요?')) {
-                router.push('/auth')
-            }
+            alert('베타 기간에는 로그인/회원가입 기능을 제공하지 않습니다.');
             return
         }
+
         if (!book || isToggling) return
         setIsToggling(true)
         try {
