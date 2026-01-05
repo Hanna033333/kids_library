@@ -123,18 +123,20 @@ def bulk_scrape_callnos():
     
     all_books = response.data
     
-    # 처음 50개 제외 (이미 테스트 완료)
-    books = all_books[50:] if len(all_books) > 50 else []
+    all_books = response.data
+    
+    # Process all books found (since we query for NULL)
+    books = all_books
     
     print(f"✅ 전체 {len(all_books)}권 중 처리 대상: {len(books)}권")
-    print(f"   (처음 50권은 이미 테스트 완료)\n")
+    # print(f"   (처음 50권은 이미 테스트 완료)\n")
     
     if not books:
         print("⚠️  처리할 책이 없습니다.")
         return
     
     # Chrome 드라이버 설정
-    print("🌐 Chrome 드라이버 초기화 중...")
+    print("🌐 Chrome 드라이버 초기화 중...", flush=True)
     driver = setup_driver()
     
     stats = {
@@ -200,6 +202,15 @@ def bulk_scrape_callnos():
                     msg = f"   ⚠️  청구기호 없음"
                     print(msg)
                     log_file.write(f"[{i}] {title} -> NOT FOUND\n")
+                    
+                    # DB 업데이트 (재시도 방지 위해 "NotFound"로 저장)
+                    try:
+                        supabase.table("childbook_items").update({
+                            "web_scraped_callno": "NotFound"
+                        }).eq("id", book_id).execute()
+                        stats["updated"] += 1  # 처리된 것으로 간주
+                    except Exception as e:
+                        print(f"   ❌ DB 업데이트 오류 (NotFound): {e}")
                 
                 # 진행 상황 출력 (50개마다)
                 if i % 50 == 0:

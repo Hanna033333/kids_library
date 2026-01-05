@@ -1,11 +1,14 @@
 import HomeClient from "@/components/HomeClient";
-import { BooksResponse } from "@/lib/types";
+import { getBooksFromSupabase } from "@/lib/supabase-client";
 
 // Enable ISR (Incremental Static Regeneration)
-// The shell will be cached and served instantly
+// The page will be cached and regenerated every hour
 export const revalidate = 3600; // 1 hour
 
-export default function Home() {
-  // Pass undefined as initialData to trigger CSR immediately
-  return <HomeClient initialData={undefined} />;
+export default async function Home() {
+  // SSG: Fetch initial data at build time from Supabase directly
+  // This avoids waking up the Render backend on first visit
+  const initialData = await getBooksFromSupabase(1, 24);
+
+  return <HomeClient initialData={initialData} />;
 }

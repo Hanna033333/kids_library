@@ -242,7 +242,7 @@ export default function BookList({
             ))}
           </div>
         </div>
-      ) : allBooks.length === 0 ? (
+      ) : !loading && allBooks.length === 0 ? (
         <div className="py-32 text-center bg-white rounded-2xl border border-dashed border-gray-200">
           <div className="text-gray-400 text-lg">
             검색 결과가 없습니다.

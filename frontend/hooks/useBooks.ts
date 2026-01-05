@@ -32,9 +32,18 @@ export function useBooks({
   const { data, isLoading, error, refetch } = useQuery({
     queryKey,
     queryFn: async (): Promise<BooksResponse> => {
-      return searchQuery
-        ? await searchBooks(searchQuery, ageFilter || undefined, categoryFilter || undefined, sortFilter, page, limit)
-        : await getBooks(ageFilter || undefined, categoryFilter || undefined, sortFilter, page, limit);
+      // Search queries use backend (complex logic, full-text search)
+      if (searchQuery) {
+        return await searchBooks(searchQuery, ageFilter || undefined, categoryFilter || undefined, sortFilter, page, limit);
+      }
+
+      // Simple browsing uses Supabase direct (fast, no cold start)
+      const { getBooksFromSupabase } = await import('@/lib/supabase-client');
+      return await getBooksFromSupabase(page, limit, {
+        age: ageFilter,
+        category: categoryFilter,
+        sort: sortFilter
+      });
     },
     // Keep data fresh for 30 seconds
     staleTime: 30 * 1000,
