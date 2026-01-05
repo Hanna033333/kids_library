@@ -1,0 +1,169 @@
+=== NotFound 재스크래핑 로그 ===
+시작 시간: 2026-01-05 15:25:12
+처리 대상: 280권
+
+[1] 같을까? 다를까? 개구리와 도롱뇽 -> STILL NOT FOUND
+[2] 넌 어떻게 춤을 추니? -> STILL NOT FOUND
+[3] 근육 아저씨와 뚱보 아줌마 : 호수 -> STILL NOT FOUND
+[4] 보름달 파티 -> STILL NOT FOUND
+[5] 고양이 가장의 기묘한 돈벌이 1 - 여우 양복점 -> STILL NOT FOUND
+[6] 코딱지 할아버지 -> STILL NOT FOUND
+[7] 야생 동물은 왜 사라졌을까? -> STILL NOT FOUND
+[8] 빈둥빈둥 투닉스 왕 -> STILL NOT FOUND
+[9] 로봇&드론 - 현실이 된 상상 -> STILL NOT FOUND
+[10] 누구 엉덩이? -> STILL NOT FOUND
+[11] 아가야, 안녕? -> STILL NOT FOUND
+[12] 고양이 해결사 깜냥 1 - 아파트의 평화를 지켜라 -> STILL NOT FOUND
+[13] 내 이름은 짐-달라-마시-커-미시-카다 -> STILL NOT FOUND
+[14] 하늘에는 얼마나 많은 별이 있을까요? - 에드윈 허블의 발견 -> STILL NOT FOUND
+[15] 금이 생겼어요! -> STILL NOT FOUND
+[16] 팍스2 : 집으로 가는 길 -> STILL NOT FOUND
+[17] 생명에게 배운다 2 - 알아 간다는 것 -> STILL NOT FOUND
+[18] 조개는 왜 껍데기가 있을까? -> STILL NOT FOUND
+[19] 쿠사마 야요이 : 점, 무한의 세계 -> STILL NOT FOUND
+[20] 내가 예쁘다고? -> STILL NOT FOUND
+[21] 누가 사자의 방에 들어왔지? -> STILL NOT FOUND
+[22] 내가 잠든 동안 넌 뭐 할 거야? -> STILL NOT FOUND
+[23] 이상한 사파리 -> STILL NOT FOUND
+[24] 타다, 아폴로 11호 - 달 착륙 50주년 기념 특별판 -> STILL NOT FOUND
+[25] 콩알탄 삼총사 - 사라진 동수를 찾아라 -> STILL NOT FOUND
+[26] 아야! 다쳤어요 - 알고 나면 왠지 덜 아픈 생활 속 어린이 의학 -> STILL NOT FOUND
+[27] 강마을에 한번 와 볼라요? -> STILL NOT FOUND
+[28] 공룡 - 화석과 깃털 -> STILL NOT FOUND
+[29] 누가 진짜 나일까? -> STILL NOT FOUND
+[30] 1분이면… -> STILL NOT FOUND
+[31] 지혜로운 멧돼지가 되기 위한 지침서 -> STILL NOT FOUND
+[32] 가난한 아이들의 선생님 - 로렌초 밀라니 신부님 이야기 -> STILL NOT FOUND
+[33] 뭐? 나랑 너랑 닮았다고!? -> STILL NOT FOUND
+[34] 기후 위기 : 지구 말고 지구인이 달라져야 해 -> STILL NOT FOUND
+[35] 미술관 가는 날 - 할머니와 함께 읽는 명화 이야기 -> STILL NOT FOUND
+[36] 선생님, 정치가 뭐예요? -> STILL NOT FOUND
+[37] 리보와 앤 - 아무도 오지 않는 도서관의 두 로봇 -> STILL NOT FOUND
+[38] 구름은 어떻게 구름이 될까? -> STILL NOT FOUND
+[39] 이 작은 책을 펼쳐 봐 -> STILL NOT FOUND
+[40] 내 몸무게가 어때서? -> STILL NOT FOUND
+[41] 그래서, 동의가 뭐야? -> STILL NOT FOUND
+[42] 고양이 - 가장 귀여운 사냥꾼 -> STILL NOT FOUND
+[43] 우리 집 하수도에 악어가 산다 -> STILL NOT FOUND
+[44] 간송미술관에는 어떤 보물이 있을까? -> STILL NOT FOUND
+[45] 키스 해링의 낙서장 - 모두를 위한 예술가 -> STILL NOT FOUND
+[46] 이럴 땐 싫다고 말해요! -> STILL NOT FOUND
+[47] 끼리 꾸루 -> STILL NOT FOUND
+[48] 독재와 민주주의 - 아무도 가르쳐 주지 않은 민주주의의 역사 -> STILL NOT FOUND
+[49] 누구 발자국일까? -> STILL NOT FOUND
+[50] 바나나가 뭐예유? -> STILL NOT FOUND
+
+
+--- 진행률: 50/280 (17%) ---
+    새로 발견: 0권 | 여전히 없음: 50권
+
+[51] 선생님, 기억하세요? -> STILL NOT FOUND
+[52] 설빔 - 여자아이 고운 옷 -> STILL NOT FOUND
+[53] 스티브 잡스 : 이게 바로 미래야! -> STILL NOT FOUND
+[54] 아빠, 법이 뭐예요? -> STILL NOT FOUND
+[55] 3.1만세운동길 -> STILL NOT FOUND
+[56] 내가 뉴스를 만든다면? -> STILL NOT FOUND
+[57] 돌부처와 비단장수 -> STILL NOT FOUND
+[58] 밀가루를 조심해 - 보들보들 쫀득쫀득 -> STILL NOT FOUND
+[59] 숲에서 보낸 마법 같은 하루 -> STILL NOT FOUND
+[60] 어린이 대학 : 역사 -> STILL NOT FOUND
+[61] 엄마 왜 안 와 -> STILL NOT FOUND
+[62] 우주 - 우리우주에 무슨 일이 있었던 거야? -> STILL NOT FOUND
+[63] 일곱 개의 화살 1-2 -> STILL NOT FOUND
+[64] 코끼리를 타면 안 돼요? -> STILL NOT FOUND
+[65] 귀뚜라미 싸움 -> STILL NOT FOUND
+[66] 누가 내 머리에 똥 쌌어? -> STILL NOT FOUND
+[67] 도마뱀의 발바닥은 신기한 테이프 -자연에서 찾아낸 창의적인 과학기술 -> STILL NOT FOUND
+[68] 몬드리안을 본 적이 있니? -> STILL NOT FOUND
+[69] 무지개 -> STILL NOT FOUND
+[70] 밀양 큰할매 - 어린이를 위한 인권 이야기 -> STILL NOT FOUND
+[71] 바보 야쿠프 -> STILL NOT FOUND
+[72] 발가락 -> STILL NOT FOUND
+[73] 빨간 열매 -> STILL NOT FOUND
+[74] 삐꾸 래봉 -> STILL NOT FOUND
+[75] 사계절 생태놀이 봄/여름/가을/겨울 -> STILL NOT FOUND
+[76] 사람이 뭐야? - 아빠가 들려주는 진화의 비밀 -> STILL NOT FOUND
+[77] 사회 계급이 뭐예요? -> STILL NOT FOUND
+[78] 아저씨, 진짜 변호사 맞아요? -> STILL NOT FOUND
+[79] 앵커 씨의 행복 이야기 -> STILL NOT FOUND
+[80] 옥수수 왕 납시오! - 고소한 맛에 가려진 세상 읽기 -> STILL NOT FOUND
+[81] 주머니에서 짤랑대는 나의 경제 -> STILL NOT FOUND
+[82] 왜, 세계유산일까? -> STILL NOT FOUND
+[83] 장애를 넘어 인류애에 이른 헬렌 켈러 -> STILL NOT FOUND
+[84] 초록 토끼를 만났다 -> STILL NOT FOUND
+[85] 칠판 볶음밥 -> STILL NOT FOUND
+[86] 태양이 뀐 방귀 -> STILL NOT FOUND
+[87] 펭귄 체조 -> STILL NOT FOUND
+[88] 후쿠시마의 눈물 - 원자력 발전 -> STILL NOT FOUND
+[89] 깊고 깊은 산속에 하나 둘 셋 -> STILL NOT FOUND
+[90] 까치가 물고 간 할머니의 기억 -> STILL NOT FOUND
+[91] 누가 가장 힘셀까? -> STILL NOT FOUND
+[92] 늦어도 괜찮아 막내 황조롱이야 -> STILL NOT FOUND
+[93] 달래네 꽃놀이 - 화전놀이 -> STILL NOT FOUND
+[94] 달에 가고 싶어요 - 사다리부터 로켓까지 달에 가는 36가지 방법 -> STILL NOT FOUND
+[95] 몬스터과학 4 - 세포야, 쪼개져라! 많아져라! -> STILL NOT FOUND
+[96] 빨강이 초록으로 보여! - 색각 이상 소년 에릭의 이야기 -> STILL NOT FOUND
+[97] 샤를마뉴 대왕의 위대한 보물 -> STILL NOT FOUND
+[98] 소녀 탐정 캠 : 도둑 맞은 다이아몬드 -> STILL NOT FOUND
+[99] 식물은 떡잎부터 다르다고요?! -> STILL NOT FOUND
+[100] 신호등 특공대 -> STILL NOT FOUND
+
+
+--- 진행률: 100/280 (35%) ---
+    새로 발견: 0권 | 여전히 없음: 100권
+
+[101] 어린이와 그림책 -> STILL NOT FOUND
+[102] 지구 둘레를 잰 도서관 사서 - 에라토스테네스 이야기 -> STILL NOT FOUND
+[103] 평등한 나라 -> STILL NOT FOUND
+[104] 해적 -> STILL NOT FOUND
+[105] 우리 집은 -> STILL NOT FOUND
+[106] 우리는 우주 어디쯤 있을까? -> STILL NOT FOUND
+[107] 짝짝이 양말 -> STILL NOT FOUND
+[108] 탄 빵 -> STILL NOT FOUND
+[109] 탁탁 톡톡 음매~ 젖소가 편지를 쓴대요 -> STILL NOT FOUND
+[110] 트리갭의 샘물 -> STILL NOT FOUND
+[111] 5월, 그 푸르던 날에 -> STILL NOT FOUND
+[112] GREEN - 숲 이야기 -> STILL NOT FOUND
+[113] 간송 전형필 -> STILL NOT FOUND
+[114] 개구리네 한솥밥 -> STILL NOT FOUND
+[115] 개와 고양이 -> STILL NOT FOUND
+[116] 고래 -거대한 포유류의 비밀스런 바다살이 -> STILL NOT FOUND
+[117] 고스트 -> STILL NOT FOUND
+[118] 곰 사냥을 떠나자 -> STILL NOT FOUND
+[119] 곰 세 마리 -> STILL NOT FOUND
+[120] 과학에 빠진 아이 -> STILL NOT FOUND
+[121] 권정생 이야기 1-2 -> STILL NOT FOUND
+[122] 꼬마 모모 (모모네집 이야기 1~6) -> STILL NOT FOUND
+[123] 꼴찌 강아지 -> STILL NOT FOUND
+[124] 나는 개다 -> STILL NOT FOUND
+[125] 나리 나리 고나리 1-3 -> STILL NOT FOUND
+[126] 나무와 강 -> STILL NOT FOUND
+[127] 내 거야! -> STILL NOT FOUND
+[128] 내 걱정은 하지 마 -> STILL NOT FOUND
+[129] 내가 라면을 먹을 때 -> STILL NOT FOUND
+[130] 내 이름은 난민이 아니야 -> STILL NOT FOUND
+[131] 넌 누구니? -> STILL NOT FOUND
+[132] 너에게 넘어가 -> STILL NOT FOUND
+[133] 노아의 방주 -> STILL NOT FOUND
+[134] 눈 다래끼 팔아요 -> STILL NOT FOUND
+[135] 늑대와 일곱 마리 아기염소 -> STILL NOT FOUND
+[136] 늑대가 돌아왔다 -> STILL NOT FOUND
+[137] 당나귀 공주 -> STILL NOT FOUND
+[138] 당나귀 실베스터와 요술 조약돌 -> STILL NOT FOUND
+[139] 도기 자기 우리 도자기 -> STILL NOT FOUND
+[140] 도와줘요, 뼈다귀 아저씨! - 키 크고 싶어요, 뼈와 성장 -> STILL NOT FOUND
+[141] 도자기 - 마음을 담은 그릇 -> STILL NOT FOUND
+[142] 돌멩이 수프 -> STILL NOT FOUND
+[143] 돌아오지 못한 아이들 -> STILL NOT FOUND
+[144] 따르릉 따르릉 -> STILL NOT FOUND
+[145] 딸기 -> STILL NOT FOUND
+[146] 딱 하나 고를게 -> STILL NOT FOUND
+[147] 땅따먹기 -> STILL NOT FOUND
+[148] 똥도 물이라고? -> STILL NOT FOUND
+[149] 똥두 1-2 -> STILL NOT FOUND
+[150] 레몬으로 돈 버는 법 1-어린이를 위한 경제학 -> STILL NOT FOUND
+
+
+--- 진행률: 150/280 (53%) ---
+    새로 발견: 0권 | 여전히 없음: 150권
+

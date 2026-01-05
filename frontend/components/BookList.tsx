@@ -48,7 +48,15 @@ export default function BookList({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Reset when filters change
+  // Sync page from URL when navigating back
+  useEffect(() => {
+    const urlPage = parseInt(searchParams.get('page') || '1', 10);
+    if (urlPage !== page) {
+      setPage(urlPage);
+    }
+  }, [searchParams]);
+
+  // Reset when filters change (but not when just page changes)
   useEffect(() => {
     setPage(1);
     setAllBooks([]);
