@@ -1,11 +1,9 @@
 import HomeClient from "@/components/HomeClient";
 
-// Enable ISR (Incremental Static Regeneration)
-// The page will be cached and regenerated every hour
-export const revalidate = 3600; // 1 hour
+// Force dynamic rendering to avoid build-time data fetching errors
+export const dynamic = 'force-dynamic';
 
 export default function Home() {
-  // Temporarily disabled SSG due to build errors
-  // Will re-enable after is_hidden column is confirmed in production DB
+  // Using CSR (Client-Side Rendering) until is_hidden column is stable
   return <HomeClient initialData={undefined} />;
 }
