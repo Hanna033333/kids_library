@@ -16,7 +16,8 @@ export async function getBooksFromSupabase(
 ) {
     let query = supabase
         .from('childbook_items')
-        .select('*', { count: 'exact' });
+        .select('*', { count: 'exact' })
+        .eq('is_hidden', false);  // 숨겨진 책 제외
 
     // 필터 적용
     if (filters?.age) {

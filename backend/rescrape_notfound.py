@@ -158,8 +158,7 @@ def rescrape_notfound():
                     
                     try:
                         supabase.table("childbook_items").update({
-                            "web_scraped_callno": callno,
-                            "pangyo_callno": callno  # 바로 pangyo_callno도 업데이트
+                            "web_scraped_callno": callno
                         }).eq("id", book_id).execute()
                         
                         stats["updated"] += 1
