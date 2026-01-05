@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import SearchBar from "@/components/SearchBar";
 import FilterBar from "@/components/FilterBar";
 import BookList from "@/components/BookList";
@@ -16,29 +17,52 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ initialData }: HomeClientProps) {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [ageFilter, setAgeFilter] = useState("");
-    const [categoryFilter, setCategoryFilter] = useState("전체");
-    const [sortFilter, setSortFilter] = useState("pangyo_callno");
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // URL에서 초기 상태 읽기
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
+    const [ageFilter, setAgeFilter] = useState(searchParams.get('age') || "");
+    const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || "전체");
+    const [sortFilter, setSortFilter] = useState(searchParams.get('sort') || "pangyo_callno");
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [filterModalMode, setFilterModalMode] = useState<"integrated" | "category">("integrated");
     const { user, signOut } = useAuth();
 
+    // URL 업데이트 함수
+    const updateURL = useCallback((params: Record<string, string>) => {
+        const newParams = new URLSearchParams(searchParams.toString());
+
+        Object.entries(params).forEach(([key, value]) => {
+            if (value && value !== "전체") {
+                newParams.set(key, value);
+            } else {
+                newParams.delete(key);
+            }
+        });
+
+        router.push(`?${newParams.toString()}`, { scroll: false });
+    }, [router, searchParams]);
+
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
-    }, []);
+        updateURL({ q: query, age: ageFilter, category: categoryFilter, sort: sortFilter });
+    }, [ageFilter, categoryFilter, sortFilter, updateURL]);
 
     const handleAgeChange = useCallback((age: string) => {
         setAgeFilter(age);
-    }, []);
+        updateURL({ q: searchQuery, age, category: categoryFilter, sort: sortFilter });
+    }, [searchQuery, categoryFilter, sortFilter, updateURL]);
 
     const handleCategoryChange = useCallback((category: string) => {
         setCategoryFilter(category);
-    }, []);
+        updateURL({ q: searchQuery, age: ageFilter, category, sort: sortFilter });
+    }, [searchQuery, ageFilter, sortFilter, updateURL]);
 
     const handleSortChange = useCallback((sort: string) => {
         setSortFilter(sort);
-    }, []);
+        updateURL({ q: searchQuery, age: ageFilter, category: categoryFilter, sort });
+    }, [searchQuery, ageFilter, categoryFilter, updateURL]);
 
     const openIntegratedFilter = () => {
         setFilterModalMode("integrated");

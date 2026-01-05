@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import BookItem from "./BookItem";
 import Pagination from "./Pagination";
 import { useBooks } from "@/hooks/useBooks";
@@ -24,7 +25,12 @@ export default function BookList({
   sortFilter = "pangyo_callno",
   initialData,
 }: BookListProps) {
-  const [page, setPage] = useState(1);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // URL에서 페이지 번호 읽기
+  const initialPage = parseInt(searchParams.get('page') || '1', 10);
+  const [page, setPage] = useState(initialPage);
   const [allBooks, setAllBooks] = useState<Book[]>([]);
   const [booksWithLoan, setBooksWithLoan] = useState<Book[]>([]);
   const [isMobile, setIsMobile] = useState(false);
@@ -46,6 +52,10 @@ export default function BookList({
   useEffect(() => {
     setPage(1);
     setAllBooks([]);
+    // URL 업데이트 (페이지 1로 리셋)
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set('page', '1');
+    router.push(`?${newParams.toString()}`, { scroll: false });
   }, [searchQuery, ageFilter, categoryFilter, sortFilter]);
 
   const { books, loading, error, total, totalPages } = useBooks({
@@ -207,6 +217,10 @@ export default function BookList({
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
+    // URL 업데이트
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set('page', newPage.toString());
+    router.push(`?${newParams.toString()}`, { scroll: false });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
