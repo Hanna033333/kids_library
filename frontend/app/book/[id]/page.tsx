@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import Head from 'next/head'
 import { useAuth } from '@/context/AuthContext'
 import { createClient } from '@/lib/supabase'
 import { saveBook, unsaveBook } from '@/lib/supabase-api'
@@ -275,6 +274,5 @@ export default function BookDetailPage() {
                     </div>
                 </div>
             </main>
-        </>
-    )
+            )
 }
