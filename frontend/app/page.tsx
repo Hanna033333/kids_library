@@ -220,6 +220,21 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* 공지사항 섹션 */}
+      <section className="py-6 px-4 bg-gray-50 border-t border-gray-200">
+        <div className="max-w-6xl mx-auto">
+          <a
+            href="https://notion.so/your-notice-link"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 text-gray-700 hover:text-gray-900 transition-colors"
+          >
+            <span className="text-xl">📢</span>
+            <span className="text-sm font-medium">12/16(화) 서비스 업데이트 안내</span>
+          </a>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-8 px-6">
         <div className="max-w-6xl mx-auto text-center">
