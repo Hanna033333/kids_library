@@ -80,14 +80,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             <header className="w-full bg-white border-b border-gray-100 flex items-center justify-between px-6 py-4 sticky top-0 z-50">
                 <div className="w-1/3"></div>
                 <div className="w-1/3 flex justify-center">
-                    <button
-                        onClick={() => {
-                            setSearchQuery('');
-                            setAgeFilter('');
-                            setCategoryFilter('전체');
-                            setSortFilter('pangyo_callno');
-                            router.push('/');
-                        }}
+                    <Link
+                        href="/"
                         className="relative inline-flex items-center cursor-pointer"
                     >
                         <img
@@ -98,7 +92,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                         <span className="absolute top-1 -right-9 text-gray-400 text-xs font-bold leading-none italic">
                             beta
                         </span>
-                    </button>
+                    </Link>
                 </div>
                 <div className="w-1/3 flex justify-end items-center gap-4">
                     {user && (
