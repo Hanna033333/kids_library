@@ -34,9 +34,24 @@ export default function SearchBar({ onSearch, initialQuery = "", onFilterClick }
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="어떤 책을 찾으시나요?"
-            className="w-full px-5 py-3 pl-12 bg-white text-gray-900 placeholder:text-gray-400 border border-transparent rounded-lg shadow-[0_2px_15px_rgba(0,0,0,0.04)] focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/20 focus:scale-[1.01] transition-all"
+            className="w-full px-5 py-3 pl-12 pr-10 bg-white text-gray-900 placeholder:text-gray-400 border border-transparent rounded-lg shadow-[0_2px_15px_rgba(0,0,0,0.04)] focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/20 focus:scale-[1.01] transition-all"
           />
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-[#F59E0B] transition-colors" />
+
+          {/* Clear button */}
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+              aria-label="검색어 지우기"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          )}
         </div>
 
         <button
