@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Search } from 'lucide-react'
+import { Search, Bookmark, LogOut } from 'lucide-react'
 import { getBooksByAge, getResearchCouncilBooks, type Book } from '@/lib/home-api'
+import { useAuth } from '@/context/AuthContext'
 
 export default function HomePage() {
   const router = useRouter()
+  const { user, signOut } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedAge, setSelectedAge] = useState('4-7')
   const [ageBooks, setAgeBooks] = useState<Book[]>([])
@@ -39,41 +41,85 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#F7F7F7]">
-      {/* Hero Section - 검색창 */}
-      <section className="bg-white py-16 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          {/* 로고 */}
-          <div className="mb-8">
+      {/* Header - 책 리스트와 동일 */}
+      <header className="w-full bg-white border-b border-gray-100 flex items-center justify-between px-6 py-4 sticky top-0 z-50">
+        <div className="w-1/3"></div>
+        <div className="w-1/3 flex justify-center">
+          <button
+            onClick={() => router.push('/')}
+            className="relative inline-flex items-center cursor-pointer"
+          >
             <img
               src="/logo.png"
               alt="책방구"
-              className="h-16 w-auto mx-auto"
+              className="h-10 w-auto"
             />
-          </div>
-
-          {/* 검색창 */}
-          <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="아이 연령 / 책 제목으로 검색"
-                className="w-full px-6 py-4 pl-14 text-lg bg-white text-gray-900 placeholder:text-gray-400 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent shadow-lg"
-              />
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6" />
-            </div>
-          </form>
+            <span className="absolute top-1 -right-9 text-gray-400 text-xs font-bold leading-none italic">
+              beta
+            </span>
+          </button>
         </div>
-      </section>
+        <div className="w-1/3 flex justify-end items-center gap-4">
+          {user && (
+            <div className="flex items-center gap-3">
+              <Link
+                href="/my-library"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600 flex items-center gap-1 text-sm font-medium"
+                title="내 서재"
+              >
+                <Bookmark className="w-5 h-5" />
+                <span className="hidden sm:inline">내 서재</span>
+              </Link>
+              <button
+                onClick={() => signOut()}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
+                title="로그아웃"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* 검색 바 - 책 리스트와 동일 */}
+      <div className="w-full sticky top-[73px] z-20 bg-[#F7F7F7]/95 backdrop-blur-sm px-4 py-4 transition-all">
+        <form onSubmit={handleSearch} className="w-full max-w-[1200px] mx-auto flex gap-3">
+          <div className="relative group flex-1">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="어떤 책을 찾으시나요?"
+              className="w-full px-5 py-3 pl-12 pr-10 bg-white text-gray-900 placeholder:text-gray-400 border border-transparent rounded-lg shadow-[0_2px_15px_rgba(0,0,0,0.04)] focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/20 focus:scale-[1.01] transition-all"
+            />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-[#F59E0B] transition-colors" />
+
+            {/* Clear button */}
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+                aria-label="검색어 지우기"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
 
       {/* 연령별 추천 섹션 */}
-      <section className="py-12 px-6">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">우리 아이 나이에 딱!</h2>
+      <section className="py-8 px-4">
+        <div className="max-w-[1200px] mx-auto">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 px-2">우리 아이 나이에 딱!</h2>
 
           {/* 연령 탭 */}
-          <div className="flex gap-3 mb-8">
+          <div className="flex gap-2 mb-6 px-2">
             {[
               { key: '0-3', label: '0-3세' },
               { key: '4-7', label: '4-7세' },
@@ -83,9 +129,9 @@ export default function HomePage() {
               <button
                 key={age.key}
                 onClick={() => setSelectedAge(age.key)}
-                className={`px-6 py-2 rounded-lg font-medium transition-all ${selectedAge === age.key
-                    ? 'bg-[#F59E0B] text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedAge === age.key
+                    ? 'bg-[#F59E0B] text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                   }`}
               >
                 {age.label}
@@ -98,15 +144,15 @@ export default function HomePage() {
             <div className="text-center py-12 text-gray-500">로딩 중...</div>
           ) : ageBooks.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-4">
                 {ageBooks.map(book => (
                   <BookCard key={book.id} book={book} />
                 ))}
               </div>
-              <div className="text-right">
+              <div className="text-right px-2">
                 <Link
                   href={`/books?age=${selectedAge}`}
-                  className="inline-flex items-center text-[#F59E0B] font-medium hover:underline"
+                  className="inline-flex items-center text-[#F59E0B] text-sm font-medium hover:underline"
                 >
                   더보기 →
                 </Link>
@@ -121,21 +167,21 @@ export default function HomePage() {
       </section>
 
       {/* 도서 연구회 추천 섹션 */}
-      <section className="py-12 px-6 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">어린이 도서 연구회 추천</h2>
+      <section className="py-8 px-4 bg-white">
+        <div className="max-w-[1200px] mx-auto">
+          <h2 className="text-xl font-bold text-gray-900 mb-6 px-2">어린이 도서 연구회 추천</h2>
 
           {researchBooks.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-4">
                 {researchBooks.map(book => (
                   <BookCard key={book.id} book={book} />
                 ))}
               </div>
-              <div className="text-right">
+              <div className="text-right px-2">
                 <Link
                   href="/books?curation=어린이도서연구회"
-                  className="inline-flex items-center text-[#F59E0B] font-medium hover:underline"
+                  className="inline-flex items-center text-[#F59E0B] text-sm font-medium hover:underline"
                 >
                   더보기 →
                 </Link>
@@ -160,40 +206,72 @@ export default function HomePage() {
   )
 }
 
-// 책 카드 컴포넌트
+// 책 카드 컴포넌트 - BookItem과 동일한 UI
 function BookCard({ book }: { book: Book }) {
-  return (
-    <Link href={`/book/${book.id}`} className="group">
-      <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-        {/* 책 표지 */}
-        <div className="aspect-[3/4] bg-gray-100 relative overflow-hidden">
-          {book.image_url ? (
-            <img
-              src={book.image_url}
-              alt={book.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300">
-              <span className="text-4xl">📚</span>
-            </div>
-          )}
-        </div>
+  // Helper to normalize age strings
+  function normalizeAge(rawAge: string): string {
+    if (!rawAge) return ""
+    const age = rawAge.replace(/\s/g, "")
 
-        {/* 책 정보 */}
-        <div className="p-3">
-          <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1">
-            {book.title}
-          </h3>
-          <p className="text-xs text-gray-500 mb-2">{book.author}</p>
+    if (age.includes("8~13세")) return "8-12세"
+    if (["청소년", "13세", "14세", "15세", "16세", "17세", "18세", "성인"].some(k => age.includes(k))) return "13세+"
+    if (["초등", "8세", "9세", "10세", "11세", "12세"].some(k => age.includes(k))) return "8-12세"
+    if (["유아", "유치", "4세", "5세", "6세", "7세"].some(k => age.includes(k))) return "4-7세"
+    if (["영유아", "0세", "1세", "2세", "3세"].some(k => age.includes(k))) return "0-3세"
+
+    return rawAge
+  }
+
+  const displayAge = normalizeAge(book.age || "")
+
+  return (
+    <Link
+      href={`/book/${book.id}`}
+      className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md h-full group"
+    >
+      {/* 1. 이미지 영역 (상단) */}
+      <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
+        {book.image_url ? (
+          <img
+            src={book.image_url}
+            alt={book.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center w-full h-full text-gray-300">
+            <span className="text-4xl mb-2">📚</span>
+            <span className="text-[10px] uppercase tracking-wider font-medium opacity-60">No Image</span>
+          </div>
+        )}
+
+        {/* 태그 (이미지 위에 오버레이) */}
+        <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
           {book.category && (
-            <span className="inline-block px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded">
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/90 text-gray-600 font-bold shadow-sm backdrop-blur-sm">
               {book.category}
             </span>
           )}
-          {book.pangyo_callno && (
-            <p className="text-xs text-gray-400 mt-1">{book.pangyo_callno}</p>
+          {displayAge && (
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-black/60 text-white font-medium shadow-sm backdrop-blur-sm">
+              {displayAge}
+            </span>
           )}
+        </div>
+      </div>
+
+      {/* 2. 정보 영역 (하단) */}
+      <div className="flex-1 p-4 flex flex-col items-start bg-white">
+        <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight group-hover:text-gray-700 transition-colors">
+          {book.title}
+        </h3>
+
+        <p className="text-[15px] font-extrabold text-[#F59E0B] tracking-tight mb-3 truncate w-full">
+          {book.pangyo_callno}
+        </p>
+
+        <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
+          <span className="text-gray-400 truncate max-w-[60%]">{book.publisher}</span>
         </div>
       </div>
     </Link>
