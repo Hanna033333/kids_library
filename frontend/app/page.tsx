@@ -116,7 +116,15 @@ export default function HomePage() {
       {/* 연령별 추천 섹션 */}
       <section className="py-8 px-4">
         <div className="max-w-[1200px] mx-auto">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 px-2">우리 아이 나이에 딱!</h2>
+          <div className="flex items-center justify-between mb-4 px-2">
+            <h2 className="text-xl font-bold text-gray-900">우리 아이 나이에 딱!</h2>
+            <Link
+              href={`/books?age=${selectedAge}`}
+              className="text-gray-400 text-sm font-medium hover:text-gray-600 transition-colors"
+            >
+              더보기 &gt;
+            </Link>
+          </div>
 
           {/* 연령 탭 */}
           <div className="flex gap-2 mb-6 px-2">
@@ -153,14 +161,6 @@ export default function HomePage() {
                   ))}
                 </div>
               </div>
-              <div className="text-right px-2 mt-4">
-                <Link
-                  href={`/books?age=${selectedAge}`}
-                  className="inline-flex items-center text-[#F59E0B] text-sm font-medium hover:underline"
-                >
-                  더보기 →
-                </Link>
-              </div>
             </>
           ) : (
             <div className="text-center py-12 text-gray-500">
@@ -173,7 +173,15 @@ export default function HomePage() {
       {/* 도서 연구회 추천 섹션 */}
       <section className="py-8 px-4 bg-white">
         <div className="max-w-[1200px] mx-auto">
-          <h2 className="text-xl font-bold text-gray-900 mb-6 px-2">어린이 도서 연구회 추천</h2>
+          <div className="flex items-center justify-between mb-6 px-2">
+            <h2 className="text-xl font-bold text-gray-900">어린이 도서 연구회 추천</h2>
+            <Link
+              href="/books?curation=어린이도서연구회"
+              className="text-gray-400 text-sm font-medium hover:text-gray-600 transition-colors"
+            >
+              더보기 &gt;
+            </Link>
+          </div>
 
           {researchBooks.length > 0 ? (
             <>
@@ -185,14 +193,6 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
-              </div>
-              <div className="text-right px-2 mt-4">
-                <Link
-                  href="/books?curation=어린이도서연구회"
-                  className="inline-flex items-center text-[#F59E0B] text-sm font-medium hover:underline"
-                >
-                  더보기 →
-                </Link>
               </div>
             </>
           ) : (
