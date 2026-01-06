@@ -13,7 +13,7 @@ export interface Book {
 }
 
 /**
- * 연령별 책 추천 가져오기
+ * 연령별 책 추천 가져오기 (일주일마다 랜덤 변경)
  */
 export async function getBooksByAge(ageGroup: string, limit: number = 5): Promise<Book[]> {
     const supabase = createClient()
@@ -32,12 +32,21 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5): Promis
         return []
     }
 
+    // 현재 주차 계산 (일주일마다 바뀜)
+    const now = new Date()
+    const startOfYear = new Date(now.getFullYear(), 0, 1)
+    const weekNumber = Math.floor((now.getTime() - startOfYear.getTime()) / (7 * 24 * 60 * 60 * 1000))
+
+    // 주차를 offset으로 사용 (매주 다른 책 선택)
+    const offset = (weekNumber * 5) % 100 // 100개 범위 내에서 순환
+
     const { data, error } = await supabase
         .from('childbook_items')
         .select('id, title, author, publisher, category, age, pangyo_callno, image_url')
         .in('age', ageValues)
         .or('is_hidden.is.null,is_hidden.eq.false')
-        .limit(limit)
+        .order('id') // 일관된 정렬
+        .range(offset, offset + limit - 1)
 
     if (error) {
         console.error('Error fetching books by age:', error)
@@ -48,17 +57,26 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5): Promis
 }
 
 /**
- * 어린이 도서 연구회 추천 책 가져오기
+ * 어린이 도서 연구회 추천 책 가져오기 (일주일마다 랜덤 변경)
  */
 export async function getResearchCouncilBooks(limit: number = 5): Promise<Book[]> {
     const supabase = createClient()
+
+    // 현재 주차 계산 (일주일마다 바뀜)
+    const now = new Date()
+    const startOfYear = new Date(now.getFullYear(), 0, 1)
+    const weekNumber = Math.floor((now.getTime() - startOfYear.getTime()) / (7 * 24 * 60 * 60 * 1000))
+
+    // 주차를 offset으로 사용 (매주 다른 책 선택)
+    const offset = (weekNumber * 5) % 50 // 50개 범위 내에서 순환
 
     const { data, error } = await supabase
         .from('childbook_items')
         .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag')
         .eq('curation_tag', '어린이도서연구회')
         .or('is_hidden.is.null,is_hidden.eq.false')
-        .limit(limit)
+        .order('id') // 일관된 정렬
+        .range(offset, offset + limit - 1)
 
     if (error) {
         console.error('Error fetching research council books:', error)
