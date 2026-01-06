@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Search, Bookmark, LogOut, ChevronRight } from 'lucide-react'
+import { Search, Bookmark, LogOut, ChevronRight, Bell } from 'lucide-react'
 import { getBooksByAge, getResearchCouncilBooks, type Book } from '@/lib/home-api'
 import { useAuth } from '@/context/AuthContext'
 
@@ -220,16 +220,19 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* 디바이더 */}
+      <div className="border-t border-gray-200"></div>
+
       {/* 공지사항 섹션 */}
-      <section className="py-6 px-4 bg-gray-50 border-t border-gray-200">
+      <section className="py-6 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <a
             href="https://notion.so/your-notice-link"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 text-gray-700 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-3 text-gray-700 hover:text-gray-900 transition-colors group"
           >
-            <span className="text-xl">📢</span>
+            <Bell className="w-5 h-5 text-[#F59E0B] group-hover:text-[#D97706] transition-colors" />
             <span className="text-sm font-medium">12/16(화) 서비스 업데이트 안내</span>
           </a>
         </div>
