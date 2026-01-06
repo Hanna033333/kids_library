@@ -131,7 +131,7 @@ export default function BookDetailPage() {
                 <button onClick={() => router.back()} className="p-2 -ml-2 text-gray-500 hover:text-gray-900">
                     <ChevronLeft className="w-6 h-6" />
                 </button>
-                <h1 className="text-sm font-bold text-gray-900 truncate max-w-[200px]">상세 정보</h1>
+                <h1 className="text-base font-bold text-gray-900 truncate max-w-[200px]">상세 정보</h1>
                 <div className="w-10" />
             </header>
 
