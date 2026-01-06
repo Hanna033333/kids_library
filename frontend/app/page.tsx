@@ -149,7 +149,24 @@ export default function HomePage() {
 
           {/* 책 그리드 - 좌우 스크롤 */}
           {loading ? (
-            <div className="text-center py-12 text-gray-500">로딩 중...</div>
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+              <div className="flex gap-4 pb-2">
+                {[1, 2, 3, 4, 5].map(i => (
+                  <div key={i} className="flex-shrink-0 w-[160px] sm:w-[180px]">
+                    <div className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden h-full animate-pulse">
+                      {/* 이미지 스켈레톤 */}
+                      <div className="w-full aspect-[1/1.1] bg-gray-200"></div>
+                      {/* 정보 스켈레톤 */}
+                      <div className="p-4 space-y-3">
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : ageBooks.length > 0 ? (
             <>
               <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
