@@ -120,9 +120,9 @@ export default function HomePage() {
             <h2 className="text-xl font-bold text-gray-900">우리 아이 나이에 딱!</h2>
             <Link
               href={`/books?age=${selectedAge}`}
-              className="text-gray-400 text-sm font-medium hover:text-gray-600 transition-colors"
+              className="text-xl font-bold text-gray-900 hover:text-gray-600 transition-colors"
             >
-              더보기 &gt;
+              &gt;
             </Link>
           </div>
 
@@ -194,9 +194,9 @@ export default function HomePage() {
             <h2 className="text-xl font-bold text-gray-900">어린이 도서 연구회 추천</h2>
             <Link
               href="/books?curation=어린이도서연구회"
-              className="text-gray-400 text-sm font-medium hover:text-gray-600 transition-colors"
+              className="text-xl font-bold text-gray-900 hover:text-gray-600 transition-colors"
             >
-              더보기 &gt;
+              &gt;
             </Link>
           </div>
 
