@@ -130,8 +130,8 @@ export default function HomePage() {
                 key={age.key}
                 onClick={() => setSelectedAge(age.key)}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedAge === age.key
-                    ? 'bg-[#F59E0B] text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                  ? 'bg-[#F59E0B] text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                   }`}
               >
                 {age.label}
@@ -139,17 +139,21 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* 책 그리드 */}
+          {/* 책 그리드 - 좌우 스크롤 */}
           {loading ? (
             <div className="text-center py-12 text-gray-500">로딩 중...</div>
           ) : ageBooks.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-4">
-                {ageBooks.map(book => (
-                  <BookCard key={book.id} book={book} />
-                ))}
+              <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+                <div className="flex gap-4 pb-2">
+                  {ageBooks.map(book => (
+                    <div key={book.id} className="flex-shrink-0 w-[160px] sm:w-[180px]">
+                      <BookCard book={book} />
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="text-right px-2">
+              <div className="text-right px-2 mt-4">
                 <Link
                   href={`/books?age=${selectedAge}`}
                   className="inline-flex items-center text-[#F59E0B] text-sm font-medium hover:underline"
@@ -173,12 +177,16 @@ export default function HomePage() {
 
           {researchBooks.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-4">
-                {researchBooks.map(book => (
-                  <BookCard key={book.id} book={book} />
-                ))}
+              <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+                <div className="flex gap-4 pb-2">
+                  {researchBooks.map(book => (
+                    <div key={book.id} className="flex-shrink-0 w-[160px] sm:w-[180px]">
+                      <BookCard book={book} />
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="text-right px-2">
+              <div className="text-right px-2 mt-4">
                 <Link
                   href="/books?curation=어린이도서연구회"
                   className="inline-flex items-center text-[#F59E0B] text-sm font-medium hover:underline"
