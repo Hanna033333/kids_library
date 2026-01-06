@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Search, Bookmark, LogOut } from 'lucide-react'
+import { Search, Bookmark, LogOut, ChevronRight } from 'lucide-react'
 import { getBooksByAge, getResearchCouncilBooks, type Book } from '@/lib/home-api'
 import { useAuth } from '@/context/AuthContext'
 
