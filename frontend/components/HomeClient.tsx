@@ -77,30 +77,32 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     return (
         <main className="min-h-screen">
             {/* Header - Back Button & Title (책 상세 페이지와 동일) */}
-            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-                <button onClick={() => router.push('/')} className="p-2 -ml-2 text-gray-500 hover:text-gray-900">
-                    <ChevronLeft className="w-6 h-6" />
-                </button>
-                <h1 className="text-base font-bold text-gray-900 truncate max-w-[200px]">책 리스트</h1>
-                <div className="flex items-center gap-2">
-                    {user && (
-                        <>
-                            <Link
-                                href="/my-library"
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
-                                title="내 서재"
-                            >
-                                <Bookmark className="w-5 h-5" />
-                            </Link>
-                            <button
-                                onClick={() => signOut()}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
-                                title="로그아웃"
-                            >
-                                <LogOut className="w-5 h-5" />
-                            </button>
-                        </>
-                    )}
+            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4">
+                <div className="relative flex items-center justify-between">
+                    <button onClick={() => router.push('/')} className="p-2 -ml-2 text-gray-500 hover:text-gray-900">
+                        <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <h1 className="absolute left-1/2 -translate-x-1/2 text-base font-bold text-gray-900 truncate max-w-[200px]">책 리스트</h1>
+                    <div className="flex items-center gap-2">
+                        {user && (
+                            <>
+                                <Link
+                                    href="/my-library"
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
+                                    title="내 서재"
+                                >
+                                    <Bookmark className="w-5 h-5" />
+                                </Link>
+                                <button
+                                    onClick={() => signOut()}
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
+                                    title="로그아웃"
+                                >
+                                    <LogOut className="w-5 h-5" />
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </div>
             </header>
 
