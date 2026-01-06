@@ -76,44 +76,45 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
     return (
         <main className="min-h-screen">
-            {/* Header / Logo */}
-            <header className="w-full bg-white border-b border-gray-100 flex items-center justify-between px-6 py-4 sticky top-0 z-50">
-                <div className="w-1/3"></div>
-                <div className="w-1/3 flex justify-center">
-                    <Link
-                        href="/"
-                        className="relative inline-flex items-center cursor-pointer"
-                    >
-                        <img
-                            src="/logo.png"
-                            alt="책방구"
-                            className="h-10 w-auto"
-                        />
-                        <span className="absolute top-1 -right-9 text-gray-400 text-xs font-bold leading-none italic">
-                            beta
-                        </span>
-                    </Link>
-                </div>
-                <div className="w-1/3 flex justify-end items-center gap-4">
-                    {user && (
-                        <div className="flex items-center gap-3">
-                            <Link
-                                href="/my-library"
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600 flex items-center gap-1 text-sm font-medium"
-                                title="내 서재"
-                            >
-                                <Bookmark className="w-5 h-5" />
-                                <span className="hidden sm:inline">내 서재</span>
-                            </Link>
-                            <button
-                                onClick={() => signOut()}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
-                                title="로그아웃"
-                            >
-                                <LogOut className="w-5 h-5" />
-                            </button>
+            {/* Header - Navigation & Title */}
+            <header className="w-full bg-white border-b border-gray-100 px-6 py-4 sticky top-0 z-50">
+                <div className="max-w-[1200px] mx-auto">
+                    {/* Navigation Breadcrumb */}
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                        <Link href="/" className="hover:text-gray-900 transition-colors">
+                            홈
+                        </Link>
+                        <span>&gt;</span>
+                        <span className="text-gray-900 font-medium">책 리스트</span>
+                    </div>
+
+                    {/* Page Title & User Menu */}
+                    <div className="flex items-center justify-between">
+                        <h1 className="text-2xl font-bold text-gray-900">책 리스트</h1>
+
+                        {/* User Menu */}
+                        <div className="flex items-center gap-4">
+                            {user && (
+                                <div className="flex items-center gap-3">
+                                    <Link
+                                        href="/my-library"
+                                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600 flex items-center gap-1 text-sm font-medium"
+                                        title="내 서재"
+                                    >
+                                        <Bookmark className="w-5 h-5" />
+                                        <span className="hidden sm:inline">내 서재</span>
+                                    </Link>
+                                    <button
+                                        onClick={() => signOut()}
+                                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
+                                        title="로그아웃"
+                                    >
+                                        <LogOut className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
             </header>
 
