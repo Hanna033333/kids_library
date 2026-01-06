@@ -27,6 +27,6 @@ export const metadata: Metadata = {
         },
     },
     verification: {
-        google: "", // Google Search Console 인증 코드 (나중에 추가)
+        google: "X91bGqGznK1eio7JJAUbij2Lo4BedhpLb4zf-w75U-M",
     },
 };
