@@ -78,11 +78,11 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         <main className="min-h-screen">
             {/* Header - Back Button & Title (책 상세 페이지와 동일) */}
             <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-                <Link href="/" className="p-2 -ml-2 text-gray-500 hover:text-gray-900">
+                <button onClick={() => router.push('/')} className="p-2 -ml-2 text-gray-500 hover:text-gray-900">
                     <ChevronLeft className="w-6 h-6" />
-                </Link>
-                <h1 className="text-base font-bold text-gray-900">책 리스트</h1>
-                <div className="flex items-center gap-3">
+                </button>
+                <h1 className="text-base font-bold text-gray-900 truncate max-w-[200px]">책 리스트</h1>
+                <div className="flex items-center gap-2">
                     {user && (
                         <>
                             <Link
