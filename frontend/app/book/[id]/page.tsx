@@ -219,7 +219,28 @@ export default function BookDetailPage() {
                             >
                                 <Heart className={`w-6 h-6 ${isSaved ? "fill-current" : ""}`} />
                             </button>
-                            <button className="w-14 h-14 flex items-center justify-center bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors border border-gray-100">
+                            <button
+                                onClick={async () => {
+                                    const shareData = {
+                                        title: book.title,
+                                        text: `${book.title} - ${book.author || ''}`,
+                                        url: window.location.href
+                                    };
+
+                                    try {
+                                        if (navigator.share) {
+                                            await navigator.share(shareData);
+                                        } else {
+                                            await navigator.clipboard.writeText(window.location.href);
+                                            alert('링크가 클립보드에 복사되었습니다!');
+                                        }
+                                    } catch (err) {
+                                        console.error('Share failed:', err);
+                                    }
+                                }}
+                                className="w-14 h-14 flex items-center justify-center bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors border border-gray-100 active:scale-[0.98] transform"
+                                title="공유하기"
+                            >
                                 <Share2 className="w-6 h-6" />
                             </button>
                         </div>
