@@ -150,7 +150,7 @@ export default function HomePage() {
           {/* 책 그리드 - 좌우 스크롤 */}
           {loading ? (
             <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-              <div className="flex gap-4 pb-2">
+              <div className="flex gap-4 pb-2 pr-4">
                 {[1, 2, 3, 4, 5].map(i => (
                   <div key={i} className="flex-shrink-0 w-[160px] sm:w-[180px]">
                     <div className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden h-full animate-pulse">
@@ -170,7 +170,7 @@ export default function HomePage() {
           ) : ageBooks.length > 0 ? (
             <>
               <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-                <div className="flex gap-4 pb-2">
+                <div className="flex gap-4 pb-2 pr-4">
                   {ageBooks.map(book => (
                     <div key={book.id} className="flex-shrink-0 w-[160px] sm:w-[180px]">
                       <BookCard book={book} />
@@ -203,7 +203,7 @@ export default function HomePage() {
           {researchBooks.length > 0 ? (
             <>
               <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-                <div className="flex gap-4 pb-2">
+                <div className="flex gap-4 pb-2 pr-4">
                   {researchBooks.map(book => (
                     <div key={book.id} className="flex-shrink-0 w-[160px] sm:w-[180px]">
                       <BookCard book={book} />
