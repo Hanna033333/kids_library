@@ -241,7 +241,6 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-8 px-6">
         <div className="max-w-6xl mx-auto text-center">
-          <p className="mb-2">책방구 | 어린이 도서관 책 검색</p>
           <p className="text-sm">© 2026 책방구. All rights reserved.</p>
         </div>
       </footer>
