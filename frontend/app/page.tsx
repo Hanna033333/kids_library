@@ -151,8 +151,8 @@ export default function HomePage() {
           {loading ? (
             <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
               <div className="flex gap-4 pb-2">
-                {[1, 2, 3, 4, 5].map(i => (
-                  <div key={i} className="flex-shrink-0 w-[160px] sm:w-[180px]">
+                {[1, 2, 3, 4, 5].map((i, index, array) => (
+                  <div key={i} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === array.length - 1 ? 'pr-4' : ''}`}>
                     <div className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden h-full animate-pulse">
                       {/* 이미지 스켈레톤 */}
                       <div className="w-full aspect-[1/1.1] bg-gray-200"></div>
@@ -165,21 +165,17 @@ export default function HomePage() {
                     </div>
                   </div>
                 ))}
-                {/* 오른쪽 여백 */}
-                <div className="flex-shrink-0 w-4"></div>
               </div>
             </div>
           ) : ageBooks.length > 0 ? (
             <>
               <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
                 <div className="flex gap-4 pb-2">
-                  {ageBooks.map(book => (
-                    <div key={book.id} className="flex-shrink-0 w-[160px] sm:w-[180px]">
+                  {ageBooks.map((book, index) => (
+                    <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === ageBooks.length - 1 ? 'pr-4' : ''}`}>
                       <BookCard book={book} />
                     </div>
                   ))}
-                  {/* 오른쪽 여백 */}
-                  <div className="flex-shrink-0 w-4"></div>
                 </div>
               </div>
             </>
@@ -208,13 +204,11 @@ export default function HomePage() {
             <>
               <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
                 <div className="flex gap-4 pb-2">
-                  {researchBooks.map(book => (
-                    <div key={book.id} className="flex-shrink-0 w-[160px] sm:w-[180px]">
+                  {researchBooks.map((book, index) => (
+                    <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === researchBooks.length - 1 ? 'pr-4' : ''}`}>
                       <BookCard book={book} />
                     </div>
                   ))}
-                  {/* 오른쪽 여백 */}
-                  <div className="flex-shrink-0 w-4"></div>
                 </div>
               </div>
             </>
