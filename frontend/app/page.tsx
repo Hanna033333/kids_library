@@ -51,7 +51,7 @@ export default function HomePage() {
           >
             <img
               src="/logo.png"
-              alt="책방구"
+              alt="책자리"
               className="h-10 w-auto"
             />
             <span className="absolute top-1 -right-9 text-gray-400 text-xs font-bold leading-none italic">
@@ -241,7 +241,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-8 px-6">
         <div className="max-w-6xl mx-auto text-center">
-          <p className="text-sm">© 2026 책방구. All rights reserved.</p>
+          <p className="text-sm">© 2026 책자리. All rights reserved.</p>
         </div>
       </footer>
     </main>
