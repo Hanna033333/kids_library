@@ -12,11 +12,20 @@ export const metadata: Metadata = {
         siteName: "책자리",
         locale: "ko_KR",
         type: "website",
+        images: [
+            {
+                url: "/logo.png",
+                width: 1200,
+                height: 630,
+                alt: "책자리 로고",
+            },
+        ],
     },
     twitter: {
         card: "summary_large_image",
         title: "책자리 - 어린이 도서관 책 검색",
         description: "어린이 추천 책을 도서관 청구기호로 바로 확인하세요",
+        images: ["/logo.png"],
     },
     robots: {
         index: true,
