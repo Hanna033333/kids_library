@@ -52,7 +52,7 @@ export default function HomePage() {
             <img
               src="/logo.png"
               alt="책자리"
-              className="h-10 w-auto"
+              className="h-9 w-auto"
             />
             <span className="absolute top-1 -right-9 text-gray-400 text-xs font-bold leading-none italic">
               beta
@@ -227,13 +227,13 @@ export default function HomePage() {
       <section className="py-6 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <a
-            href="https://notion.so/your-notice-link"
+            href="https://amplified-decimal-9c4.notion.site/26-01-10-2e4939f003ba80f2b698e9e016910587?source=copy_link"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 text-gray-700 hover:text-gray-900 transition-colors group"
           >
             <Bell className="w-5 h-5 text-[#F59E0B] group-hover:text-[#D97706] transition-colors" />
-            <span className="text-sm font-medium">12/16(화) 서비스 업데이트 안내</span>
+            <span className="text-sm font-medium">서비스 오픈 안내(1/10)</span>
           </a>
         </div>
       </section>
@@ -241,7 +241,18 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-8 px-6">
         <div className="max-w-6xl mx-auto text-center">
-          <p className="text-sm">© 2026 책자리. All rights reserved.</p>
+          <p className="text-sm flex items-center justify-center gap-3 flex-wrap">
+            <span>© 2026 책자리. All rights reserved.</span>
+            <span className="text-gray-600">|</span>
+            <a
+              href="https://amplified-decimal-9c4.notion.site/2e4939f003ba809ab07ce973f9033e61?source=copy_link"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white transition-colors underline"
+            >
+              서비스 소개
+            </a>
+          </p>
         </div>
       </footer>
     </main>
