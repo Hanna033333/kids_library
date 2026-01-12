@@ -20,7 +20,7 @@ export default function RootLayout({
         <meta name="keywords" content="어린이 도서, 어린이 추천 책, 도서관, 어린이 도서관, 청구기호" />
 
         {/* Google Search Console Verification */}
-        <meta name="google-site-verification" content="X91bGqGznK1eio7JJAUbij2Lo4BedhpLb4zf-w75U-M" />
+        <meta name="google-site-verification" content="yLipdtFnNl8hGiWx_zjWZY3paRWUaZhkxs7AotPaCq4" />
 
         {/* Open Graph */}
         <meta property="og:title" content="책자리 - 어린이 도서관 책 검색" />
