@@ -11,7 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('id')
 
-    const baseUrl = 'https://bookbangu.com'
+    const baseUrl = 'https://checkjari.com'
 
     // Main page
     const routes: MetadataRoute.Sitemap = [
