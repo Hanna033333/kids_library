@@ -1,0 +1,308 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import BookItem from "./BookItem";
+import { useBooks } from "@/hooks/useBooks";
+import { Book } from "@/lib/types";
+import { fetchLoanStatuses } from "@/lib/api";
+
+interface BookListProps {
+  searchQuery?: string;
+  ageFilter?: string;
+  categoryFilter?: string;
+  sortFilter?: string;
+}
+
+const ITEMS_PER_PAGE = 24;
+
+export default function BookList({
+  searchQuery,
+  ageFilter,
+  categoryFilter,
+  sortFilter = "pangyo_callno",
+}: BookListProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Read initial page from URL (important for back navigation and desktop pagination)
+  const initialPage = parseInt(searchParams.get('page') || '1', 10);
+  const [page, setPage] = useState(initialPage);
+  const [allBooks, setAllBooks] = useState<Book[]>([]);
+  const [booksWithLoan, setBooksWithLoan] = useState<Book[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Sync page state with URL (for desktop pagination and back navigation)
+  useEffect(() => {
+    // Don't sync during mobile infinite scroll (it doesn't use URL)
+    if (isMobile) return;
+
+    const urlPage = parseInt(searchParams.get('page') || '1', 10);
+    if (urlPage !== page) {
+      console.log('[BookList] Syncing URL page to state:', urlPage);
+      setPage(urlPage);
+      setAllBooks([]); // Clear books when page changes via URL
+    }
+  }, [searchParams, isMobile, page]);
+
+  const { books, loading, error, total, totalPages } = useBooks({
+    searchQuery,
+    ageFilter,
+    categoryFilter,
+    sortFilter,
+    page,
+    limit: ITEMS_PER_PAGE,
+  });
+
+  console.log(`[BookList] After useBooks, page ${page}:`, {
+    booksLength: books.length,
+    loading,
+    total,
+    totalPages
+  });
+
+  // Update books list (mobile: append, desktop: replace)
+  useEffect(() => {
+    if (!loading) {
+      if (books.length > 0) {
+        if (isMobile && page > 1) {
+          setAllBooks(prev => [...prev, ...books]);
+        } else {
+          setAllBooks(books);
+        }
+      }
+      setIsFetchingMore(false);
+    }
+  }, [books, loading, isMobile, page]);
+
+  // Track which books have had their loan status fetched
+  const fetchedBookIds = useRef<Set<number>>(new Set());
+
+  // Reset fetched status when filters change
+  useEffect(() => {
+    fetchedBookIds.current.clear();
+  }, [searchQuery, ageFilter, categoryFilter, sortFilter]);
+
+  // Sync booksWithLoan with allBooks, preserving existing statuses
+  useEffect(() => {
+    setBooksWithLoan(prev => {
+      const prevMap = new Map(prev.map(b => [b.id, b]));
+      return allBooks.map(b => {
+        const existing = prevMap.get(b.id);
+        if (existing && existing.loan_status) {
+          return { ...b, loan_status: existing.loan_status };
+        }
+        return b;
+      });
+    });
+  }, [allBooks]);
+
+  // Lazy load loan statuses for visible books only
+  useEffect(() => {
+    // Only set up observer if we have books
+    if (booksWithLoan.length === 0) return;
+
+    // Intersection Observer to detect visible books
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleBookIds: number[] = [];
+
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const bookId = parseInt(entry.target.getAttribute('data-book-id') || '0');
+            if (bookId && !fetchedBookIds.current.has(bookId)) {
+              visibleBookIds.push(bookId);
+              fetchedBookIds.current.add(bookId);
+            }
+          }
+        });
+
+        // Fetch loan status in chunks (Progressive Rendering)
+        if (visibleBookIds.length > 0) {
+          const chunkSize = 6;
+          for (let i = 0; i < visibleBookIds.length; i += chunkSize) {
+            const chunk = visibleBookIds.slice(i, i + chunkSize);
+
+            // Fire request for this chunk
+            fetchLoanStatuses(chunk)
+              .then(loanStatuses => {
+                setBooksWithLoan(prevBooks =>
+                  prevBooks.map(book => {
+                    // Update only if this book was in the chunk
+                    if (chunk.includes(book.id)) {
+                      return {
+                        ...book,
+                        loan_status: loanStatuses[book.id] || book.loan_status || null
+                      };
+                    }
+                    return book;
+                  })
+                );
+              })
+              .catch(err => {
+                console.error('Failed to fetch loan statuses chunk:', err);
+                // 에러 발생 시 UI에 표시
+                setBooksWithLoan(prevBooks =>
+                  prevBooks.map(book => {
+                    if (chunk.includes(book.id)) {
+                      return {
+                        ...book,
+                        loan_status: { available: null, status: "통신오류", updated_at: new Date().toISOString() }
+                      };
+                    }
+                    return book;
+                  })
+                );
+              });
+          }
+        }
+
+      },
+      {
+        rootMargin: '100px', // Start loading slightly before book becomes visible
+        threshold: 0.1
+      }
+    );
+
+    // Observe all book items
+    const bookElements = document.querySelectorAll('[data-book-id]');
+    bookElements.forEach(el => observer.observe(el));
+
+    return () => {
+      observer.disconnect();
+    };
+    // Re-run observer when booksWithLoan actually changes LENGTH (to attach to new elements)
+    // But be careful not to re-run on STATUS change alone if possible? 
+    // Actually, if we use [booksWithLoan.length], we handle appends.
+    // If status updates, we re-render, but observer doesn't need re-init.
+    // But data-book-id elements are re-rendered.
+    // It's safer to re-observe.
+  }, [booksWithLoan.length]);
+
+  // Refs for IntersectionObserver (avoid stale closures)
+  const loadingRef = useRef(loading);
+  const isFetchingMoreRef = useRef(isFetchingMore);
+  const pageRef = useRef(page);
+  const totalPagesRef = useRef(totalPages);
+
+  useEffect(() => {
+    console.log('[BookList] Updating refs:', {
+      loading,
+      isFetchingMore,
+      page,
+      totalPages
+    });
+    loadingRef.current = loading;
+    isFetchingMoreRef.current = isFetchingMore;
+    pageRef.current = page;
+    totalPagesRef.current = totalPages;
+  }, [loading, isFetchingMore, page, totalPages]);
+
+  // Infinite scroll for mobile
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting &&
+          !loadingRef.current &&
+          !isFetchingMoreRef.current &&
+          pageRef.current < totalPagesRef.current) {
+          setIsFetchingMore(true);
+          setPage(prev => prev + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [isMobile]);
+
+  return (
+    <div className="w-full max-w-[1200px] mx-auto px-4">
+      {/* Status display */}
+      <div className="mb-4 px-1 flex flex-col gap-2">
+        <div className="flex items-center justify-between text-sm text-gray-500 font-medium">
+          <span>
+            총 <span className="font-bold text-gray-900">{total.toLocaleString()}</span>권
+          </span>
+        </div>
+      </div>
+
+      {/* Error display */}
+      {error && (
+        <div className="py-20 text-center bg-white rounded-xl shadow-sm">
+          <p className="text-red-500 font-medium mb-2">데이터를 불러오지 못했습니다.</p>
+          <p className="text-sm text-gray-400">{error}</p>
+        </div>
+      )}
+
+      {/* Book list grid */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+            <p className="text-gray-500 font-medium animate-pulse">도서 리스트 확인 중...</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6 w-full mt-12 opacity-50">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="aspect-[1/1.6] bg-gray-200 rounded-2xl animate-pulse" />
+            ))}
+          </div>
+        </div>
+      ) : !loading && books.length === 0 ? (
+        <div className="py-32 text-center bg-white rounded-2xl border border-dashed border-gray-200">
+          <div className="text-gray-400 text-lg">
+            검색 결과가 없습니다.
+          </div>
+          <div className="text-gray-300 text-sm mt-1">
+            다른 검색어로 시도해보세요.
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+            {booksWithLoan.map((book) => (
+              <div key={book.id} data-book-id={book.id}>
+                <BookItem book={book} />
+              </div>
+            ))}
+          </div>
+
+          {/* Infinite scroll trigger for mobile */}
+          {isMobile && allBooks.length > 0 && !error && (
+            <div ref={observerTarget} className="py-8 flex justify-center">
+              {page < totalPages && (
+                <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+
+    </div>
+  );
+}

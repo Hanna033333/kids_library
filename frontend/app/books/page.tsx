@@ -5,5 +5,5 @@ export const dynamic = 'force-dynamic';
 
 export default function BooksPage() {
     // Using CSR (Client-Side Rendering) until is_hidden column is stable
-    return <HomeClient initialData={undefined} />;
+    return <HomeClient />;
 }

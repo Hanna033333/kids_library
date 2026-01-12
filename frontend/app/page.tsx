@@ -19,7 +19,7 @@ export default function HomePage() {
   // 연령별 책 로드
   useEffect(() => {
     setLoading(true)
-    getBooksByAge(selectedAge, 5).then(books => {
+    getBooksByAge(selectedAge, 7).then(books => {
       setAgeBooks(books)
       setLoading(false)
     })
@@ -27,7 +27,7 @@ export default function HomePage() {
 
   // 도서 연구회 책 로드
   useEffect(() => {
-    getResearchCouncilBooks(5).then(setResearchBooks)
+    getResearchCouncilBooks(7).then(setResearchBooks)
   }, [])
 
   const handleSearch = (e: React.FormEvent) => {
@@ -151,7 +151,7 @@ export default function HomePage() {
           {loading ? (
             <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
               <div className="flex gap-4 pb-2">
-                {[1, 2, 3, 4, 5].map((i, index, array) => (
+                {[1, 2, 3, 4, 5, 6, 7].map((i, index, array) => (
                   <div key={i} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === array.length - 1 ? 'pr-4' : ''}`}>
                     <div className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden h-full animate-pulse">
                       {/* 이미지 스켈레톤 */}

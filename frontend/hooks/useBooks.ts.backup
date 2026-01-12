@@ -1,0 +1,84 @@
+/**
+ * 책 데이터 로딩 및 관리 커스텀 훅
+ */
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { BooksResponse } from "@/lib/types";
+import { searchBooks } from "@/lib/api";
+
+interface UseBooksParams {
+  searchQuery?: string;
+  ageFilter?: string;
+  categoryFilter?: string;
+  sortFilter?: string;
+  page: number;
+  limit?: number;
+}
+
+export function useBooks({
+  searchQuery,
+  ageFilter,
+  categoryFilter,
+  sortFilter = "pangyo_callno",
+  page,
+  limit = 24,
+}: UseBooksParams) {
+  const queryKey = ["books", searchQuery, ageFilter, categoryFilter, sortFilter, page, limit];
+
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey,
+    queryFn: async (): Promise<BooksResponse> => {
+      console.log(`[useBooks] Fetching page ${page}...`);
+
+      // Search queries use backend
+      if (searchQuery) {
+        const result = await searchBooks(
+          searchQuery,
+          ageFilter || undefined,
+          categoryFilter || undefined,
+          sortFilter,
+          page,
+          limit
+        );
+        console.log(`[useBooks] Page ${page} response:`, {
+          dataLength: result.data?.length,
+          total: result.total,
+          total_pages: result.total_pages
+        });
+        return result;
+      }
+
+      // Simple browsing uses Supabase direct
+      const { getBooksFromSupabase } = await import("@/lib/supabase-client");
+      const result = await getBooksFromSupabase(page, limit, {
+        age: ageFilter,
+        category: categoryFilter,
+        sort: sortFilter,
+      });
+      console.log(`[useBooks] Page ${page} response:`, {
+        dataLength: result.data?.length,
+        total: result.total,
+        total_pages: result.total_pages
+      });
+      return result;
+    },
+    staleTime: 30 * 1000,
+  });
+
+  console.log(`[useBooks] Returning for page ${page}:`, {
+    booksLength: data?.data?.length || 0,
+    total: data?.total || 0,
+    totalPages: data?.total_pages || 0,
+    loading: isLoading
+  });
+
+  return {
+    books: data?.data || [],
+    loading: isLoading,
+    error: error ? "책 목록을 불러오는데 실패했습니다." : null,
+    total: data?.total || 0,
+    totalPages: data?.total_pages || 0,
+    reload: refetch,
+  };
+}

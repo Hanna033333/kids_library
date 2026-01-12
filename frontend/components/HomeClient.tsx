@@ -13,10 +13,9 @@ import Link from "next/link";
 import IntegratedFilterModal from "@/components/IntegratedFilterModal";
 
 interface HomeClientProps {
-    initialData?: BooksResponse;
 }
 
-export default function HomeClient({ initialData }: HomeClientProps) {
+export default function HomeClient({ }: HomeClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -31,7 +30,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
     // URL 업데이트 함수
     const updateURL = useCallback((params: Record<string, string>) => {
-        const newParams = new URLSearchParams(searchParams.toString());
+        // Use window.location.search to get current params without dependency
+        const newParams = new URLSearchParams(window.location.search);
 
         Object.entries(params).forEach(([key, value]) => {
             if (value && value !== "전체") {
@@ -42,7 +42,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         });
 
         router.push(`?${newParams.toString()}`, { scroll: false });
-    }, [router, searchParams]);
+    }, [router]);
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
@@ -153,7 +153,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                     ageFilter={ageFilter || undefined}
                     categoryFilter={categoryFilter === "전체" ? undefined : categoryFilter}
                     sortFilter={sortFilter}
-                    initialData={initialData}
                 />
             </div>
         </main>

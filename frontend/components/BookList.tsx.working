@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
 import BookItem from "./BookItem";
 import { useBooks } from "@/hooks/useBooks";
 
@@ -38,26 +37,6 @@ export default function BookList({
     categoryFilter,
     sortFilter,
     limit: ITEMS_PER_PAGE,
-  });
-
-  // Batch fetch loan statuses for all visible books (1 API call instead of 24)
-  const bookIds = books.map(b => b.id).join(',');
-
-  const { data: loanStatuses } = useQuery({
-    queryKey: ['batch-loan-status', bookIds],
-    queryFn: async () => {
-      if (books.length === 0) return {};
-      try {
-        const { fetchLoanStatuses } = await import("@/lib/api");
-        return await fetchLoanStatuses(books.map(b => b.id));
-      } catch (err) {
-        console.warn('Batch loan status fetch failed:', err);
-        return {};
-      }
-    },
-    enabled: books.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
-    retry: 1,
   });
 
   // Infinite scroll observer (mobile only)
@@ -115,7 +94,7 @@ export default function BookList({
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
             {books.map((book) => (
               <div key={book.id}>
-                <BookItem book={book} loanStatus={loanStatuses?.[book.id]} />
+                <BookItem book={book} />
               </div>
             ))}
           </div>

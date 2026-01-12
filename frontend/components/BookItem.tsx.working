@@ -1,10 +1,11 @@
-﻿import { Book, LoanStatus } from "@/lib/types";
+﻿import { Book } from "@/lib/types";
 import { ImageOff, Tags } from "lucide-react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { fetchLoanStatuses } from "@/lib/api";
 
 interface BookItemProps {
   book: Book;
-  loanStatus?: LoanStatus;
 }
 
 // Helper to normalize age strings to standard ranges
@@ -24,11 +25,25 @@ function normalizeAge(rawAge: string): string {
   return rawAge; // Return original if no match
 }
 
-export default function BookItem({ book, loanStatus }: BookItemProps) {
+export default function BookItem({ book }: BookItemProps) {
   const displayAge = normalizeAge(book.age || "");
 
-  // Use prop from batch fetch, fallback to book's existing status
-  const finalLoanStatus = loanStatus || book.loan_status;
+  // Fetch loan status independently for this book
+  const { data: loanStatuses } = useQuery({
+    queryKey: ['loan-status', book.id],
+    queryFn: async () => {
+      try {
+        return await fetchLoanStatuses([book.id]);
+      } catch (err) {
+        console.warn(`Failed to fetch loan status for book ${book.id}:`, err);
+        return {};
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+  });
+
+  const loanStatus = loanStatuses?.[book.id] || book.loan_status;
 
   return (
     <Link
@@ -85,14 +100,14 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
 
         <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
           <span className="text-gray-400 truncate max-w-[60%]">{book.publisher}</span>
-          {finalLoanStatus && finalLoanStatus.status !== '시간초과' && (
-            <span className={`px-2 py-1 rounded-full text-[11px] font-bold leading-none text-center ${finalLoanStatus.available === true
+          {loanStatus && loanStatus.status !== '시간초과' && (
+            <span className={`px-2 py-1 rounded-full text-[11px] font-bold leading-none text-center ${loanStatus.available === true
               ? "bg-green-100 text-green-700"
-              : finalLoanStatus.available === false
+              : loanStatus.available === false
                 ? "bg-red-100 text-red-700"
                 : "bg-gray-100 text-gray-500"
               }`}>
-              {finalLoanStatus.status}
+              {loanStatus.status}
             </span>
           )}
 
