@@ -28,13 +28,14 @@ def build_search_query(
     if category and category != "전체":
         query = query.eq("category", category)
     
-    # 검색어 필터링
+    # 검색어 필터링 (제목 또는 저자에 검색어 포함)
     if q:
         q = q.strip()
         if q:
+            # OR는 title/author 내부에만 적용, 전체 쿼리와는 AND로 결합
             query = query.or_(f"title.ilike.%{q}%,author.ilike.%{q}%")
     
-    # 연령 필터링
+    # 연령 필터링 (각 연령대별 OR는 유지하되, 전체 쿼리와는 AND로 결합)
     if age:
         age = age.strip()
         if age:
@@ -82,13 +83,14 @@ def search_books_service(
     if category and category != "전체":
         query = query.eq("category", category)
     
-    # 검색어 필터링
+    # 검색어 필터링 (제목 또는 저자에 검색어 포함)
     if q:
         q = q.strip()
         if q:
+            # OR는 title/author 내부에만 적용, 전체 쿼리와는 AND로 결합
             query = query.or_(f"title.ilike.%{q}%,author.ilike.%{q}%")
     
-    # 연령 필터링
+    # 연령 필터링 (각 연령대별 OR는 유지하되, 전체 쿼리와는 AND로 결합)
     if age:
         age = age.strip()
         if age:
