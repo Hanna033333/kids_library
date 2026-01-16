@@ -149,6 +149,14 @@ async def get_book_detail(book_id: int):
     count_data = supabase.table("user_saved_books").select("id", count="exact").eq("book_id", book_id).execute()
     book["save_count"] = count_data.count if count_data.count is not None else 0
 
+    # 4. 도서관 청구기호 조회 (Multi-Library Support)
+    try:
+        lib_data = supabase.table("book_library_info").select("library_name, callno").eq("book_id", book_id).execute()
+        book["library_info"] = lib_data.data if lib_data.data else []
+    except Exception as e:
+        print(f"Error fetching library info: {e}")
+        book["library_info"] = []
+
     return book
 
 

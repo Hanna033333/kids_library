@@ -4,8 +4,11 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Search, Bookmark, LogOut, ChevronRight, Bell } from 'lucide-react'
-import { getBooksByAge, getResearchCouncilBooks, type Book } from '@/lib/home-api'
+import { getBooksByAge, getResearchCouncilBooks } from '@/lib/home-api'
+import { type Book, type LibraryInfo } from '@/lib/types'
 import { useAuth } from '@/context/AuthContext'
+import LibrarySelector from '@/components/LibrarySelector'
+import { useLibrary } from '@/context/LibraryContext'
 
 export default function HomePage() {
   const router = useRouter()
@@ -41,10 +44,8 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#F7F7F7]">
-      {/* Header - 책 리스트와 동일 */}
       <header className="w-full bg-white border-b border-gray-100 flex items-center justify-between px-6 py-4 sticky top-0 z-50">
-        <div className="w-1/3"></div>
-        <div className="w-1/3 flex justify-center">
+        <div className="flex justify-start items-center gap-4">
           <button
             onClick={() => router.push('/')}
             className="relative inline-flex items-center cursor-pointer"
@@ -59,9 +60,12 @@ export default function HomePage() {
             </span>
           </button>
         </div>
-        <div className="w-1/3 flex justify-end items-center gap-4">
+
+        <div className="flex justify-end items-center gap-4">
+          <LibrarySelector />
+
           {user && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 ml-2 border-l border-gray-200 pl-4">
               <Link
                 href="/my-library"
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600 flex items-center gap-1 text-sm font-medium"
@@ -261,6 +265,8 @@ export default function HomePage() {
 
 // 책 카드 컴포넌트 - BookItem과 동일한 UI
 function BookCard({ book }: { book: Book }) {
+  const { selectedLibrary } = useLibrary()
+
   // Helper to normalize age strings
   function normalizeAge(rawAge: string): string {
     if (!rawAge) return ""
@@ -276,6 +282,27 @@ function BookCard({ book }: { book: Book }) {
   }
 
   const displayAge = normalizeAge(book.age || "")
+
+  // 청구기호 결정 로직
+  let displayCallNo = '청구기호 없음'
+
+  if (selectedLibrary === '판교도서관') {
+    // 판교는 기존 컬럼 우선, 없으면 library_info 확인
+    if (book.pangyo_callno && book.pangyo_callno !== '없음') {
+      displayCallNo = book.pangyo_callno
+    } else {
+      const info = book.library_info?.find((l: LibraryInfo) => l.library_name.includes('판교'))
+      if (info) displayCallNo = info.callno
+    }
+  } else {
+    // 다른 도서관
+    const info = book.library_info?.find((l: LibraryInfo) => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary))
+    if (info) {
+      displayCallNo = info.callno
+    } else {
+      displayCallNo = '보유 정보 없음'
+    }
+  }
 
   return (
     <Link
@@ -319,8 +346,8 @@ function BookCard({ book }: { book: Book }) {
           {book.title}
         </h3>
 
-        <p className="text-[15px] font-extrabold text-[#F59E0B] tracking-tight mb-3 truncate w-full">
-          {book.pangyo_callno}
+        <p className={`text-[15px] font-extrabold tracking-tight mb-3 truncate w-full ${displayCallNo === '보유 정보 없음' ? 'text-gray-300' : 'text-[#F59E0B]'}`}>
+          {displayCallNo}
         </p>
 
         <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">

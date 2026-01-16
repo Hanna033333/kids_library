@@ -1,16 +1,5 @@
 import { createClient } from './supabase'
-
-export interface Book {
-    id: number
-    title: string
-    author: string
-    publisher: string
-    category: string
-    age: string
-    pangyo_callno: string
-    image_url: string
-    curation_tag?: string
-}
+import { Book } from './types'
 
 /**
  * 연령별 책 추천 가져오기 (일주일마다 랜덤 변경)
@@ -42,7 +31,7 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5): Promis
 
     const { data, error } = await supabase
         .from('childbook_items')
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url')
+        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, library_info:book_library_info(library_name, callno)')
         .in('age', ageValues)
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('id') // 일관된 정렬
@@ -53,7 +42,7 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5): Promis
         return []
     }
 
-    return data || []
+    return (data as any) || []
 }
 
 /**
@@ -72,7 +61,7 @@ export async function getResearchCouncilBooks(limit: number = 5): Promise<Book[]
 
     const { data, error } = await supabase
         .from('childbook_items')
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag')
+        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, library_info:book_library_info(library_name, callno)')
         .eq('curation_tag', '어린이도서연구회')
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('id') // 일관된 정렬
@@ -83,5 +72,5 @@ export async function getResearchCouncilBooks(limit: number = 5): Promise<Book[]
         return []
     }
 
-    return data || []
+    return (data as any) || []
 }

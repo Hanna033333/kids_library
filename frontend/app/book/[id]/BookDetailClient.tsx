@@ -16,6 +16,8 @@ import {
     Share2
 } from 'lucide-react'
 import Link from 'next/link'
+import LibrarySelector from '@/components/LibrarySelector'
+import { useLibrary } from '@/context/LibraryContext'
 
 interface BookDetailClientProps {
     book: Book
@@ -28,8 +30,27 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
     const [isSaved, setIsSaved] = useState(false)
     const [saveCount, setSaveCount] = useState(initialBook.save_count || 0)
     const [isToggling, setIsToggling] = useState(false)
+    const { selectedLibrary } = useLibrary()
 
     const supabase = createClient()
+
+    // 청구기호 결정 로직
+    let displayCallNo = '청구기호 없음'
+    if (selectedLibrary === '판교도서관') {
+        if (book.pangyo_callno && book.pangyo_callno !== '없음') {
+            displayCallNo = book.pangyo_callno
+        } else {
+            const info = book.library_info?.find(l => l.library_name.includes('판교'))
+            if (info) displayCallNo = info.callno
+        }
+    } else {
+        const info = book.library_info?.find(l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary))
+        if (info) {
+            displayCallNo = info.callno
+        } else {
+            displayCallNo = '보유 정보 없음'
+        }
+    }
 
     // Fetch loan status in background (progressive loading)
     useEffect(() => {
@@ -109,11 +130,13 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
         <main className="min-h-screen bg-white pb-20">
             {/* Top Header */}
             <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-                <button onClick={() => router.back()} className="p-2 -ml-2 text-gray-500 hover:text-gray-900">
-                    <ChevronLeft className="w-6 h-6" />
-                </button>
-                <h1 className="text-base font-bold text-gray-900 truncate max-w-[200px]">상세 정보</h1>
-                <div className="w-10" />
+                <div className="flex items-center gap-2">
+                    <button onClick={() => router.back()} className="p-2 -ml-2 text-gray-500 hover:text-gray-900">
+                        <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <h1 className="text-base font-bold text-gray-900 truncate max-w-[200px]">상세 정보</h1>
+                </div>
+                <LibrarySelector />
             </header>
 
             <div className="max-w-4xl mx-auto px-6 pt-8">
@@ -160,11 +183,11 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                             <div className="mb-2">
                                 <span className="text-sm text-gray-600 block mb-1.5 flex items-center gap-1">
                                     <MapPin className="w-3.5 h-3.5" />
-                                    판교 도서관
+                                    {selectedLibrary}
                                 </span>
                                 <div className="flex items-center gap-3">
-                                    <span className="font-black text-2xl text-gray-900 tracking-tight">
-                                        {book.pangyo_callno}{book.vol ? `-${book.vol}` : ''}
+                                    <span className={`font-black text-2xl tracking-tight ${displayCallNo === '보유 정보 없음' ? 'text-gray-300' : 'text-gray-900'}`}>
+                                        {displayCallNo}{book.vol ? `-${book.vol}` : ''}
                                     </span>
                                     {book.loan_status && (
                                         <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${book.loan_status.available

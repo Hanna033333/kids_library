@@ -4,6 +4,7 @@ import "./globals.css";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "@/context/AuthContext";
+import { LibraryProvider } from "@/context/LibraryContext";
 import Script from "next/script";
 
 export default function RootLayout({
@@ -52,7 +53,9 @@ export default function RootLayout({
       <body className="bg-[#F7F7F7] min-h-screen text-gray-900">
         <AuthProvider>
           <QueryClientProvider client={queryClient}>
-            {children}
+            <LibraryProvider>
+              {children}
+            </LibraryProvider>
           </QueryClientProvider>
         </AuthProvider>
       </body>

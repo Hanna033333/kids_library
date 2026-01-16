@@ -2,6 +2,11 @@
  * 공통 타입 정의
  */
 
+export interface LibraryInfo {
+  library_name: string;
+  callno: string;
+}
+
 export interface Book {
   id: number;
   title: string;
@@ -9,6 +14,8 @@ export interface Book {
   publisher: string | null;
   isbn: string | null;
   pangyo_callno: string | null;
+  web_scraped_callno?: string | null;
+  library_info?: LibraryInfo[];
   vol: string | null;
   age: string | null;
   category: string | null;
