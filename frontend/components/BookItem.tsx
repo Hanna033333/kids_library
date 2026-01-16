@@ -1,5 +1,5 @@
 ﻿import { Book } from "@/lib/types";
-import { ImageOff, Tags } from "lucide-react";
+import { ImageOff, Tags, BookOpen } from "lucide-react";
 import Link from "next/link";
 
 interface BookItemProps {
@@ -12,13 +12,13 @@ function normalizeAge(rawAge: string): string {
   const age = rawAge.replace(/\s/g, ""); // Remove spaces
 
   // 특수 케이스: "8~13세"는 초등으로 분류
-  if (age.includes("8~13세")) return "8-12세";
+  if (age.includes("8~13세")) return "8~12세";
 
   // 높은 연령부터 체크하여 하위 연령 문자열 포함 문제 해결 (예: "13세"에 "3세"가 포함되는 문제)
   if (["청소년", "13세", "14세", "15세", "16세", "17세", "18세", "성인"].some(k => age.includes(k))) return "13세+";
-  if (["초등", "8세", "9세", "10세", "11세", "12세"].some(k => age.includes(k))) return "8-12세";
-  if (["유아", "유치", "4세", "5세", "6세", "7세"].some(k => age.includes(k))) return "4-7세";
-  if (["영유아", "0세", "1세", "2세", "3세"].some(k => age.includes(k))) return "0-3세";
+  if (["초등", "8세", "9세", "10세", "11세", "12세"].some(k => age.includes(k))) return "8~12세";
+  if (["유아", "유치", "4세", "5세", "6세", "7세"].some(k => age.includes(k))) return "4~7세";
+  if (["영유아", "0세", "1세", "2세", "3세"].some(k => age.includes(k))) return "0~3세";
 
   return rawAge; // Return original if no match
 }
@@ -48,8 +48,7 @@ export default function BookItem({ book }: BookItemProps) {
 
         {/* Fallback for No Image */}
         <div className={`flex flex-col items-center justify-center w-full h-full text-gray-300 ${book.image_url ? 'hidden' : ''}`}>
-          <ImageOff className="w-8 h-8 mb-2 opacity-40" />
-          <span className="text-[10px] uppercase tracking-wider font-medium opacity-60">No Image</span>
+          <BookOpen className="w-12 h-12 opacity-20" />
         </div>
 
         {/* 태그 (이미지 위에 오버레이) */}
