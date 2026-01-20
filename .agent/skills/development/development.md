@@ -69,11 +69,48 @@ kids library/
 - ❌ 코드 리팩토링 (기능 변경 없음)
 - ❌ 문서 오타 수정
 
-## 6. 참고 사항
-- **Base URL**: Production은 `https://kids-library-7gj8.onrender.com`
-- **환경변수**: `NEXT_PUBLIC_API_URL`로 API URL 설정
+## 6. 호스팅 환경
+
+### Frontend (Vercel)
+| 환경 | URL | 브랜치 |
+|------|-----|--------|
+| **Preview (개발)** | `https://kids-library-git-dev-hannas-projects-f9ed017f.vercel.app` | `dev` |
+| **Production** | `https://checkjari.com` | `main` |
+
+### Backend (Render)
+| 환경 | URL |
+|------|-----|
+| **Production** | `https://kids-library-7gj8.onrender.com` |
+
+### 환경변수
+- `NEXT_PUBLIC_API_URL`: Backend API URL (기본: `http://127.0.0.1:8000`)
+- 자세한 내용은 [supabase_env.md](./supabase_env.md) 참고
+
+### 기타 참고
 - **캐싱**: 대출 상태 API는 5분 캐시
 - **페이지네이션**: 무한 스크롤, 24권씩 로딩
 
-## 7. Supabase 환경변수 가이드
+## 7. 배포 원칙
+
+### 배포 순서
+1. **개발(Preview) 배포** → `dev` 브랜치 push
+2. **검증** → Preview URL에서 이슈 없는지 확인
+3. **프로덕션 배포** → 검증 완료 후 `main` 브랜치 push
+
+### 배포 명령어
+```bash
+# 개발 배포 (dev 브랜치)
+git checkout dev
+git merge main
+git push origin dev
+
+# 프로덕션 배포 (검증 후)
+git checkout main
+git push origin main
+```
+
+> [!IMPORTANT]
+> **절대 main에 바로 push하지 않기!** Preview에서 검증 후 Production 배포.
+
+## 8. Supabase 환경변수 가이드
 DB 업데이트 스크립트 작성 시 환경변수 설정은 [supabase_env.md](./supabase_env.md)를 참고하세요.
