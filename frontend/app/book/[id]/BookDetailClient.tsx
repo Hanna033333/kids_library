@@ -145,7 +145,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                     </button>
                     <h1 className="text-base font-bold text-gray-900 truncate max-w-[200px]">상세 정보</h1>
                 </div>
-                <LibrarySelector />
+                {/* <LibrarySelector /> */}
             </header>
 
             <div className="max-w-4xl mx-auto px-6 pt-8">
