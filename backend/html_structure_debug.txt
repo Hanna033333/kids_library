@@ -1,0 +1,135 @@
+=== 첫 번째 검색 결과 HTML ===
+<li>
+ <span class="num">
+  1.
+ </span>
+ <span class="chk">
+  <input name="check" title="나는 오늘도 감정식당에 가요 선택" type="checkbox" value="1949734267^1949734269^BO"/>
+ </span>
+ <div class="thumb">
+  <a class="cover" href="#link" onclick="javascript:fnSearchResultDetail(1949734267,1949734269,'BO'); return false;">
+   <em class="tag">
+    <img alt="문학" src="/include/booksearch/image/kdc/tag8.png"/>
+   </em>
+   <span class="img">
+    <img alt="나는 오늘도 감정식당에 가요 표지" class="bookCoverImg" src="https://shopping-phinf.pstatic.net/main_5598914/55989142232.20250729091616.jpg"/>
+   </span>
+  </a>
+ </div>
+ <dl class="bookDataWrap">
+  <dt class="tit">
+   <span class="cate">
+    도서
+   </span>
+   <a href="#link" onclick="javascript:fnSearchResultDetail(1949734267,1949734269,'BO'); return false;">
+    <span class="searchKwd themeFC">
+     나는
+    </span>
+    <span class="searchKwd themeFC">
+     오늘도
+    </span>
+    <span class="searchKwd themeFC">
+     감정식당에
+    </span>
+    <span class="searchKwd themeFC">
+     가요
+    </span>
+   </a>
+  </dt>
+  <dd class="author">
+   <span>
+    저자 : 김현태 글 ; 오숙진 그림
+   </span>
+   <span>
+    발행자: 그린북
+   </span>
+   <span>
+    발행연도: 2025
+   </span>
+   <span>
+    청구기호: 유 813.8-ㄹ434-11
+    <a class="button print mobileHide" href="#btn" onclick="javascript:fnCallNoPrintPop('pg', 1949734269, 'BO', 'LABEL'); return false;" title="새창열림">
+     위치출력
+    </a>
+   </span>
+  </dd>
+  <!--
+						<dd class="data">
+							<span>등록번호: PJU000822751</span>
+							
+								<span>ISBN: 9788955889130</span>
+							
+							
+						</dd>
+						-->
+  <dd class="site">
+   <span>
+    도서관: 판교도서관
+   </span>
+   <span>
+    자료실: [판교]제1어린이열람실
+   </span>
+   <span>
+    부록: 없음
+   </span>
+  </dd>
+ </dl>
+ <div class="bookStateBar clearfix">
+  <p class="txt">
+   <b class="emp8">
+    대출가능[비치중]
+   </b>
+  </p>
+  <div class="stateArea">
+   <span class="state typeA">
+    <span class="ico">
+    </span>
+    도서예약불가
+   </span>
+   <a class="state typeB" href="#btn" onclick="javascript:fnBandLillApplyPop('MP','PJU000822751'); return false;" title="새창열림">
+    <span class="ico">
+    </span>
+    상호대차신청
+   </a>
+   <a class="state typeC" href="#btn" onclick="javascript:fnBasketGroupBookAdd(1949734267,1949734269,'BO'); return false;">
+    <span class="ico">
+    </span>
+    관심도서담기
+   </a>
+  </div>
+ </div>
+</li>
+
+
+
+=== 링크 개수: 5 ===
+
+링크 1:
+  href: #link
+  onclick: javascript:fnSearchResultDetail(1949734267,1949734269,'BO'); return false;
+  text: 
+
+링크 2:
+  href: #link
+  onclick: javascript:fnSearchResultDetail(1949734267,1949734269,'BO'); return false;
+  text: 나는오늘도감정식당에가요
+
+링크 3:
+  href: #btn
+  onclick: javascript:fnCallNoPrintPop('pg', 1949734269, 'BO', 'LABEL'); return false;
+  text: 위치출력
+
+링크 4:
+  href: #btn
+  onclick: javascript:fnBandLillApplyPop('MP','PJU000822751'); return false;
+  text: 상호대차신청
+
+링크 5:
+  href: #btn
+  onclick: javascript:fnBasketGroupBookAdd(1949734267,1949734269,'BO'); return false;
+  text: 관심도서담기
+
+=== dt > a 태그 ===
+href: #link
+onclick: javascript:fnSearchResultDetail(1949734267,1949734269,'BO'); return false;
+text: 나는오늘도감정식당에가요

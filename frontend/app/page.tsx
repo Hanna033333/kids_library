@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Search, Bookmark, LogOut, ChevronRight, Bell } from 'lucide-react'
-import { getBooksByAge, getResearchCouncilBooks } from '@/lib/home-api'
+
+import { Search, Bookmark, LogOut, ChevronRight, Bell, Snowflake, BookOpen } from 'lucide-react'
+import { getBooksByAge, getResearchCouncilBooks, getWinterBooks } from '@/lib/home-api'
 import { type Book, type LibraryInfo } from '@/lib/types'
 import { useAuth } from '@/context/AuthContext'
 import LibrarySelector from '@/components/LibrarySelector'
@@ -14,9 +15,18 @@ export default function HomePage() {
   const router = useRouter()
   const { user, signOut } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedAge, setSelectedAge] = useState('')
+  const [selectedAge, setSelectedAge] = useState(() => {
+    // localStorage에서 마지막 선택 연령 가져오기 (재방문자 대응)
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lastSelectedAge')
+      if (saved) return saved
+    }
+    // 디폴트: 4-7세
+    return '4-7'
+  })
   const [ageBooks, setAgeBooks] = useState<Book[]>([])
   const [researchBooks, setResearchBooks] = useState<Book[]>([])
+  const [winterBooks, setWinterBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(true)
 
   // 연령별 책 로드
@@ -28,9 +38,21 @@ export default function HomePage() {
     })
   }, [selectedAge])
 
+  // 연령 선택 시 localStorage에 저장
+  useEffect(() => {
+    if (selectedAge && typeof window !== 'undefined') {
+      localStorage.setItem('lastSelectedAge', selectedAge)
+    }
+  }, [selectedAge])
+
   // 도서 연구회 책 로드
   useEffect(() => {
     getResearchCouncilBooks(7).then(setResearchBooks)
+  }, [])
+
+  // 겨울방학 추천 도서 로드
+  useEffect(() => {
+    getWinterBooks(7).then(setWinterBooks)
   }, [])
 
   const handleSearch = (e: React.FormEvent) => {
@@ -44,8 +66,9 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#F7F7F7]">
-      <header className="w-full bg-white border-b border-gray-100 flex items-center justify-between px-6 py-4 sticky top-0 z-50">
-        <div className="flex justify-start items-center gap-4">
+      <header className="w-full bg-white border-b border-gray-100 flex items-center justify-center px-6 py-4 sticky top-0 z-50 relative">
+        {/* 로고 중앙 정렬 */}
+        <h1>
           <button
             onClick={() => router.push('/')}
             className="relative inline-flex items-center cursor-pointer"
@@ -59,31 +82,31 @@ export default function HomePage() {
               beta
             </span>
           </button>
-        </div>
+        </h1>
 
-        <div className="flex justify-end items-center gap-4">
-          <LibrarySelector />
+        {/* 도서관 선택 버튼 숨김 처리 */}
+        {/* <LibrarySelector /> */}
 
-          {user && (
-            <div className="flex items-center gap-3 ml-2 border-l border-gray-200 pl-4">
-              <Link
-                href="/my-library"
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600 flex items-center gap-1 text-sm font-medium"
-                title="내 서재"
-              >
-                <Bookmark className="w-5 h-5" />
-                <span className="hidden sm:inline">내 서재</span>
-              </Link>
-              <button
-                onClick={() => signOut()}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
-                title="로그아웃"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          )}
-        </div>
+        {/* 우측 메뉴 (절대 위치) */}
+        {user && (
+          <div className="absolute right-6 flex items-center gap-3">
+            <Link
+              href="/my-library"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600 flex items-center gap-1 text-sm font-medium"
+              title="내 서재"
+            >
+              <Bookmark className="w-5 h-5" />
+              <span className="hidden sm:inline">내 서재</span>
+            </Link>
+            <button
+              onClick={() => signOut()}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
+              title="로그아웃"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
+        )}
       </header>
 
       {/* 검색 바 - 책 리스트와 동일 */}
@@ -117,10 +140,51 @@ export default function HomePage() {
         </form>
       </div>
 
+      {/* 겨울방학 추천 섹션 (최상단 강조) */}
+      <section className="py-8 px-4 bg-white">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="flex items-center justify-between mb-1 px-2">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <span>사서 추천 겨울방학 도서</span>
+            </h2>
+            <Link
+              href="/books?curation=겨울방학"
+              className="text-gray-900 hover:text-gray-600 transition-colors"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </Link>
+          </div>
+
+          <div className="px-2 mb-4">
+            <p className="text-sm text-gray-600">긴 방학, 스마트폰 대신 책과 친해져요</p>
+          </div>
+
+          {winterBooks.length > 0 ? (
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+              <div className="flex gap-4 pb-2">
+                {winterBooks.map((book, index) => (
+                  <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === winterBooks.length - 1 ? 'mr-4' : ''}`}>
+                    <BookCard book={book} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="h-[280px] flex items-center justify-center">
+              <div className="animate-pulse flex gap-4 overflow-hidden w-full">
+                {[1, 2, 3, 4, 5, 6, 7].map(i => (
+                  <div key={i} className="w-[160px] h-[240px] bg-gray-200 rounded-xl flex-shrink-0" />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* 연령별 추천 섹션 */}
       <section className="py-8 px-4">
         <div className="max-w-[1200px] mx-auto">
-          <div className="flex items-center justify-between mb-4 px-2">
+          <div className="flex items-center justify-between mb-1 px-2">
             <h2 className="text-xl font-bold text-gray-900">우리 아이 나이에 딱!</h2>
             <Link
               href={`/books?age=${selectedAge}`}
@@ -128,6 +192,10 @@ export default function HomePage() {
             >
               <ChevronRight className="w-6 h-6" />
             </Link>
+          </div>
+
+          <div className="px-2 mb-4">
+            <p className="text-sm text-gray-600">발달 단계에 맞는 맞춤 도서를 만나보세요</p>
           </div>
 
           {/* 연령 탭 */}
@@ -156,7 +224,7 @@ export default function HomePage() {
             <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
               <div className="flex gap-4 pb-2">
                 {[1, 2, 3, 4, 5, 6, 7].map((i, index, array) => (
-                  <div key={i} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === array.length - 1 ? 'pr-4' : ''}`}>
+                  <div key={i} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === array.length - 1 ? 'mr-4' : ''}`}>
                     <div className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden h-full animate-pulse">
                       {/* 이미지 스켈레톤 */}
                       <div className="w-full aspect-[1/1.1] bg-gray-200"></div>
@@ -176,7 +244,7 @@ export default function HomePage() {
               <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
                 <div className="flex gap-4 pb-2">
                   {ageBooks.map((book, index) => (
-                    <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === ageBooks.length - 1 ? 'pr-4' : ''}`}>
+                    <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === ageBooks.length - 1 ? 'mr-4' : ''}`}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -194,7 +262,7 @@ export default function HomePage() {
       {/* 도서 연구회 추천 섹션 */}
       <section className="py-8 px-4 bg-white">
         <div className="max-w-[1200px] mx-auto">
-          <div className="flex items-center justify-between mb-6 px-2">
+          <div className="flex items-center justify-between mb-1 px-2">
             <h2 className="text-xl font-bold text-gray-900">어린이 도서 연구회 추천</h2>
             <Link
               href="/books?curation=어린이도서연구회"
@@ -204,12 +272,16 @@ export default function HomePage() {
             </Link>
           </div>
 
+          <div className="px-2 mb-4">
+            <p className="text-sm text-gray-600">전문가가 엄선한 믿고 보는 필독서</p>
+          </div>
+
           {researchBooks.length > 0 ? (
             <>
               <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
                 <div className="flex gap-4 pb-2">
                   {researchBooks.map((book, index) => (
-                    <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === researchBooks.length - 1 ? 'pr-4' : ''}`}>
+                    <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === researchBooks.length - 1 ? 'mr-4' : ''}`}>
                       <BookCard book={book} />
                     </div>
                   ))}
@@ -222,13 +294,13 @@ export default function HomePage() {
             </div>
           )}
         </div>
-      </section>
+      </section >
 
       {/* 디바이더 */}
-      <div className="border-t border-gray-200"></div>
+      < div className="border-t border-gray-200" ></div >
 
       {/* 공지사항 섹션 */}
-      <section className="py-6 px-4 bg-white">
+      < section className="py-6 px-4 bg-white" >
         <div className="max-w-6xl mx-auto">
           <a
             href="https://amplified-decimal-9c4.notion.site/26-01-10-2e4939f003ba80f2b698e9e016910587?source=copy_link"
@@ -240,10 +312,10 @@ export default function HomePage() {
             <span className="text-sm font-medium">서비스 오픈 안내(1/10)</span>
           </a>
         </div>
-      </section>
+      </section >
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 px-6">
+      < footer className="bg-gray-900 text-gray-400 py-8 px-6" >
         <div className="max-w-6xl mx-auto text-center">
           <p className="text-sm flex items-center justify-center gap-3 flex-wrap">
             <span>© 2026 책자리. All rights reserved.</span>
@@ -258,8 +330,8 @@ export default function HomePage() {
             </a>
           </p>
         </div>
-      </footer>
-    </main>
+      </footer >
+    </main >
   )
 }
 
@@ -316,12 +388,12 @@ function BookCard({ book }: { book: Book }) {
             src={book.image_url}
             alt={book.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
+            loading="eager"
+            fetchPriority="high"
           />
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full text-gray-300">
-            <span className="text-4xl mb-2">📚</span>
-            <span className="text-[10px] uppercase tracking-wider font-medium opacity-60">No Image</span>
+            <BookOpen className="w-12 h-12 opacity-20" />
           </div>
         )}
 

@@ -74,3 +74,38 @@ export async function getResearchCouncilBooks(limit: number = 5): Promise<Book[]
 
     return (data as any) || []
 }
+
+
+/**
+ * 겨울방학 추천 도서 가져오기 (매주 8권씩 로테이션)
+ * 총 40권 가정: 5주 주기로 순환
+ */
+export async function getWinterBooks(limit: number = 7): Promise<Book[]> {
+    const supabase = createClient()
+
+    // 현재 주차 계산
+    const now = new Date()
+    const startOfYear = new Date(now.getFullYear(), 0, 1)
+    const weekNumber = Math.floor((now.getTime() - startOfYear.getTime()) / (7 * 24 * 60 * 60 * 1000))
+
+    // 40권 중 매주 다른 책 노출 (offset)
+    // weekNumber * limit을 하면 매주 limit만큼 이동
+    // 40권 넘어가면 다시 0부터 (modulo)
+    const totalBooks = 40
+    const offset = (weekNumber * limit) % totalBooks
+
+    const { data, error } = await supabase
+        .from('childbook_items')
+        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, library_info:book_library_info(library_name, callno)')
+        .eq('curation_tag', '겨울방학2026')
+        .or('is_hidden.is.null,is_hidden.eq.false')
+        .order('id') // ID 순서대로 정렬하여 로테이션 일관성 유지
+        .range(offset, offset + limit - 1)
+
+    if (error) {
+        console.error('Error fetching winter books:', error)
+        return []
+    }
+
+    return (data as any) || []
+}

@@ -12,6 +12,7 @@ export async function getBooksFromSupabase(
         age?: string;
         category?: string;
         sort?: string;
+        curation?: string;
     }
 ) {
     let query = supabase
@@ -42,6 +43,16 @@ export async function getBooksFromSupabase(
     }
     if (filters?.category && filters.category !== '전체') {
         query = query.eq('category', filters.category);
+    }
+    // Curation 필터 (겨울방학 등)
+    if (filters?.curation) {
+        // URL param 값을 DB tag 값으로 매핑
+        const curationMapping: Record<string, string> = {
+            '겨울방학': '겨울방학2026',
+            '어린이도서연구회': '어린이도서연구회'
+        };
+        const dbCurationTag = curationMapping[filters.curation] || filters.curation;
+        query = query.eq('curation_tag', dbCurationTag);
     }
 
     // 정렬

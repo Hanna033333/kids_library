@@ -30,7 +30,16 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
     const [isSaved, setIsSaved] = useState(false)
     const [saveCount, setSaveCount] = useState(initialBook.save_count || 0)
     const [isToggling, setIsToggling] = useState(false)
+    const [imageError, setImageError] = useState(false)
     const { selectedLibrary } = useLibrary()
+
+    // Handle book navigation
+    useEffect(() => {
+        setBook(initialBook)
+        setSaveCount(initialBook.save_count || 0)
+        setImageError(false)
+        setIsSaved(false)
+    }, [initialBook])
 
     const supabase = createClient()
 
@@ -144,8 +153,13 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                     {/* Left: Image Card */}
                     <div className="w-full md:w-[35%] shrink-0 max-w-[320px] mx-auto md:mx-0">
                         <div className="relative aspect-[3/4] bg-gray-50 rounded-[28px] overflow-hidden shadow-2xl shadow-gray-200 border border-gray-100">
-                            {book.image_url ? (
-                                <img src={book.image_url} alt={book.title} className="w-full h-full object-cover" />
+                            {book.image_url && !imageError ? (
+                                <img
+                                    src={book.image_url}
+                                    alt={book.title}
+                                    className="w-full h-full object-cover"
+                                    onError={() => setImageError(true)}
+                                />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-300">
                                     <BookOpen className="w-16 h-16 opacity-20" />
@@ -171,7 +185,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                 )}
                             </div>
 
-                            <h2 className="text-xl md:text-2xl font-black text-gray-900 leading-tight mb-2 tracking-tight">
+                            <h2 className="text-xl md:text-2xl font-black text-gray-900 leading-tight mb-2 tracking-tight line-clamp-3">
                                 {book.title}
                             </h2>
 

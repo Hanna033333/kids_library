@@ -11,6 +11,7 @@ interface BookListProps {
   searchQuery?: string;
   ageFilter?: string;
   categoryFilter?: string;
+  curationFilter?: string;
   sortFilter?: string;
 }
 
@@ -18,6 +19,7 @@ export default function BookList({
   searchQuery,
   ageFilter,
   categoryFilter,
+  curationFilter,
   sortFilter = "pangyo_callno",
 }: BookListProps) {
   const [isMobile, setIsMobile] = useState(false);
@@ -36,6 +38,7 @@ export default function BookList({
     searchQuery,
     ageFilter,
     categoryFilter,
+    curationFilter,
     sortFilter,
     limit: ITEMS_PER_PAGE,
   });
@@ -106,8 +109,8 @@ export default function BookList({
         </div>
       ) : !loading && books.length === 0 ? (
         <div className="py-32 text-center bg-white rounded-2xl border border-dashed border-gray-200">
-          <div className="text-gray-400 text-lg">검색 결과가 없습니다.</div>
-          <div className="text-gray-300 text-sm mt-1">다른 검색어로 시도해보세요.</div>
+          <div className="text-gray-400 text-lg mb-2">검색 결과가 없습니다.</div>
+          <div className="text-gray-300 text-sm">다른 검색어나 필터로 시도해보세요.</div>
         </div>
       ) : (
         <>

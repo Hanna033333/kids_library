@@ -9,44 +9,60 @@ interface Props {
 
 // 동적 메타데이터 생성
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const { id } = await params
-    const book = await getBookById(Number(id))
+    try {
+        const { id } = await params
+        const book = await getBookById(Number(id))
 
-    if (!book) {
-        return {
-            title: '책을 찾을 수 없습니다 – 책자리'
+        if (!book) {
+            return {
+                title: '책을 찾을 수 없습니다 – 책자리'
+            }
         }
-    }
 
-    const title = `${book.title} | 도서관에서 책 위치 찾기 – 책자리`
-    const description = `${book.title} - ${book.author || ''}. 판교도서관 청구기호: ${book.pangyo_callno}`
+        const title = `${book.title} | 도서관에서 책 위치 찾기 – 책자리`
+        // author 필드가 null일 경우 빈 문자열로 처리
+        const description = `${book.title} - ${book.author || ''}. 판교도서관 청구기호: ${book.pangyo_callno}`
 
-    return {
-        title,
-        description,
-        openGraph: {
-            title: `${book.title} | 도서관에서 책 위치 찾기`,
-            description: `${book.author || ''} | 청구기호: ${book.pangyo_callno}`,
-            images: book.image_url ? [book.image_url] : [],
-            type: 'article',
-        },
-        twitter: {
-            card: 'summary_large_image',
+        return {
             title,
             description,
-            images: book.image_url ? [book.image_url] : [],
-        },
+            openGraph: {
+                title: `${book.title} | 도서관에서 책 위치 찾기`,
+                description: `${book.author || ''} | 청구기호: ${book.pangyo_callno}`,
+                images: book.image_url ? [book.image_url] : [],
+                type: 'article',
+            },
+            twitter: {
+                card: 'summary_large_image',
+                title,
+                description,
+                images: book.image_url ? [book.image_url] : [],
+            },
+        }
+    } catch (error) {
+        console.error('Metadata generation failed:', error);
+        return {
+            title: '책자리 – 도서관에서 책 찾기',
+            description: '도서관 청구기호와 위치 정보를 확인하세요.',
+        }
     }
 }
 
 // 서버 컴포넌트
 export default async function BookDetailPage({ params }: Props) {
     const { id } = await params
-    const book = await getBookById(Number(id))
 
-    if (!book) {
-        notFound()
+    try {
+        const book = await getBookById(Number(id))
+
+        if (!book) {
+            notFound()
+        }
+
+        return <BookDetailClient book={book} />
+    } catch (error) {
+        console.error('Book fetch failed:', error);
+        // 에러 발생 시 404로 처리하거나 별도 에러 페이지로 유도
+        notFound();
     }
-
-    return <BookDetailClient book={book} />
 }
