@@ -18,6 +18,7 @@ import {
 import Link from 'next/link'
 import LibrarySelector from '@/components/LibrarySelector'
 import { useLibrary } from '@/context/LibraryContext'
+import { sendGAEvent } from '@/lib/analytics'
 
 interface BookDetailClientProps {
     book: Book
@@ -74,6 +75,17 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                 console.error('Failed to fetch loan status:', err)
             })
     }, [book.id])
+
+    // Send GA event when book detail page is viewed
+    useEffect(() => {
+        sendGAEvent('view_book_detail', {
+            book_id: book.id,
+            book_title: book.title,
+            call_number: displayCallNo,
+            category: book.category,
+            age: book.age
+        });
+    }, [book.id]);
 
     // Check if book is saved
     useEffect(() => {

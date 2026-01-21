@@ -24,12 +24,15 @@ function normalizeAge(rawAge: string): string {
   return rawAge; // Return original if no match
 }
 
+import { sendGAEvent } from "@/lib/analytics";
+
 export default function BookItem({ book, loanStatus }: BookItemProps) {
   const displayAge = normalizeAge(book.age || "");
 
   return (
     <Link
       href={`/book/${book.id}`}
+      prefetch={true}
       className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md h-full group"
     >
       {/* 1. 이미지 영역 (상단) */}
