@@ -43,10 +43,17 @@ export default function RootLayout({
         />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-FG2WYB82L9');
+            if (localStorage.getItem("checkjari_ignore_tracking") === "true" || window.location.search.includes("ignore=true")) {
+              if (window.location.search.includes("ignore=true")) {
+                localStorage.setItem("checkjari_ignore_tracking", "true");
+              }
+              console.log("GA Tracking Disabled (Internal)");
+            } else {
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-FG2WYB82L9');
+            }
           `}
         </Script>
       </head>
