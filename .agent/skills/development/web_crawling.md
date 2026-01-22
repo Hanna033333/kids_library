@@ -413,6 +413,71 @@ WHERE id IN (
 
 ---
 
+---
+
+## 🚀 V2 주요 개선사항 (2025.01 이슈 반영)
+
+이번 겨울방학 도서 크롤링 중 발생한 이슈를 바탕으로 개선된 전략입니다.
+
+### 1. 매칭 정확도 강화 (Hierarchical Matching)
+단순 검색(첫 번째 결과 선택)은 오탐 확률이 높으므로 2단계 매칭을 권장합니다.
+- **Strict Match**: `제목` + `저자` + `출판사` 일치 (최우선)
+- **Fallback Match**: `제목` + `저자` 일치 (차선, 출판사명 표기 차이 등 대응)
+- **Mismatch**: 위 조건에 맞지 않으면 데이터를 수집하지 않는 것이 데이터 품질 유지에 좋습니다.
+
+### 2. 파싱 로직 개선
+HTML 텍스트에서 청구기호를 추출할 때, 단순 `split(':')` 등은 위험합니다.
+- **Issue**: "저자 : 홍길동 청구기호 : 123" 같은 문자열을 단순 분리하면 엉뚱한 값을 가져올 수 있음.
+- **Solution**: 명확한 앵커 텍스트(`청구기호`)를 기준으로 `split('청구기호')` 하여 뒷부분만 취하고, `위치출력` 등 불필요한 접미사를 제거해야 합니다.
+
+### 3. 대량 크롤링 안정성 (Resume Capability)
+네트워크 불안정이나 예외 상황으로 스크립트가 중단될 수 있습니다.
+- **Incremental Save**: `jsonl` (Line-delimited JSON) 포맷으로 매 건마다 파일에 씁니다(`append`).
+- **Skip Logic**: 스크립트 시작 시 기존 로그 파일을 읽어, 이미 완료된 도서는 건너뛰도록 구현합니다.
+
+---
+
+---
+
+## 🔄 데이터 삽입 전략 (Upsert Strategy)
+
+도서 데이터를 추가할 때는 반드시 **기존 데이터 유무**를 확인하여 중복을 방지해야 합니다.
+
+### 프로세스
+1. **ISBN 확인**: `isbn13` (또는 `isbn`) 컬럼을 기준으로 DB를 조회합니다.
+2. **분기 처리**:
+   - **존재함 (Found)**: 기존 레코드에 **태그만 추가**합니다.
+     - 로직: 기존 `curation_tag`에 새로운 태그를 콤마(,)로 구분하여 덧붙입니다. (단, 중복 태그 방지)
+     - 예: `"추천도서"` → `"추천도서,겨울방학2026"`
+   - **존재하지 않음 (Not Found)**: 새로운 도서 정보를 `INSERT` 합니다.
+
+### 구현 예시 (Python)
+```python
+def upsert_book(book_data):
+    # 1. 존재 여부 확인
+    existing = supabase.table("childbook_items")\
+        .select("*").eq("isbn13", book_data['isbn13']).execute()
+    
+    if existing.data:
+        # 2. UPDATE (태그 추가)
+        row = existing.data[0]
+        current_tags = row.get('curation_tag', '') or ''
+        new_tag = book_data['curation_tag']
+        
+        if new_tag not in current_tags:
+            updated_tags = f"{current_tags},{new_tag}" if current_tags else new_tag
+            supabase.table("childbook_items")\
+                .update({'curation_tag': updated_tags})\
+                .eq("id", row['id']).execute()
+            print(f"Updated tags for {row['title']}")
+    else:
+        # 3. INSERT (신규 추가)
+        supabase.table("childbook_items").insert(book_data).execute()
+        print(f"Inserted new book: {book_data['title']}")
+```
+
+---
+
 ## ✅ 체크리스트
 
 크롤링 작업 시 확인 사항:

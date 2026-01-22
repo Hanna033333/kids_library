@@ -66,9 +66,23 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
     useEffect(() => {
         fetchLoanStatuses([book.id])
             .then(loanStatuses => {
+                const rawStatus = loanStatuses[book.id] || null;
+                // Normalize loan status to show 4 states: 대출가능, 대출중, 미소장, 확인불가
+                let normalizedStatus = rawStatus;
+                if (rawStatus) {
+                    const status = rawStatus.status;
+                    // Map "시간초과" to "확인불가"
+                    if (status === "시간초과") {
+                        normalizedStatus = { ...rawStatus, status: "확인불가", available: null };
+                    }
+                    // Map "정보없음" to "미소장"
+                    if (status === "정보없음") {
+                        normalizedStatus = { ...rawStatus, status: "미소장", available: null };
+                    }
+                }
                 setBook(prev => ({
                     ...prev,
-                    loan_status: loanStatuses[book.id] || null
+                    loan_status: normalizedStatus
                 }))
             })
             .catch(err => {
@@ -216,9 +230,13 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                         {displayCallNo}{book.vol ? `-${book.vol}` : ''}
                                     </span>
                                     {book.loan_status && (
-                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${book.loan_status.available
-                                            ? "bg-green-50 text-green-700 border-green-200"
-                                            : "bg-red-50 text-red-700 border-red-200"
+                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${book.loan_status.available === true
+                                                ? "bg-green-50 text-green-700 border-green-200"
+                                                : book.loan_status.available === false
+                                                    ? "bg-red-50 text-red-700 border-red-200"
+                                                    : book.loan_status.status === "미소장"
+                                                        ? "bg-gray-100 text-gray-700 border-gray-200"
+                                                        : "bg-white text-gray-600 border-gray-300"
                                             }`}>
                                             {book.loan_status.status}
                                         </span>

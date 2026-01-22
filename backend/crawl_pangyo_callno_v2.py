@@ -1,165 +1,196 @@
+# -*- coding: utf-8 -*-
+import sys
+import io
+import os
 import json
 import time
 import requests
+import re
 from bs4 import BeautifulSoup
-from urllib.parse import quote
+
+# 콘솔 출력 인코딩 설정
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+# Helper for logging
+log_file = open('crawling_progress.log', 'a', encoding='utf-8') # Append mode
+def log(msg):
+    print(msg)
+    log_file.write(msg + '\n')
+    log_file.flush()
+
+# 정규화 함수: 공백, 특수문자 제거
+def normalize(text):
+    if not text:
+        return ""
+    # 괄호와 그 안의 내용 제거 (예: (개정판), [도서] 등)
+    text = re.sub(r'\(.*?\)|\[.*?\]', '', text)
+    # 특수문자 제거, 공백 제거, 소문자 변환
+    text = re.sub(r'[\s\W_]+', '', text).lower()
+    return text
 
 # JSON 파일 읽기
 with open('winter_books_clean.json', 'r', encoding='utf-8') as f:
     books = json.load(f)
 
-print(f"🔍 판교도서관 청구기호 크롤링 시작 (총 {len(books)}권)")
-print()
+log(f"\n🚀 크롤링 재시작... (총 {len(books)}권)")
 
-# 판교도서관 검색 URL (성남시립도서관 시스템)
 BASE_URL = "https://www.snlib.go.kr/pg/plusSearchResultList.do"
 
+# Load existing progress
 results = []
-success_count = 0
-fail_count = 0
+done_titles = set()
+
+if os.path.exists('crawling_results.jsonl'):
+    with open('crawling_results.jsonl', 'r', encoding='utf-8') as f:
+        for line in f:
+            try:
+                data = json.loads(line)
+                results.append(data)
+                done_titles.add(data['title'])
+            except: pass
+    log(f"📋 이전 결과 {len(results)}건 로드 완료")
+
+success_count = len([r for r in results if r.get('status') == 'success'])
+fail_count = len([r for r in results if r.get('status') != 'success'])
 
 for i, book in enumerate(books, 1):
-    title = book['서명']
-    author = book['저자'].split()[0] if book['저자'] else ''
+    target_title = book['서명']
+    if target_title in done_titles:
+        # log(f"[{i}/{len(books)}] {target_title} (Skip: 이미 완료)")
+        continue
+
+    target_author = book['저자']
+    target_publisher = book.get('발행자', '')
     
-    print(f"[{i}/{len(books)}] {title}")
+    # 저자 이름 첫 어절 추출
+    target_author_key = target_author.split()[0] if target_author else ""
     
+    # 정규화된 타겟 정보
+    norm_target_title = normalize(target_title)
+    norm_target_author = normalize(target_author_key)
+    norm_target_publisher = normalize(target_publisher)
+    
+    log(f"[{i}/{len(books)}] {target_title} / {target_author_key} (진행중)")
+    
+    current_result = {'title': target_title, 'status': 'fail'} # Default
+
     try:
-        # 검색 파라미터
         params = {
-            'searchKeyword': title,
+            'searchKeyword': target_title,
             'searchType': 'SIMPLE',
             'searchCategory': 'BOOK',
-            'searchLibraryArr': 'MP',  # 판교도서관
+            'searchLibraryArr': 'MP',
             'searchKey': 'ALL',
             'topSearchType': 'BOOK'
         }
         
-        # 검색 요청
-        response = requests.get(BASE_URL, params=params, timeout=10)
-        response.raise_for_status()
+        response = requests.get(BASE_URL, params=params, timeout=30)
         
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # 검색 결과에서 첫 번째 책 찾기
-        result_list = soup.select('ul.resultList > li')
-        
-        if result_list:
-            first_result = result_list[0]
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            result_items = soup.select('ul.resultList > li')
             
-            # 청구기호 찾기: dd 요소 중 "청구기호:" 텍스트 포함하는 것
-            dd_elements = first_result.select('dl dd')
-            callno = None
+            found_callno = None
+            match_type = None
             
-            for dd in dd_elements:
-                text = dd.get_text(strip=True)
-                if '청구기호:' in text:
-                    # "청구기호:" 뒤의 텍스트 추출
-                    callno = text.replace('청구기호:', '').strip()
-                    # "위치출력" 등 불필요한 텍스트 제거
-                    callno = callno.split('위치출력')[0].strip()
-                    break
-            
-            if callno:
-                results.append({
-                    'title': title,
-                    'author': author,
-                    'callno': callno,
-                    'status': 'success'
-                })
-                success_count += 1
-                print(f"  ✅ 청구기호: {callno}")
+            if result_items:
+                for idx, item in enumerate(result_items):
+                    title_elem = item.select_one('.tit a')
+                    result_title = title_elem.get_text(strip=True) if title_elem else ""
+                    item_text = item.get_text(strip=True)
+                    
+                    norm_result_title = normalize(result_title)
+                    norm_item_text = normalize(item_text)
+                    
+                    is_title_match = (norm_target_title in norm_result_title) or (norm_result_title in norm_target_title)
+                    is_author_match = norm_target_author in norm_item_text
+                    is_publisher_match = norm_target_publisher in norm_item_text if norm_target_publisher else False
+                    
+                    callno = None
+                    dd_elements = item.select('dl dd')
+                    for dd in dd_elements:
+                        text = dd.get_text(strip=True)
+                        if '청구기호' in text:
+                            # "저자: ... 청구기호: 123" 형태일 경우 "123"만 추출
+                            parts = text.split('청구기호')
+                            if len(parts) > 1:
+                                candidate = parts[-1].replace(':', '').strip()
+                                callno = candidate.split('위치출력')[0].strip()
+                                break
+                    
+                    if not callno: continue
+
+                    if is_title_match and is_author_match and is_publisher_match:
+                        found_callno = callno
+                        match_type = "Strict Match"
+                        break 
+                    
+                    if not found_callno and is_title_match and is_author_match:
+                        found_callno = callno
+                        match_type = "Fallback Match"
+                
+                if found_callno:
+                    current_result = {
+                        'title': target_title,
+                        'callno': found_callno,
+                        'match_type': match_type,
+                        'status': 'success'
+                    }
+                    success_count += 1
+                    log(f"  ✅ {match_type}: {found_callno}")
+                else:
+                    current_result['status'] = 'mismatch'
+                    fail_count += 1
+                    log(f"  ⚠️ 매칭 실패")
             else:
-                results.append({
-                    'title': title,
-                    'author': author,
-                    'callno': None,
-                    'status': 'no_callno'
-                })
+                current_result['status'] = 'not_found'
                 fail_count += 1
-                print(f"  ⚠️ 검색 결과 있으나 청구기호 없음")
+                log(f"  ❌ 검색 결과 없음")
         else:
-            results.append({
-                'title': title,
-                'author': author,
-                'callno': None,
-                'status': 'not_found'
-            })
+            current_result['status'] = 'http_error'
+            current_result['error'] = str(response.status_code)
             fail_count += 1
-            print(f"  ❌ 검색 결과 없음 (신간 미등록 가능성)")
-        
-        # 요청 간격 (서버 부하 방지)
-        time.sleep(1.5)
-        
+            log(f"  ❌ HTTP Error: {response.status_code}")
+
+        time.sleep(1.0) 
+
     except Exception as e:
-        results.append({
-            'title': title,
-            'author': author,
-            'callno': None,
-            'status': 'error',
-            'error': str(e)
-        })
+        current_result['status'] = 'error'
+        current_result['error'] = str(e)
         fail_count += 1
-        print(f"  ❌ 에러: {e}")
+        log(f"  ❌ 에러: {e}")
         time.sleep(2)
+    
+    # Save incrementally
+    results.append(current_result)
+    with open('crawling_results.jsonl', 'a', encoding='utf-8') as f:
+        json.dump(current_result, f, ensure_ascii=False)
+        f.write('\n')
 
-print()
-print("="*50)
-print(f"✅ 성공: {success_count}권")
-print(f"❌ 실패: {fail_count}권")
-print(f"📊 성공률: {success_count/len(books)*100:.1f}%")
-print("="*50)
+# Final Report & SQL Generation
+log("")
+log("="*50)
+log(f"✅ 성공: {success_count}권")
+log(f"❌ 실패: {fail_count}권")
+log("="*50)
 
-# 결과 저장
-with open('winter_books_callno_results.json', 'w', encoding='utf-8') as f:
-    json.dump({
-        'total': len(books),
-        'success': success_count,
-        'fail': fail_count,
-        'results': results
-    }, f, ensure_ascii=False, indent=2)
-
-print("\n✅ winter_books_callno_results.json 파일로 저장 완료!")
-
-# UPDATE SQL 생성
 if success_count > 0:
     sql_lines = []
-    sql_lines.append("-- 겨울방학 도서 청구기호 업데이트")
-    sql_lines.append(f"-- 크롤링 결과: {success_count}/{len(books)}권 성공")
-    sql_lines.append("-- 생성일: 2026-01-19")
+    sql_lines.append("-- 겨울방학 도서 청구기호 정밀 업데이트 (Strict/Fallback Matching)")
+    sql_lines.append(f"-- 성공: {success_count}/{len(books)}")
     sql_lines.append("")
     
-    for result in results:
-        if result['status'] == 'success' and result['callno']:
-            title_escaped = result['title'].replace("'", "''")
-            callno_escaped = result['callno'].replace("'", "''")
-            
-            sql = f"""UPDATE childbook_items 
-SET pangyo_callno = '{callno_escaped}'
-WHERE title = '{title_escaped}' 
-  AND curation_tag = '겨울방학2026';
-"""
-            sql_lines.append(f"-- {result['title']}: {result['callno']}")
+    # Re-read results to ensure completeness
+    # (Optional, but using memory 'results' is safer here to include previous runs)
+    
+    for res in results:
+        if res.get('status') == 'success':
+            title_esc = res['title'].replace("'", "''")
+            callno_esc = res['callno'].replace("'", "''")
+            sql = f"UPDATE childbook_items SET pangyo_callno = '{callno_esc}' WHERE title = '{title_esc}' AND curation_tag = '겨울방학2026';"
+            sql_lines.append(f"-- {res.get('match_type', 'Unknown')}")
             sql_lines.append(sql)
-    
-    # 확인 쿼리
-    sql_lines.append("")
-    sql_lines.append("-- 확인 쿼리")
-    sql_lines.append("SELECT title, pangyo_callno")
-    sql_lines.append("FROM childbook_items")
-    sql_lines.append("WHERE curation_tag = '겨울방학2026'")
-    sql_lines.append("  AND pangyo_callno IS NOT NULL;")
-    
-    with open('update_winter_callno.sql', 'w', encoding='utf-8') as f:
+            
+    with open('update_winter_callno_v2.sql', 'w', encoding='utf-8') as f:
         f.write('\n'.join(sql_lines))
-    
-    print(f"✅ update_winter_callno.sql 파일 생성 완료! ({success_count}개 UPDATE 문)")
-else:
-    print("⚠️ 성공한 결과가 없어 SQL 파일을 생성하지 않았습니다.")
-
-# 실패 목록 출력
-if fail_count > 0:
-    print(f"\n⚠️ 청구기호를 찾지 못한 책 ({fail_count}권):")
-    for result in results:
-        if result['status'] != 'success':
-            print(f"  - {result['title']} ({result['status']})")
+    log("✅ update_winter_callno_v2.sql 생성 완료")
