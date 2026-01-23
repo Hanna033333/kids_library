@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+    metadataBase: new URL("https://checkjari.com"),
+    alternates: {
+        canonical: "/",
+    },
     title: "책자리 - 어린이 도서관 책 검색 | 청구기호 바로 찾기",
     description: "어린이 추천 책을 도서관 청구기호로 바로 확인하세요. 아이 책, 도서관에서 어디 있는지 쉽게 찾을 수 있어요.",
     keywords: "어린이 도서, 어린이 추천 책, 도서관, 어린이 도서관, 청구기호",
@@ -36,6 +40,8 @@ export const metadata: Metadata = {
         },
     },
     verification: {
-        google: "X91bGqGznK1eio7JJAUbij2Lo4BedhpLb4zf-w75U-M",
+        other: {
+            "naver-site-verification": ["d2c8b82224a9887592cdbcf4e8caa29a", "d697e7d21ac1762af40d7b1fa9902c06"],
+        },
     },
 };
