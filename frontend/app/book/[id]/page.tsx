@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
         const title = `${book.title} - 책자리`
         // author 필드가 null일 경우 빈 문자열로 처리
-        const description = `${book.title} (${book.author || '저자 미상'}). 판교도서관 청구기호 [${book.pangyo_callno}] 및 대출 가능 여부를 실시간으로 확인하세요.`
+        const description = `이 책, 지금 도서관에 있을까? 헛걸음 전 3초 확인!`
         const keywords = `${book.title}, ${book.author}, 판교도서관, 청구기호, 어린이 도서, ${book.category || '추천도서'}`
 
         return {
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             keywords,
             openGraph: {
                 title: `${book.title} - 책자리`,
-                description: `판교도서관 청구기호: ${book.pangyo_callno} | 지금 바로 위치와 대출 상태를 확인해보세요.`,
+                description: `이 책, 지금 도서관에 있을까? 헛걸음 전 3초 확인!`,
                 images: book.image_url ? [book.image_url] : [],
                 type: 'article',
             },

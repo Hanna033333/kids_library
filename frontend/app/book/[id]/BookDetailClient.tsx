@@ -154,7 +154,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
     const handleShare = async () => {
         const shareData = {
             title: book.title,
-            text: `${book.title} - ${book.author || ''}`,
+            text: `${book.title} - 이 책, 지금 도서관에 있을까? 헛걸음 전 3초 확인!`,
             url: window.location.href
         }
 
