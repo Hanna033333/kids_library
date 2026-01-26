@@ -139,6 +139,15 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
             console.error('Failed to toggle save:', err)
         } finally {
             setIsToggling(false)
+            // GA Event
+            sendGAEvent('toggle_save_book', {
+                book_id: book.id,
+                book_title: book.title,
+                state: !isSaved ? 'save' : 'unsave' // Logic inverted because state hasn't updated in this closure yet? verify logic.
+                // Actually isSaved is the OLD state. 
+                // If isSaved was true, we unsaved. New state is 'unsave'.
+                // If isSaved was false, we saved. New state is 'save'.
+            })
         }
     }
 
@@ -150,7 +159,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
         }
 
         try {
-            if (navigator.share) {
+            if (typeof navigator.share === 'function') {
                 await navigator.share(shareData)
             } else {
                 await navigator.clipboard.writeText(window.location.href)
@@ -158,6 +167,12 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
             }
         } catch (err) {
             console.error('Share failed:', err)
+        } finally {
+            sendGAEvent('share_book', {
+                book_id: book.id,
+                book_title: book.title,
+                method: typeof navigator.share === 'function' ? 'native_share' : 'clipboard'
+            })
         }
     }
 
@@ -231,12 +246,12 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                     </span>
                                     {book.loan_status && (
                                         <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${book.loan_status.available === true
-                                                ? "bg-green-50 text-green-700 border-green-200"
-                                                : book.loan_status.available === false
-                                                    ? "bg-red-50 text-red-700 border-red-200"
-                                                    : book.loan_status.status === "미소장"
-                                                        ? "bg-gray-100 text-gray-700 border-gray-200"
-                                                        : "bg-white text-gray-600 border-gray-300"
+                                            ? "bg-green-50 text-green-700 border-green-200"
+                                            : book.loan_status.available === false
+                                                ? "bg-red-50 text-red-700 border-red-200"
+                                                : book.loan_status.status === "미소장"
+                                                    ? "bg-gray-100 text-gray-700 border-gray-200"
+                                                    : "bg-white text-gray-600 border-gray-300"
                                             }`}>
                                             {book.loan_status.status}
                                         </span>
@@ -247,6 +262,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-xs text-gray-400 hover:text-gray-600 underline mt-1.5 inline-block"
+                                    onClick={() => sendGAEvent('click_report_error', { book_id: book.id })}
                                 >
                                     청구기호 다른가요?
                                 </a>
@@ -295,6 +311,6 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                     )}
                 </div>
             </div>
-        </main>
+        </main >
     )
 }
