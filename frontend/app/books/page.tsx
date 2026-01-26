@@ -2,12 +2,11 @@ import HomeClient from "@/components/HomeClient";
 import { Metadata } from 'next'
 
 interface Props {
-    searchParams: Promise<{ age?: string; curation?: string; category?: string; q?: string }>
+    searchParams: { age?: string; curation?: string; category?: string; q?: string }
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-    const params = await searchParams
-    const { age, curation, q } = params
+    const { age, curation, q } = searchParams
 
     let title = '책자리 - 도서 검색'
     let description = '판교도서관의 도서를 검색하고 청구기호를 확인하세요.'
@@ -48,7 +47,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
             title,
             description,
             type: 'website',
-            url: `https://checkjari.com/books?${new URLSearchParams(params as any).toString()}`
+            url: `https://checkjari.com/books?${new URLSearchParams(searchParams as any).toString()}`
         },
         twitter: {
             card: 'summary_large_image',
