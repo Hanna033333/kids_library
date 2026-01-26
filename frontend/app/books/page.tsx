@@ -13,11 +13,11 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     let description = '판교도서관의 도서를 검색하고 청구기호를 확인하세요.'
     let keywords = '어린이 도서, 도서 검색, 판교도서관'
 
-    if (curation === '겨울방학') {
+    if (curation === 'winter-vacation' || curation === '겨울방학') {
         title = '겨울방학 사서 추천 도서 | 책자리'
         description = '방학에 읽기 좋은 사서 추천 도서 목록입니다. 판교도서관 청구기호와 대출 가능 여부를 바로 확인하세요.'
         keywords = '겨울방학 추천도서, 사서 추천, 어린이 방학 책, 초등 필독서'
-    } else if (curation === '어린이도서연구회') {
+    } else if (curation === 'research-council' || curation === '어린이도서연구회') {
         title = '어린이 도서 연구회 추천 도서 | 책자리'
         description = '전문가가 엄선한 어린이 권장 도서 목록입니다.'
         keywords = '어린이 도서 연구회, 전문가 추천 도서, 권장도서'

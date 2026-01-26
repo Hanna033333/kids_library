@@ -148,7 +148,7 @@ export default function HomePage() {
               <span>사서 추천 겨울방학 도서</span>
             </h2>
             <Link
-              href="/books?curation=겨울방학"
+              href="/books?curation=winter-vacation"
               className="text-gray-900 hover:text-gray-600 transition-colors"
             >
               <ChevronRight className="w-6 h-6" />
@@ -265,7 +265,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-1 px-2">
             <h2 className="text-xl font-bold text-gray-900">어린이 도서 연구회 추천</h2>
             <Link
-              href="/books?curation=어린이도서연구회"
+              href="/books?curation=research-council"
               className="text-gray-900 hover:text-gray-600 transition-colors"
             >
               <ChevronRight className="w-6 h-6" />
