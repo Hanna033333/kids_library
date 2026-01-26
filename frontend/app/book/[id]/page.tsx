@@ -21,14 +21,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
         const title = `${book.title} | 도서관에서 책 위치 찾기 – 책자리`
         // author 필드가 null일 경우 빈 문자열로 처리
-        const description = `${book.title} - ${book.author || ''}. 판교도서관 청구기호: ${book.pangyo_callno}`
+        const description = `${book.title} (${book.author || '저자 미상'}). 판교도서관 청구기호 [${book.pangyo_callno}] 및 대출 가능 여부를 실시간으로 확인하세요.`
+        const keywords = `${book.title}, ${book.author}, 판교도서관, 청구기호, 어린이 도서, ${book.category || '추천도서'}`
 
         return {
             title,
             description,
+            keywords,
             openGraph: {
-                title: `${book.title} | 도서관에서 책 위치 찾기`,
-                description: `${book.author || ''} | 청구기호: ${book.pangyo_callno}`,
+                title: `${book.title} | 판교도서관 책 찾기`,
+                description: `판교도서관 청구기호: ${book.pangyo_callno} | 지금 바로 위치와 대출 상태를 확인해보세요.`,
                 images: book.image_url ? [book.image_url] : [],
                 type: 'article',
             },
