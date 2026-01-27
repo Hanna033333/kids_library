@@ -1,0 +1,15 @@
+City                  | Device    | Users | Sess | AvgTime (s)
+------------------------------------------------------------
+Seongnam-si           | mobile    |    18 |   19 | 11.2
+Seoul                 | mobile    |    12 |   28 | 125.7
+(not set)             | desktop   |     8 |    8 | 14.4
+Ashburn               | desktop   |     3 |    3 | 6.0
+New York              | desktop   |     3 |    3 | 0.0
+Seongnam-si           | desktop   |     3 |    3 | 1916.7
+Seoul                 | desktop   |     3 |    3 | 11.3
+Council Bluffs        | desktop   |     2 |    2 | 12.0
+Aspen                 | desktop   |     1 |    1 | 0.0
+Bengaluru             | desktop   |     1 |    1 | 1.0
+Frankfurt am Main     | desktop   |     1 |    1 | 12.0
+Gwangju-si            | mobile    |     1 |    1 | 0.0
+Moses Lake            | desktop   |     1 |    1 | 0.0

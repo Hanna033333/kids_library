@@ -10,6 +10,7 @@ import { type Book, type LibraryInfo } from '@/lib/types'
 import { useAuth } from '@/context/AuthContext'
 import LibrarySelector from '@/components/LibrarySelector'
 import { useLibrary } from '@/context/LibraryContext'
+import Footer from '@/components/Footer'
 
 export default function HomePage() {
   const router = useRouter()
@@ -314,23 +315,7 @@ export default function HomePage() {
         </div>
       </section >
 
-      {/* Footer */}
-      < footer className="bg-gray-900 text-gray-400 py-8 px-6" >
-        <div className="max-w-6xl mx-auto text-center">
-          <p className="text-sm flex items-center justify-center gap-3 flex-wrap">
-            <span>© 2026 책자리. All rights reserved.</span>
-            <span className="text-gray-600">|</span>
-            <a
-              href="https://amplified-decimal-9c4.notion.site/2e4939f003ba809ab07ce973f9033e61?source=copy_link"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-400 hover:text-white transition-colors underline"
-            >
-              서비스 소개
-            </a>
-          </p>
-        </div>
-      </footer >
+      <Footer />
     </main >
   )
 }

@@ -1,0 +1,11 @@
+🕵️ Device Breakdown for Seoul Mobile Users (Last 7 Days)
+============================================================
+Model                          | OS         | Ver      | Users | AvgTime
+--------------------------------------------------------------------------------
+(not set)                      | iOS        | 18.7     | 5     | 0.0
+(not set)                      | iOS        | 26.2.0   | 4     | 0.0
+SM-S901N                       | Android    | 15       | 1     | 0.0
+SM-S916N                       | Android    | 15.0.0   | 1     | 1047.0
+SM-S916N                       | Android    | 16       | 1     | 0.0
+SM-S916N                       | Android    | 16.0.0   | 1     | 461.0
+SM-S921N                       | Android    | 16.0.0   | 0     | 0.0

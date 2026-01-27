@@ -1,0 +1,29 @@
+==================================================
+📊 REPORTING FOR PROPERTY: 518474196
+==================================================
+
+[1] 🌍 Acquisition Source/Medium (Last 7 Days)
+   - (direct) / (none)              | Users:  49 | Sess:  57 | AvgTime: 7.6s
+   - (not set)                      | Users:   2 | Sess:   2 | AvgTime: 1.5s
+   - admin.linkprice.com / referral | Users:   2 | Sess:   2 | AvgTime: 15.5s
+   - bing / organic                 | Users:   1 | Sess:   1 | AvgTime: 0.0s
+   - m.search.naver.com / referral  | Users:   1 | Sess:  10 | AvgTime: 1508.0s
+
+[2] 📄 Top Content
+   - /                              | Views: 99  | Users: 53 
+   - /books                         | Views: 50  | Users: 3  
+   - /book/11312                    | Views: 6   | Users: 1  
+   - /book/11290                    | Views: 3   | Users: 2  
+   - /book/11299                    | Views: 3   | Users: 3  
+   - /book/11310                    | Views: 3   | Users: 1  
+   - /book/11315                    | Views: 3   | Users: 1  
+   - /book/11293                    | Views: 2   | Users: 1  
+   - /book/11306                    | Views: 2   | Users: 1  
+   - /book/7723                     | Views: 2   | Users: 1  
+
+[3] 📍 Top Cities
+   - Seongnam-si                    | Users: 18
+   - Seoul                          | Users: 15
+   - (not set)                      | Users: 8
+   - Ashburn                        | Users: 3
+   - New York                       | Users: 3

@@ -59,3 +59,6 @@ collect_log.txt
 # Dump and detailed logs
 childbook_items_dump_*.json
 bulk_scrape_log_*.txt
+
+# Secrets
+ga4-key.json
