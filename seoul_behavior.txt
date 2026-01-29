@@ -1,0 +1,40 @@
+🕵️ Analysis Target: Seoul Mobile Users (Last 7 Days)
+============================================================
+
+[1] 📄 Top Pages Visited
+Page Path                                | Users | Views | Avg Time (s)
+---------------------------------------------------------------------------
+/books                                   | 1     | 46    | 1096.0
+/                                        | 12    | 42    | 6.7
+/book/11312                              | 1     | 6     | 51.0
+/book/11310                              | 1     | 3     | 16.0
+/book/11315                              | 1     | 3     | 22.0
+/book/11290                              | 1     | 2     | 0.0
+/book/11293                              | 1     | 2     | 17.0
+/book/11299                              | 1     | 2     | 13.0
+/book/11306                              | 1     | 2     | 24.0
+/book/11287                              | 1     | 1     | 4.0
+/book/11288                              | 1     | 1     | 2.0
+/book/11290                              | 1     | 1     | 130.0
+/book/11297                              | 1     | 1     | 2.0
+/book/11299                              | 1     | 1     | 0.0
+/book/11301                              | 1     | 1     | 0.0
+/book/11302                              | 1     | 1     | 3.0
+/book/11305                              | 1     | 1     | 4.0
+/book/11309                              | 1     | 1     | 2.0
+/book/11316                              | 1     | 1     | 8.0
+/book/11321                              | 1     | 1     | 3.0
+
+[2] 🧭 Engagement Depth
+Total Users: 12
+Avg Page Views per User: 10.4 pages
+Avg Time Spent per User: 125.7 seconds
+>> Insight: Users are browsing multiple pages (Good Sign).
+
+[3] 🖱️ Key Events
+- page_view: 125 times (12 users)
+- session_start: 28 times (12 users)
+- first_visit: 11 times (11 users)
+- scroll: 11 times (1 users)
+- view_book_detail: 7 times (2 users)
+- user_engagement: 6 times (1 users)

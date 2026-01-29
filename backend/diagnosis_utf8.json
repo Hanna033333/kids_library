@@ -1,0 +1,169 @@
+﻿{
+  "time_info": {
+    "current_time": "2026-01-19 14:08:33.652390",
+    "week_number": 2,
+    "age_offset": 10,
+    "research_offset": 10
+  },
+  "age_groups": {
+    "0-3": {
+      "age_values": [
+        "0세부터",
+        "3세부터"
+      ],
+      "total_count": 86,
+      "books_in_range": 7,
+      "has_data": true,
+      "offset_exceeds_total": false,
+      "sample_books": [
+        {
+          "id": 8266,
+          "title": "내가 있어요",
+          "age": "0세부터"
+        },
+        {
+          "id": 8321,
+          "title": "노란 장화",
+          "age": "3세부터"
+        },
+        {
+          "id": 8323,
+          "title": "노란 택시",
+          "age": "0세부터"
+        }
+      ]
+    },
+    "4-7": {
+      "age_values": [
+        "5세부터",
+        "7세부터"
+      ],
+      "total_count": 471,
+      "books_in_range": 7,
+      "has_data": true,
+      "offset_exceeds_total": false,
+      "sample_books": [
+        {
+          "id": 7633,
+          "title": "같을까? 다를까? 개구리와 도롱뇽",
+          "age": "7세부터"
+        },
+        {
+          "id": 7638,
+          "title": "개구리네 한솥밥",
+          "age": "5세부터"
+        },
+        {
+          "id": 7647,
+          "title": "개똥은 가만히 누워 잠을 잔다",
+          "age": "7세부터"
+        }
+      ]
+    },
+    "8-12": {
+      "age_values": [
+        "9세부터",
+        "11세부터"
+      ],
+      "total_count": 438,
+      "books_in_range": 7,
+      "has_data": true,
+      "offset_exceeds_total": false,
+      "sample_books": [
+        {
+          "id": 7608,
+          "title": "간송미술관에는 어떤 보물이 있을까?",
+          "age": "11세부터"
+        },
+        {
+          "id": 7612,
+          "title": "갈릴레오 갈릴레이",
+          "age": "11세부터"
+        },
+        {
+          "id": 7616,
+          "title": "감당 못 할 전학생",
+          "age": "11세부터"
+        }
+      ]
+    },
+    "13+": {
+      "age_values": [
+        "13세부터",
+        "16세부터"
+      ],
+      "total_count": 93,
+      "books_in_range": 7,
+      "has_data": true,
+      "offset_exceeds_total": false,
+      "sample_books": [
+        {
+          "id": 8004,
+          "title": "꽃할머니",
+          "age": "13세부터"
+        },
+        {
+          "id": 8027,
+          "title": "끝의 아름다움",
+          "age": "13세부터"
+        },
+        {
+          "id": 8029,
+          "title": "나",
+          "age": "16세부터"
+        }
+      ]
+    }
+  },
+  "research_council": {
+    "total_count": 1091,
+    "books_in_range": 7,
+    "has_data": true,
+    "offset_exceeds_total": false,
+    "sample_books": [
+      {
+        "id": 7579,
+        "title": "7년 동안의 잠"
+      },
+      {
+        "id": 7586,
+        "title": "GREEN - 숲 이야기"
+      },
+      {
+        "id": 7591,
+        "title": "Z교시"
+      }
+    ]
+  },
+  "songpa_library": {
+    "total_count": 9,
+    "has_data": true,
+    "sample_data": [
+      {
+        "book_id": 7665,
+        "library_name": "송파어린이도서관",
+        "callno": "843-프298거"
+      },
+      {
+        "book_id": 8197,
+        "library_name": "송파어린이도서관",
+        "callno": "859.7-아27ㄴ"
+      },
+      {
+        "book_id": 9775,
+        "library_name": "송파어린이도서관",
+        "callno": "808.9-비295ㅂ-259"
+      },
+      {
+        "book_id": 8829,
+        "library_name": "송파어린이도서관",
+        "callno": "375.1-어57ㅇ-1"
+      },
+      {
+        "book_id": 8136,
+        "library_name": "송파어린이도서관",
+        "callno": "998.6-슈194ㄴ=2"
+      }
+    ]
+  }
+}

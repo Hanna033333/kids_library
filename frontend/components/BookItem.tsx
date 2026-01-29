@@ -24,12 +24,29 @@ function normalizeAge(rawAge: string): string {
   return rawAge; // Return original if no match
 }
 
+import { sendGAEvent } from "@/lib/analytics";
+
 export default function BookItem({ book, loanStatus }: BookItemProps) {
   const displayAge = normalizeAge(book.age || "");
+
+  // Normalize loan status to show 4 states: 대출가능, 대출중, 미소장, 확인불가
+  const normalizedStatus = loanStatus ? (() => {
+    const status = loanStatus.status;
+    // Map "시간초과" to "확인불가"
+    if (status === "시간초과") {
+      return { ...loanStatus, status: "확인불가", available: null };
+    }
+    // Map "정보없음" to "미소장"
+    if (status === "정보없음") {
+      return { ...loanStatus, status: "미소장", available: null };
+    }
+    return loanStatus;
+  })() : undefined;
 
   return (
     <Link
       href={`/book/${book.id}`}
+      prefetch={true}
       className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md h-full group"
     >
       {/* 1. 이미지 영역 (상단) */}
@@ -55,12 +72,12 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
         {/* 태그 (이미지 위에 오버레이) */}
         <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
           {book.category && (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/90 text-gray-600 font-bold shadow-sm backdrop-blur-sm flex items-center gap-1">
+            <span className="text-[11px] px-3 py-1.5 rounded-full bg-white/90 text-gray-600 font-bold shadow-sm backdrop-blur-sm flex items-center gap-1">
               {book.category}
             </span>
           )}
           {displayAge && (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-black/60 text-white font-medium shadow-sm backdrop-blur-sm">
+            <span className="text-[11px] px-3 py-1.5 rounded-full bg-black/60 text-white font-medium shadow-sm backdrop-blur-sm">
               {displayAge}
             </span>
           )}
@@ -73,21 +90,23 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
           {book.title}
         </h3>
 
-        <p className="text-[15px] font-extrabold text-[#F59E0B] tracking-tight mb-3 truncate">
+        <p className="text-[15px] font-extrabold text-[#F59E0B] tracking-tight mb-3 line-clamp-2 break-all">
           {book.pangyo_callno}
           {book.vol && `-${book.vol}`}
         </p>
 
         <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
-          <span className="text-gray-400 truncate max-w-[60%]">{book.publisher}</span>
-          {loanStatus && (
-            <span className={`px-2 py-1 rounded-full text-[11px] font-bold leading-none text-center ${loanStatus.available === true
+          <span className="text-gray-400 truncate max-w-[50%]">{book.publisher}</span>
+          {normalizedStatus && (
+            <span className={`px-2 py-1 rounded-full text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
               ? "bg-green-100 text-green-700"
-              : loanStatus.available === false
+              : normalizedStatus.available === false
                 ? "bg-red-100 text-red-700"
-                : "bg-gray-100 text-gray-500"
+                : normalizedStatus.status === "미소장"
+                  ? "bg-gray-100 text-gray-700"
+                  : "bg-white text-gray-600 border border-gray-300"
               }`}>
-              {loanStatus.status}
+              {normalizedStatus.status}
             </span>
           )}
 

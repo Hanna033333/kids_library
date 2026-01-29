@@ -18,6 +18,7 @@ import {
 import Link from 'next/link'
 import LibrarySelector from '@/components/LibrarySelector'
 import { useLibrary } from '@/context/LibraryContext'
+import { sendGAEvent } from '@/lib/analytics'
 
 interface BookDetailClientProps {
     book: Book
@@ -30,7 +31,16 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
     const [isSaved, setIsSaved] = useState(false)
     const [saveCount, setSaveCount] = useState(initialBook.save_count || 0)
     const [isToggling, setIsToggling] = useState(false)
+    const [imageError, setImageError] = useState(false)
     const { selectedLibrary } = useLibrary()
+
+    // Handle book navigation
+    useEffect(() => {
+        setBook(initialBook)
+        setSaveCount(initialBook.save_count || 0)
+        setImageError(false)
+        setIsSaved(false)
+    }, [initialBook])
 
     const supabase = createClient()
 
@@ -56,15 +66,40 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
     useEffect(() => {
         fetchLoanStatuses([book.id])
             .then(loanStatuses => {
+                const rawStatus = loanStatuses[book.id] || null;
+                // Normalize loan status to show 4 states: 대출가능, 대출중, 미소장, 확인불가
+                let normalizedStatus = rawStatus;
+                if (rawStatus) {
+                    const status = rawStatus.status;
+                    // Map "시간초과" to "확인불가"
+                    if (status === "시간초과") {
+                        normalizedStatus = { ...rawStatus, status: "확인불가", available: null };
+                    }
+                    // Map "정보없음" to "미소장"
+                    if (status === "정보없음") {
+                        normalizedStatus = { ...rawStatus, status: "미소장", available: null };
+                    }
+                }
                 setBook(prev => ({
                     ...prev,
-                    loan_status: loanStatuses[book.id] || null
+                    loan_status: normalizedStatus
                 }))
             })
             .catch(err => {
                 console.error('Failed to fetch loan status:', err)
             })
     }, [book.id])
+
+    // Send GA event when book detail page is viewed
+    useEffect(() => {
+        sendGAEvent('view_book_detail', {
+            book_id: book.id,
+            book_title: book.title,
+            call_number: displayCallNo,
+            category: book.category,
+            age: book.age
+        });
+    }, [book.id]);
 
     // Check if book is saved
     useEffect(() => {
@@ -104,18 +139,27 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
             console.error('Failed to toggle save:', err)
         } finally {
             setIsToggling(false)
+            // GA Event
+            sendGAEvent('toggle_save_book', {
+                book_id: book.id,
+                book_title: book.title,
+                state: !isSaved ? 'save' : 'unsave' // Logic inverted because state hasn't updated in this closure yet? verify logic.
+                // Actually isSaved is the OLD state. 
+                // If isSaved was true, we unsaved. New state is 'unsave'.
+                // If isSaved was false, we saved. New state is 'save'.
+            })
         }
     }
 
     const handleShare = async () => {
         const shareData = {
             title: book.title,
-            text: `${book.title} - ${book.author || ''}`,
+            text: `${book.title} - 이 책, 지금 도서관에 있을까? 헛걸음 전 3초 확인!`,
             url: window.location.href
         }
 
         try {
-            if (navigator.share) {
+            if (typeof navigator.share === 'function') {
                 await navigator.share(shareData)
             } else {
                 await navigator.clipboard.writeText(window.location.href)
@@ -123,6 +167,12 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
             }
         } catch (err) {
             console.error('Share failed:', err)
+        } finally {
+            sendGAEvent('share_book', {
+                book_id: book.id,
+                book_title: book.title,
+                method: typeof navigator.share === 'function' ? 'native_share' : 'clipboard'
+            })
         }
     }
 
@@ -136,7 +186,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                     </button>
                     <h1 className="text-base font-bold text-gray-900 truncate max-w-[200px]">상세 정보</h1>
                 </div>
-                <LibrarySelector />
+                {/* <LibrarySelector /> */}
             </header>
 
             <div className="max-w-4xl mx-auto px-6 pt-8">
@@ -144,8 +194,13 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                     {/* Left: Image Card */}
                     <div className="w-full md:w-[35%] shrink-0 max-w-[320px] mx-auto md:mx-0">
                         <div className="relative aspect-[3/4] bg-gray-50 rounded-[28px] overflow-hidden shadow-2xl shadow-gray-200 border border-gray-100">
-                            {book.image_url ? (
-                                <img src={book.image_url} alt={book.title} className="w-full h-full object-cover" />
+                            {book.image_url && !imageError ? (
+                                <img
+                                    src={book.image_url}
+                                    alt={book.title}
+                                    className="w-full h-full object-cover"
+                                    onError={() => setImageError(true)}
+                                />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-300">
                                     <BookOpen className="w-16 h-16 opacity-20" />
@@ -171,7 +226,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                 )}
                             </div>
 
-                            <h2 className="text-xl md:text-2xl font-black text-gray-900 leading-tight mb-2 tracking-tight">
+                            <h2 className="text-xl md:text-2xl font-black text-gray-900 leading-tight mb-2 tracking-tight line-clamp-3">
                                 {book.title}
                             </h2>
 
@@ -190,9 +245,13 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                         {displayCallNo}{book.vol ? `-${book.vol}` : ''}
                                     </span>
                                     {book.loan_status && (
-                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${book.loan_status.available
+                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${book.loan_status.available === true
                                             ? "bg-green-50 text-green-700 border-green-200"
-                                            : "bg-red-50 text-red-700 border-red-200"
+                                            : book.loan_status.available === false
+                                                ? "bg-red-50 text-red-700 border-red-200"
+                                                : book.loan_status.status === "미소장"
+                                                    ? "bg-gray-100 text-gray-700 border-gray-200"
+                                                    : "bg-white text-gray-600 border-gray-300"
                                             }`}>
                                             {book.loan_status.status}
                                         </span>
@@ -203,6 +262,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-xs text-gray-400 hover:text-gray-600 underline mt-1.5 inline-block"
+                                    onClick={() => sendGAEvent('click_report_error', { book_id: book.id })}
                                 >
                                     청구기호 다른가요?
                                 </a>
@@ -251,6 +311,6 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                     )}
                 </div>
             </div>
-        </main>
+        </main >
     )
 }

@@ -23,6 +23,7 @@ export default function HomeClient({ }: HomeClientProps) {
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
     const [ageFilter, setAgeFilter] = useState(searchParams.get('age') || "");
     const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || "전체");
+    const [curationFilter] = useState(searchParams.get('curation') || "");
     const [sortFilter, setSortFilter] = useState(searchParams.get('sort') || "pangyo_callno");
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [filterModalMode, setFilterModalMode] = useState<"integrated" | "category">("integrated");
@@ -152,6 +153,7 @@ export default function HomeClient({ }: HomeClientProps) {
                     searchQuery={searchQuery || undefined}
                     ageFilter={ageFilter || undefined}
                     categoryFilter={categoryFilter === "전체" ? undefined : categoryFilter}
+                    curationFilter={curationFilter || undefined}
                     sortFilter={sortFilter}
                 />
             </div>

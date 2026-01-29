@@ -12,7 +12,7 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5): Promis
         '0-3': ['0세부터', '3세부터'],
         '4-7': ['5세부터', '7세부터'],
         '8-12': ['9세부터', '11세부터'],
-        '13+': ['13세부터', '16세부터']
+        'teen': ['13세부터', '16세부터']
     }
 
     const ageValues = ageMap[ageGroup] || []
@@ -73,4 +73,53 @@ export async function getResearchCouncilBooks(limit: number = 5): Promise<Book[]
     }
 
     return (data as any) || []
+}
+
+
+/**
+ * 겨울방학 추천 도서 가져오기 (매일 랜덤 7권 선정)
+ * 정책: 항상 정확히 7권 노출 보장 (랜덤 선택)
+ */
+export async function getWinterBooks(limit: number = 7): Promise<Book[]> {
+    const supabase = createClient()
+
+    // 날짜 기반 시드로 하루 동안 일관된 랜덤 순서 유지
+    const now = new Date()
+    const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / (24 * 60 * 60 * 1000))
+    const seed = dayOfYear * 0.001 // 0~1 사이 값으로 변환
+
+    const { data, error } = await supabase
+        .from('childbook_items')
+        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, library_info:book_library_info(library_name, callno)')
+        .eq('curation_tag', '겨울방학2026')
+        .or('is_hidden.is.null,is_hidden.eq.false')
+        // PostgreSQL RANDOM() 함수로 랜덤 정렬 (시드 기반)
+        .order('id', { ascending: true }) // 먼저 ID로 정렬하여 일관성 확보
+        .limit(100) // 충분한 수 가져오기
+
+    if (error) {
+        console.error('Error fetching winter books:', error)
+        return []
+    }
+
+    if (!data || data.length === 0) {
+        return []
+    }
+
+    // 클라이언트 사이드에서 시드 기반 랜덤 선택
+    const seededRandom = (index: number) => {
+        // Simple seeded random using day + index
+        const x = Math.sin(seed + index) * 10000
+        return x - Math.floor(x)
+    }
+
+    // Fisher-Yates shuffle with seeded random
+    const shuffled = [...data]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(seededRandom(i) * (i + 1))
+            ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+
+    // 정확히 limit 개수만 반환 (기본 7권)
+    return shuffled.slice(0, Math.min(limit, shuffled.length)) as any
 }

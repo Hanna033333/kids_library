@@ -12,6 +12,7 @@ export async function getBooksFromSupabase(
         age?: string;
         category?: string;
         sort?: string;
+        curation?: string;
     }
 ) {
     let query = supabase
@@ -32,7 +33,7 @@ export async function getBooksFromSupabase(
             '0-3': ['0세부터', '3세부터'],
             '4-7': ['5세부터', '7세부터'],
             '8-12': ['9세부터', '11세부터'],
-            '13+': ['13세부터', '16세부터']
+            'teen': ['13세부터', '16세부터']
         };
 
         const dbAgeValues = ageMapping[filters.age];
@@ -42,6 +43,18 @@ export async function getBooksFromSupabase(
     }
     if (filters?.category && filters.category !== '전체') {
         query = query.eq('category', filters.category);
+    }
+    // Curation 필터 (겨울방학 등)
+    if (filters?.curation) {
+        // URL param 값을 DB tag 값으로 매핑
+        const curationMapping: Record<string, string> = {
+            '겨울방학': '겨울방학2026', // Backward compatibility
+            'winter-vacation': '겨울방학2026',
+            '어린이도서연구회': '어린이도서연구회', // Backward compatibility
+            'research-council': '어린이도서연구회'
+        };
+        const dbCurationTag = curationMapping[filters.curation] || filters.curation;
+        query = query.eq('curation_tag', dbCurationTag);
     }
 
     // 정렬
