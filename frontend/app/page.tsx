@@ -205,7 +205,7 @@ export default function HomePage() {
               { key: '0-3', label: '0-3세' },
               { key: '4-7', label: '4-7세' },
               { key: '8-12', label: '8-12세' },
-              { key: '13+', label: '13세+' }
+              { key: 'teen', label: '13세+' }
             ].map(age => (
               <button
                 key={age.key}

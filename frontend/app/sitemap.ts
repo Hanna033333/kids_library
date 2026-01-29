@@ -19,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         { url: `${baseUrl}/collections/age/0-3`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
         { url: `${baseUrl}/collections/age/4-7`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
         { url: `${baseUrl}/collections/age/8-12`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
-        { url: `${baseUrl}/collections/age/13+`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
+        { url: `${baseUrl}/collections/age/teen`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
         { url: `${baseUrl}/collections/research-council`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 }
     ]
 

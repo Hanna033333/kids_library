@@ -8,13 +8,13 @@ import IntegratedFilterModal from '@/components/IntegratedFilterModal'
 interface AgeCollectionClientProps { age: string }
 
 const ageDisplayNames: Record<string, string> = {
-    '0-3': '0-3세', '4-7': '4-7세', '8-12': '8-12세', '13+': '13세 이상'
+    '0-3': '0-3세', '4-7': '4-7세', '8-12': '8-12세', 'teen': '13세 이상'
 }
 const ageDescriptions: Record<string, string> = {
     '0-3': '영유아 발달에 꼭 맞는 그림책을 만나보세요',
     '4-7': '상상력과 언어 발달을 돕는 유아 그림책',
     '8-12': '독서 습관을 기르는 초등학생 필독서',
-    '13+': '사고력을 키우는 청소년 권장도서'
+    'teen': '사고력을 키우는 청소년 권장도서'
 }
 
 export default function AgeCollectionClient({ age }: AgeCollectionClientProps) {

@@ -33,7 +33,7 @@ export async function getBooksFromSupabase(
             '0-3': ['0세부터', '3세부터'],
             '4-7': ['5세부터', '7세부터'],
             '8-12': ['9세부터', '11세부터'],
-            '13+': ['13세부터', '16세부터']
+            'teen': ['13세부터', '16세부터']
         };
 
         const dbAgeValues = ageMapping[filters.age];

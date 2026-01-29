@@ -5,12 +5,12 @@ export const metadata: Metadata = {
     metadataBase: new URL("https://checkjari.com"),
     alternates: { canonical: "/collections/research-council" },
     title: "어린이 도서 연구회 추천 도서 | 전문가 선정 필독서 - 책자리",
-    description: "어린이 도서 전문가들이 엄선한 믿고 보는 필독서를 청구기호와 함께 확인하세요. 판교도서관에서 바로 찾을 수 있습니다.",
-    keywords: "어린이 도서 연구회, 어린이 필독서, 전문가 추천 도서, 판교도서관, 청구기호, 어린이 도서, 권장도서",
+    description: "어린이 도서 전문가가 엄선한 필독서! 믿고 보는 사서 추천 도서를 도서관에서 바로 대출하세요. 검증된 베스트 어린이 책 리스트를 지금 확인하세요.",
+    keywords: "어린이 도서 연구회, 사서 추천 도서, 전문가 추천, 어린이 필독서, 베스트 어린이 책, 권장도서, 인기 어린이 도서",
     authors: [{ name: "책자리" }],
     openGraph: {
         title: "어린이 도서 연구회 추천 도서 | 전문가 선정 필독서",
-        description: "어린이 도서 전문가들이 엄선한 믿고 보는 필독서를 청구기호와 함께 확인하세요.",
+        description: "어린이 도서 전문가가 엄선한 필독서! 믿고 보는 사서 추천 도서를 도서관에서 바로 대출하세요.",
         url: "https://checkjari.com/collections/research-council",
         siteName: "책자리",
         locale: "ko_KR",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     twitter: {
         card: "summary_large_image",
         title: "어린이 도서 연구회 추천 도서 | 전문가 선정 필독서",
-        description: "어린이 도서 전문가들이 엄선한 믿고 보는 필독서를 청구기호와 함께 확인하세요.",
+        description: "어린이 도서 전문가가 엄선한 필독서! 믿고 보는 사서 추천 도서를 도서관에서 바로 대출하세요.",
         images: ["/logo.png"]
     },
     robots: { index: true, follow: true, googleBot: { index: true, follow: true } }

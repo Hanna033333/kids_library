@@ -8,24 +8,24 @@ interface Props {
 
 const ageMetadata: Record<string, { title: string; description: string; keywords: string }> = {
     '0-3': {
-        title: '우리 아이 나이에 딱! 0-3세 맞춤 도서',
-        description: '전집 고민 그만! 0-3세 발달 단계에 딱 맞는 도서관 책 추천',
-        keywords: '0-3세 추천 도서, 영유아 그림책, 돌 그림책, 판교도서관, 청구기호, 어린이 도서'
+        title: '0-3세 영유아 그림책 추천 | 전집 고민 끝! 사서가 뽑은 베스트 - 책자리',
+        description: '전집 고민 끝! 0-3세 아기 발달에 딱 맞는 그림책을 도서관에서 바로 대출하세요. 사서가 엄선한 베스트 영유아 도서 리스트를 지금 확인하세요.',
+        keywords: '0-3세 추천 도서, 영유아 그림책 추천, 아기 그림책, 돌 그림책, 베스트 영유아 도서, 사서 추천 도서, 북스타트'
     },
     '4-7': {
-        title: '우리 아이 나이에 딱! 4-7세 맞춤 도서',
-        description: '전집 고민 그만! 4-7세 발달 단계에 딱 맞는 도서관 책 추천',
-        keywords: '4-7세 추천 도서, 유아 그림책, 유치원 책, 판교도서관, 청구기호, 어린이 도서'
+        title: '4-7세 유아 그림책 추천 | 유치원생 필독서 리스트 - 책자리',
+        description: '우리 아이 첫 독서 습관! 4-7세 유치원생에게 딱 맞는 인기 그림책을 도서관에서 만나보세요. 전문가가 추천하는 유아 필독서 리스트입니다.',
+        keywords: '4-7세 추천 도서, 유아 그림책 추천, 유치원 책 추천, 인기 유아 도서, 사서 추천, 베스트 그림책'
     },
     '8-12': {
-        title: '우리 아이 나이에 딱! 8-12세 맞춤 도서',
-        description: '전집 고민 그만! 8-12세 발달 단계에 딱 맞는 도서관 책 추천',
-        keywords: '8-12세 추천 도서, 초등학생 필독서, 초등 권장도서, 판교도서관, 청구기호, 어린이 도서'
+        title: '초등학생 필독서 추천 | 학년별 베스트셀러 한눈에 - 책자리',
+        description: '초등학생 자녀를 위한 필독서! 학년별 맞춤 추천 도서를 도서관에서 바로 찾아보세요. 사서와 교사가 엄선한 초등 베스트셀러 리스트입니다.',
+        keywords: '초등학생 필독서, 초등 추천 도서, 초등 권장도서, 학년별 추천 도서, 사서 추천, 초등 베스트셀러, 인기 어린이 책'
     },
-    '13+': {
-        title: '우리 아이 나이에 딱! 13세+ 맞춤 도서',
-        description: '전집 고민 그만! 13세 이상 발달 단계에 딱 맞는 도서관 책 추천',
-        keywords: '13세 이상 추천 도서, 청소년 필독서, 중학생 권장도서, 판교도서관, 청구기호, 청소년 도서'
+    'teen': {
+        title: '청소년 필독서 추천 | 중고등학생이 진짜 읽는 책 - 책자리',
+        description: '중고등학생을 위한 필독서! 사춘기 자녀에게 꼭 필요한 책을 도서관에서 만나보세요. 전문가가 추천하는 청소년 베스트 도서 리스트입니다.',
+        keywords: '청소년 필독서, 중학생 추천 도서, 고등학생 권장도서, 청소년 베스트셀러, 사서 추천, 인기 청소년 책'
     }
 }
 
@@ -63,6 +63,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function AgeCollectionPage({ params }: Props) {
     const { age } = await params
-    if (!['0-3', '4-7', '8-12', '13+'].includes(age)) notFound()
+    if (!['0-3', '4-7', '8-12', 'teen'].includes(age)) notFound()
     return <AgeCollectionClient age={age} />
 }
