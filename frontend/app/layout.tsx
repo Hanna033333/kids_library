@@ -65,16 +65,51 @@ export default function RootLayout({
         />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
-            if (localStorage.getItem("checkjari_ignore_tracking") === "true" || window.location.search.includes("ignore=true")) {
+            // Bot detection function
+            function isBotOrAutomation() {
+              if (typeof navigator === "undefined") return true;
+
+              // Check for WebDriver
+              if (navigator.webdriver) {
+                console.log("🤖 Bot detected: WebDriver");
+                return true;
+              }
+
+              // Check User-Agent
+              const ua = navigator.userAgent.toLowerCase();
+              const botPatterns = ['headless', 'phantom', 'selenium', 'puppeteer', 'playwright', 'chrome-lighthouse', 'bot', 'crawler'];
+              for (const pattern of botPatterns) {
+                if (ua.includes(pattern)) {
+                  console.log("🤖 Bot detected: " + pattern);
+                  return true;
+                }
+              }
+
+              // Check for missing plugins (headless browsers)
+              if (!navigator.plugins || navigator.plugins.length === 0) {
+                console.log("🤖 Bot detected: No plugins");
+                return true;
+              }
+
+              return false;
+            }
+
+            // Check if tracking should be ignored
+            const shouldIgnore = localStorage.getItem("checkjari_ignore_tracking") === "true" || 
+                                window.location.search.includes("ignore=true") ||
+                                isBotOrAutomation();
+
+            if (shouldIgnore) {
               if (window.location.search.includes("ignore=true")) {
                 localStorage.setItem("checkjari_ignore_tracking", "true");
               }
-              console.log("GA Tracking Disabled (Internal)");
+              console.log("🚫 GA Tracking Disabled");
             } else {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
               gtag('config', 'G-FG2WYB82L9');
+              console.log("✅ GA Tracking Enabled");
             }
           `}
         </Script>
