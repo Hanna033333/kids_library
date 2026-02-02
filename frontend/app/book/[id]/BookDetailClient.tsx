@@ -13,7 +13,8 @@ import {
     Loader2,
     BookOpen,
     MapPin,
-    Share2
+    Share2,
+    ShoppingCart
 } from 'lucide-react'
 import Link from 'next/link'
 import LibrarySelector from '@/components/LibrarySelector'
@@ -174,6 +175,40 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                 method: typeof navigator.share === 'function' ? 'native_share' : 'clipboard'
             })
         }
+
+
+    }
+
+    const generateKyoboDeepLink = (isbn: string) => {
+        // 교보문고 상품 상세 URL로 직접 이동이 불가하여(Internal ID 필요), 검색 결과 페이지로 랜딩
+        const targetUrl = `https://search.kyobobook.co.kr/search?keyword=${isbn}&gbCode=TOT&target=total`
+        const encodedTargetUrl = encodeURIComponent(targetUrl)
+
+        // LinkPrice Deep Link (Corrected based on sample)
+        // m: merchant id (kbbook)
+        // a: affiliate id (A100702199)
+        // l: link id (9999)
+        // l_cd1: 3, l_cd2: 0
+        // tu: target url
+        return `https://linkmoa.kr/click.php?m=kbbook&a=A100702199&l=9999&l_cd1=3&l_cd2=0&tu=${encodedTargetUrl}`
+    }
+
+    const handleBuyKyobo = () => {
+        if (!book.isbn) {
+            alert('ISBN 정보가 없어 구매 페이지로 이동할 수 없습니다.')
+            return
+        }
+
+        const deepLink = generateKyoboDeepLink(book.isbn)
+
+        sendGAEvent('click_buy_kyobo', {
+            book_id: book.id,
+            book_title: book.title,
+            isbn: book.isbn,
+            link_type: 'deep_link'
+        })
+
+        window.open(deepLink, '_blank')
     }
 
     return (
@@ -288,6 +323,13 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                 title="공유하기"
                             >
                                 <Share2 className="w-6 h-6" />
+                            </button>
+                            <button
+                                onClick={handleBuyKyobo}
+                                className="flex-1 h-14 bg-[#F59E0B] text-white rounded-lg font-bold text-base flex items-center justify-center gap-2 hover:bg-[#D97706] transition-colors"
+                            >
+                                <ShoppingCart className="w-5 h-5" />
+                                도서 구매하기
                             </button>
                         </div>
                     </div>
