@@ -1,7 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Script from "next/script";
 import { Providers } from "./providers";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://checkjari.com"),
@@ -85,12 +92,6 @@ export default function RootLayout({
                 }
               }
 
-              // Check for missing plugins (headless browsers)
-              if (!navigator.plugins || navigator.plugins.length === 0) {
-                console.log("🤖 Bot detected: No plugins");
-                return true;
-              }
-
               return false;
             }
 
@@ -114,7 +115,7 @@ export default function RootLayout({
           `}
         </Script>
       </head>
-      <body className="bg-[#F7F7F7] min-h-screen text-gray-900">
+      <body className="bg-[#F7F7F7] min-h-screen text-gray-900 overflow-x-hidden">
         <Providers>{children}</Providers>
       </body>
     </html>

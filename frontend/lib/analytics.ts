@@ -46,12 +46,6 @@ const isBotOrAutomation = (): boolean => {
         }
     }
 
-    // 3. Check for missing browser features (headless browsers often lack these)
-    if (!navigator.plugins || navigator.plugins.length === 0) {
-        console.log("🤖 Bot detected: No browser plugins");
-        return true;
-    }
-
     // 4. Check for automation-specific properties
     if ((window as any).__nightmare || (window as any)._phantom || (window as any).callPhantom) {
         console.log("🤖 Bot detected: Automation framework detected");
