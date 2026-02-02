@@ -326,7 +326,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                             </button>
                             <button
                                 onClick={handleBuyKyobo}
-                                className="flex-1 h-14 bg-[#F59E0B] text-white rounded-lg font-bold text-base flex items-center justify-center gap-2 hover:bg-[#D97706] transition-colors"
+                                className="flex-1 h-14 bg-[#F59E0B] text-white rounded-lg font-bold text-base flex items-center justify-center gap-2 hover:bg-[#D97706] focus:bg-[#F59E0B] focus:outline-none transition-colors"
                             >
                                 <ShoppingCart className="w-5 h-5" />
                                 도서 구매하기
