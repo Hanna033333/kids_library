@@ -28,6 +28,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             title,
             description,
             keywords,
+            alternates: {
+                canonical: `/book/${id}`
+            },
             openGraph: {
                 title: `${book.title} - 책자리`,
                 description: `이 책, 지금 도서관에 있을까? 헛걸음 전 3초 확인!`,

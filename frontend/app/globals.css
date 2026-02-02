@@ -59,6 +59,12 @@
   }
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   color: hsl(var(--foreground));
   background: hsl(var(--background));
