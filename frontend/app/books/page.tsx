@@ -39,10 +39,17 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         description = `헛걸음 NO! 대출 가능 여부와 위치를 바로 확인하세요`
     }
 
+    // Generate canonical URL with query parameters
+    const params = new URLSearchParams(searchParams as any).toString()
+    const canonicalUrl = params ? `/books?${params}` : '/books'
+
     return {
         title,
         description,
         keywords,
+        alternates: {
+            canonical: canonicalUrl
+        },
         openGraph: {
             title,
             description,

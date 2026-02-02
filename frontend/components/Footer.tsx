@@ -1,5 +1,7 @@
 'use client'
 
+import Link from "next/link";
+
 export default function Footer() {
     return (
         <footer className="bg-gray-900 text-gray-400 py-10 px-6 mt-auto">
@@ -10,14 +12,12 @@ export default function Footer() {
 
                     {/* Links */}
                     <div className="text-sm flex items-center justify-center gap-3 flex-wrap">
-                        <a
-                            href="https://amplified-decimal-9c4.notion.site/2e4939f003ba809ab07ce973f9033e61?source=copy_link"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <Link
+                            href="/intro"
                             className="hover:text-white transition-colors"
                         >
                             서비스 소개
-                        </a>
+                        </Link>
 
                         <span className="text-gray-700">|</span>
 
