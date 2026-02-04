@@ -19,10 +19,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             }
         }
 
-        const title = `${book.title} - 책자리`
+        const title = `${book.title} - 도서관 청구기호/위치 3초 확인 (책자리)`
         // author 필드가 null일 경우 빈 문자열로 처리
-        const description = `이 책, 지금 도서관에 있을까? 헛걸음 전 3초 확인!`
-        const keywords = `${book.title}, ${book.author}, 판교도서관, 청구기호, 어린이 도서, ${book.category || '추천도서'}`
+        const description = `${book.title}의 청구기호, 도서관 위치, 대출 가능 여부를 로그인 없이 확인하세요. 어린이 추천 도서.`
+        const keywords = `${book.title}, ${book.author}, 도서관, 청구기호, 어린이 도서, ${book.category || '추천도서'}, 4~7세 추천 도서, 초등 필독서, 도서관 위치, 청구기호 찾기, 책자리, 판교도서관`
 
         return {
             title,
@@ -32,14 +32,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 canonical: `/book/${id}`
             },
             openGraph: {
-                title: `${book.title} - 책자리`,
-                description: `이 책, 지금 도서관에 있을까? 헛걸음 전 3초 확인!`,
+                title,
+                description,
                 images: book.image_url ? [book.image_url] : [],
                 type: 'article',
             },
             twitter: {
                 card: 'summary_large_image',
-                title: `${book.title} - 책자리`,
+                title,
                 description,
                 images: book.image_url ? [book.image_url] : [],
             },

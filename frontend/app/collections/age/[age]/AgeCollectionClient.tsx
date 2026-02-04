@@ -5,7 +5,12 @@ import SearchBar from '@/components/SearchBar'
 import FilterBar from '@/components/FilterBar'
 import IntegratedFilterModal from '@/components/IntegratedFilterModal'
 
-interface AgeCollectionClientProps { age: string }
+import { Book } from '@/lib/types'
+
+interface AgeCollectionClientProps {
+    age: string;
+    initialBooks?: Book[];
+}
 
 const ageDisplayNames: Record<string, string> = {
     '0-3': '0-3세', '4-7': '4-7세', '8-12': '8-12세', 'teen': '13세 이상'
@@ -17,7 +22,7 @@ const ageDescriptions: Record<string, string> = {
     'teen': '사고력을 키우는 청소년 권장도서'
 }
 
-export default function AgeCollectionClient({ age }: AgeCollectionClientProps) {
+export default function AgeCollectionClient({ age, initialBooks }: AgeCollectionClientProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedAge, setSelectedAge] = useState<string>(age)
     const [selectedCategory, setSelectedCategory] = useState<string>('전체')
@@ -38,6 +43,9 @@ export default function AgeCollectionClient({ age }: AgeCollectionClientProps) {
         return () => { document.head.removeChild(script) }
     }, [age])
 
+    // initialBooks는 초기 로드 시 한 번만 사용됨. 필터가 변경되면 쿼리가 다시 실행됨.
+    const currentInitialBooks = selectedAge === age ? initialBooks : undefined;
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
             <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -56,8 +64,13 @@ export default function AgeCollectionClient({ age }: AgeCollectionClientProps) {
                     mode="integrated" selectedAge={selectedAge} selectedCategory={selectedCategory}
                     selectedSort={sortBy} onAgeChange={setSelectedAge} onCategoryChange={setSelectedCategory}
                     onSortChange={(sort: string) => setSortBy(sort as 'pangyo_callno' | 'title')} />
-                <BookList searchQuery={searchQuery} ageFilter={selectedAge}
-                    categoryFilter={selectedCategory} sortFilter={sortBy} />
+                <BookList
+                    searchQuery={searchQuery}
+                    ageFilter={selectedAge}
+                    categoryFilter={selectedCategory}
+                    sortFilter={sortBy}
+                    initialBooks={currentInitialBooks}
+                />
             </div>
         </div>
     )

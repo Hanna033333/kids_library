@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import BookItem from "./BookItem";
 import { useBooks } from "@/hooks/useBooks";
+import { Book } from "@/lib/types";
 
 const ITEMS_PER_PAGE = 24;
 
@@ -13,6 +14,7 @@ interface BookListProps {
   categoryFilter?: string;
   curationFilter?: string;
   sortFilter?: string;
+  initialBooks?: Book[];
 }
 
 export default function BookList({
@@ -21,6 +23,7 @@ export default function BookList({
   categoryFilter,
   curationFilter,
   sortFilter = "pangyo_callno",
+  initialBooks,
 }: BookListProps) {
   const [isMobile, setIsMobile] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -41,6 +44,7 @@ export default function BookList({
     curationFilter,
     sortFilter,
     limit: ITEMS_PER_PAGE,
+    initialBooks,
   });
 
   // Batch fetch loan statuses for all visible books (1 API call instead of 24)

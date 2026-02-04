@@ -1,11 +1,12 @@
 import { createClient } from './supabase'
 import { Book } from './types'
+import { SupabaseClient } from '@supabase/supabase-js'
 
 /**
  * 연령별 책 추천 가져오기 (일주일마다 랜덤 변경)
  */
-export async function getBooksByAge(ageGroup: string, limit: number = 5): Promise<Book[]> {
-    const supabase = createClient()
+export async function getBooksByAge(ageGroup: string, limit: number = 5, client?: SupabaseClient): Promise<Book[]> {
+    const supabase = client || createClient()
 
     // 연령 그룹 매핑
     const ageMap: Record<string, string[]> = {
@@ -48,8 +49,8 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5): Promis
 /**
  * 어린이 도서 연구회 추천 책 가져오기 (일주일마다 랜덤 변경)
  */
-export async function getResearchCouncilBooks(limit: number = 5): Promise<Book[]> {
-    const supabase = createClient()
+export async function getResearchCouncilBooks(limit: number = 5, client?: SupabaseClient): Promise<Book[]> {
+    const supabase = client || createClient()
 
     // 현재 주차 계산 (일주일마다 바뀜)
     const now = new Date()
@@ -80,8 +81,8 @@ export async function getResearchCouncilBooks(limit: number = 5): Promise<Book[]
  * 겨울방학 추천 도서 가져오기 (매일 랜덤 7권 선정)
  * 정책: 항상 정확히 7권 노출 보장 (랜덤 선택)
  */
-export async function getWinterBooks(limit: number = 7): Promise<Book[]> {
-    const supabase = createClient()
+export async function getWinterBooks(limit: number = 7, client?: SupabaseClient): Promise<Book[]> {
+    const supabase = client || createClient()
 
     // 날짜 기반 시드로 하루 동안 일관된 랜덤 순서 유지
     const now = new Date()

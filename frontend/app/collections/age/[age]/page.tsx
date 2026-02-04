@@ -61,8 +61,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 }
 
+import { getBooksFromServer } from '@/lib/books-api-server'
+import { createClient } from '@/lib/supabase-server'
+
+// ... (previous imports)
+
 export default async function AgeCollectionPage({ params }: Props) {
     const { age } = await params
     if (!['0-3', '4-7', '8-12', 'teen'].includes(age)) notFound()
-    return <AgeCollectionClient age={age} />
+
+    const supabase = createClient()
+    const { data: initialBooks } = await getBooksFromServer({
+        page: 1,
+        limit: 24,
+        filters: { age, sort: 'pangyo_callno' },
+        client: supabase
+    })
+
+    return <AgeCollectionClient age={age} initialBooks={initialBooks} />
 }

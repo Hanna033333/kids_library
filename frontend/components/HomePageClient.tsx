@@ -12,7 +12,19 @@ import LibrarySelector from '@/components/LibrarySelector'
 import { useLibrary } from '@/context/LibraryContext'
 import Footer from '@/components/Footer'
 
-export default function HomePageClient() {
+interface HomePageClientProps {
+  initialWinterBooks?: Book[];
+  initialResearchBooks?: Book[];
+  initialAgeBooks?: Book[];
+  initialSelectedAge?: string;
+}
+
+export default function HomePageClient({
+  initialWinterBooks = [],
+  initialResearchBooks = [],
+  initialAgeBooks = [],
+  initialSelectedAge = '4-7'
+}: HomePageClientProps) {
   const router = useRouter()
   const { user, signOut } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
@@ -22,22 +34,30 @@ export default function HomePageClient() {
       const saved = localStorage.getItem('lastSelectedAge')
       if (saved) return saved
     }
-    // 디폴트: 4-7세
-    return '4-7'
+    return initialSelectedAge
   })
-  const [ageBooks, setAgeBooks] = useState<Book[]>([])
-  const [researchBooks, setResearchBooks] = useState<Book[]>([])
-  const [winterBooks, setWinterBooks] = useState<Book[]>([])
-  const [loading, setLoading] = useState(true)
 
-  // 연령별 책 로드
+  const [ageBooks, setAgeBooks] = useState<Book[]>(initialAgeBooks)
+  const [researchBooks, setResearchBooks] = useState<Book[]>(initialResearchBooks)
+  const [winterBooks, setWinterBooks] = useState<Book[]>(initialWinterBooks)
+
+  // 초기 데이터가 있으면 로딩 상태 false
+  const [loading, setLoading] = useState(initialAgeBooks.length === 0)
+
+  // 연령별 책 로드 (초기 데이터가 있고 연령이 초기값과 같으면 스킵)
   useEffect(() => {
+    // 이미 데이터가 있고, 선택된 연령이 초기 연령과 같으면 페칭 안함 (SSR 활용)
+    if (ageBooks.length > 0 && selectedAge === initialSelectedAge) {
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     getBooksByAge(selectedAge, 7).then(books => {
       setAgeBooks(books)
       setLoading(false)
     })
-  }, [selectedAge])
+  }, [selectedAge, initialSelectedAge]) // ageBooks 의존성 제거 (무한 루프 방지)
 
   // 연령 선택 시 localStorage에 저장
   useEffect(() => {
@@ -46,15 +66,19 @@ export default function HomePageClient() {
     }
   }, [selectedAge])
 
-  // 도서 연구회 책 로드
+  // 도서 연구회 책 로드 (초기 데이터 없으면 로드)
   useEffect(() => {
-    getResearchCouncilBooks(7).then(setResearchBooks)
-  }, [])
+    if (researchBooks.length === 0) {
+      getResearchCouncilBooks(7).then(setResearchBooks)
+    }
+  }, []) // researchBooks 의존성 제거
 
-  // 겨울방학 추천 도서 로드
+  // 겨울방학 추천 도서 로드 (초기 데이터 없으면 로드)
   useEffect(() => {
-    getWinterBooks(7).then(setWinterBooks)
-  }, [])
+    if (winterBooks.length === 0) {
+      getWinterBooks(7).then(setWinterBooks)
+    }
+  }, []) // winterBooks 의존성 제거
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -179,6 +203,30 @@ export default function HomePageClient() {
               </div>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* 칼데콧 수상작 섹션 */}
+      <section className="py-8 px-4 bg-gradient-to-br from-amber-50 to-white">
+        <div className="max-w-[1200px] mx-auto">
+          <Link href="/caldecott" className="block group">
+            <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6 hover:shadow-md transition-all hover:-translate-y-0.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="text-5xl">🏆</div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+                      칼데콧 수상작 (2000-2026)
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      세계 최고의 어린이 그림책 27권을 만나보세요
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-6 h-6 text-gray-400 group-hover:text-gray-600 transition-colors" />
+              </div>
+            </div>
+          </Link>
         </div>
       </section>
 
