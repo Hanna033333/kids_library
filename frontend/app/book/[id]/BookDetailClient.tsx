@@ -219,7 +219,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                     <button onClick={() => router.back()} className="p-2 -ml-2 text-gray-500 hover:text-gray-900">
                         <ChevronLeft className="w-6 h-6" />
                     </button>
-                    <h1 className="text-base font-bold text-gray-900 truncate max-w-[200px]">상세 정보</h1>
+                    <span className="text-base font-bold text-gray-900 truncate max-w-[200px]">도서 정보</span>
                 </div>
                 {/* <LibrarySelector /> */}
             </header>
@@ -232,7 +232,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                             {book.image_url && !imageError ? (
                                 <img
                                     src={book.image_url}
-                                    alt={book.title}
+                                    alt={`${book.title} 표지`}
                                     className="w-full h-full object-cover"
                                     onError={() => setImageError(true)}
                                 />
@@ -261,9 +261,9 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                 )}
                             </div>
 
-                            <h2 className="text-xl md:text-2xl font-black text-gray-900 leading-tight mb-2 tracking-tight line-clamp-3">
+                            <h1 className="text-xl md:text-2xl font-black text-gray-900 leading-tight mb-2 tracking-tight line-clamp-3">
                                 {book.title}
-                            </h2>
+                            </h1>
 
                             <div className="flex flex-col gap-0.5 text-gray-600 font-medium text-base mb-8">
                                 <span>{book.author || '정보 없음'}</span>
@@ -279,7 +279,8 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                     <span className={`font-black text-2xl tracking-tight ${displayCallNo === '보유 정보 없음' ? 'text-gray-300' : 'text-gray-900'}`}>
                                         {displayCallNo}{book.vol ? `-${book.vol}` : ''}
                                     </span>
-                                    {book.loan_status && (
+                                    {/* 임시 숨김: API 한도 초과 (2026-02-04) */}
+                                    {/* {book.loan_status && (
                                         <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${book.loan_status.available === true
                                             ? "bg-green-50 text-green-700 border-green-200"
                                             : book.loan_status.available === false
@@ -290,7 +291,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                             }`}>
                                             {book.loan_status.status}
                                         </span>
-                                    )}
+                                    )} */}
                                 </div>
                                 <a
                                     href="https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog"
@@ -352,6 +353,8 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                         <p className="text-gray-400 italic">등록된 도서 소개 정보가 없습니다.</p>
                     )}
                 </div>
+
+
             </div>
         </main >
     )
