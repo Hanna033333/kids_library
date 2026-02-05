@@ -206,29 +206,6 @@ export default function HomePageClient({
         </div>
       </section>
 
-      {/* 칼데콧 수상작 섹션 */}
-      <section className="py-8 px-4 bg-gradient-to-br from-amber-50 to-white">
-        <div className="max-w-[1200px] mx-auto">
-          <Link href="/caldecott" className="block group">
-            <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6 hover:shadow-md transition-all hover:-translate-y-0.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="text-5xl">🏆</div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
-                      칼데콧 수상작 (2000-2026)
-                    </h2>
-                    <p className="text-sm text-gray-600">
-                      세계 최고의 어린이 그림책 27권을 만나보세요
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-6 h-6 text-gray-400 group-hover:text-gray-600 transition-colors" />
-              </div>
-            </div>
-          </Link>
-        </div>
-      </section>
 
       {/* 연령별 추천 섹션 */}
       <section className="py-8 px-4">
