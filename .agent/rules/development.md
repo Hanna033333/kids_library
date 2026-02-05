@@ -14,6 +14,7 @@
 7. 책 이미지 데이터 관련 작업 시에는 `.agent/skills/development/image_optimization/SKILL.md`의 화질 가이드를 준수해.
 8. **데이터 관리:** 데이터 추가 시 항상 중복(ISBN)을 확인하고, 기존 데이터는 덮어쓰기보다 확장(Upsert)하는 방향으로 처리해.
 9. **언어 정책:** 모든 문서(implementation plan, 기술 문서 등)는 **한글로 작성**해.
+10. **배포 트러블슈팅:** 배포 관련 이슈(Vercel, Render) 발생/수정 시에는 `.agent/skills/development/deployment/SKILL.md`를 반드시 참고하여 이전 사례를 검토해.
 
 ## 🔒 보안 가이드
 1. **환경변수 관리**
