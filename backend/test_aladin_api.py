@@ -3,8 +3,16 @@
 """
 import asyncio
 import aiohttp
+import os
+from dotenv import load_dotenv
 
-ALADIN_TTB_KEY = "ttbrkdgkssk011716001"
+# 환경변수 로딩 (보안: 하드코딩 제거)
+load_dotenv()
+ALADIN_TTB_KEY = os.getenv("ALADIN_TTB_KEY")
+
+if not ALADIN_TTB_KEY:
+    print("❌ Error: ALADIN_TTB_KEY not found in .env file")
+    exit(1)
 
 async def test_aladin(isbn):
     url = "http://www.aladin.co.kr/ttb/api/ItemLookUp.aspx"

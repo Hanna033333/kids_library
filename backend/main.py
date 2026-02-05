@@ -15,10 +15,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS 설정 (프론트엔드와 통신을 위해)
+# CORS 설정 (보안 강화: 특정 도메인만 허용)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 개발 환경에서는 모든 origin 허용
+    allow_origins=[
+        "https://checkjari.com",
+        "https://www.checkjari.com",
+        "http://localhost:3000",  # 로컬 개발용
+        "http://127.0.0.1:3000",  # 로컬 개발용
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

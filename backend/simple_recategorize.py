@@ -7,9 +7,15 @@ import google.generativeai as genai
 from supabase_client import supabase
 import os
 
-# 환경 변수
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or "AIzaSyDYgxS07vtdIjW0lpHDfYjxevehkd_Yhqw"
-ALADIN_TTB_KEY = os.getenv("ALADIN_TTB_KEY") or "ttbrkdgkssk011716001"
+# 환경 변수 (보안: 하드코딩 제거)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+ALADIN_TTB_KEY = os.getenv("ALADIN_TTB_KEY")
+
+# 환경변수 검증
+if not GEMINI_API_KEY:
+    raise ValueError("❌ GEMINI_API_KEY not found in .env file")
+if not ALADIN_TTB_KEY:
+    raise ValueError("❌ ALADIN_TTB_KEY not found in .env file")
 
 VALID_CATEGORIES = [
     "동화", "외국", "자연", "사회", "과학", "전통", "인물", "시", 

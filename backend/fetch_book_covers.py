@@ -6,12 +6,12 @@ from dotenv import load_dotenv
 from core.database import supabase
 from typing import List, Dict
 
-# Load env manually to avoid OSError
-# (Skipped due to repeated errors, using provided key)
-ALADIN_TTBKEY = "ttbrkdgkssk011716001"
+# 환경변수 로딩 (보안: 하드코딩 제거)
+load_dotenv()
+ALADIN_TTBKEY = os.getenv("ALADIN_TTB_KEY")
 
 if not ALADIN_TTBKEY:
-    print("Error: ALADIN_TTBKEY not found")
+    print("❌ Error: ALADIN_TTB_KEY not found in .env file")
     exit(1) 
 
 def fetch_books_needing_images() -> List[Dict]:

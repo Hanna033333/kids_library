@@ -17,16 +17,13 @@ if sys.platform.startswith('win'):
 # 환경 변수 (없으면 하드코딩된 값 사용 - 최후의 수단)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
-    # .env 파일 수동 로드 시도
-    try:
-        with open(".env", "r", encoding="utf-8") as f:
-            for line in f:
-                if line.startswith("GEMINI_API_KEY="):
-                    GEMINI_API_KEY = line.split("=", 1)[1].strip().strip("'").strip('"')
-                    break
-    except: pass
+    print("❌ Error: GEMINI_API_KEY not found in environment variables")
+    exit(1)
 
-ALADIN_TTB_KEY = os.getenv("ALADIN_TTB_KEY") or "ttbrkdgkssk011716001"
+ALADIN_TTB_KEY = os.getenv("ALADIN_TTB_KEY")
+if not ALADIN_TTB_KEY:
+    print("❌ Error: ALADIN_TTB_KEY not found in environment variables")
+    exit(1)
 
 VALID_CATEGORIES = [
     "동화", "외국", "자연", "사회", "과학", "전통", "인물", "시", 
