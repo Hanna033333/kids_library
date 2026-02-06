@@ -44,8 +44,7 @@ def set_cached_loan(isbn: str, data: Dict):
 
 async def fetch_loan_status_single(
     session: aiohttp.ClientSession, 
-    isbn: str,
-    lib_code: str = PANGYO_LIB_CODE
+    isbn: str
 ) -> Dict:
     """
     단일 책의 대출 정보 조회 (비동기)
@@ -66,13 +65,13 @@ async def fetch_loan_status_single(
     url = "http://data4library.kr/api/bookExist"
     params = {
         "authKey": DATA4LIBRARY_KEY,
-        "libCode": lib_code,
+        "libCode": PANGYO_LIB_CODE,
         "isbn13": isbn,
         "format": "json"
     }
     
     try:
-        async with session.get(url, params=params, timeout=5) as response:
+        async with session.get(url, params=params, timeout=3) as response:
             data = await response.json()
             
             # 응답 파싱
@@ -104,7 +103,6 @@ async def fetch_loan_status_single(
             "updated_at": datetime.now().isoformat()
         }
     except Exception as e:
-        print(f"Error fetching loan status for ISBN {isbn}: {e}")
         return {
             "available": None,
             "status": "확인불가",
@@ -113,7 +111,7 @@ async def fetch_loan_status_single(
         }
 
 
-async def fetch_loan_status_batch(books: List[Dict], lib_code: str = PANGYO_LIB_CODE) -> Dict[int, Dict]:
+async def fetch_loan_status_batch(books: List[Dict]) -> Dict[int, Dict]:
     """
     여러 책의 대출 정보를 병렬로 조회
     
@@ -141,10 +139,10 @@ async def fetch_loan_status_batch(books: List[Dict], lib_code: str = PANGYO_LIB_
 
     async def fetch_with_sem(session, isbn):
         async with semaphore:
-            return await fetch_loan_status_single(session, isbn, lib_code=lib_code)
+            return await fetch_loan_status_single(session, isbn)
 
-    # 타임아웃 설정을 포함한 세션 (병렬 요청을 고려하여 설정)
-    timeout = aiohttp.ClientTimeout(total=20)
+    # 타임아웃 설정을 포함한 세션
+    timeout = aiohttp.ClientTimeout(total=10)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         tasks = [
             fetch_with_sem(session, book['isbn'])

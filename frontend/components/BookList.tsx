@@ -5,14 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import BookItem from "./BookItem";
 import { useBooks } from "@/hooks/useBooks";
 import { Book } from "@/lib/types";
-import { useLibrary, LibraryName } from "@/context/LibraryContext";
 
 const ITEMS_PER_PAGE = 24;
-
-const LIBRARY_CODES: Record<string, string> = {
-  '판교도서관': '141231',
-  '송파어린이도서관': '111451'
-};
 
 interface BookListProps {
   searchQuery?: string;
@@ -54,36 +48,23 @@ export default function BookList({
   });
 
   // Batch fetch loan statuses for all visible books (1 API call instead of 24)
-  // Optimization: Filter out books without call numbers (don't query API for them)
-  const booksToFetch = books.filter(b => b.pangyo_callno);
-  const bookIds = booksToFetch.map(b => b.id).join(',');
+  const bookIds = books.map(b => b.id).join(',');
 
-  const { selectedLibrary } = useLibrary();
-  const libCode = LIBRARY_CODES[selectedLibrary];
-
-  const { data: loanStatuses, isError: isLoanError } = useQuery({
-    queryKey: ['batch-loan-status', bookIds, libCode],
+  const { data: loanStatuses } = useQuery({
+    queryKey: ['batch-loan-status', bookIds],
     queryFn: async () => {
-      // If filtered list is empty, return empty immediately
-      if (booksToFetch.length === 0) return {};
-
-      const { fetchLoanStatuses } = await import("@/lib/api");
-      // Only fetch for books that have call numbers
-      const ids = booksToFetch.map(b => b.id);
-      if (ids.length === 0) return {};
-
+      if (books.length === 0) return {};
       try {
-        return await fetchLoanStatuses(ids, libCode);
+        const { fetchLoanStatuses } = await import("@/lib/api");
+        return await fetchLoanStatuses(books.map(b => b.id));
       } catch (err) {
         console.warn('Batch loan status fetch failed:', err);
-        throw err; // Re-throw to trigger isError and retry logic
+        return {};
       }
     },
-    enabled: booksToFetch.length > 0,
-    staleTime: 5 * 60 * 1000,
-    retry: 1, // Max 1 retry
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff: 1s, 2s, 4s...
-    refetchOnWindowFocus: false, // Prevent unnecessary refetches
+    enabled: books.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    retry: 1,
   });
 
   // Infinite scroll observer (mobile only)
@@ -141,7 +122,7 @@ export default function BookList({
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
             {books.map((book) => (
               <div key={book.id}>
-                <BookItem book={book} loanStatus={loanStatuses?.[book.id]} isLoanError={isLoanError} />
+                <BookItem book={book} loanStatus={loanStatuses?.[book.id]} />
               </div>
             ))}
           </div>

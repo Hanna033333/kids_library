@@ -69,11 +69,10 @@ export async function getBooks(
 }
 
 export async function fetchLoanStatuses(
-  bookIds: number[],
-  libCode?: string
+  bookIds: number[]
 ): Promise<Record<number, LoanStatus>> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30초 타임아웃
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 10초 타임아웃
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/books/loan-status`, {
@@ -81,7 +80,7 @@ export async function fetchLoanStatuses(
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ book_ids: bookIds, lib_code: libCode }),
+      body: JSON.stringify(bookIds),
       signal: controller.signal
     });
 

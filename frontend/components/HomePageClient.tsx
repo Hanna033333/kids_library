@@ -392,7 +392,6 @@ export default function HomePageClient({
 
 // 책 카드 컴포넌트 - BookItem과 동일한 UI
 function BookCard({ book }: { book: Book }) {
-  const { selectedLibrary } = useLibrary()
 
   // Helper to normalize age strings
   function normalizeAge(rawAge: string): string {
@@ -410,23 +409,13 @@ function BookCard({ book }: { book: Book }) {
 
   const displayAge = normalizeAge(book.age || "")
 
-  // 청구기호 결정 로직
+  // 청구기호 결정 로직 (판교도서관 고정)
   let displayCallNo = ''
-
-  if (selectedLibrary === '판교도서관') {
-    // 판교는 기존 컬럼 우선, 없으면 library_info 확인
-    if (book.pangyo_callno && book.pangyo_callno !== '없음') {
-      displayCallNo = book.pangyo_callno
-    } else {
-      const info = book.library_info?.find((l: LibraryInfo) => l.library_name.includes('판교'))
-      if (info) displayCallNo = info.callno
-    }
+  if (book.pangyo_callno && book.pangyo_callno !== '없음') {
+    displayCallNo = book.pangyo_callno
   } else {
-    // 다른 도서관
-    const info = book.library_info?.find((l: LibraryInfo) => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary))
-    if (info) {
-      displayCallNo = info.callno
-    }
+    const info = book.library_info?.find((l: LibraryInfo) => l.library_name.includes('판교'))
+    if (info) displayCallNo = info.callno
   }
 
   return (
