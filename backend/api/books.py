@@ -58,9 +58,12 @@ def check_env():
 
 
 @router.post("/loan-status")
-async def get_loan_status(book_ids: List[int] = Body(..., description="책 ID 리스트")):
+async def get_loan_status(
+    book_ids: List[int] = Body(..., description="책 ID 리스트"),
+    lib_code: Optional[str] = Body(None, description="도서관 코드 (기본값: 판교도서관)")
+):
     """
-    여러 책의 대출 정보를 병렬로 조회
+    여러 책의 대출 정보를 병렬로 조회 (특정 도서관 지정 가능)
     
     Args:
         book_ids: 조회할 책 ID 리스트
@@ -75,7 +78,9 @@ async def get_loan_status(book_ids: List[int] = Body(..., description="책 ID �
         return {}
     
     # 대출 정보 병렬 조회
-    loan_statuses = await fetch_loan_status_batch(books_data.data)
+    from services.loan_status import PANGYO_LIB_CODE
+    target_lib_code = lib_code or PANGYO_LIB_CODE
+    loan_statuses = await fetch_loan_status_batch(books_data.data, lib_code=target_lib_code)
     
     return loan_statuses
 

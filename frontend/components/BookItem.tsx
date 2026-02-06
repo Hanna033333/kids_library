@@ -57,7 +57,7 @@ export default function BookItem({ book, loanStatus, isLoanError }: BookItemProp
 
     // 3. 에러 발생 시 (그리고 데이터가 없을 때)
     if (isLoanError) {
-      return { status: "확인중", available: null };
+      return { status: "확인불가", available: null };
     }
 
     return undefined;

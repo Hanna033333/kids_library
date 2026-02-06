@@ -5,8 +5,14 @@ import { useQuery } from "@tanstack/react-query";
 import BookItem from "./BookItem";
 import { useBooks } from "@/hooks/useBooks";
 import { Book } from "@/lib/types";
+import { useLibrary, LibraryName } from "@/context/LibraryContext";
 
 const ITEMS_PER_PAGE = 24;
+
+const LIBRARY_CODES: Record<string, string> = {
+  '판교도서관': '141231',
+  '송파어린이도서관': '111451'
+};
 
 interface BookListProps {
   searchQuery?: string;
@@ -52,8 +58,11 @@ export default function BookList({
   const booksToFetch = books.filter(b => b.pangyo_callno);
   const bookIds = booksToFetch.map(b => b.id).join(',');
 
+  const { selectedLibrary } = useLibrary();
+  const libCode = LIBRARY_CODES[selectedLibrary];
+
   const { data: loanStatuses, isError: isLoanError } = useQuery({
-    queryKey: ['batch-loan-status', bookIds],
+    queryKey: ['batch-loan-status', bookIds, libCode],
     queryFn: async () => {
       // If filtered list is empty, return empty immediately
       if (booksToFetch.length === 0) return {};
@@ -64,7 +73,7 @@ export default function BookList({
       if (ids.length === 0) return {};
 
       try {
-        return await fetchLoanStatuses(ids);
+        return await fetchLoanStatuses(ids, libCode);
       } catch (err) {
         console.warn('Batch loan status fetch failed:', err);
         throw err; // Re-throw to trigger isError and retry logic
@@ -72,7 +81,7 @@ export default function BookList({
     },
     enabled: booksToFetch.length > 0,
     staleTime: 5 * 60 * 1000,
-    retry: 3, // Max 3 retries
+    retry: 1, // Max 1 retry
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff: 1s, 2s, 4s...
     refetchOnWindowFocus: false, // Prevent unnecessary refetches
   });
