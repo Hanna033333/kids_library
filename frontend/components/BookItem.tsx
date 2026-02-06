@@ -42,7 +42,7 @@ export default function BookItem({ book, loanStatus, isLoanError }: BookItemProp
       const status = loanStatus.status;
       // Map "시간초과" to "확인불가"
       if (status === "시간초과") {
-        return { ...loanStatus, status: "확인불가", available: null };
+        return { ...loanStatus, status: "확인중", available: null };
       }
       // Map "정보없음" to "확인중" (API가 정보없음이면 재확인 필요 상태로 표시)
       if (status === "정보없음") {
@@ -57,7 +57,7 @@ export default function BookItem({ book, loanStatus, isLoanError }: BookItemProp
 
     // 3. 에러 발생 시 (그리고 데이터가 없을 때)
     if (isLoanError) {
-      return { status: "확인불가", available: null };
+      return { status: "확인중", available: null };
     }
 
     return undefined;
