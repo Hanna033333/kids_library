@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/context/AuthContext'
 import { createClient } from '@/lib/supabase'
 import { saveBook, unsaveBook } from '@/lib/supabase-api'
@@ -63,33 +64,41 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
         }
     }
 
-    // Fetch loan status in background (progressive loading)
-    useEffect(() => {
-        fetchLoanStatuses([book.id])
-            .then(loanStatuses => {
-                const rawStatus = loanStatuses[book.id] || null;
-                // Normalize loan status to show 4 states: 대출가능, 대출중, 미소장, 확인불가
-                let normalizedStatus = rawStatus;
-                if (rawStatus) {
-                    const status = rawStatus.status;
-                    // Map "시간초과" to "확인불가"
-                    if (status === "시간초과") {
-                        normalizedStatus = { ...rawStatus, status: "확인불가", available: null };
-                    }
-                    // Map "정보없음" to "미소장"
-                    if (status === "정보없음") {
-                        normalizedStatus = { ...rawStatus, status: "미소장", available: null };
-                    }
-                }
-                setBook(prev => ({
-                    ...prev,
-                    loan_status: normalizedStatus
-                }))
-            })
-            .catch(err => {
-                console.error('Failed to fetch loan status:', err)
-            })
-    }, [book.id])
+    // React Query for Loan Status
+    const { data: loanStatuses, isError: isLoanError } = useQuery({
+        queryKey: ['book-loan-status', book.id],
+        queryFn: async () => {
+            return await fetchLoanStatuses([book.id]);
+        },
+        enabled: !!displayCallNo && displayCallNo !== '청구기호 없음' && displayCallNo !== '보유 정보 없음',
+        staleTime: 5 * 60 * 1000,
+        retry: 3,
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+        refetchOnWindowFocus: false,
+    });
+
+    // Derive final status
+    const normalizedStatus = (() => {
+        // 1. 청구기호 없으면 무조건 '미소장'
+        if (!displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음') {
+            return { status: "미소장", available: null };
+        }
+
+        const rawStatus = loanStatuses?.[book.id];
+        if (rawStatus) {
+            const status = rawStatus.status;
+            if (status === "시간초과") return { ...rawStatus, status: "확인불가", available: null };
+            if (status === "정보없음") return { ...rawStatus, status: "확인중", available: null };
+            if (status === "미소장") return { ...rawStatus, status: "확인중", available: null };
+            return rawStatus;
+        }
+
+        if (isLoanError) {
+            return { status: "확인중", available: null };
+        }
+
+        return undefined;
+    })();
 
     // Send GA event when book detail page is viewed
     useEffect(() => {
@@ -279,16 +288,18 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                     <span className={`font-black text-2xl tracking-tight ${displayCallNo === '보유 정보 없음' ? 'text-gray-300' : 'text-gray-900'}`}>
                                         {displayCallNo}{book.vol ? `-${book.vol}` : ''}
                                     </span>
-                                    {book.loan_status && (
-                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${book.loan_status.available === true
+                                    {normalizedStatus && (
+                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${normalizedStatus.available === true
                                             ? "bg-green-50 text-green-700 border-green-200"
-                                            : book.loan_status.available === false
+                                            : normalizedStatus.available === false
                                                 ? "bg-red-50 text-red-700 border-red-200"
-                                                : book.loan_status.status === "미소장"
+                                                : normalizedStatus.status === "미소장"
                                                     ? "bg-gray-100 text-gray-700 border-gray-200"
-                                                    : "bg-white text-gray-600 border-gray-300"
+                                                    : normalizedStatus.status === "확인중"
+                                                        ? "bg-orange-50 text-orange-600 border-orange-200"
+                                                        : "bg-white text-gray-600 border-gray-300"
                                             }`}>
-                                            {book.loan_status.status}
+                                            {normalizedStatus.status}
                                         </span>
                                     )}
                                 </div>

@@ -34,8 +34,33 @@ export default async function CaldecottPage() {
     const supabase = createClient()
     const books = await getCaldecottBooks(supabase)
 
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        itemListElement: books.map((book, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            item: {
+                '@type': 'Book',
+                name: book.title,
+                author: {
+                    '@type': 'Person',
+                    name: book.author,
+                },
+                isbn: book.isbn,
+                image: book.image_url,
+                url: `https://checkjari.com/book/${book.id}`,
+            },
+        })),
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
+
             <div className="max-w-7xl mx-auto px-4 py-8">
                 {/* Header */}
                 <div className="text-center mb-12">

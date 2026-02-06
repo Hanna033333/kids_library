@@ -3,9 +3,35 @@ name: deployment-troubleshooting
 description: Kids Library 프로젝트의 Vercel(Next.js) 및 Render(FastAPI) 배포 문제 해결 가이드
 ---
 
-# 🚀 배포 트러블슈팅 가이드 (Kids Library)
+# 🚀 배포 가이드 및 트러블슈팅 (Kids Library)
 
-이 문서는 프로젝트 배포 과정에서 발생한 주요 이슈와 해결 방법을 기록합니다.
+이 문서는 프로젝트 배포 과정에서 반드시 확인해야 할 표준 절차와 과거 발생한 주요 이슈의 해결 방법을 기록합니다.
+
+## 📖 표준 배포 가이드 (Happy Path)
+
+새로운 기능을 배포할 때는 다음 절차를 준수하여 장애를 방지합니다.
+
+### 1단계: 로컬 검증 (Pre-check)
+- [ ] 프론트엔드 빌드 테스트: `cd frontend && npm run build` (오류 없이 완료되는지 확인)
+- [ ] 백엔드 신규 라이브러리 확인: `backend/requirements.txt`에 신규 추가된 라이브러리가 Render 빌드를 방해하지 않는지 확인.
+
+### 2단계: Vercel 배포 설정 (Frontend)
+- **Root Directory**: 반드시 `frontend`로 설정되어 있어야 함.
+- **Framework Preset**: 반드시 `Next.js`로 설정.
+- **Environment Variables**: 모든 Supabase/API 변수는 `NEXT_PUBLIC_` 접두사를 사용.
+- **Node.js Version**: `package.json`의 엔진 설정과 Vercel 설정을 일치시킴 (현재 18+ 권장).
+
+### 3단계: Render 배포 설정 (Backend)
+- **Runtime**: `python`
+- **Build Command**: `pip install -r backend/requirements.txt`
+- **Start Command**: `cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
+- **Environment Variables**: `PYTHON_VERSION` (3.11), `SUPABASE_URL`, `SUPABASE_KEY` 등 필수 변수 주입 확인.
+
+---
+
+## 🛠️ 트러블슈팅 가이드 (Troubleshooting)
+
+과거에 발생했던 주요 이슈들에 대한 해결 방법입니다.
 
 ## 1. Vercel (Frontend - Next.js)
 

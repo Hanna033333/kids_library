@@ -20,6 +20,10 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         title = "전문가가 보증하는 '찐' 필독서 모음"
         description = '엄마표 독서 고민 끝! 어린이 도서 연구회가 엄선한 필독서를 도서관에서 바로 대출하세요. 전문가 추천 베스트 어린이 책 리스트를 지금 확인하세요.'
         keywords = '어린이 도서 연구회, 전문가 추천 도서, 사서 추천, 어린이 필독서, 베스트 어린이 책, 권장도서'
+    } else if (curation === 'caldecott') {
+        title = "칼데콧 수상작 (2000-2026)"
+        description = '2000년부터 2026년까지 칼데콧 메달을 수상한 세계 최고의 어린이 그림책 목록입니다. 판교도서관 청구기호와 대출 정보를 확인하세요.'
+        keywords = '칼데콧상, Caldecott Medal, 어린이 그림책, 수상작, 추천 도서, 판교도서관'
     } else if (age) {
         if (age === '0-3') {
             title = '우리 아이 나이에 딱! 0-3세 맞춤 도서'
@@ -64,8 +68,56 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     }
 }
 
+import { createClient } from '@/lib/supabase-server'
+
 export const dynamic = 'force-dynamic';
 
-export default function BooksPage() {
-    return <HomeClient />;
+export default async function BooksPage({ searchParams }: Props) {
+    const { curation } = searchParams
+    let jsonLd = null;
+
+    // curation 값이 있고, 알려진 큐레이션 태그인 경우 서버 사이드에서 데이터를 가져와 구조화된 데이터 생성
+    if (curation && ['winter-vacation', 'research-council'].includes(curation)) {
+        const supabase = createClient()
+        const { data: books } = await supabase
+            .from('childbook_items')
+            .select('id, title, author, isbn, image_url')
+            .eq('curation_tag', curation)
+            .or('is_hidden.is.null,is_hidden.eq.false')
+            .order('title', { ascending: true })
+
+        if (books && books.length > 0) {
+            jsonLd = {
+                '@context': 'https://schema.org',
+                '@type': 'ItemList',
+                itemListElement: books.map((book, index) => ({
+                    '@type': 'ListItem',
+                    position: index + 1,
+                    item: {
+                        '@type': 'Book',
+                        name: book.title,
+                        author: {
+                            '@type': 'Person',
+                            name: book.author,
+                        },
+                        isbn: book.isbn,
+                        image: book.image_url,
+                        url: `https://checkjari.com/book/${book.id}`,
+                    },
+                })),
+            }
+        }
+    }
+
+    return (
+        <>
+            {jsonLd && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
+            )}
+            <HomeClient />
+        </>
+    );
 }

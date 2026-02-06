@@ -11,9 +11,11 @@ import { useAuth } from '@/context/AuthContext'
 import LibrarySelector from '@/components/LibrarySelector'
 import { useLibrary } from '@/context/LibraryContext'
 import Footer from '@/components/Footer'
+import MainBanner from '@/components/MainBanner'
 
 interface HomePageClientProps {
   initialWinterBooks?: Book[];
+  initialCaldecottBooks?: Book[];
   initialResearchBooks?: Book[];
   initialAgeBooks?: Book[];
   initialSelectedAge?: string;
@@ -21,6 +23,7 @@ interface HomePageClientProps {
 
 export default function HomePageClient({
   initialWinterBooks = [],
+  initialCaldecottBooks = [],
   initialResearchBooks = [],
   initialAgeBooks = [],
   initialSelectedAge = '4-7'
@@ -40,6 +43,7 @@ export default function HomePageClient({
   const [ageBooks, setAgeBooks] = useState<Book[]>(initialAgeBooks)
   const [researchBooks, setResearchBooks] = useState<Book[]>(initialResearchBooks)
   const [winterBooks, setWinterBooks] = useState<Book[]>(initialWinterBooks)
+  const [caldecottBooks] = useState<Book[]>(initialCaldecottBooks)
 
   // 초기 데이터가 있으면 로딩 상태 false
   const [loading, setLoading] = useState(initialAgeBooks.length === 0)
@@ -134,6 +138,10 @@ export default function HomePageClient({
         )}
       </header>
 
+
+      {/* 메인 배너 */}
+      {/* <MainBanner /> */}
+
       {/* 검색 바 - 책 리스트와 동일 */}
       <div className="w-full sticky top-[73px] z-20 bg-[#F7F7F7]/95 backdrop-blur-sm px-4 py-4 transition-all">
         <form onSubmit={handleSearch} className="w-full max-w-[1200px] mx-auto flex gap-3">
@@ -206,9 +214,46 @@ export default function HomePageClient({
         </div>
       </section>
 
+      {/* 칼데콧 수상작 섹션 */}
+      <section className="py-8 px-4">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="flex items-center justify-between mb-1 px-2">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <span>칼데콧 수상작</span>
+            </h2>
+            <Link
+              href="/books?curation=caldecott"
+              className="text-gray-900 hover:text-gray-600 transition-colors"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </Link>
+          </div>
+
+          <div className="px-2 mb-4">
+            <p className="text-sm text-gray-600">미국 도서관 사서들이 엄선한 최고의 그림책, 칼데콧 수상작 컬렉션</p>
+          </div>
+
+          {caldecottBooks.length > 0 ? (
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+              <div className="flex gap-4 pb-2">
+                {caldecottBooks.map((book, index) => (
+                  <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === caldecottBooks.length - 1 ? 'mr-4' : ''}`}>
+                    <BookCard book={book} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              수상작 목록을 불러오는 중입니다...
+            </div>
+          )}
+        </div>
+      </section>
+
 
       {/* 연령별 추천 섹션 */}
-      <section className="py-8 px-4">
+      <section className="py-8 px-4 bg-white">
         <div className="max-w-[1200px] mx-auto">
           <div className="flex items-center justify-between mb-1 px-2">
             <h2 className="text-xl font-bold text-gray-900">우리 아이 나이에 딱!</h2>
@@ -286,7 +331,7 @@ export default function HomePageClient({
       </section>
 
       {/* 도서 연구회 추천 섹션 */}
-      <section className="py-8 px-4 bg-white">
+      <section className="py-8 px-4">
         <div className="max-w-[1200px] mx-auto">
           <div className="flex items-center justify-between mb-1 px-2">
             <h2 className="text-xl font-bold text-gray-900">어린이 도서 연구회 추천</h2>

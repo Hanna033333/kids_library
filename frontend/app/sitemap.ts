@@ -20,7 +20,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         { url: `${baseUrl}/collections/age/4-7`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
         { url: `${baseUrl}/collections/age/8-12`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
         { url: `${baseUrl}/collections/age/teen`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
-        { url: `${baseUrl}/collections/research-council`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 }
+        { url: `${baseUrl}/collections/research-council`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
+        { url: `${baseUrl}/caldecott`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 }
     ]
 
     // Book detail pages

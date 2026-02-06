@@ -1,38 +1,40 @@
 
 ============================================================
-GA4 REPORT - 2026-02-03 (어제)
+GA4 REPORT - 2026-02-05 (어제)
 ============================================================
 
 1️⃣  트래픽 개요 (Traffic Overview)
 ------------------------------------------------------------
-   활성 사용자 (Active Users): 132
-   총 세션 (Total Sessions): 134
-   페이지뷰 (Page Views): 459
-   평균 참여시간 (Avg Engagement): 23.7초
+   활성 사용자 (Active Users): 63
+   총 세션 (Total Sessions): 71
+   페이지뷰 (Page Views): 273
+   평균 참여시간 (Avg Engagement): 50.0초
 
 
 2️⃣  유입 채널 (Acquisition Channels)
 ------------------------------------------------------------
-   (direct) / (none): 90명 (92 세션)
-   (not set): 66명 (67 세션)
-   m.cafe.naver.com / referral: 25명 (25 세션)
-   cafe.naver.com / referral: 5명 (5 세션)
-   naver.com / referral: 4명 (4 세션)
+   (not set): 39명 (39 세션)
+   news.hada.io / referral: 36명 (38 세션)
+   (direct) / (none): 15명 (20 세션)
+   cafe.naver.com / referral: 2명 (2 세션)
    m.search.naver.com / referral: 2명 (2 세션)
-   naver / cpc: 1명 (1 세션)
+   naver / organic: 2명 (4 세션)
+   (data not available): 1명 (1 세션)
+   ad.search.naver.com / referral: 1명 (1 세션)
+   l.threads.com / referral: 1명 (1 세션)
 
 
 3️⃣  인기 페이지 (Top Pages)
 ------------------------------------------------------------
-   /: 239회 조회 (132명)
-   /books: 123회 조회 (34명)
-   /book/11325: 16회 조회 (16명)
-   /book/11309: 7회 조회 (6명)
-   /book/7612: 6회 조회 (8명)
-   /book/7668: 5회 조회 (5명)
-   /book/7743: 5회 조회 (5명)
-   /book/7745: 5회 조회 (5명)
-   /book/7671: 4회 조회 (4명)
-   /book/11324: 3회 조회 (3명)
+   /: 127회 조회 (61명)
+   /books: 92회 조회 (21명)
+   /book/11321: 9회 조회 (8명)
+   /book/11288: 5회 조회 (6명)
+   /collections/age/4-7: 3회 조회 (2명)
+   /intro: 3회 조회 (2명)
+   /book/7628: 2회 조회 (3명)
+   /book/7633: 2회 조회 (2명)
+   /book/10098: 1회 조회 (1명)
+   /book/10101: 1회 조회 (1명)
 
 ============================================================

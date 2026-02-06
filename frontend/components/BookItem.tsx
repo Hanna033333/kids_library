@@ -5,6 +5,7 @@ import Link from "next/link";
 interface BookItemProps {
   book: Book;
   loanStatus?: LoanStatus;
+  isLoanError?: boolean;
 }
 
 // Helper to normalize age strings to standard ranges
@@ -26,22 +27,41 @@ function normalizeAge(rawAge: string): string {
 
 import { sendGAEvent } from "@/lib/analytics";
 
-export default function BookItem({ book, loanStatus }: BookItemProps) {
+export default function BookItem({ book, loanStatus, isLoanError }: BookItemProps) {
   const displayAge = normalizeAge(book.age || "");
 
   // Normalize loan status to show 4 states: 대출가능, 대출중, 미소장, 확인불가
-  const normalizedStatus = loanStatus ? (() => {
-    const status = loanStatus.status;
-    // Map "시간초과" to "확인불가"
-    if (status === "시간초과") {
-      return { ...loanStatus, status: "확인불가", available: null };
+  const normalizedStatus = (() => {
+    // 1. 청구기호 없으면 무조건 '미소장'
+    if (!book.pangyo_callno) {
+      return { status: "미소장", available: null };
     }
-    // Map "정보없음" to "미소장"
-    if (status === "정보없음") {
-      return { ...loanStatus, status: "미소장", available: null };
+
+    // 2. 대출 상태 정보가 있으면 표시
+    if (loanStatus) {
+      const status = loanStatus.status;
+      // Map "시간초과" to "확인불가"
+      if (status === "시간초과") {
+        return { ...loanStatus, status: "확인불가", available: null };
+      }
+      // Map "정보없음" to "확인중" (API가 정보없음이면 재확인 필요 상태로 표시)
+      if (status === "정보없음") {
+        return { ...loanStatus, status: "확인중", available: null };
+      }
+      // 청구기호가 있는데 API가 "미소장"이라고 하는 경우 -> 데이터 불일치이므로 "확인중"으로 표시 (사용자 요청)
+      if (status === "미소장") {
+        return { ...loanStatus, status: "확인중", available: null };
+      }
+      return loanStatus;
     }
-    return loanStatus;
-  })() : undefined;
+
+    // 3. 에러 발생 시 (그리고 데이터가 없을 때)
+    if (isLoanError) {
+      return { status: "확인중", available: null };
+    }
+
+    return undefined;
+  })();
 
   return (
     <Link
@@ -104,7 +124,9 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
                 ? "bg-red-100 text-red-700"
                 : normalizedStatus.status === "미소장"
                   ? "bg-gray-100 text-gray-700"
-                  : "bg-white text-gray-600 border border-gray-300"
+                  : normalizedStatus.status === "확인중"
+                    ? "bg-orange-50 text-orange-600 border border-orange-200"
+                    : "bg-white text-gray-600 border border-gray-300"
               }`}>
               {normalizedStatus.status}
             </span>

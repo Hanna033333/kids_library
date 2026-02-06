@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import HomePageClient from '@/components/HomePageClient'
 import { getWinterBooks, getResearchCouncilBooks, getBooksByAge } from '@/lib/home-api'
+import { getCaldecottBooks } from '@/lib/caldecott-api'
 import { createClient } from '@/lib/supabase-server'
 
 export const metadata: Metadata = {
@@ -35,14 +36,16 @@ export default async function HomePage() {
   const defaultAge = '4-7'
 
   // 서버 사이드 병렬 데이터 페칭
-  const [winterBooks, researchBooks, ageBooks] = await Promise.all([
+  const [winterBooks, researchBooks, ageBooks, caldecottBooks] = await Promise.all([
     getWinterBooks(7, supabase),
     getResearchCouncilBooks(7, supabase),
-    getBooksByAge(defaultAge, 7, supabase)
+    getBooksByAge(defaultAge, 7, supabase),
+    getCaldecottBooks(supabase)
   ])
 
   return <HomePageClient
     initialWinterBooks={winterBooks}
+    initialCaldecottBooks={caldecottBooks.slice(0, 7)}
     initialResearchBooks={researchBooks}
     initialAgeBooks={ageBooks}
     initialSelectedAge={defaultAge}

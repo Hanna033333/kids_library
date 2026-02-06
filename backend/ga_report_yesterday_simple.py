@@ -2,7 +2,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r"c:\Users\skplanet\Desktop\kids library\ga4-key.json"
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/Users/1004823/Desktop/kids_library/ga4-key.json"
 
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import RunReportRequest, DateRange, Dimension, Metric
