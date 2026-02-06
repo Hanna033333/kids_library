@@ -230,7 +230,7 @@ export default function HomePageClient({
           </div>
 
           <div className="px-2 mb-4">
-            <p className="text-sm text-gray-600">미국 도서관 사서들이 엄선한 최고의 그림책, 칼데콧 수상작 컬렉션</p>
+            <p className="text-sm text-gray-600">미국 도서관 사서들이 엄선한 최고의 그림책</p>
           </div>
 
           {caldecottBooks.length > 0 ? (
@@ -411,7 +411,7 @@ function BookCard({ book }: { book: Book }) {
   const displayAge = normalizeAge(book.age || "")
 
   // 청구기호 결정 로직
-  let displayCallNo = '청구기호 없음'
+  let displayCallNo = ''
 
   if (selectedLibrary === '판교도서관') {
     // 판교는 기존 컬럼 우선, 없으면 library_info 확인
@@ -426,8 +426,6 @@ function BookCard({ book }: { book: Book }) {
     const info = book.library_info?.find((l: LibraryInfo) => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary))
     if (info) {
       displayCallNo = info.callno
-    } else {
-      displayCallNo = '보유 정보 없음'
     }
   }
 
@@ -473,7 +471,7 @@ function BookCard({ book }: { book: Book }) {
           {book.title}
         </h3>
 
-        <p className={`text-[15px] font-extrabold tracking-tight mb-3 truncate w-full ${displayCallNo === '보유 정보 없음' ? 'text-gray-300' : 'text-[#F59E0B]'}`}>
+        <p className={`text-[15px] font-extrabold tracking-tight mb-3 truncate w-full ${!displayCallNo ? 'text-gray-300' : 'text-[#F59E0B]'}`}>
           {displayCallNo}
         </p>
 

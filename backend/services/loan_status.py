@@ -71,7 +71,7 @@ async def fetch_loan_status_single(
     }
     
     try:
-        async with session.get(url, params=params, timeout=3) as response:
+        async with session.get(url, params=params, timeout=10) as response:
             data = await response.json()
             
             # 응답 파싱
@@ -103,6 +103,7 @@ async def fetch_loan_status_single(
             "updated_at": datetime.now().isoformat()
         }
     except Exception as e:
+        print(f"Error fetching loan status for ISBN {isbn}: {e}")
         return {
             "available": None,
             "status": "확인불가",
