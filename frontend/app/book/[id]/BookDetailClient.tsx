@@ -279,8 +279,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                     <span className={`font-black text-2xl tracking-tight ${displayCallNo === '보유 정보 없음' ? 'text-gray-300' : 'text-gray-900'}`}>
                                         {displayCallNo}{book.vol ? `-${book.vol}` : ''}
                                     </span>
-                                    {/* 임시 숨김: API 한도 초과 (2026-02-04) */}
-                                    {/* {book.loan_status && (
+                                    {book.loan_status && (
                                         <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${book.loan_status.available === true
                                             ? "bg-green-50 text-green-700 border-green-200"
                                             : book.loan_status.available === false
@@ -291,7 +290,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                             }`}>
                                             {book.loan_status.status}
                                         </span>
-                                    )} */}
+                                    )}
                                 </div>
                                 <a
                                     href="https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog"

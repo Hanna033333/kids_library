@@ -97,8 +97,7 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
 
         <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
           <span className="text-gray-400 truncate max-w-[50%]">{book.publisher}</span>
-          {/* 임시 숨김: API 한도 초과 (2026-02-04) */}
-          {/* {normalizedStatus && (
+          {normalizedStatus && (
             <span className={`px-2 py-1 rounded-full text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
               ? "bg-green-100 text-green-700"
               : normalizedStatus.available === false
@@ -109,7 +108,7 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
               }`}>
               {normalizedStatus.status}
             </span>
-          )} */}
+          )}
 
         </div>
       </div>

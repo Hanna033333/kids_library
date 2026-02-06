@@ -11,6 +11,7 @@
 - [x] **Optimize SEO Titles**: Change title to "도서관 청구기호..." (Generic for expansion). <!-- id: 6 -->
 - [x] **Verify GA4**: Traffic confirmed (8 users in 30m). <!-- id: 7 -->
 - [ ] **Performance Check**: Ensure site loads fast for mobile users. <!-- id: 8 -->
+- [x] **Feature Restore**: Re-enabled loan status display.
 
 ## 🔄 Phase 3: Retention & Viral (Winter Curation)
 - [ ] **Define Content**: Finalize the "Winter Vacation Top 10" book list. <!-- id: 9 -->
