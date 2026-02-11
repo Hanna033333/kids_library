@@ -27,7 +27,7 @@ const AGE_OPTIONS = [
     { value: "0-3", label: "0-3세" },
     { value: "4-7", label: "4-7세" },
     { value: "8-12", label: "8-12세" },
-    { value: "teen", label: "13세+" },
+    { value: "13+", label: "13세+" },
 ];
 
 const SORT_OPTIONS = [

@@ -90,20 +90,29 @@ def search_books_service(
             # OR는 title/author 내부에만 적용, 전체 쿼리와는 AND로 결합
             query = query.or_(f"title.ilike.%{q}%,author.ilike.%{q}%")
     
-    # 연령 필터링 (각 연령대별 OR는 유지하되, 전체 쿼리와는 AND로 결합)
+    # 연령 필터링 - 괄호로 감싸서 AND 조건으로 결합
     if age:
         age = age.strip()
         if age:
+            age_conditions = []
             if age == "0-3":
-                query = query.or_(f"age.ilike.%0세%,age.ilike.%1세%,age.ilike.%2세%,age.ilike.%3세%,age.ilike.%{age}%")
+                # 0세부터, 3세부터를 포함
+                age_conditions = ["age.ilike.%0세%", "age.ilike.%1세%", "age.ilike.%2세%", "age.ilike.%3세%"]
             elif age == "4-7":
-                query = query.or_(f"age.ilike.%4세%,age.ilike.%5세%,age.ilike.%6세%,age.ilike.%7세%,age.ilike.%{age}%")
+                # 3세부터, 5세부터, 7세부터를 포함
+                age_conditions = ["age.ilike.%3세%", "age.ilike.%4세%", "age.ilike.%5세%", "age.ilike.%6세%", "age.ilike.%7세%"]
             elif age == "8-12":
-                query = query.or_(f"age.ilike.%8세%,age.ilike.%9세%,age.ilike.%10세%,age.ilike.%11세%,age.ilike.%12세%,age.ilike.%{age}%")
+                # 7세부터, 9세부터, 11세부터를 포함
+                age_conditions = ["age.ilike.%7세%", "age.ilike.%8세%", "age.ilike.%9세%", "age.ilike.%10세%", "age.ilike.%11세%", "age.ilike.%12세%"]
             elif age == "13+":
-                query = query.or_(f"age.ilike.%13세%,age.ilike.%13%")
+                # 11세부터, 13세부터, 16세부터를 포함
+                age_conditions = ["age.ilike.%11세%", "age.ilike.%13세%", "age.ilike.%16세%"]
             else:
-                query = query.ilike("age", f"%{age}%")
+                age_conditions = [f"age.ilike.%{age}%"]
+            
+            if age_conditions:
+                # OR 조건을 괄호로 감싸서 적용
+                query = query.or_(",".join(age_conditions))
     
     # 정렬
     if sort == "title":
@@ -125,6 +134,7 @@ def search_books_service(
         "limit": limit,
         "total_pages": (result.count + limit - 1) // limit if hasattr(result, 'count') and result.count else 1
     }
+
 
 
 

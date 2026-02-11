@@ -34,7 +34,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         } else if (age === '8-12') {
             title = '우리 아이 나이에 딱! 8-12세 맞춤 도서'
             description = '전집 고민 그만! 8-12세 발달 단계에 딱 맞는 도서관 책 추천'
-        } else if (age === 'teen') {
+        } else if (age === '13+') {
             title = '우리 아이 나이에 딱! 청소년 맞춤 도서'
             description = '전집 고민 그만! 청소년 발달 단계에 딱 맞는 도서관 책 추천'
         }
