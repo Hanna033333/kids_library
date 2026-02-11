@@ -96,13 +96,13 @@ def search_books_service(
         if age:
             age_conditions = []
             if age == "0-3":
-                # 0세부터, 3세부터를 포함
-                age_conditions = ["age.ilike.%0세%", "age.ilike.%1세%", "age.ilike.%2세%", "age.ilike.%3세%"]
+                # 0세, 1세, 2세, 3세, 유아 포함
+                age_conditions = ["age.ilike.%0세%", "age.ilike.%1세%", "age.ilike.%2세%", "age.ilike.%3세%", "age.ilike.%유아%"]
             elif age == "4-7":
-                # 3세부터, 5세부터, 7세부터를 포함
-                age_conditions = ["age.ilike.%3세%", "age.ilike.%4세%", "age.ilike.%5세%", "age.ilike.%6세%", "age.ilike.%7세%"]
+                # 3세, 4세, 5세, 6세, 7세, 유아 포함 (범위 확대)
+                age_conditions = ["age.ilike.%3세%", "age.ilike.%4세%", "age.ilike.%5세%", "age.ilike.%6세%", "age.ilike.%7세%", "age.ilike.%유아%"]
             elif age == "8-12":
-                # 7세부터, 9세부터, 11세부터를 포함
+                # 7세, 8세, 9세, 10세, 11세, 12세 포함 (범위 확대)
                 age_conditions = ["age.ilike.%7세%", "age.ilike.%8세%", "age.ilike.%9세%", "age.ilike.%10세%", "age.ilike.%11세%", "age.ilike.%12세%"]
             elif age == "13+":
                 # 11세부터, 13세부터, 16세부터를 포함

@@ -30,10 +30,11 @@ export async function getBooksFromSupabase(
     if (filters?.age) {
         // 나이 필터 매핑: 프론트엔드 값 → DB 값
         const ageMapping: Record<string, string[]> = {
-            '0-3': ['0세부터', '3세부터'],
-            '4-7': ['5세부터', '7세부터'],
-            '8-12': ['9세부터', '11세부터'],
-            'teen': ['13세부터', '16세부터']
+            '0-3': ['0세부터', '3세부터', '유아'],
+            '4-7': ['3세부터', '5세부터', '7세부터', '유아'],
+            '8-12': ['7세부터', '9세부터', '11세부터'],
+            'teen': ['13세부터', '16세부터'], // Backward compatibility
+            '13+': ['11세부터', '13세부터', '16세부터'] // 11세도 포함
         };
 
         const dbAgeValues = ageMapping[filters.age];
