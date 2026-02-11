@@ -45,7 +45,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <head>
+      <body className="bg-[#F7F7F7] min-h-screen text-gray-900 overflow-x-hidden">
         {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-FG2WYB82L9"
@@ -95,8 +95,6 @@ export default function RootLayout({
             }
           `}
         </Script>
-      </head>
-      <body className="bg-[#F7F7F7] min-h-screen text-gray-900 overflow-x-hidden">
         <Providers>{children}</Providers>
       </body>
     </html>
