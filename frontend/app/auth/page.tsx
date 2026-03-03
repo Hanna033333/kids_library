@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+export const dynamic = 'force-dynamic'
 import AuthClient from './AuthClient'
 
 export const metadata: Metadata = {

@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
 import { useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
@@ -11,9 +12,10 @@ export default function AuthCallback() {
 
     useEffect(() => {
         const handleCallback = async () => {
-            const { error } = await supabase.auth.exchangeCodeForSession(
-                window.location.search.split('code=')[1]?.split('&')[0] || ''
-            )
+            const code = typeof window !== 'undefined'
+                ? window.location.search.split('code=')[1]?.split('&')[0]
+                : '';
+            const { error } = await supabase.auth.exchangeCodeForSession(code || '')
 
             if (!error) {
                 router.push('/')
