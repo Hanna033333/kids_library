@@ -1,35 +1,46 @@
 'use client'
 
 import { useEffect } from 'react'
-import { createClient } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
-export default function AuthCallback() {
+export default function AuthCallbackPage() {
     const router = useRouter()
-    const supabase = createClient()
+    const searchParams = useSearchParams()
+    const step = searchParams.get('step')
 
     useEffect(() => {
         const handleCallback = async () => {
-            const { error } = await supabase.auth.exchangeCodeForSession(
-                window.location.search.split('code=')[1]?.split('&')[0] || ''
-            )
+            const { data, error } = await supabase.auth.getSession()
 
-            if (!error) {
-                router.push('/')
-            } else {
+            if (error) {
                 console.error('Auth callback error:', error)
-                router.push('/auth?error=callback_failed')
+                router.push('/auth/signup')
+                return
+            }
+
+            if (data.session) {
+                // Step 2: 약관 동의 화면으로 이동
+                if (step === '2') {
+                    router.push('/auth/agreements')
+                } else {
+                    // 기본: 홈으로 이동
+                    router.push('/')
+                }
+            } else {
+                router.push('/auth/signup')
             }
         }
 
         handleCallback()
-    }, [router, supabase.auth])
+    }, [router, step])
 
     return (
-        <div className="min-h-screen bg-[#F7F7F7] flex flex-col items-center justify-center p-4">
-            <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
-            <p className="text-gray-600 font-medium text-lg">로그인 준비 중입니다...</p>
+        <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF4D00] mx-auto mb-4"></div>
+                <p className="text-gray-600">로그인 처리 중...</p>
+            </div>
         </div>
     )
 }

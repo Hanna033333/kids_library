@@ -95,7 +95,7 @@ export default function HomeClient({ }: HomeClientProps) {
                     </div>
                     <h1 className="absolute left-1/2 -translate-x-1/2 text-base font-bold text-gray-900 truncate max-w-[200px]">책 리스트</h1>
                     <div className="flex items-center gap-2">
-                        {user && (
+                        {/* {user && (
                             <>
                                 <Link
                                     href="/my-library"
@@ -112,7 +112,7 @@ export default function HomeClient({ }: HomeClientProps) {
                                     <LogOut className="w-5 h-5" />
                                 </button>
                             </>
-                        )}
+                        )} */}
                     </div>
                 </div>
             </header>

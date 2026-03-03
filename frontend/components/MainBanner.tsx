@@ -17,6 +17,17 @@ interface Banner {
 
 const BANNERS: Banner[] = [
   {
+    id: 'spring-2026-new',
+    bgImage: '/banners/winter_3d_bg.png', // Temporary use same bg or update later
+    title: '책자리와 함께하는',
+    highlight: '즐거운 독서 습관',
+    subtitle: '우리 아이 나이에 맞는 책을 찾아보세요!',
+    link: '/books',
+    bgColor: '#D1F5EA',
+    textColor: '#1F2937'
+  }
+  /*
+  {
     id: 'winter-2026-3d',
     bgImage: '/banners/winter_3d_bg.png', // Generated 3D background
     title: '서울시 교육청 어린이 도서관',
@@ -26,6 +37,7 @@ const BANNERS: Banner[] = [
     bgColor: '#D1F5EA', // Matches the image background
     textColor: '#1F2937'
   }
+  */
 ]
 
 export default function MainBanner() {
@@ -36,7 +48,7 @@ export default function MainBanner() {
     <div className="w-full" style={{ backgroundColor: banner.bgColor }}>
       <div className="max-w-[1200px] mx-auto relative group">
         <Link href={banner.link} className="block relative w-full aspect-[2/1] sm:aspect-[3/1] md:aspect-[1200/400] overflow-hidden">
-          
+
           {/* Background Image (Right aligned for mobile, cover for PC) */}
           <div className="absolute inset-0 w-full h-full">
             <Image
@@ -61,12 +73,12 @@ export default function MainBanner() {
                 {banner.subtitle}
               </p>
             </div>
-            
+
             {/* CTA Button imitation */}
             <div className="mt-4 sm:mt-6">
-               <span className="inline-block bg-emerald-600 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-emerald-700 transition-colors">
-                 보러가기
-               </span>
+              <span className="inline-block bg-emerald-600 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-emerald-700 transition-colors">
+                보러가기
+              </span>
             </div>
           </div>
         </Link>

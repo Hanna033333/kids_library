@@ -1,0 +1,63 @@
+
+======================================================================
+📅 일별 트래픽 추이 분석 (순수 유저 기준)
+분석 기간: 7daysAgo ~ yesterday
+======================================================================
+
+1️⃣  일별 활성 사용자 및 페이지 뷰 추이
+----------------------------------------------------------------------
+   2026-02-02: 4  명 | 16 뷰 | 평균 체류 607.0s
+   2026-02-03: 127명 | 442뷰 | 평균 체류  76.6s
+   2026-02-04: 56 명 | 230뷰 | 평균 체류  84.8s
+   2026-02-05: 23 명 | 131뷰 | 평균 체류 188.4s
+   2026-02-06: 13 명 | 27 뷰 | 평균 체류 128.1s
+   2026-02-07: 6  명 | 76 뷰 | 평균 체류 555.8s
+   2026-02-08: 12 명 | 48 뷰 | 평균 체류 132.0s
+
+
+2️⃣  날짜별 주요 유입 채널 및 리텐션 신호
+----------------------------------------------------------------------
+
+   [02/02]
+      - (direct) / (none)             : 4명
+
+   [02/03]
+      - (direct) / (none)             : 92명
+      - m.cafe.naver.com / referral   : 28명
+      - naver.com / referral          : 4명
+      - m.search.naver.com / referral : 2명
+      - naver / cpc                   : 1명
+
+   [02/04]
+      - (direct) / (none)             : 34명
+      - m.cafe.naver.com / referral   : 12명
+      - cafe.naver.com / referral     : 4명
+      - m.search.naver.com / referral : 3명
+      - naver / cpc                   : 1명
+      - naver / organic               : 1명
+      - shield-ui.nsa-front-end.svc.pr1.io.navercorp.com / referral: 1명
+
+   [02/05]
+      - (direct) / (none)             : 17명
+      - m.search.naver.com / referral : 2명
+      - naver / organic               : 2명
+      - cafe.naver.com / referral     : 1명
+      - l.threads.com / referral      : 1명
+
+   [02/06]
+      - (direct) / (none)             : 9명
+      - m.search.naver.com / referral : 2명
+      - google / organic              : 1명
+      - vercel.com / referral         : 1명
+
+   [02/07]
+      - (direct) / (none)             : 3명
+      - m.ad.search.naver.com / referral: 1명
+      - m.blog.naver.com / referral   : 1명
+      - naver / organic               : 1명
+
+   [02/08]
+      - (direct) / (none)             : 8명
+      - (not set)                     : 8명
+      - google / organic              : 1명
+      - m.search.naver.com / referral : 1명

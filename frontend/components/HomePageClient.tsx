@@ -12,9 +12,10 @@ import LibrarySelector from '@/components/LibrarySelector'
 import { useLibrary } from '@/context/LibraryContext'
 import Footer from '@/components/Footer'
 import MainBanner from '@/components/MainBanner'
+import { Button } from '@/components/ui/Button'
 
 interface HomePageClientProps {
-  initialWinterBooks?: Book[];
+  // initialWinterBooks?: Book[];
   initialCaldecottBooks?: Book[];
   initialResearchBooks?: Book[];
   initialAgeBooks?: Book[];
@@ -22,7 +23,7 @@ interface HomePageClientProps {
 }
 
 export default function HomePageClient({
-  initialWinterBooks = [],
+  // initialWinterBooks = [],
   initialCaldecottBooks = [],
   initialResearchBooks = [],
   initialAgeBooks = [],
@@ -42,7 +43,7 @@ export default function HomePageClient({
 
   const [ageBooks, setAgeBooks] = useState<Book[]>(initialAgeBooks)
   const [researchBooks, setResearchBooks] = useState<Book[]>(initialResearchBooks)
-  const [winterBooks, setWinterBooks] = useState<Book[]>(initialWinterBooks)
+  // const [winterBooks, setWinterBooks] = useState<Book[]>(initialWinterBooks)
   const [caldecottBooks] = useState<Book[]>(initialCaldecottBooks)
 
   // 초기 데이터가 있으면 로딩 상태 false
@@ -78,11 +79,13 @@ export default function HomePageClient({
   }, []) // researchBooks 의존성 제거
 
   // 겨울방학 추천 도서 로드 (초기 데이터 없으면 로드)
+  /* 
   useEffect(() => {
     if (winterBooks.length === 0) {
       getWinterBooks(7).then(setWinterBooks)
     }
   }, []) // winterBooks 의존성 제거
+  */
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -116,8 +119,9 @@ export default function HomePageClient({
         {/* 도서관 선택 버튼 숨김 처리 */}
         {/* <LibrarySelector /> */}
 
-        {/* 우측 메뉴 (절대 위치) */}
-        {user && (
+        {/* 우측 메뉴 (절대 위치) - 프리뷰 배포 시 숨김 */}
+        {/* 
+        {user ? (
           <div className="absolute right-6 flex items-center gap-3">
             <Link
               href="/my-library"
@@ -135,7 +139,18 @@ export default function HomePageClient({
               <LogOut className="w-5 h-5" />
             </button>
           </div>
+        ) : (
+          <div className="absolute right-6 flex items-center gap-3">
+            <Button
+              onClick={() => router.push('/auth/signup')}
+              variant="primary"
+              size="sm"
+            >
+              로그인
+            </Button>
+          </div>
         )}
+        */}
       </header>
 
 
@@ -173,86 +188,8 @@ export default function HomePageClient({
         </form>
       </div>
 
-      {/* 겨울방학 추천 섹션 (최상단 강조) */}
-      <section className="py-8 px-4 bg-white">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="flex items-center justify-between mb-1 px-2">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <span>사서 추천 겨울방학 도서</span>
-            </h2>
-            <Link
-              href="/books?curation=winter-vacation"
-              className="text-gray-900 hover:text-gray-600 transition-colors"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </Link>
-          </div>
 
-          <div className="px-2 mb-4">
-            <p className="text-sm text-gray-600">긴 방학, 스마트폰 대신 책과 친해져요</p>
-          </div>
-
-          {winterBooks.length > 0 ? (
-            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-              <div className="flex gap-4 pb-2">
-                {winterBooks.map((book, index) => (
-                  <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === winterBooks.length - 1 ? 'mr-4' : ''}`}>
-                    <BookCard book={book} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="h-[280px] flex items-center justify-center">
-              <div className="animate-pulse flex gap-4 overflow-hidden w-full">
-                {[1, 2, 3, 4, 5, 6, 7].map(i => (
-                  <div key={i} className="w-[160px] h-[240px] bg-gray-200 rounded-xl flex-shrink-0" />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* 칼데콧 수상작 섹션 */}
-      <section className="py-8 px-4">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="flex items-center justify-between mb-1 px-2">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <span>칼데콧 수상작</span>
-            </h2>
-            <Link
-              href="/books?curation=caldecott"
-              className="text-gray-900 hover:text-gray-600 transition-colors"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </Link>
-          </div>
-
-          <div className="px-2 mb-4">
-            <p className="text-sm text-gray-600">미국 도서관 사서들이 엄선한 최고의 그림책</p>
-          </div>
-
-          {caldecottBooks.length > 0 ? (
-            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-              <div className="flex gap-4 pb-2">
-                {caldecottBooks.map((book, index) => (
-                  <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === caldecottBooks.length - 1 ? 'mr-4' : ''}`}>
-                    <BookCard book={book} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-12 text-gray-500">
-              수상작 목록을 불러오는 중입니다...
-            </div>
-          )}
-        </div>
-      </section>
-
-
-      {/* 연령별 추천 섹션 */}
+      {/* 1. 우리 아이 나이에 딱! (연령별 추천 섹션) */}
       <section className="py-8 px-4 bg-white">
         <div className="max-w-[1200px] mx-auto">
           <div className="flex items-center justify-between mb-1 px-2">
@@ -281,7 +218,7 @@ export default function HomePageClient({
                 key={age.key}
                 onClick={() => setSelectedAge(age.key)}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedAge === age.key
-                  ? 'bg-[#F59E0B] text-white'
+                  ? 'bg-brand-primary text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                   }`}
               >
@@ -330,8 +267,45 @@ export default function HomePageClient({
         </div>
       </section>
 
-      {/* 도서 연구회 추천 섹션 */}
+      {/* 2. 칼데콧 수상작 섹션 */}
       <section className="py-8 px-4">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="flex items-center justify-between mb-1 px-2">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <span>칼데콧 수상작</span>
+            </h2>
+            <Link
+              href="/books?curation=caldecott"
+              className="text-gray-900 hover:text-gray-600 transition-colors"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </Link>
+          </div>
+
+          <div className="px-2 mb-4">
+            <p className="text-sm text-gray-600">미국 도서관 사서들이 엄선한 최고의 그림책</p>
+          </div>
+
+          {caldecottBooks.length > 0 ? (
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+              <div className="flex gap-4 pb-2">
+                {caldecottBooks.map((book, index) => (
+                  <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === caldecottBooks.length - 1 ? 'mr-4' : ''}`}>
+                    <BookCard book={book} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              수상작 목록을 불러오는 중입니다...
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 3. 도서 연구회 추천 섹션 */}
+      <section className="py-8 px-4 bg-white">
         <div className="max-w-[1200px] mx-auto">
           <div className="flex items-center justify-between mb-1 px-2">
             <h2 className="text-xl font-bold text-gray-900">어린이 도서 연구회 추천</h2>
@@ -366,6 +340,49 @@ export default function HomePageClient({
           )}
         </div>
       </section >
+
+      {/* 겨울방학 추천 섹션 (주석 처리) */}
+      {/* 
+      <section className="py-8 px-4 bg-white">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="flex items-center justify-between mb-1 px-2">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <span>사서 추천 겨울방학 도서</span>
+            </h2>
+            <Link
+              href="/books?curation=winter-vacation"
+              className="text-gray-900 hover:text-gray-600 transition-colors"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </Link>
+          </div>
+
+          <div className="px-2 mb-4">
+            <p className="text-sm text-gray-600">긴 방학, 스마트폰 대신 책과 친해져요</p>
+          </div>
+
+          {winterBooks.length > 0 ? (
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+              <div className="flex gap-4 pb-2">
+                {winterBooks.map((book, index) => (
+                  <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === winterBooks.length - 1 ? 'mr-4' : ''}`}>
+                    <BookCard book={book} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="h-[280px] flex items-center justify-center">
+              <div className="animate-pulse flex gap-4 overflow-hidden w-full">
+                {[1, 2, 3, 4, 5, 6, 7].map(i => (
+                  <div key={i} className="w-[160px] h-[240px] bg-gray-200 rounded-xl flex-shrink-0" />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+      */}
 
       {/* 디바이더 */}
       < div className="border-t border-gray-200" ></div >

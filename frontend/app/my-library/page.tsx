@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { createClient } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { getSavedBookIds } from '@/lib/supabase-api'
 import { getBooksByIds, fetchLoanStatuses } from '@/lib/api'
 import { Book } from '@/lib/types'
@@ -15,7 +15,7 @@ export default function MyLibraryPage() {
     const { user, isLoading: authLoading } = useAuth()
     const [books, setBooks] = useState<Book[]>([])
     const [isLoading, setIsLoading] = useState(true)
-    const supabase = createClient()
+    // const supabase = createClient() <-- 제거됨
     const router = useRouter()
 
     useEffect(() => {
@@ -104,7 +104,7 @@ export default function MyLibraryPage() {
                         <p className="text-gray-400 text-sm mb-6">마음에 드는 책을 발견하면 하트를 눌러보세요!</p>
                         <Link
                             href="/"
-                            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
+                            className="px-6 py-3 bg-[#F59E0B] text-white rounded-lg font-semibold hover:bg-[#F59E0B] transition-all shadow-lg shadow-orange-100"
                         >
                             책 구경하러 가기
                         </Link>

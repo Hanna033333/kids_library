@@ -158,7 +158,7 @@ export default function IntroPage() {
                 </h2>
                 <button
                     onClick={() => router.push('/')}
-                    className="bg-[#FFB300] hover:bg-[#FF8F00] text-white text-[20px] sm:text-[24px] font-bold py-6 px-16 rounded-[20px] transition-all shadow-[0_10px_30px_rgba(255,179,0,0.3)] hover:shadow-[0_15px_40px_rgba(255,179,0,0.4)] hover:-translate-y-1 tracking-[-0.03em]"
+                    className="bg-[#FFB300] hover:bg-[#FFB300] text-white text-[20px] sm:text-[24px] font-bold py-6 px-16 rounded-[20px] transition-all shadow-[0_10px_30px_rgba(255,179,0,0.3)] hover:shadow-[0_15px_40px_rgba(255,179,0,0.4)] hover:-translate-y-1 tracking-[-0.03em]"
                 >
                     책자리 시작하기
                 </button>

@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { searchBooks, getBooks } from "@/lib/api";
+import { Button } from "@/components/ui/Button";
 
 interface IntegratedFilterModalProps {
     isOpen: boolean;
@@ -150,7 +151,7 @@ export default function IntegratedFilterModal({
                                             key={option.value}
                                             onClick={() => handleAgeToggle(option.value)}
                                             className={`px-4 py-2 rounded-lg text-[15px] font-medium transition-all duration-200 border ${localAge === option.value
-                                                ? "bg-[#F59E0B] text-white border-[#F59E0B] shadow-md shadow-gray-200 transform scale-[1.02]"
+                                                ? "bg-brand-primary text-white border-brand-primary shadow-md shadow-gray-200 transform scale-[1.02]"
                                                 : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                                                 }`}
                                         >
@@ -172,7 +173,7 @@ export default function IntegratedFilterModal({
                                             key={option.value}
                                             onClick={() => setLocalSort(option.value)}
                                             className={`flex-1 flex items-center justify-center py-3 px-4 rounded-lg border font-medium transition-all duration-200 ${localSort === option.value
-                                                ? "bg-[#F59E0B] border-[#F59E0B] text-white shadow-md shadow-gray-200"
+                                                ? "bg-brand-primary border-brand-primary text-white shadow-md shadow-gray-200"
                                                 : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
                                                 }`}
                                         >
@@ -188,28 +189,28 @@ export default function IntegratedFilterModal({
                 {/* Footer */}
                 <div className="p-4 border-t border-gray-100 bg-white">
                     <div className="flex gap-3">
-                        <button
+                        <Button
                             onClick={() => {
                                 setLocalCategory("전체");
                                 setLocalAge("");
                                 setLocalSort("pangyo_callno");
                             }}
-                            className="px-6 py-3.5 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-colors"
+                            variant="secondary"
+                            size="lg"
+                            className="px-6"
                         >
                             초기화
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             onClick={handleApply}
                             disabled={loadingCount}
-                            className="flex-1 px-6 py-3.5 rounded-xl bg-[#F59E0B] text-white font-bold text-base shadow-lg shadow-gray-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait"
+                            isLoading={loadingCount}
+                            variant="primary"
+                            size="lg"
+                            className="flex-1"
                         >
-                            {loadingCount ? (
-                                <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                            ) : null}
-                            <span>
-                                {predictedCount !== null ? `${predictedCount.toLocaleString()}권의 책 보기` : "필터 적용하기"}
-                            </span>
-                        </button>
+                            {predictedCount !== null ? `${predictedCount.toLocaleString()}권의 책 보기` : "필터 적용하기"}
+                        </Button>
                     </div>
                 </div>
             </div>

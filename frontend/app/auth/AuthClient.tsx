@@ -3,13 +3,16 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { LogIn, UserPlus, Mail, Lock, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 
 export default function AuthClient() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [isSignUp, setIsSignUp] = useState(false)
+    const [agreedToTerms, setAgreedToTerms] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const router = useRouter()
     const supabase = createClient()
@@ -28,6 +31,11 @@ export default function AuthClient() {
 
         try {
             if (isSignUp) {
+                if (!agreedToTerms) {
+                    setError('서비스 이용약관에 동의해주세요.')
+                    setIsLoading(false)
+                    return
+                }
                 const { error } = await supabase.auth.signUp({
                     email,
                     password,
@@ -111,23 +119,45 @@ export default function AuthClient() {
                             </div>
                         </div>
 
+                        {isSignUp && (
+                            <div className="flex items-center justify-between py-2">
+                                <div className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        id="terms"
+                                        checked={agreedToTerms}
+                                        onChange={(e) => setAgreedToTerms(e.target.checked)}
+                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    />
+                                    <label htmlFor="terms" className="ml-2 text-sm text-gray-600 cursor-pointer select-none">
+                                        <span className="text-red-500 font-medium mr-1">[필수]</span>
+                                        서비스 이용약관
+                                    </label>
+                                </div>
+                                <Link
+                                    href="/terms"
+                                    target="_blank"
+                                    className="text-sm text-gray-400 underline hover:text-gray-600"
+                                >
+                                    보기
+                                </Link>
+                            </div>
+                        )}
+
                         {error && (
                             <p className="text-sm text-red-500 ml-1">{error}</p>
                         )}
 
-                        <button
+                        <Button
                             type="submit"
+                            variant="primary"
+                            size="lg"
                             disabled={isLoading}
-                            className="w-full bg-[#F59E0B] hover:bg-[#D97706] text-white font-semibold py-3 rounded-lg shadow-lg shadow-gray-200 transition-all flex items-center justify-center gap-2 group"
+                            isLoading={isLoading}
+                            className="w-full"
                         >
-                            {isLoading ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : isSignUp ? (
-                                '회원가입하기'
-                            ) : (
-                                '로그인'
-                            )}
-                        </button>
+                            {isSignUp ? '회원가입하기' : '로그인'}
+                        </Button>
                     </form>
 
                     <div className="mt-8">
@@ -140,15 +170,17 @@ export default function AuthClient() {
                             </div>
                         </div>
 
-                        <button
+                        <Button
                             onClick={handleKakaoLogin}
-                            className="w-full bg-[#FEE500] hover:bg-[#FDE000] text-[#191919] font-semibold py-3 rounded-lg transition-all flex items-center justify-center gap-3"
+                            variant="kakao"
+                            size="lg"
+                            className="w-full"
                         >
                             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 3c-4.97 0-9 3.11-9 6.94 0 2.42 1.58 4.54 3.96 5.8l-.94 3.44c-.06.21.05.4.24.46.06.02.12.03.18.03.13 0 .25-.07.32-.2l4.08-2.7c.38.04.77.07 1.16.07 4.97 0 9-3.11 9-6.94S16.97 3 12 3z" />
                             </svg>
                             카카오로 시작하기
-                        </button>
+                        </Button>
                     </div>
 
                     <p className="mt-8 text-center text-sm text-gray-500">

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/context/AuthContext'
-import { createClient } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { saveBook, unsaveBook } from '@/lib/supabase-api'
 import { fetchLoanStatuses } from '@/lib/api'
 import { Book, LoanStatus } from '@/lib/types'
@@ -25,7 +25,6 @@ import { sendGAEvent } from '@/lib/analytics'
 interface BookDetailClientProps {
     book: Book
 }
-
 export default function BookDetailClient({ book: initialBook }: BookDetailClientProps) {
     const router = useRouter()
     const { user } = useAuth()
@@ -44,7 +43,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
         setIsSaved(false)
     }, [initialBook])
 
-    const supabase = createClient()
+    // const supabase = createClient()  <-- 제거됨
 
     // 청구기호 결정 로직
     let displayCallNo = '청구기호 없음'
@@ -116,7 +115,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
         const checkSaved = async () => {
             if (user) {
                 const { data: savedData } = await supabase
-                    .from('user_saved_books')
+                    .from('wishlists')
                     .select('id')
                     .match({ user_id: user.id, book_id: book.id })
                     .maybeSingle()
@@ -315,9 +314,9 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                             </div>
                         </div>
 
-                        {/* Save & Share Area */}
+                        {/* Save & Share Area - 프리뷰 배포 시 찜하기 숨김 */}
                         <div className="mt-2 pt-6 border-t border-gray-100 flex gap-3">
-                            <button
+                            {/* <button
                                 onClick={handleToggleSave}
                                 disabled={isToggling}
                                 className={`w-14 h-14 rounded-lg flex items-center justify-center transition-all transform active:scale-[0.98] border ${isSaved
@@ -327,7 +326,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                 title={isSaved ? "찜 취소" : "찜하기"}
                             >
                                 <Heart className={`w-6 h-6 ${isSaved ? "fill-current" : ""}`} />
-                            </button>
+                            </button> */}
                             <button
                                 onClick={handleShare}
                                 className="w-14 h-14 flex items-center justify-center bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors border border-gray-100 active:scale-[0.98] transform"
@@ -337,7 +336,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                             </button>
                             <button
                                 onClick={handleBuyKyobo}
-                                className="flex-1 h-14 bg-[#F59E0B] text-white rounded-lg font-bold text-base flex items-center justify-center gap-2 hover:bg-[#D97706] focus:bg-[#F59E0B] focus:outline-none transition-colors"
+                                className="flex-1 h-14 bg-[#F59E0B] text-white rounded-lg font-bold text-base flex items-center justify-center gap-2 hover:bg-[#F59E0B] focus:bg-[#F59E0B] focus:outline-none transition-colors"
                             >
                                 <ShoppingCart className="w-5 h-5" />
                                 도서 구매하기

@@ -74,8 +74,8 @@ export default function LibrarySelector({ whiteMode = false }: { whiteMode?: boo
                                         key={lib}
                                         onClick={() => handleSelect(lib)}
                                         className={`w-full flex items-center justify-between p-4 rounded-xl text-left transition-all ${selectedLibrary === lib
-                                            ? 'bg-[#F59E0B]/10 text-[#F59E0B] font-bold border border-[#F59E0B]/20'
-                                            : 'bg-gray-50 text-gray-700 font-medium hover:bg-gray-100 border border-transparent'
+                                            ? 'bg-brand-primary/10 text-brand-primary font-bold border border-brand-primary/20'
+                                            : 'bg-gray-50 text-gray-700 font-medium hover:bg-gray-50 border border-transparent'
                                             }`}
                                     >
                                         <span className="flex items-center gap-3">

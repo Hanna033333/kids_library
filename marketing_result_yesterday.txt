@@ -3,43 +3,31 @@
 ==================================================
 
 [1] 🌍 Acquisition Source/Medium
-   - (direct) / (none)              | Users:  90 | Sess:  92 | AvgTime: 14.6s
-   - (not set)                      | Users:  61 | Sess:  62 | AvgTime: 20.6s
-   - m.cafe.naver.com / referral    | Users:  25 | Sess:  25 | AvgTime: 9.6s
-   - naver.com / referral           | Users:   4 | Sess:   4 | AvgTime: 2.8s
-   - m.search.naver.com / referral  | Users:   2 | Sess:   2 | AvgTime: 15.0s
-   - naver / cpc                    | Users:   1 | Sess:   1 | AvgTime: 0.0s
+   - (not set)                      | Users:   7 | Sess:   7 | AvgTime: 25.6s
+   - news.hada.io / referral        | Users:   6 | Sess:   6 | AvgTime: 5.5s
+   - (direct) / (none)              | Users:   3 | Sess:   3 | AvgTime: 0.0s
+   - naver / organic                | Users:   2 | Sess:   2 | AvgTime: 0.0s
+   - m.search.naver.com / referral  | Users:   1 | Sess:   1 | AvgTime: 22.0s
+   - todayhumor.co.kr / referral    | Users:   1 | Sess:   1 | AvgTime: 2.0s
+   - m.cafe.naver.com / referral    | Users:   0 | Sess:   1 | AvgTime: 0.0s
 
 [2] 📄 Top Content
-   - /                              | 책자리 - 도서관 헛걸음 그만! 3초 만에 책 찾기             | Views: 226 | Users: 126 | AvgTime: 7.7s
-   - /books                         | 스마트폰만 보는 아이, 방학 때 뭐 읽힐까요?                | Views:  60 | Users:  16 | AvgTime: 23.9s
-   - /books                         | 전문가가 보증하는 '찐' 필독서 모음                     | Views:  18 | Users:   8 | AvgTime: 63.8s
-   - /book/11325                    | 여름에 내리는 비, 잠비 - 책자리                      | Views:  16 | Users:  16 | AvgTime: 6.6s
-   - /books                         | 우리 아이 나이에 딱! 4-7세 맞춤 도서                  | Views:   7 | Users:   4 | AvgTime: 17.2s
-   - /book/7612                     | 갈릴레오 갈릴레이 - 책자리                          | Views:   6 | Users:   8 | AvgTime: 3.0s
-   - /books                         | 우리 아이 나이에 딱! 0-3세 맞춤 도서                  | Views:   6 | Users:   3 | AvgTime: 34.7s
-   - /book/11309                    | 일곱 빛깔 감정 나라 : 내 안의 다채로운 감정과 만나는 곳 - 책자리  | Views:   5 | Users:   4 | AvgTime: 6.5s
-   - /book/7668                     | 거인의 침묵 - 책자리                             | Views:   5 | Users:   5 | AvgTime: 6.8s
-   - /book/7743                     | 고함쟁이 엄마 - 책자리                            | Views:   5 | Users:   5 | AvgTime: 5.4s
-   - /book/7745                     | 고흐가 눈사람을 그린다면 - 책자리                      | Views:   5 | Users:   5 | AvgTime: 3.0s
-   - /books                         | 우리 아이 나이에 딱! 청소년 맞춤 도서                   | Views:   5 | Users:   3 | AvgTime: 23.0s
-   - /book/7671                     | 거짓말처럼 거짓말을 끝냈어 - 책자리                     | Views:   4 | Users:   4 | AvgTime: 2.8s
-   - /book/7808                     | 구덩이 - 책자리                                | Views:   3 | Users:   3 | AvgTime: 11.7s
-   - /book/8300                     | 너와 내가 - 책자리                              | Views:   3 | Users:   3 | AvgTime: 15.3s
-   - /book/8839                     | 모모 - 책자리                                 | Views:   3 | Users:   3 | AvgTime: 2.7s
-   - /books                         | '수학특공대' - 도서관에 있을까?                      | Views:   3 | Users:   1 | AvgTime: 7.0s
-   - /book/11315                    | 평양냉면을 좋아하게 될 줄이야! - 책자리                  | Views:   2 | Users:   2 | AvgTime: 11.0s
-   - /book/11324                    | 찰랑찰랑 슬픔 하나 - 책자리                         | Views:   2 | Users:   2 | AvgTime: 12.5s
-   - /book/7610                     | 갈라파 행성에서 만난 살아나마스의 진화 - 책자리              | Views:   2 | Users:   2 | AvgTime: 11.5s
+   - /                              | 책자리 - 도서관 청구기호 찾기, 3초면 끝 (로그인X)          | Views:  19 | Users:  13 | AvgTime: 10.7s
+   - /books                         | 스마트폰만 보는 아이, 방학 때 뭐 읽힐까요?                | Views:   4 | Users:   1 | AvgTime: 45.0s
+   - /books                         | '내가슴에해마가산다' - 도서관에 있을까?                  | Views:   2 | Users:   1 | AvgTime: 5.0s
+   - /book/11288                    | 창덕궁에 불이 꺼지면 - 도서관 청구기호/위치 3초 확인 (책자리)    | Views:   1 | Users:   1 | AvgTime: 4.0s
+   - /book/11302                    | 불안이 사르르 사라지는 그림책 : 작은 일에도 걱정부터 앞서는 아이를 위 | Views:   1 | Users:   1 | AvgTime: 5.0s
+   - /book/11310                    | 엄마 규칙에 반대한다고? - 도서관 청구기호/위치 3초 확인 (책자리)  | Views:   1 | Users:   1 | AvgTime: 31.0s
+   - /book/7774                     | 공룡은 없어 - 도서관 청구기호/위치 3초 확인 (책자리)         | Views:   1 | Users:   1 | AvgTime: 5.0s
+   - /books                         | '소맥거핀' - 도서관에 있을까?                       | Views:   1 | Users:   1 | AvgTime: 2.0s
 
 [3] 📍 Top Cities
-   - Seongnam-si                    | Users: 94
-   - Seoul                          | Users: 21
-   - Anseong-si                     | Users: 1
-   - Busan                          | Users: 1
-   - Cam Ranh                       | Users: 1
-   - Changwon-si                    | Users: 1
-   - Cheonan-si                     | Users: 1
-   - Chiang Mai                     | Users: 1
-   - Daejeon                        | Users: 1
-   - Guri-si                        | Users: 1
+   - Seoul                          | Users: 5
+   - Aspen                          | Users: 1
+   - Council Bluffs                 | Users: 1
+   - Gwacheon-si                    | Users: 1
+   - Incheon                        | Users: 1
+   - Namyangju-si                   | Users: 1
+   - Seongnam-si                    | Users: 1
+   - Ulsan                          | Users: 1
+   - Wonju-si                       | Users: 1

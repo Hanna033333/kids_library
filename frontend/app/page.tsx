@@ -8,11 +8,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://checkjari.com"),
   alternates: { canonical: '/' },
   title: "책자리 - 도서관 청구기호 찾기, 3초면 끝 (로그인X)",
-  description: "도서관 책 찾기 필수템. 로그인 없이 청구기호와 대출 가능 여부를 3초 만에 확인하세요. 키오스크 줄 서지 마세요!",
-  keywords: "도서관, 어린이 도서관, 도서관 도서검색, 청구기호 찾기, 어린이 도서, 책자리, 판교도서관",
+  description: "도서관 책 찾기 필수템. 우리 아이 나이와 맞는 추천 도서를 로그인 없이 3초 만에 확인하세요. 새 학기 필독서도 책자리에서!",
+  keywords: "도서관, 어린이 도서관, 도서관 도서검색, 청구기호 찾기, 어린이 도서, 책자리, 판교도서관, 새 학기 추천도서, 초등 필독서",
   openGraph: {
     title: "책자리 - 도서관 청구기호 찾기, 3초면 끝 (로그인X)",
-    description: "도서관 책 찾기 필수템. 로그인 없이 청구기호와 대출 가능 여부를 3초 만에 확인하세요. 키오스크 줄 서지 마세요!",
+    description: "도서관 책 찾기 필수템. 우리 아이 나이와 맞는 추천 도서를 로그인 없이 3초 만에 확인하세요. 새 학기 필독서도 책자리에서!",
     url: "https://checkjari.com",
     images: [
       {
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "책자리 - 도서관 청구기호 찾기, 3초면 끝 (로그인X)",
-    description: "도서관 책 찾기 필수템. 로그인 없이 청구기호와 대출 가능 여부를 3초 만에 확인하세요. 키오스크 줄 서지 마세요!",
+    description: "도서관 책 찾기 필수템. 우리 아이 나이와 맞는 추천 도서를 로그인 없이 3초 만에 확인하세요. 새 학기 필독서도 책자리에서!",
     images: ["/logo.png"],
   },
 };
@@ -36,15 +36,16 @@ export default async function HomePage() {
   const defaultAge = '4-7'
 
   // 서버 사이드 병렬 데이터 페칭
-  const [winterBooks, researchBooks, ageBooks, caldecottBooks] = await Promise.all([
-    getWinterBooks(7, supabase),
+  const [/* winterBooks */, researchBooks, ageBooks, caldecottBooks] = await Promise.all([
+    // getWinterBooks(7, supabase),
+    Promise.resolve([]), // Placeholder for winterBooks
     getResearchCouncilBooks(7, supabase),
     getBooksByAge(defaultAge, 7, supabase),
     getCaldecottBooks(supabase)
   ])
 
   return <HomePageClient
-    initialWinterBooks={winterBooks}
+    // initialWinterBooks={winterBooks}
     initialCaldecottBooks={caldecottBooks.slice(0, 7)}
     initialResearchBooks={researchBooks}
     initialAgeBooks={ageBooks}

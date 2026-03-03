@@ -8,6 +8,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.books import router as books_router
 from api.sync import router as sync_router
+from api.auth import router as auth_router
+from api.wishlists import router as wishlists_router
 
 app = FastAPI(
     title="Kids Library API",
@@ -33,6 +35,8 @@ app.add_middleware(
 # 라우터 등록
 app.include_router(books_router)
 app.include_router(sync_router)
+app.include_router(auth_router)
+app.include_router(wishlists_router)
 
 
 @app.get("/")

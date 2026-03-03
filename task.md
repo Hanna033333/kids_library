@@ -24,3 +24,6 @@
 - [ ] **Data Setup**: Create `caldecott-books.ts` constant. <!-- id: 14 -->
 - [ ] **UI Implementation**: Create `/caldecott` page and list components. <!-- id: 15 -->
 - [ ] **Home Integration**: Add banner/link on the homepage. <!-- id: 16 -->
+
+## 🛠️ DevOps
+- [ ] **Start Development Servers**: Launch frontend and backend servers. <!-- id: 17 -->

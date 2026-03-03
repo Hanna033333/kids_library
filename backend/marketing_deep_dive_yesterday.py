@@ -15,7 +15,7 @@ from google.analytics.data_v1beta.types import (
     FilterExpressionList
 )
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r"c:\Users\skplanet\Desktop\kids library\ga4-key.json"
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ga4-key.json")
 
 def run_deep_dive_analysis(property_id):
     client = BetaAnalyticsDataClient()

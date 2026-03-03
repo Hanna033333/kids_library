@@ -21,6 +21,24 @@ export default function Footer() {
 
                         <span className="text-gray-700">|</span>
 
+                        <Link
+                            href="/terms"
+                            className="hover:text-white transition-colors"
+                        >
+                            이용약관
+                        </Link>
+
+                        <span className="text-gray-700">|</span>
+
+                        <Link
+                            href="/privacy"
+                            className="hover:text-white transition-colors"
+                        >
+                            개인정보 처리방침
+                        </Link>
+
+                        <span className="text-gray-700">|</span>
+
                         <a
                             href="https://docs.google.com/forms/d/e/1FAIpQLSdz7vpG3dj7RVHUEFWoxjdkEIyALYIry-3J-79bfowT2_82mQ/viewform?usp=publish-editor"
                             target="_blank"
