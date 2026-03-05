@@ -68,10 +68,12 @@ export default async function BookDetailPage({ params }: Props) {
         const jsonLd = {
             '@context': 'https://schema.org',
             '@type': 'Book',
+            'url': `https://checkjari.com/book/${book.id}`,
             'name': book.title,
+            'isbn': book.isbn || '',
             'author': {
                 '@type': 'Person',
-                'name': book.author || '저자 미상'
+                'name': (book.author || '저자 미상').replace(/│/g, ', ')
             },
             'image': book.image_url || '',
             'description': `${book.title}의 청구기호, 도서관 위치, 대출 가능 여부를 확인하세요.`,
