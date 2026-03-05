@@ -7,12 +7,12 @@ import { createClient } from '@/lib/supabase-server'
 export const metadata: Metadata = {
   metadataBase: new URL("https://checkjari.com"),
   alternates: { canonical: '/' },
-  title: "책자리 - 도서관 청구기호 찾기, 3초면 끝 (로그인X)",
-  description: "도서관 책 찾기 필수템. 우리 아이 나이와 맞는 추천 도서를 로그인 없이 3초 만에 확인하세요. 새 학기 필독서도 책자리에서!",
+  title: "책자리 - 도서관 청구기호/위치 3초 확인 (내 도서관 설정)",
+  description: "도서관 책 찾기 필수템. 우리 아이 나이 맞춤 도서와 내 동네 도서관 검색 결과를 로그인 한 번으로 더 편리하게 확인하세요.",
   keywords: "도서관, 어린이 도서관, 도서관 도서검색, 청구기호 찾기, 어린이 도서, 책자리, 판교도서관, 새 학기 추천도서, 초등 필독서",
   openGraph: {
-    title: "책자리 - 도서관 청구기호 찾기, 3초면 끝 (로그인X)",
-    description: "도서관 책 찾기 필수템. 우리 아이 나이와 맞는 추천 도서를 로그인 없이 3초 만에 확인하세요. 새 학기 필독서도 책자리에서!",
+    title: "책자리 - 도서관 청구기호/위치 3초 확인 (내 도서관 설정)",
+    description: "도서관 책 찾기 필수템. 우리 아이 나이 맞춤 도서와 내 동네 도서관 검색 결과를 로그인 한 번으로 더 편리하게 확인하세요.",
     url: "https://checkjari.com",
     images: [
       {
@@ -25,8 +25,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "책자리 - 도서관 청구기호 찾기, 3초면 끝 (로그인X)",
-    description: "도서관 책 찾기 필수템. 우리 아이 나이와 맞는 추천 도서를 로그인 없이 3초 만에 확인하세요. 새 학기 필독서도 책자리에서!",
+    title: "책자리 - 도서관 청구기호/위치 3초 확인 (내 도서관 설정)",
+    description: "도서관 책 찾기 필수템. 우리 아이 나이 맞춤 도서와 내 동네 도서관 검색 결과를 로그인 한 번으로 더 편리하게 확인하세요.",
     images: ["/logo.png"],
   },
 };

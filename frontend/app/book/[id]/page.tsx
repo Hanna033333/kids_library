@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
         const title = `${book.title} - 도서관 청구기호/위치 3초 확인 (책자리)`
         // author 필드가 null일 경우 빈 문자열로 처리
-        const description = `${book.title}의 청구기호, 도서관 위치, 대출 가능 여부를 로그인 없이 확인하세요. 어린이 추천 도서.`
+        const description = `${book.title}의 청구기호, 도서관 위치, 대출 여부를 확인하고 관심 도서로 저장하세요. 내 도서관 설정 가능.`
         const keywords = `${book.title}, ${book.author}, 도서관, 청구기호, 어린이 도서, ${book.category || '추천도서'}, 4~7세 추천 도서, 초등 필독서, 도서관 위치, 청구기호 찾기, 책자리, 판교도서관`
 
         return {
@@ -64,7 +64,33 @@ export default async function BookDetailPage({ params }: Props) {
             notFound()
         }
 
-        return <BookDetailClient book={book} />
+        // Schema.org 구조화 데이터 (JSON-LD)
+        const jsonLd = {
+            '@context': 'https://schema.org',
+            '@type': 'Book',
+            'name': book.title,
+            'author': {
+                '@type': 'Person',
+                'name': book.author || '저자 미상'
+            },
+            'image': book.image_url || '',
+            'description': `${book.title}의 청구기호, 도서관 위치, 대출 가능 여부를 확인하세요.`,
+            'publisher': {
+                '@type': 'Organization',
+                'name': book.publisher || '출판사 정보 없음'
+            },
+            'genre': book.category || '어린이 도서'
+        }
+
+        return (
+            <>
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
+                <BookDetailClient book={book} />
+            </>
+        )
     } catch (error) {
         console.error('Book fetch failed:', error);
         // 에러 발생 시 404로 처리하거나 별도 에러 페이지로 유도
