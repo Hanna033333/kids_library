@@ -65,7 +65,14 @@ export default async function BookDetailPage({ params }: Props) {
         }
 
         // Schema.org 구조화 데이터 (JSON-LD)
-        const jsonLd = {
+        // ISBN이 있을 경우 교보문고 BuyAction 추가 -> Google Book Actions 리치 결과 활성화
+        const generateKyoboUrl = (isbn: string) => {
+            const targetUrl = `https://search.kyobobook.co.kr/search?keyword=${isbn}&gbCode=TOT&target=total`
+            const encodedUrl = encodeURIComponent(targetUrl)
+            return `https://linkmoa.kr/click.php?m=kbbook&a=A100702199&l=9999&l_cd1=3&l_cd2=0&tu=${encodedUrl}`
+        }
+
+        const jsonLd: Record<string, unknown> = {
             '@context': 'https://schema.org',
             '@type': 'Book',
             'url': `https://checkjari.com/book/${book.id}`,
@@ -82,6 +89,14 @@ export default async function BookDetailPage({ params }: Props) {
                 'name': book.publisher || '출판사 정보 없음'
             },
             'genre': book.category || '어린이 도서'
+        }
+
+        // ISBN이 있을 경우에만 BuyAction 추가 (Book Actions 리치 결과 요건)
+        if (book.isbn) {
+            jsonLd['potentialAction'] = {
+                '@type': 'BuyAction',
+                'target': generateKyoboUrl(book.isbn)
+            }
         }
 
         return (
