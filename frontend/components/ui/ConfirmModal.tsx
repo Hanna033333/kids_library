@@ -21,24 +21,12 @@ interface ConfirmModalProps {
     confirmVariant?: ConfirmVariant;
     /** 확인 동작 중 로딩 상태 */
     isLoading?: boolean;
+    /** 배경 dimmed 오버레이 숨김 */
+    hideOverlay?: boolean;
 }
 
 /**
  * 공통 확인/취소 팝업 템플릿
- *
- * 사용 예시:
- * ```tsx
- * <ConfirmModal
- *   isOpen={isOpen}
- *   onClose={() => setIsOpen(false)}
- *   onConfirm={handleDelete}
- *   title="정말 삭제하시겠습니까?"
- *   description="이 작업은 되돌릴 수 없습니다."
- *   confirmLabel="삭제"
- *   cancelLabel="취소"
- *   isLoading={isDeleting}
- * />
- * ```
  */
 export default function ConfirmModal({
     isOpen,
@@ -50,6 +38,7 @@ export default function ConfirmModal({
     cancelLabel = '취소',
     confirmVariant = 'destructive',
     isLoading = false,
+    hideOverlay = false,
 }: ConfirmModalProps) {
     return (
         <Modal
@@ -57,6 +46,7 @@ export default function ConfirmModal({
             onClose={onClose}
             hideCloseButton
             disableOverlayClose={isLoading}
+            hideOverlay={hideOverlay}
         >
             <div className="p-6">
                 {/* 타이틀 */}

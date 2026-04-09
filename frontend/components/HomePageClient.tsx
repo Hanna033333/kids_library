@@ -473,16 +473,18 @@ export default function HomePageClient({
         isOpen={isSignupCompleteOpen}
         onClose={() => setIsSignupCompleteOpen(false)}
         onConfirm={() => setIsSignupCompleteOpen(false)}
-        title="환영합니다!"
+        title="회원 가입 완료"
         description={
           <div className="text-gray-600 leading-relaxed text-center break-keep">
-            책자리와 함께<br />
-            우리 아이 책을 찾아볼까요?
+            책자리 회원 가입이 완료되었습니다.<br />
+            우리 아이에게 딱 맞는 책,<br />
+            지금 바로 찾아보세요.
           </div>
         }
         confirmLabel="확인"
         cancelLabel=""
         confirmVariant="primary"
+        hideOverlay
       />
 
       {/* 하단 토스트 팝업 */}

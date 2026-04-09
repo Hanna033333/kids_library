@@ -14,6 +14,8 @@ interface ModalProps {
     hideCloseButton?: boolean;
     /** 오버레이 클릭 시 닫기 비활성화 */
     disableOverlayClose?: boolean;
+    /** 배경 dimmed 오버레이 숨김 */
+    hideOverlay?: boolean;
     children: ReactNode;
     /** 테스트/접근성용 ID */
     id?: string;
@@ -26,6 +28,7 @@ export default function Modal({
     maxWidth = 'max-w-sm',
     hideCloseButton = false,
     disableOverlayClose = false,
+    hideOverlay = false,
     children,
     id,
 }: ModalProps) {
@@ -39,15 +42,15 @@ export default function Modal({
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, onClose]);
 
-    // body 스크롤 잠금
+    // body 스크롤 잠금 (hideOverlay일 때는 스크롤 유지)
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && !hideOverlay) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = '';
         }
         return () => { document.body.style.overflow = ''; };
-    }, [isOpen]);
+    }, [isOpen, hideOverlay]);
 
     if (!isOpen) return null;
 
@@ -56,7 +59,7 @@ export default function Modal({
     return (
         <div
             id={id}
-            className={`fixed inset-0 z-50 flex ${isBottom ? 'items-end md:items-center' : 'items-center'} justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 px-4`}
+            className={`fixed inset-0 z-50 flex ${isBottom ? 'items-end md:items-center' : 'items-center'} justify-center ${hideOverlay ? '' : 'bg-black/50 backdrop-blur-sm'} animate-in fade-in duration-200 px-4`}
             onClick={disableOverlayClose ? undefined : (e) => { if (e.target === e.currentTarget) onClose(); }}
             role="dialog"
             aria-modal="true"
@@ -64,6 +67,7 @@ export default function Modal({
             <div
                 className={`
                     relative w-full ${maxWidth} bg-white overflow-hidden
+                    ${hideOverlay ? 'shadow-2xl' : ''}
                     ${isBottom
                         ? 'rounded-t-2xl md:rounded-2xl max-h-[90vh] flex flex-col animate-in slide-in-from-bottom md:slide-in-from-bottom-10 duration-300'
                         : 'rounded-2xl animate-in zoom-in-95 duration-200'
