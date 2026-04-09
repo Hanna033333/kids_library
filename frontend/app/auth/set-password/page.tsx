@@ -165,16 +165,16 @@ export default function SetPasswordPage() {
                         />
                         <div className="flex flex-wrap gap-x-4 gap-y-2 px-1">
                             <div className="flex items-center gap-1">
-                                <span className={`text-[13px] ${validation.hasLetter ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>영문포함</span>
-                                <Check className={`w-4 h-4 stroke-[1.5] ${validation.hasLetter ? 'text-brand-primary' : 'text-gray-200'}`} />
+                                <span className={`text-[13px] ${validation.hasLetter ? 'text-green-600 font-medium' : 'text-gray-400'}`}>영문포함</span>
+                                <Check className={`w-4 h-4 stroke-[1.5] ${validation.hasLetter ? 'text-green-500' : 'text-gray-200'}`} />
                             </div>
                             <div className="flex items-center gap-1">
-                                <span className={`text-[13px] ${validation.hasNumber ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>숫자포함</span>
-                                <Check className={`w-4 h-4 stroke-[1.5] ${validation.hasNumber ? 'text-brand-primary' : 'text-gray-200'}`} />
+                                <span className={`text-[13px] ${validation.hasNumber ? 'text-green-600 font-medium' : 'text-gray-400'}`}>숫자포함</span>
+                                <Check className={`w-4 h-4 stroke-[1.5] ${validation.hasNumber ? 'text-green-500' : 'text-gray-200'}`} />
                             </div>
                             <div className="flex items-center gap-1">
-                                <span className={`text-[13px] ${validation.isLengthValid ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>8~20자 이내</span>
-                                <Check className={`w-4 h-4 stroke-[1.5] ${validation.isLengthValid ? 'text-brand-primary' : 'text-gray-200'}`} />
+                                <span className={`text-[13px] ${validation.isLengthValid ? 'text-green-600 font-medium' : 'text-gray-400'}`}>8~20자 이내</span>
+                                <Check className={`w-4 h-4 stroke-[1.5] ${validation.isLengthValid ? 'text-green-500' : 'text-gray-200'}`} />
                             </div>
                         </div>
                     </div>
@@ -189,8 +189,8 @@ export default function SetPasswordPage() {
                             className="w-full h-[56px] px-5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-primary focus:border-brand-primary transition-all text-[16px]"
                         />
                         <div className="flex items-center gap-1 px-1">
-                            <span className={`text-[13px] ${validation.isMatch ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>비밀번호 일치</span>
-                            <Check className={`w-4 h-4 stroke-[1.5] ${validation.isMatch ? 'text-brand-primary' : 'text-gray-200'}`} />
+                            <span className={`text-[13px] ${validation.isMatch ? 'text-green-600 font-medium' : 'text-gray-400'}`}>비밀번호 일치</span>
+                            <Check className={`w-4 h-4 stroke-[1.5] ${validation.isMatch ? 'text-green-500' : 'text-gray-200'}`} />
                         </div>
                     </div>
 
