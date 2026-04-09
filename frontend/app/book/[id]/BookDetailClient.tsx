@@ -25,7 +25,8 @@ import ProfileDropdown from '@/components/ProfileDropdown'
 import { Button } from '@/components/ui/Button'
 import PageHeader from '@/components/PageHeader'
 import { getAgeDisplayLabel } from '@/lib/utils/age'
-import { getHighResImageUrl } from '@/lib/utils/image'
+import Image from 'next/image'
+import { getOptimizedImageUrl } from '@/lib/utils/image'
 
 interface BookDetailClientProps {
     book: Book
@@ -283,10 +284,13 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                     <div className="w-full md:w-[35%] shrink-0 max-w-[320px] mx-auto md:mx-0">
                         <div className="relative aspect-[3/4] bg-gray-50 rounded-[28px] overflow-hidden shadow-2xl shadow-gray-200 border border-gray-100">
                             {book.image_url && !imageError ? (
-                                <img
-                                    src={getHighResImageUrl(book.image_url)}
+                                <Image
+                                    src={getOptimizedImageUrl(book.image_url, 'detail')}
                                     alt={`${book.title} 표지`}
-                                    className="w-full h-full object-cover"
+                                    fill
+                                    priority
+                                    sizes="(max-width: 768px) 100vw, 400px"
+                                    className="object-cover"
                                     onError={() => setImageError(true)}
                                 />
                             ) : (

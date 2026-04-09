@@ -1,6 +1,7 @@
 import { Book, LoanStatus } from "@/lib/types";
 import { ImageOff, Tags, BookOpen } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface BookItemProps {
   book: Book;
@@ -25,7 +26,7 @@ function normalizeAge(rawAge: string): string {
 }
 
 import { sendGAEvent } from "@/lib/analytics";
-import { getHighResImageUrl } from "@/lib/utils/image";
+import { getOptimizedImageUrl } from "@/lib/utils/image";
 
 export default function BookItem({ book, loanStatus }: BookItemProps) {
   const displayAge = normalizeAge(book.age || "");
@@ -54,15 +55,13 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
       {/* 1. 이미지 영역 (상단) */}
       <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
         {book.image_url ? (
-          <img
-            src={getHighResImageUrl(book.image_url)}
+          <Image
+            src={getOptimizedImageUrl(book.image_url, 'list')}
             alt={book.title}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-            }}
           />
         ) : null}
 

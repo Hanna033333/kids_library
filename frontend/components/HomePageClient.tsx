@@ -16,7 +16,8 @@ import ConfirmModal from '@/components/ui/ConfirmModal'
 import { sendGAEvent } from '@/lib/analytics'
 import Toast from '@/components/ui/Toast'
 import UserAvatar from '@/components/UserAvatar'
-import { getHighResImageUrl } from '@/lib/utils/image'
+import Image from 'next/image'
+import { getOptimizedImageUrl } from '@/lib/utils/image'
 
 interface HomePageClientProps {
   // initialWinterBooks?: Book[];
@@ -520,12 +521,13 @@ function BookCard({ book }: { book: Book }) {
       {/* 1. 이미지 영역 (상단) */}
       <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
         {book.image_url ? (
-          <img
-            src={getHighResImageUrl(book.image_url)}
+          <Image
+            src={getOptimizedImageUrl(book.image_url, 'list')}
             alt={book.title}
-            className="w-full h-full object-cover"
-            loading="eager"
-            fetchPriority="high"
+            fill
+            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
           />
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full text-gray-300">
