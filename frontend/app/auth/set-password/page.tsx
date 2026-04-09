@@ -109,9 +109,9 @@ export default function SetPasswordPage() {
             sessionStorage.setItem('showSignupComplete', 'true')
             if (returnUrl) {
                 sessionStorage.removeItem('returnUrl')
-                router.push(returnUrl)
+                window.location.href = returnUrl
             } else {
-                router.push('/')
+                window.location.href = '/'
             }
         } catch (err: any) {
             if (err.message === 'User not found') {
