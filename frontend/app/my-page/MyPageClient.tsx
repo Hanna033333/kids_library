@@ -290,7 +290,6 @@ export default function MyPageClient() {
             } else { // ON
                 setIsMarketingOnNoticeOpen(false)
                 setToastMessage(`책자리 혜택알림 수신동의 완료 (수신처리일 ${dateStr})`)
-                setToastMessage('비밀번호가 변경되었습니다.')
             }
         }
         
