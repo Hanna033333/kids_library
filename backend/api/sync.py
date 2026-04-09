@@ -1,5 +1,6 @@
 """데이터 동기화 API 라우터"""
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
+import os
 from core.database import supabase
 
 from childbook_crawler import fetch_all_childbook_recommendations
@@ -13,6 +14,12 @@ def sync_childbook():
     """
     어린이 도서 연구회 추천 도서 수집 및 Supabase 저장
     """
+    if os.getenv("ENV") == "production":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Sync API is disabled in production"
+        )
+        
     books = fetch_all_childbook_recommendations()
     
     for b in books:

@@ -46,15 +46,7 @@ def get_books():
     return data.data
 
 
-@router.get("/debug/env")
-def check_env():
-    """환경변수 설정 확인 (디버그용)"""
-    from core.config import DATA4LIBRARY_KEY
-    return {
-        "DATA4LIBRARY_KEY_exists": DATA4LIBRARY_KEY is not None,
-        "DATA4LIBRARY_KEY_length": len(DATA4LIBRARY_KEY) if DATA4LIBRARY_KEY else 0,
-        "DATA4LIBRARY_KEY_preview": DATA4LIBRARY_KEY[:10] + "..." if DATA4LIBRARY_KEY else "NOT SET"
-    }
+
 
 
 @router.post("/loan-status")
@@ -162,49 +154,4 @@ async def get_book_detail(book_id: int):
 
 
 
-@router.get("/debug/test-lib-connection")
-async def test_lib_connection():
-    """
-    Data4Library API 연결 및 IP 확인 (디버그용)
-    """
-    import aiohttp
-    from core.config import DATA4LIBRARY_KEY
-    
-    url = "http://data4library.kr/api/bookExist"
-    params = {
-        "authKey": DATA4LIBRARY_KEY,
-        "libCode": "141231", # 판교도서관
-        "isbn13": "9788936434120", # 테스트용 ISBN (채식주의자) - 검증된 ISBN 사용
-        "format": "json"
-    }
-    
-    result = {
-        "config_key_preview": DATA4LIBRARY_KEY[:10] + "..." if DATA4LIBRARY_KEY else "None",
-        "my_ip": "Checking...",
-        "api_status": "Checking...",
-        "api_response": "Checking...",
-        "error": None
-    }
-    
-    async with aiohttp.ClientSession() as session:
-        # 1. Check IP
-        try:
-            async with session.get("https://api.ipify.org?format=json", timeout=5) as resp:
-                if resp.status == 200:
-                    ip_data = await resp.json()
-                    result["my_ip"] = ip_data.get("ip")
-                else:
-                    result["my_ip"] = f"Failed: {resp.status}"
-        except Exception as e:
-            result["my_ip"] = f"Error: {str(e)}"
 
-        # 2. Check Data4Library
-        try:
-            async with session.get(url, params=params, timeout=10) as resp:
-                result["api_status"] = resp.status
-                text = await resp.text()
-                result["api_response"] = text[:500] # 앞부분만
-        except Exception as e:
-            result["error"] = str(e)
-            
-    return result
