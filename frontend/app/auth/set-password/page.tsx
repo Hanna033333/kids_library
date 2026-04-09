@@ -106,7 +106,9 @@ export default function SetPasswordPage() {
             sessionStorage.removeItem('signup_agreements')
 
             const returnUrl = sessionStorage.getItem('returnUrl')
+            sessionStorage.setItem('showSignupComplete', 'true')
             if (returnUrl) {
+                sessionStorage.removeItem('returnUrl')
                 router.push(returnUrl)
             } else {
                 router.push('/')

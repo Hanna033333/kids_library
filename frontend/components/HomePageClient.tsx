@@ -55,6 +55,7 @@ export default function HomePageClient({
   // 회원 탈퇴 팝업 상태
   const [isWithdrawnPopupOpen, setIsWithdrawnPopupOpen] = useState(false)
   const [logoutToastMessage, setLogoutToastMessage] = useState('')
+  const [isSignupCompleteOpen, setIsSignupCompleteOpen] = useState(false)
 
   // 회원 탈퇴 후 랜딩 시 팝업 띄우기
   useEffect(() => {
@@ -66,6 +67,10 @@ export default function HomePageClient({
       if (sessionStorage.getItem('showLogoutToast') === 'true') {
         setLogoutToastMessage('로그아웃 되었습니다.')
         sessionStorage.removeItem('showLogoutToast')
+      }
+      if (sessionStorage.getItem('showSignupComplete') === 'true') {
+        setIsSignupCompleteOpen(true)
+        sessionStorage.removeItem('showSignupComplete')
       }
     }
   }, [])
@@ -456,6 +461,23 @@ export default function HomePageClient({
             회원 탈퇴가 완료되었습니다.<br />
             아이와 도서관 나들이가 생각날 때<br />
             언제든 다시 책자리를 찾아주세요.
+          </div>
+        }
+        confirmLabel="확인"
+        cancelLabel=""
+        confirmVariant="primary"
+      />
+
+      {/* 회원가입 완료 팝업 */}
+      <ConfirmModal
+        isOpen={isSignupCompleteOpen}
+        onClose={() => setIsSignupCompleteOpen(false)}
+        onConfirm={() => setIsSignupCompleteOpen(false)}
+        title="환영합니다!"
+        description={
+          <div className="text-gray-600 leading-relaxed text-center break-keep">
+            책자리와 함께<br />
+            우리 아이 책을 찾아볼까요?
           </div>
         }
         confirmLabel="확인"
