@@ -375,11 +375,11 @@ export default function MyPageClient() {
                                     </button>
                                 </div>
                                 <div className="py-2 border-b-8 border-gray-50 divide-y divide-gray-100">
-                                    <Link href="/auth/agreements" className="w-full flex items-center justify-between px-6 py-3.5 transition-colors">
+                                    <Link href="/terms" className="w-full flex items-center justify-between px-6 py-3.5 transition-colors">
                                         <span className="font-medium text-gray-900 text-[15px]">이용약관</span>
                                         <ChevronRight className="w-5 h-5 text-gray-400" />
                                     </Link>
-                                    <Link href="/policy" className="w-full flex items-center justify-between px-6 py-3.5 transition-colors">
+                                    <Link href="/privacy" className="w-full flex items-center justify-between px-6 py-3.5 transition-colors">
                                         <span className="font-medium text-gray-900 text-[15px]">개인정보보호정책</span>
                                         <ChevronRight className="w-5 h-5 text-gray-400" />
                                     </Link>
