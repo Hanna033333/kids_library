@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import CloseButton from '@/components/CloseButton'
+import PageHeader from '@/components/PageHeader'
 
 export const metadata: Metadata = {
     title: '개인정보 처리방침 | 책자리',
@@ -9,17 +9,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
     return (
         <div className="min-h-screen bg-white">
-            {/* Header */}
-            <header className="sticky top-0 z-10 bg-white border-b border-gray-100">
-                <div className="max-w-3xl mx-auto px-4 h-14 flex items-center relative">
-                    <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-bold text-gray-900 whitespace-nowrap">
-                        개인정보 처리방침
-                    </h1>
-                    <div className="ml-auto">
-                        <CloseButton />
-                    </div>
-                </div>
-            </header>
+            <PageHeader title="개인정보 처리방침" />
 
             {/* Content */}
             <main className="max-w-3xl mx-auto px-4 py-8 md:py-12">

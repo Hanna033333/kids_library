@@ -143,7 +143,7 @@ export default function AgreementsPage() {
                                 <span className="text-gray-700 text-[15px] font-medium tracking-tight">[필수] 서비스 이용약관</span>
                             </label>
                             <button
-                                onClick={() => window.open('/terms', '_blank')}
+                                onClick={() => router.push('/terms')}
                                 className="text-gray-400 text-[13px] hover:text-gray-600 transition-colors ml-4 shrink-0"
                             >
                                 보기 &gt;
@@ -168,7 +168,7 @@ export default function AgreementsPage() {
                                 <span className="text-gray-700 text-[15px] font-medium tracking-tight">[필수] 개인정보 수집 및 이용</span>
                             </label>
                             <button
-                                onClick={() => window.open('/privacy', '_blank')}
+                                onClick={() => router.push('/privacy')}
                                 className="text-gray-400 text-[13px] hover:text-gray-600 transition-colors ml-4 shrink-0"
                             >
                                 보기 &gt;
@@ -193,7 +193,7 @@ export default function AgreementsPage() {
                                 <span className="text-gray-700 text-[15px] font-medium tracking-tight">[선택] 이벤트·혜택 정보 수신 및 활용 동의</span>
                             </label>
                             <button
-                                onClick={() => window.open('/marketing', '_blank')}
+                                onClick={() => router.push('/marketing')}
                                 className="text-gray-400 text-[13px] hover:text-gray-600 transition-colors ml-4 shrink-0"
                             >
                                 보기 &gt;
