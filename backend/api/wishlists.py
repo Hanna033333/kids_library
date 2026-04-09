@@ -60,6 +60,17 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     """JWT 토큰에서 현재 사용자 정보 추출"""
     token = credentials.credentials
     
+    # QA 전용 테스터 토큰 처리
+    if token == "TEST_QA_TOKEN" and os.getenv("ENV") != "production":
+        from types import SimpleNamespace
+        print("[DEBUG] QA Tester Token detected in Wishlists")
+        return SimpleNamespace(
+            id="00000000-0000-0000-0000-000000000000",
+            email="qa-tester@checkjari.com",
+            app_metadata={'provider': 'kakao'},
+            user_metadata={'provider_id': 'qa-tester-001'}
+        )
+
     try:
         user = supabase.auth.get_user(token)
         if not user:
@@ -86,6 +97,15 @@ async def get_wishlists(
     current_user = Depends(get_current_user)
 ):
     """찜 목록 조회"""
+    # QA 전용 테스터 처리
+    if current_user.id == "00000000-0000-0000-0000-000000000000":
+        return {
+            "data": [],
+            "total": 0,
+            "page": page,
+            "limit": limit
+        }
+
     try:
         offset = (page - 1) * limit
         
@@ -117,6 +137,10 @@ async def add_wishlist(
     current_user = Depends(get_current_user)
 ):
     """찜 추가"""
+    # QA 전용 테스터 처리
+    if current_user.id == "00000000-0000-0000-0000-000000000000":
+        return {"id": 0, "user_id": current_user.id, "book_id": request.book_id, "created_at": datetime.now()}
+
     try:
         response = supabase.table("wishlists").insert({
             "user_id": current_user.id,
@@ -143,6 +167,10 @@ async def remove_wishlist(
     current_user = Depends(get_current_user)
 ):
     """찜 삭제"""
+    # QA 전용 테스터 처리
+    if current_user.id == "00000000-0000-0000-0000-000000000000":
+        return {"message": "Wishlist item removed (QA Mock)"}
+
     try:
         # 본인의 찜인지 확인 (RLS가 자동으로 처리하지만 명시적으로 체크)
         response = supabase.table("wishlists").delete().eq("id", wishlist_id).eq("user_id", current_user.id).execute()
@@ -169,6 +197,10 @@ async def check_wishlists(
     current_user = Depends(get_current_user)
 ):
     """찜 여부 확인 (여러 책 동시)"""
+    # QA 전용 테스터 처리
+    if current_user.id == "00000000-0000-0000-0000-000000000000":
+        return {str(book_id): False for book_id in request.book_ids}
+
     try:
         response = supabase.table("wishlists").select("book_id").eq("user_id", current_user.id).in_("book_id", request.book_ids).execute()
         

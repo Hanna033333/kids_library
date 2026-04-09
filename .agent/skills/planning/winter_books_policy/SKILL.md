@@ -1,4 +1,5 @@
 ---
+trigger: manual
 description: 겨울방학 추천 도서 노출 정책
 ---
 

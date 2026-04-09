@@ -54,22 +54,22 @@ const config: Config = {
         brand: {
           primary: {
             DEFAULT: '#F59E0B',      // 메인 오렌지 (Amber-500)
-            hover: '#F59E0B',         // 호버 상태 (변화 없음)
-            active: '#B45309',        // 클릭 상태 (Amber-700)
+            hover: '#F59E0B',         // 호버 상태 (기본색과 동일)
+            active: '#D97706',        // 클릭 상태 (Amber-600)
           },
           accent: {
             DEFAULT: '#FF4D00',       // 강조 레드-오렌지
-            hover: '#FF4D00',         // 호버 상태 (변화 없음)
+            hover: '#FF4D00',         // 호버 상태 (기본색과 동일)
           },
           kakao: {
             DEFAULT: '#FEE500',       // 카카오 브랜드 컬러
-            hover: '#FEE500',         // 호버 상태 (변화 없음)
+            hover: '#FEE500',         // 호버 상태 (기본색과 동일)
             active: '#FCC419',
             text: '#191919',          // 카카오 텍스트 컬러
           },
           intro: {
             DEFAULT: '#FFB300',       // 인트로 페이지 전용 (Amber-400)
-            hover: '#FFB300',         // 호버 상태 (변화 없음)
+            hover: '#FFB300',         // 호버 상태 (기본색과 동일)
           },
         },
       },

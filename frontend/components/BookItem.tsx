@@ -1,4 +1,4 @@
-﻿import { Book, LoanStatus } from "@/lib/types";
+import { Book, LoanStatus } from "@/lib/types";
 import { ImageOff, Tags, BookOpen } from "lucide-react";
 import Link from "next/link";
 
@@ -47,7 +47,8 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
     <Link
       href={`/book/${book.id}`}
       prefetch={true}
-      className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md h-full group"
+      className="flex flex-col bg-white rounded-lg border border-gray-100 overflow-hidden transition-all h-full group"
+      onClick={() => sendGAEvent('click_book_item', { book_id: book.id, book_title: book.title })}
     >
       {/* 1. 이미지 영역 (상단) */}
       <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
@@ -55,7 +56,7 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
           <img
             src={book.image_url}
             alt={book.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover"
             loading="lazy"
             onError={(e) => {
               e.currentTarget.style.display = 'none';
@@ -86,7 +87,7 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
 
       {/* 2. 정보 영역 (하단) */}
       <div className="flex-1 p-4 flex flex-col items-start bg-white">
-        <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight group-hover:text-gray-700 transition-colors">
+        <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight">
           {book.title}
         </h3>
 

@@ -73,7 +73,7 @@ export default function LibrarySelector({ whiteMode = false }: { whiteMode?: boo
                                     <button
                                         key={lib}
                                         onClick={() => handleSelect(lib)}
-                                        className={`w-full flex items-center justify-between p-4 rounded-xl text-left transition-all ${selectedLibrary === lib
+                                        className={`w-full flex items-center justify-between p-4 rounded-lg text-left transition-all ${selectedLibrary === lib
                                             ? 'bg-brand-primary/10 text-brand-primary font-bold border border-brand-primary/20'
                                             : 'bg-gray-50 text-gray-700 font-medium hover:bg-gray-50 border border-transparent'
                                             }`}
@@ -91,7 +91,7 @@ export default function LibrarySelector({ whiteMode = false }: { whiteMode?: boo
 
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="w-full mt-6 py-3.5 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition-colors"
+                                className="w-full mt-6 py-3.5 rounded-lg text-gray-500 font-medium hover:bg-gray-50 transition-colors"
                             >
                                 닫기
                             </button>

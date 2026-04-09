@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Search, Sparkles, ChevronRight, BookOpen, Check, ChevronLeft, Coins, Smartphone } from 'lucide-react'
+import { Search, Sparkles, ChevronRight, BookOpen, Check, Coins, Smartphone } from 'lucide-react'
+import BackButton from '@/components/BackButton'
 
 export default function IntroPageClient() {
     const router = useRouter()
@@ -12,13 +13,7 @@ export default function IntroPageClient() {
             {/* Header - h2로 변경하여 h1 중복 방지 */}
             <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4">
                 <div className="relative flex items-center justify-between">
-                    <div
-                        onClick={() => router.back()}
-                        className="p-3 -ml-2 text-gray-500 hover:text-gray-900 cursor-pointer active:bg-gray-100 rounded-lg transition-colors touch-manipulation"
-                        role="button"
-                    >
-                        <ChevronLeft className="w-6 h-6" />
-                    </div>
+                    <BackButton />
                     {/* h1 중복 제거: 헤더는 span으로 변경 */}
                     <span className="absolute left-1/2 -translate-x-1/2 text-base font-bold text-gray-900">서비스 소개</span>
                     <div className="w-10" /> {/* Spacer for centering balance */}
@@ -147,7 +142,7 @@ export default function IntroPageClient() {
                 </h2>
                 <button
                     onClick={() => router.push('/')}
-                    className="bg-[#FFB300] hover:bg-[#FFB300] text-white text-[20px] sm:text-[24px] font-bold py-6 px-16 rounded-[20px] transition-all shadow-[0_10px_30px_rgba(255,179,0,0.3)] hover:shadow-[0_15px_40px_rgba(255,179,0,0.4)] hover:-translate-y-1 tracking-[-0.03em]"
+                    className="bg-[#FFB300] text-white text-[20px] sm:text-[24px] font-bold py-6 px-16 rounded-[20px] transition-all hover:-translate-y-1 tracking-[-0.03em]"
                 >
                     책자리 시작하기
                 </button>

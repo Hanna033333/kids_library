@@ -1,7 +1,8 @@
 import { Metadata } from 'next'
 import { getCaldecottBooks } from '@/lib/caldecott-api'
 import { createClient } from '@/lib/supabase-server'
-import BookItem from '@/components/BookItem'
+import PageHeader from '@/components/PageHeader'
+import CaldecottClient from './CaldecottClient'
 
 export const metadata: Metadata = {
     metadataBase: new URL("https://checkjari.com"),
@@ -55,44 +56,22 @@ export default async function CaldecottPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
+        <div className="min-h-screen bg-[#F7F7F7]">
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
+            <PageHeader title="칼데콧 수상작" backHref="/" />
 
             <div className="max-w-7xl mx-auto px-4 py-8">
-                {/* Header */}
-                <div className="text-center mb-12">
-                    <div className="inline-block mb-4">
-                        <span className="text-5xl">🏆</span>
-                    </div>
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                        칼데콧 수상작
-                    </h1>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                        2000년부터 2026년까지 <span className="font-semibold text-amber-600">칼데콧 메달(Caldecott Medal)</span>을 수상한
-                        세계 최고의 어린이 그림책 목록입니다.
-                    </p>
-                    <p className="text-sm text-gray-500 mt-2">
-                        총 {books.length}권의 수상작을 만나보세요
+                <div className="text-center mb-8">
+                    <p className="text-gray-500 text-sm">
+                        2000년대이후 칼데콧 메달 수상작 &middot; 총 {books.length}권
                     </p>
                 </div>
 
                 {/* Books Grid */}
-                {books.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {books.map((book) => (
-                            <BookItem key={book.id} book={book} />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-16">
-                        <p className="text-gray-500 text-lg">
-                            칼데콧 수상작 데이터를 불러오는 중입니다...
-                        </p>
-                    </div>
-                )}
+                <CaldecottClient books={books} />
 
                 {/* Info Section */}
                 <div className="mt-16 bg-white rounded-lg shadow-sm p-8 border border-gray-200">

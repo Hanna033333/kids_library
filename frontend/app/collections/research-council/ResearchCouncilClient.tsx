@@ -4,6 +4,7 @@ import BookList from '@/components/BookList'
 import SearchBar from '@/components/SearchBar'
 import FilterBar from '@/components/FilterBar'
 import IntegratedFilterModal from '@/components/IntegratedFilterModal'
+import PageHeader from '@/components/PageHeader'
 
 export default function ResearchCouncilClient() {
     const [searchQuery, setSearchQuery] = useState('')
@@ -25,17 +26,14 @@ export default function ResearchCouncilClient() {
     }, [])
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="min-h-screen bg-[#F7F7F7]">
+            <PageHeader title="어린이도서연구회" backHref="/" />
             <div className="container mx-auto px-4 py-8 max-w-7xl">
-                <div className="mb-8 text-center">
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">📖 어린이 도서 연구회 추천</h1>
-                    <p className="text-gray-600 text-lg">전문가가 엄선한 믿고 보는 필독서</p>
-                </div>
-                <div className="mb-6">
-                    <SearchBar onSearch={setSearchQuery} onFilterClick={() => setIsFilterModalOpen(true)} />
+                <div className="mb-4">
+                    <SearchBar onSearch={setSearchQuery} />
                 </div>
                 <FilterBar selectedAge={selectedAge} selectedCategory={selectedCategory}
-                    onAgeChange={setSelectedAge} onCategoryClick={() => setIsFilterModalOpen(true)} />
+                    onAgeChange={setSelectedAge} onFilterClick={() => setIsFilterModalOpen(true)} />
                 <IntegratedFilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)}
                     mode="integrated" selectedAge={selectedAge} selectedCategory={selectedCategory}
                     selectedSort={sortBy} onAgeChange={setSelectedAge} onCategoryChange={setSelectedCategory}

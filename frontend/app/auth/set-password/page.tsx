@@ -4,7 +4,10 @@ import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
-import { Check } from 'lucide-react'
+import { Check, ChevronLeft } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import PageHeader from '@/components/PageHeader'
+import { sendGAEvent } from '@/lib/analytics'
 
 export default function SetPasswordPage() {
     const router = useRouter()
@@ -13,6 +16,8 @@ export default function SetPasswordPage() {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
+    const { user: authUser } = useAuth()
+    
     // 실시간 유효성 검사 상태
     const validation = useMemo(() => {
         return {
@@ -32,25 +37,32 @@ export default function SetPasswordPage() {
         setError('')
 
         try {
-            const { data: { user } } = await supabase.auth.getUser()
+            // Use authUser from context instead of directly calling supabase.auth.getUser()
+            // to support QA mock sessions
+            const user = authUser;
 
             if (!user) {
                 throw new Error('User not found')
             }
 
-            const { error: updateError } = await supabase.auth.updateUser({
-                password: password
-            })
+            // Only update password if not in QA mode (or handle differently)
+            const isQaMode = typeof window !== 'undefined' && localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN';
+            
+            if (!isQaMode) {
+                const { error: updateError } = await supabase.auth.updateUser({
+                    password: password
+                })
 
-            if (updateError) {
-                if (updateError.message.includes('different from the old password')) {
-                    console.log('Password is unchanged (same as previous). Proceeding.')
-                } else {
-                    console.error('Password update failed:', updateError.message)
-                    let msg = updateError.message
-                    if (msg.includes('weak')) msg = '비밀번호가 너무 쉽습니다. 더 복잡하게 설정해주세요.'
-                    else if (msg.includes('same')) msg = '이전과 다른 비밀번호를 설정해주세요.'
-                    throw new Error(`비밀번호 설정 실패: ${msg}`)
+                if (updateError) {
+                    if (updateError.message.includes('different from the old password')) {
+                        console.log('Password is unchanged (same as previous). Proceeding.')
+                    } else {
+                        console.error('Password update failed:', updateError.message)
+                        let msg = updateError.message
+                        if (msg.includes('weak')) msg = '비밀번호가 너무 쉽습니다. 더 복잡하게 설정해주세요.'
+                        else if (msg.includes('same')) msg = '이전과 다른 비밀번호를 설정해주세요.'
+                        throw new Error(`비밀번호 설정 실패: ${msg}`)
+                    }
                 }
             }
 
@@ -60,11 +72,19 @@ export default function SetPasswordPage() {
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             const API_BASE_URL = isLocal ? "http://127.0.0.1:8000" : (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000");
 
+            let authToken = '';
+            if (isQaMode) {
+                authToken = 'TEST_QA_TOKEN';
+            } else {
+                const { data: sessionData } = await supabase.auth.getSession();
+                authToken = sessionData.session?.access_token || '';
+            }
+
             const response = await fetch(`${API_BASE_URL}/api/auth/me/agreements`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify({
                     agreed_to_terms: agreements.termsAgreed || false,
@@ -78,29 +98,53 @@ export default function SetPasswordPage() {
                 throw new Error(`Failed to save agreements (${response.status}): ${errorText}`)
             }
 
+            // Track GA Sign-up event
+            sendGAEvent('sign_up', { 
+                method: agreements.marketingAgreed ? 'with_marketing' : 'without_marketing' 
+            })
+
             sessionStorage.removeItem('signup_agreements')
-            router.push('/')
+
+            const returnUrl = sessionStorage.getItem('returnUrl')
+            if (returnUrl) {
+                router.push(returnUrl)
+            } else {
+                router.push('/')
+            }
         } catch (err: any) {
-            setError(err.message === 'User not found' ? '로그인이 필요합니다.' : (err.message || '회원가입 완료 중 오류가 발생했습니다.'))
+            if (err.message === 'User not found') {
+                setError('로그인이 필요합니다.')
+            } else if (err.message === 'Failed to fetch') {
+                setError('회원 가입에 문제가 있습니다. 잠시 후 다시 시도해주세요.')
+            } else {
+                setError(err.message || '회원가입 완료 중 오류가 발생했습니다.')
+            }
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <div className="min-h-screen bg-white font-sans flex flex-col items-center justify-center px-6 py-12">
-            <div className="w-full max-w-sm flex flex-col items-center">
+        <div className="min-h-screen bg-white font-sans flex flex-col items-center">
+            {/* 상단 헤더 */}
+            <PageHeader
+                title=""
+                backHref="/auth/agreements"
+                rightSlot={null}
+            />
+
+            <div className="w-full max-w-sm flex flex-col items-center px-6 pb-12 pt-12">
                 {/* 헤더 */}
                 <div className="mb-10 text-center flex flex-col items-center">
                     <img
                         src="/logo.png"
                         alt="책자리"
-                        className="w-20 h-auto mb-6"
+                        className="w-16 h-auto mb-6"
                     />
-                    <h1 className="text-[28px] font-bold text-gray-900 leading-tight mb-3">
+                    <h1 className="text-[26px] font-bold text-gray-900 leading-tight mb-3 tracking-tight">
                         비밀번호 설정
                     </h1>
-                    <p className="text-gray-500 text-[16px] leading-relaxed">
+                    <p className="text-gray-500 text-[15px] leading-relaxed">
                         안전한 서비스 이용을 위해<br />
                         비밀번호를 설정해 주세요
                     </p>
@@ -115,7 +159,7 @@ export default function SetPasswordPage() {
                             placeholder="비밀번호 입력"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full h-[56px] px-5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-primary focus:border-brand-primary transition-all text-[16px]"
+                            className="w-full h-[56px] px-5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-primary focus:border-brand-primary transition-all text-[16px]"
                         />
                         <div className="flex flex-wrap gap-x-4 gap-y-2 px-1">
                             <div className="flex items-center gap-1">
@@ -140,7 +184,7 @@ export default function SetPasswordPage() {
                             placeholder="비밀번호 확인"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full h-[56px] px-5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-primary focus:border-brand-primary transition-all text-[16px]"
+                            className="w-full h-[56px] px-5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-primary focus:border-brand-primary transition-all text-[16px]"
                         />
                         <div className="flex items-center gap-1 px-1">
                             <span className={`text-[13px] ${validation.isMatch ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>비밀번호 일치</span>
@@ -160,8 +204,11 @@ export default function SetPasswordPage() {
                         isLoading={loading}
                         variant="primary"
                         size="lg"
-                        className={`w-full rounded-xl h-[56px] text-lg font-bold shadow-sm transition-all
-                            ${isValid ? 'opacity-100' : 'opacity-40 brightness-95'}`}
+                        className={`w-full rounded-lg h-[56px] text-lg font-bold transition-all
+                            ${isValid
+                                ? 'bg-[#F59E0B] text-white'
+                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            }`}
                     >
                         완료
                     </Button>

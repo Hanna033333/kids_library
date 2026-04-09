@@ -11,6 +11,13 @@ export const metadata: Metadata = {
     }
 }
 
+import { Suspense } from 'react'
+import { PageLoader } from '@/components/ui/PageLoader'
+
 export default function AuthPage() {
-    return <AuthClient />
+    return (
+        <Suspense fallback={<PageLoader />}>
+            <AuthClient />
+        </Suspense>
+    )
 }

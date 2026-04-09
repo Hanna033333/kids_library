@@ -10,17 +10,21 @@ import { fetchLoanStatuses } from '@/lib/api'
 import { Book, LoanStatus } from '@/lib/types'
 import {
     Heart,
-    ChevronLeft,
     Loader2,
     BookOpen,
     MapPin,
     Share2,
     ShoppingCart
 } from 'lucide-react'
-import Link from 'next/link'
 import LibrarySelector from '@/components/LibrarySelector'
+import BackButton from '@/components/BackButton'
 import { useLibrary } from '@/context/LibraryContext'
 import { sendGAEvent } from '@/lib/analytics'
+import LoginPromptModal from '@/components/ui/LoginPromptModal'
+import ProfileDropdown from '@/components/ProfileDropdown'
+import { Button } from '@/components/ui/Button'
+import PageHeader from '@/components/PageHeader'
+import { getAgeDisplayLabel } from '@/lib/utils/age'
 
 interface BookDetailClientProps {
     book: Book
@@ -124,41 +128,89 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
             }
         }
         checkSaved()
-    }, [user, book.id, supabase])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, book.id])
+
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
     const handleToggleSave = async () => {
         if (!user) {
-            alert('베타 기간에는 로그인/회원가입 기능을 제공하지 않습니다.')
+            sessionStorage.setItem('returnUrl', window.location.pathname)
+            sessionStorage.setItem('pendingAction', `like_book_${book.id}`)
+            setIsLoginModalOpen(true)
             return
         }
 
         if (isToggling) return
+
+        // 낙관적 업데이트: DB 응답 기다리지 않고 즉시 UI 반영
+        const prevSaved = isSaved
+        const prevCount = saveCount
+        setIsSaved(!isSaved)
+        setSaveCount(prev => isSaved ? Math.max(0, prev - 1) : prev + 1)
         setIsToggling(true)
+
         try {
-            if (isSaved) {
+            if (prevSaved) {
                 await unsaveBook(supabase, user.id, book.id)
-                setIsSaved(false)
-                setSaveCount(prev => Math.max(0, prev - 1))
             } else {
                 await saveBook(supabase, user.id, book.id)
-                setIsSaved(true)
-                setSaveCount(prev => prev + 1)
             }
         } catch (err) {
+            // 실패 시 이전 상태로 롤백
             console.error('Failed to toggle save:', err)
+            setIsSaved(prevSaved)
+            setSaveCount(prevCount)
         } finally {
             setIsToggling(false)
-            // GA Event
             sendGAEvent('toggle_save_book', {
                 book_id: book.id,
                 book_title: book.title,
-                state: !isSaved ? 'save' : 'unsave' // Logic inverted because state hasn't updated in this closure yet? verify logic.
-                // Actually isSaved is the OLD state. 
-                // If isSaved was true, we unsaved. New state is 'unsave'.
-                // If isSaved was false, we saved. New state is 'save'.
+                state: !prevSaved ? 'save' : 'unsave'
             })
         }
     }
+
+    // Auto-Action: 로그인/가입 후 방금 페이지로 돌아오면 찜하기 자동 실행
+    useEffect(() => {
+        if (!user) return
+
+        const pendingAction = sessionStorage.getItem('pendingAction')
+        if (pendingAction !== `like_book_${book.id}`) return
+
+        // isSaved는 checkSaved가 비동기로 체크하므로 잠시 대기 후 실행
+        const timer = setTimeout(async () => {
+            // 이미 찜한 상태면 실행 안 함
+            const { data: savedData } = await supabase
+                .from('wishlists')
+                .select('id')
+                .match({ user_id: user.id, book_id: book.id })
+                .maybeSingle()
+
+            if (savedData) {
+                // 이미 찜되어 있음
+                setIsSaved(true)
+                sessionStorage.removeItem('pendingAction')
+                sessionStorage.removeItem('returnUrl')
+                return
+            }
+
+            setIsToggling(true)
+            try {
+                await saveBook(supabase, user.id, book.id)
+                setIsSaved(true)
+                setSaveCount(prev => prev + 1)
+                sessionStorage.removeItem('pendingAction')
+                sessionStorage.removeItem('returnUrl')
+            } catch (err) {
+                console.error('Failed auto save:', err)
+            } finally {
+                setIsToggling(false)
+            }
+        }, 600)
+        return () => clearTimeout(timer)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, book.id])
 
     const handleShare = async () => {
         const shareData = {
@@ -222,15 +274,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
     return (
         <main className="min-h-screen bg-white pb-20">
             {/* Top Header */}
-            <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <button onClick={() => router.back()} className="p-2 -ml-2 text-gray-500 hover:text-gray-900">
-                        <ChevronLeft className="w-6 h-6" />
-                    </button>
-                    <span className="text-base font-bold text-gray-900 truncate max-w-[200px]">도서 정보</span>
-                </div>
-                {/* <LibrarySelector /> */}
-            </header>
+            <PageHeader title="도서 정보" rightSlot={<ProfileDropdown />} />
 
             <div className="max-w-4xl mx-auto px-6 pt-8">
                 <div className="flex flex-col md:flex-row gap-8 md:items-start max-w-5xl mx-auto">
@@ -264,7 +308,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                 )}
                                 {book.age && (
                                     <span className="px-2.5 py-0.5 bg-amber-50 text-amber-600 rounded-lg text-[11px] font-bold border border-amber-100">
-                                        {book.age}
+                                        {getAgeDisplayLabel(book.age)}
                                     </span>
                                 )}
                             </div>
@@ -316,31 +360,32 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
 
                         {/* Save & Share Area - 프리뷰 배포 시 찜하기 숨김 */}
                         <div className="mt-2 pt-6 border-t border-gray-100 flex gap-3">
-                            {/* <button
+                            <button
                                 onClick={handleToggleSave}
-                                disabled={isToggling}
-                                className={`w-14 h-14 rounded-lg flex items-center justify-center transition-all transform active:scale-[0.98] border ${isSaved
-                                    ? "bg-amber-50 text-[#F59E0B] border-amber-200 shadow-lg shadow-gray-200"
-                                    : "bg-white text-gray-400 border-gray-100 hover:bg-gray-50"
+                                className={`w-14 h-14 rounded-lg flex items-center justify-center transition-all transform active:scale-[0.98] border ${isToggling ? "pointer-events-none" : ""} ${isSaved
+                                    ? "bg-brand-primary/5 text-brand-primary border-brand-primary/30"
+                                    : "bg-white text-gray-600 border-gray-200"
                                     }`}
                                 title={isSaved ? "찜 취소" : "찜하기"}
                             >
                                 <Heart className={`w-6 h-6 ${isSaved ? "fill-current" : ""}`} />
-                            </button> */}
+                            </button>
                             <button
                                 onClick={handleShare}
-                                className="w-14 h-14 flex items-center justify-center bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors border border-gray-100 active:scale-[0.98] transform"
+                                className="w-14 h-14 flex items-center justify-center bg-white text-gray-600 rounded-lg transition-colors border border-gray-200 active:scale-[0.98] transform"
                                 title="공유하기"
                             >
                                 <Share2 className="w-6 h-6" />
                             </button>
-                            <button
+                            <Button
+                                variant="secondary"
+                                size="lg"
                                 onClick={handleBuyKyobo}
-                                className="flex-1 h-14 bg-[#F59E0B] text-white rounded-lg font-bold text-base flex items-center justify-center gap-2 hover:bg-[#F59E0B] focus:bg-[#F59E0B] focus:outline-none transition-colors"
+                                className="flex-1 w-full text-gray-600 font-bold border-gray-200 bg-white"
                             >
-                                <ShoppingCart className="w-5 h-5" />
+                                <ShoppingCart className="w-5 h-5 mr-1" />
                                 도서 구매하기
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -349,14 +394,14 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
             {/* Book Description Section */}
             <div className="mt-12 max-w-4xl mx-auto px-6">
                 <h3 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
-                    <div className="w-1.5 h-6 bg-orange-500 rounded-full" />
+                    <div className="w-1.5 h-6 bg-brand-primary rounded-full" />
                     도서 소개
                 </h3>
                 <div className="text-gray-600 leading-relaxed text-sm md:text-base font-medium">
                     {book.description ? (
                         <div
                             dangerouslySetInnerHTML={{ __html: book.description }}
-                            className="prose prose-sm max-w-none prose-p:mb-3 prose-strong:text-orange-600"
+                            className="prose prose-sm max-w-none prose-p:mb-3 prose-strong:text-brand-primary"
                         />
                     ) : (
                         <p className="text-gray-400 italic">등록된 도서 소개 정보가 없습니다.</p>
@@ -365,6 +410,13 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
 
 
             </div>
+
+            <LoginPromptModal
+                isOpen={isLoginModalOpen}
+                onClose={() => setIsLoginModalOpen(false)}
+                title="찜한 책은 내 책장에 보관돼요!"
+                description="다음에 도서관 갈 때 헤매지 않도록 미리 담아두세요."
+            />
         </main >
     )
 }

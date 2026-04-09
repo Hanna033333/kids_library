@@ -51,7 +51,15 @@ import { Button } from "@/components/ui/Button"
 - `disabled` (boolean): 비활성화 스타일 적용
 - `className` (string): 추가 스타일 적용 (Tailwind Merge 지원)
 
-## 4. 예시 코드 (Do & Don't)
+## 4. 버튼 내 아이콘 가이드라인 (Icon in Button)
+
+버튼 내부에 아이콘(예: lucide-react)을 배치할 때 디자인 파편화를 막고 시각적 안정감을 유지하기 위해 다음 규칙을 준수합니다.
+
+1. **색상 일체화 (Color Unity):** 아이콘의 색상은 **반드시 버튼 텍스트 색상과 동일**하게 맞춰야 합니다. 텍스트와 다른 별도의 포인트 컬러(예: 텍스트는 회색인데 아이콘만 주황색 탑재 등) 적용은 엄격히 금지합니다.
+2. **크기 (Size):** 일반 버튼(`md`, `lg` 사이즈) 기준 아이콘 크기는 **`w-5 h-5`**를 기본으로 사용합니다.
+3. **여백 (Spacing):** 여백은 아이콘을 텍스트 왼쪽에 배치할 경우 `mr-2` 혹은 `mr-1`을 사용하거나, 부모 컴포넌트에 통일된 `gap-2`를 적용합니다.
+
+## 5. 예시 코드 (Do & Don't)
 
 ### ✅ DO
 ```tsx
@@ -66,10 +74,10 @@ import { Button } from "@/components/ui/Button"
   확인
 </Button>
 
-// 아이콘이 포함된 카카오 버튼
-<Button variant="kakao" className="w-full">
-  <KakaoIcon className="w-5 h-5 mr-2" />
-  카카오로 시작하기
+// 텍스트와 동일한 색상 톤으로 안착된 아이콘 (디자인 가이드 준수)
+<Button variant="secondary" className="text-gray-600">
+  <ShoppingCart className="w-5 h-5 mr-2" />
+  도서 구매하기
 </Button>
 ```
 
@@ -80,8 +88,14 @@ import { Button } from "@/components/ui/Button"
   확인
 </button>
 
-// Button 컴포넌트에 bg-color 직접 지정 지양 (variant 사용 권장)
+// Button 컴포넌트에 bg-color 직접 지정 지양
 <Button className="bg-blue-500">
   확인
+</Button>
+
+// 아이콘에만 색상을 넣어 시선을 반감시키는 행위 엄격히 금지!
+<Button variant="secondary" className="text-gray-800">
+  <ShoppingCart className="w-5 h-5 mr-2 text-brand-primary" />
+  도서 구매하기
 </Button>
 ```

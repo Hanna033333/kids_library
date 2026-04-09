@@ -25,16 +25,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         const setData = async () => {
-            const { data: { session }, error } = await supabase.auth.getSession()
-            if (error) throw error
-            setSession(session)
-            setUser(session?.user ?? null)
-            setIsLoading(false)
+            // Check for QA Mock Token first
+            const isQaMode = typeof window !== 'undefined' && localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN';
+            
+            if (isQaMode) {
+                const mockUser = {
+                    id: '00000000-0000-0000-0000-000000000000',
+                    email: 'qa-tester@checkjari.com',
+                    app_metadata: { provider: 'kakao' },
+                    user_metadata: { provider_id: 'qa-tester-001' }
+                } as any;
+                setUser(mockUser);
+                setSession({ user: mockUser, access_token: 'TEST_QA_TOKEN' } as any);
+                setIsLoading(false);
+                return;
+            }
+
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession()
+                if (error) {
+                    console.error("Session fetch error:", error);
+                    setIsLoading(false);
+                    return;
+                }
+                setSession(session)
+                setUser(session?.user ?? null)
+            } catch (err) {
+                console.error("Unexpected auth error:", err);
+            } finally {
+                setIsLoading(false)
+            }
         }
 
         setData()
 
+        // Also check periodically or on storage events for the mock token in dev
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'supabase.auth.token') {
+                setData();
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            // If we are in QA mode, don't let Supabase override the mock user
+            const isQaMode = typeof window !== 'undefined' && localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN';
+            if (isQaMode) return;
+
             setSession(session)
             setUser(session?.user ?? null)
             setIsLoading(false)
@@ -42,11 +79,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         return () => {
             subscription.unsubscribe()
+            window.removeEventListener('storage', handleStorageChange);
         }
     }, [supabase.auth])
 
     const signOut = async () => {
         await supabase.auth.signOut()
+        localStorage.removeItem('supabase.auth.token') // Clear mock token too
         setUser(null)
         setSession(null)
     }

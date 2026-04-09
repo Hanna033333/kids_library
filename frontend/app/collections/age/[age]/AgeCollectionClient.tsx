@@ -4,6 +4,7 @@ import BookList from '@/components/BookList'
 import SearchBar from '@/components/SearchBar'
 import FilterBar from '@/components/FilterBar'
 import IntegratedFilterModal from '@/components/IntegratedFilterModal'
+import PageHeader from '@/components/PageHeader'
 
 import { Book } from '@/lib/types'
 
@@ -13,7 +14,7 @@ interface AgeCollectionClientProps {
 }
 
 const ageDisplayNames: Record<string, string> = {
-    '0-3': '0-3세', '4-7': '4-7세', '8-12': '8-12세', 'teen': '13세 이상'
+    '0-3': '0~3세', '4-7': '4~7세', '8-12': '8~12세', '13+': '13세 이상', 'teen': '13세 이상'
 }
 const ageDescriptions: Record<string, string> = {
     '0-3': '영유아 발달에 꼭 맞는 그림책을 만나보세요',
@@ -24,7 +25,7 @@ const ageDescriptions: Record<string, string> = {
 
 export default function AgeCollectionClient({ age, initialBooks }: AgeCollectionClientProps) {
     const [searchQuery, setSearchQuery] = useState('')
-    const [selectedAge, setSelectedAge] = useState<string>(age)
+    const [selectedAge, setSelectedAge] = useState<string>(age === 'teen' ? '13+' : age)
     const [selectedCategory, setSelectedCategory] = useState<string>('전체')
     const [sortBy, setSortBy] = useState<'pangyo_callno' | 'title'>('pangyo_callno')
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
@@ -47,19 +48,14 @@ export default function AgeCollectionClient({ age, initialBooks }: AgeCollection
     const currentInitialBooks = selectedAge === age ? initialBooks : undefined;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="min-h-screen bg-[#F7F7F7]">
+            <PageHeader title={`${ageDisplayNames[age]} 추천 도서`} backHref="/" />
             <div className="container mx-auto px-4 py-8 max-w-7xl">
-                <div className="mb-8 text-center">
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-                        📚 {ageDisplayNames[age]} 추천 도서
-                    </h1>
-                    <p className="text-gray-600 text-lg">{ageDescriptions[age]}</p>
-                </div>
-                <div className="mb-6">
-                    <SearchBar onSearch={setSearchQuery} onFilterClick={() => setIsFilterModalOpen(true)} />
+                <div className="mb-4">
+                    <SearchBar onSearch={setSearchQuery} />
                 </div>
                 <FilterBar selectedAge={selectedAge} selectedCategory={selectedCategory}
-                    onAgeChange={setSelectedAge} onCategoryClick={() => setIsFilterModalOpen(true)} />
+                    onAgeChange={setSelectedAge} onFilterClick={() => setIsFilterModalOpen(true)} />
                 <IntegratedFilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)}
                     mode="integrated" selectedAge={selectedAge} selectedCategory={selectedCategory}
                     selectedSort={sortBy} onAgeChange={setSelectedAge} onCategoryChange={setSelectedCategory}

@@ -56,7 +56,7 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1 || loading}
-          className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-lg active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
           이전
         </button>
@@ -76,9 +76,9 @@ export default function Pagination({
                 key={pageNum}
                 onClick={() => onPageChange(pageNum as number)}
                 disabled={currentPage === pageNum}
-                className={`min-w-[32px] h-8 px-1 flex items-center justify-center text-sm font-bold rounded-lg transition-all ${currentPage === pageNum
-                  ? "bg-[#F59E0B] text-white shadow-md shadow-gray-200"
-                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                className={`min-w-[32px] h-8 px-1 flex items-center justify-center text-sm font-bold rounded-lg transition-all active:scale-[0.98] ${currentPage === pageNum
+                  ? "bg-[#F59E0B] text-white"
+                  : "text-gray-500"
                   } ${loading && currentPage !== pageNum ? "pointer-events-none" : ""}`}
               >
                 {pageNum}
@@ -91,7 +91,7 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages || loading}
-          className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-lg active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
           다음
         </button>

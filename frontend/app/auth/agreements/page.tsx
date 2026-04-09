@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
-import { Check } from 'lucide-react'
+import { Check, ChevronLeft } from 'lucide-react'
+import PageHeader from '@/components/PageHeader'
 
 interface Agreements {
     allAgreed: boolean
@@ -59,21 +60,28 @@ export default function AgreementsPage() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6 py-12">
-            <div className="w-full max-w-sm flex flex-col items-center">
+        <div className="min-h-screen flex flex-col items-center bg-white">
+            {/* 상단 헤더 */}
+            <PageHeader
+                title=""
+                backHref="/auth/signup"
+                rightSlot={null}
+            />
+
+            <div className="w-full max-w-[420px] flex flex-col items-center px-4 pb-12 pt-12">
                 {/* 헤더 */}
                 <div className="text-center mb-10 flex flex-col items-center">
                     <img
                         src="/logo.png"
                         alt="책자리"
-                        className="w-20 h-auto mb-6"
+                        className="w-16 h-auto mb-6"
                     />
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">회원가입</h2>
-                    <p className="text-gray-500 text-[15px]">서비스 약관에 동의해주세요</p>
+                    <h2 className="text-[26px] font-bold text-gray-900 mb-3 tracking-tight">회원가입</h2>
+                    <p className="text-gray-500 text-[15px] leading-relaxed">서비스 약관에 동의해주세요</p>
                 </div>
 
                 {/* 약관 동의 영역 */}
-                <div className="w-full bg-gray-50/50 rounded-[24px] p-6 mb-8 border border-gray-100/50">
+                <div className="w-full bg-gray-50/50 rounded-[24px] p-5 mb-8 border border-gray-100/50">
                     {/* 모두 동의 */}
                     <div className="flex items-center mb-5">
                         <label className="flex items-center gap-3 cursor-pointer group w-full">
@@ -200,8 +208,11 @@ export default function AgreementsPage() {
                     disabled={!isValid}
                     variant="primary"
                     size="lg"
-                    className={`w-full rounded-xl h-[56px] text-lg font-bold shadow-sm transition-all
-                        ${isValid ? 'opacity-100' : 'opacity-40 brightness-95'}`}
+                    className={`w-full rounded-lg h-[56px] text-lg font-bold transition-all
+                        ${isValid
+                            ? 'bg-[#F59E0B] text-white'
+                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        }`}
                 >
                     다음
                 </Button>

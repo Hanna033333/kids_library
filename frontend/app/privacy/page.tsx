@@ -1,6 +1,5 @@
 import { Metadata } from 'next'
-import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import CloseButton from '@/components/CloseButton'
 
 export const metadata: Metadata = {
     title: '개인정보 처리방침 | 책자리',
@@ -12,14 +11,13 @@ export default function PrivacyPage() {
         <div className="min-h-screen bg-white">
             {/* Header */}
             <header className="sticky top-0 z-10 bg-white border-b border-gray-100">
-                <div className="max-w-3xl mx-auto px-4 h-14 flex items-center">
-                    <Link href="/auth" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-                        <ChevronLeft className="w-5 h-5 mr-1" />
-                        <span className="text-sm font-medium">돌아가기</span>
-                    </Link>
-                    <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-bold text-gray-900">
+                <div className="max-w-3xl mx-auto px-4 h-14 flex items-center relative">
+                    <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-bold text-gray-900 whitespace-nowrap">
                         개인정보 처리방침
                     </h1>
+                    <div className="ml-auto">
+                        <CloseButton />
+                    </div>
                 </div>
             </header>
 

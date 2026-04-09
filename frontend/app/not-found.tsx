@@ -1,10 +1,12 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
-export default function NotFound() {
+// usePathname을 사용하는 로직을 별도 컴포넌트로 분리 (Suspense 경계 적용)
+function PathnameTracker() {
     const pathname = usePathname()
 
     useEffect(() => {
@@ -20,6 +22,16 @@ export default function NotFound() {
         console.warn(`404 Error: ${pathname}`)
     }, [pathname])
 
+    if (!pathname) return null
+
+    return (
+        <p className="mt-8 text-sm text-gray-500">
+            경로: <code className="bg-gray-100 px-2 py-1 rounded">{pathname}</code>
+        </p>
+    )
+}
+
+export default function NotFound() {
     return (
         <div className="min-h-screen flex items-center justify-center px-4">
             <div className="text-center max-w-md">
@@ -32,15 +44,13 @@ export default function NotFound() {
                 </p>
                 <Link
                     href="/"
-                    className="inline-block px-6 py-3 bg-[#F59E0B] text-white font-medium rounded-lg hover:bg-[#F59E0B] transition-colors"
+                    className="inline-block px-6 py-3 bg-[#F59E0B] text-white font-medium rounded-lg hover:bg-[#D97706] transition-colors"
                 >
                     홈으로 돌아가기
                 </Link>
-                {pathname && (
-                    <p className="mt-8 text-sm text-gray-500">
-                        경로: <code className="bg-gray-100 px-2 py-1 rounded">{pathname}</code>
-                    </p>
-                )}
+                <Suspense fallback={null}>
+                    <PathnameTracker />
+                </Suspense>
             </div>
         </div>
     )

@@ -1,0 +1,81 @@
+
+======================================================================
+🔍 맘카페(Naver Cafe) 유입 트래픽 심층 분석
+분석 기간: 7daysAgo ~ yesterday
+======================================================================
+
+1️⃣ 채널별 인게이지먼트 (Engagement by Channel)
+----------------------------------------------------------------------
+🔹 (direct) / (none)
+   - 사용자: 7명 | 세션: 9회
+   - 유저당 평균 체류시간: 12.4초
+   - 세션당 페이지뷰: 3.2장
+
+🔹 naver / organic
+   - 사용자: 3명 | 세션: 3회
+   - 유저당 평균 체류시간: 15.7초
+   - 세션당 페이지뷰: 2.7장
+
+🔹 m.cafe.naver.com / referral
+   - 사용자: 2명 | 세션: 2회
+   - 유저당 평균 체류시간: 169.0초
+   - 세션당 페이지뷰: 20.5장
+
+🔹 google / organic
+   - 사용자: 1명 | 세션: 1회
+   - 유저당 평균 체류시간: 7.0초
+   - 세션당 페이지뷰: 3.0장
+
+🔹 m.search.naver.com / referral
+   - 사용자: 1명 | 세션: 1회
+   - 유저당 평균 체류시간: 34.0초
+   - 세션당 페이지뷰: 1.0장
+
+🔹 naver.com / referral
+   - 사용자: 1명 | 세션: 1회
+   - 유저당 평균 체류시간: 43.0초
+   - 세션당 페이지뷰: 6.0장
+
+🔹 news.hada.io / referral
+   - 사용자: 1명 | 세션: 1회
+   - 유저당 평균 체류시간: 25.0초
+   - 세션당 페이지뷰: 3.0장
+
+2️⃣ 채널별 핵심 행동 (Core Events by Channel)
+----------------------------------------------------------------------
+🔹 (direct) / (none)
+   - page_view           : 29회 (실행 유저 7명)
+   - user_engagement     : 5회 (실행 유저 4명)
+   - scroll              : 2회 (실행 유저 1명)
+   - view_book_detail    : 2회 (실행 유저 1명)
+
+🔹 google / organic
+   - page_view           : 3회 (실행 유저 1명)
+
+🔹 m.cafe.naver.com / referral
+   - page_view           : 41회 (실행 유저 2명)
+   - view_book_detail    : 15회 (실행 유저 2명)
+   - scroll              : 3회 (실행 유저 2명)
+   - user_engagement     : 3회 (실행 유저 2명)
+
+🔹 m.search.naver.com / referral
+   - page_view           : 1회 (실행 유저 1명)
+   - scroll              : 1회 (실행 유저 1명)
+   - user_engagement     : 1회 (실행 유저 1명)
+
+🔹 naver / organic
+   - page_view           : 8회 (실행 유저 3명)
+   - scroll              : 3회 (실행 유저 3명)
+   - user_engagement     : 2회 (실행 유저 2명)
+   - view_book_detail    : 1회 (실행 유저 1명)
+
+🔹 naver.com / referral
+   - page_view           : 6회 (실행 유저 1명)
+   - scroll              : 1회 (실행 유저 1명)
+
+🔹 news.hada.io / referral
+   - page_view           : 3회 (실행 유저 1명)
+   - scroll              : 1회 (실행 유저 1명)
+   - view_book_detail    : 1회 (실행 유저 1명)
+
+======================================================================

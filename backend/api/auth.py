@@ -56,6 +56,17 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     token = credentials.credentials
     # print(f"[DEBUG] Validating token: {token[:10]}...") # Too noisy?
     
+    # QA 전용 테스터 토큰 처리
+    if token == "TEST_QA_TOKEN" and os.getenv("ENV") != "production":
+        from types import SimpleNamespace
+        print("[DEBUG] QA Tester Token detected")
+        return SimpleNamespace(
+            id="00000000-0000-0000-0000-000000000000",
+            email="qa-tester@checkjari.com",
+            app_metadata={'provider': 'kakao'},
+            user_metadata={'provider_id': 'qa-tester-001'}
+        )
+
     try:
         # Supabase Auth로 토큰 검증
         user = supabase.auth.get_user(token)
@@ -83,6 +94,20 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 @router.get("/me", response_model=UserResponse)
 async def get_my_profile(current_user = Depends(get_current_user)):
     """내 정보 조회"""
+    # QA 전용 테스터 처리
+    if current_user.id == "00000000-0000-0000-0000-000000000000":
+        return {
+            "id": current_user.id,
+            "email": current_user.email,
+            "nickname": "QA 테스터",
+            "profile_image_url": None,
+            "provider": "kakao",
+            "agreed_to_terms": True,
+            "agreed_to_privacy": True,
+            "agreed_to_marketing": False,
+            "created_at": datetime.now()
+        }
+
     try:
         response = supabase.table("members").select("*").eq("id", current_user.id).single().execute()
         return response.data
@@ -148,6 +173,10 @@ async def update_agreements(
         print(f"[DEBUG] Validated User Data: {data}")
         
         # members 테이블에 upsert (없으면 생성, 있으면 업데이트)
+        # QA 전용 테스터는 실제 DB 저장을 스킵하여 외래키 제약조건 위반 방지
+        if current_user.id == "00000000-0000-0000-0000-000000000000":
+            return {"message": "Agreements updated successfully (QA Mock)"}
+
         response = supabase.table("members").upsert(data).execute()
         
         print(f"[DEBUG] Upsert Response: {response}")
@@ -175,6 +204,9 @@ async def update_agreements(
 @router.delete("/me")
 async def delete_my_account(current_user = Depends(get_current_user)):
     """회원 탈퇴"""
+    if current_user.id == "00000000-0000-0000-0000-000000000000":
+        return {"message": "Account deleted successfully (QA Mock)"}
+        
     try:
         # members 테이블에서 삭제 (CASCADE로 wishlists도 자동 삭제)
         supabase.table("members").delete().eq("id", current_user.id).execute()

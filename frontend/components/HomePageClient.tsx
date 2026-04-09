@@ -4,15 +4,18 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-import { Search, Bookmark, LogOut, ChevronRight, Bell, Snowflake, BookOpen } from 'lucide-react'
+import { Search, Bookmark, LogOut, ChevronRight, Bell, Snowflake, BookOpen, User } from 'lucide-react'
 import { getBooksByAge, getResearchCouncilBooks, getWinterBooks } from '@/lib/home-api'
 import { type Book, type LibraryInfo } from '@/lib/types'
 import { useAuth } from '@/context/AuthContext'
 import LibrarySelector from '@/components/LibrarySelector'
 import { useLibrary } from '@/context/LibraryContext'
 import Footer from '@/components/Footer'
-import MainBanner from '@/components/MainBanner'
-import { Button } from '@/components/ui/Button'
+import { getAgeDisplayLabel } from '@/lib/utils/age'
+import ConfirmModal from '@/components/ui/ConfirmModal'
+import { sendGAEvent } from '@/lib/analytics'
+import Toast from '@/components/ui/Toast'
+import UserAvatar from '@/components/UserAvatar'
 
 interface HomePageClientProps {
   // initialWinterBooks?: Book[];
@@ -48,6 +51,24 @@ export default function HomePageClient({
 
   // 초기 데이터가 있으면 로딩 상태 false
   const [loading, setLoading] = useState(initialAgeBooks.length === 0)
+
+  // 회원 탈퇴 팝업 상태
+  const [isWithdrawnPopupOpen, setIsWithdrawnPopupOpen] = useState(false)
+  const [logoutToastMessage, setLogoutToastMessage] = useState('')
+
+  // 회원 탈퇴 후 랜딩 시 팝업 띄우기
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (sessionStorage.getItem('showWithdrawnPopup') === 'true') {
+        setIsWithdrawnPopupOpen(true)
+        sessionStorage.removeItem('showWithdrawnPopup')
+      }
+      if (sessionStorage.getItem('showLogoutToast') === 'true') {
+        setLogoutToastMessage('로그아웃 되었습니다.')
+        sessionStorage.removeItem('showLogoutToast')
+      }
+    }
+  }, [])
 
   // 연령별 책 로드 (초기 데이터가 있고 연령이 초기값과 같으면 스킵)
   useEffect(() => {
@@ -90,6 +111,7 @@ export default function HomePageClient({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
+      sendGAEvent('home_search', { keyword: searchQuery })
       router.push(`/books?q=${encodeURIComponent(searchQuery)}`)
     } else {
       router.push('/books')
@@ -119,46 +141,61 @@ export default function HomePageClient({
         {/* 도서관 선택 버튼 숨김 처리 */}
         {/* <LibrarySelector /> */}
 
-        {/* 우측 메뉴 (절대 위치) - 프리뷰 배포 시 숨김 */}
-        {/* 
         {user ? (
-          <div className="absolute right-6 flex items-center gap-3">
-            <Link
-              href="/my-library"
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600 flex items-center gap-1 text-sm font-medium"
-              title="내 서재"
-            >
-              <Bookmark className="w-5 h-5" />
-              <span className="hidden sm:inline">내 서재</span>
-            </Link>
+          <div className="absolute right-6 flex items-center gap-3 md:gap-4">
             <button
-              onClick={() => signOut()}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600"
-              title="로그아웃"
+              onClick={() => {
+                const searchEl = document.getElementById('global-search-bar');
+                if (searchEl) {
+                  searchEl.classList.toggle('hidden');
+                  searchEl.querySelector('input')?.focus();
+                }
+              }}
+              className="text-gray-500 p-1"
+              aria-label="검색 열기"
             >
-              <LogOut className="w-5 h-5" />
+              <Search className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => router.push('/my-page')}
+              className="p-1 flex items-center justify-center group"
+              aria-label="마이 페이지"
+            >
+              <UserAvatar user={user} size={24} className="text-gray-500" />
             </button>
           </div>
         ) : (
-          <div className="absolute right-6 flex items-center gap-3">
-            <Button
-              onClick={() => router.push('/auth/signup')}
-              variant="primary"
-              size="sm"
+          <div className="absolute right-6 flex items-center gap-3 md:gap-4">
+            <button
+              onClick={() => {
+                const searchEl = document.getElementById('global-search-bar');
+                if (searchEl) {
+                  searchEl.classList.toggle('hidden');
+                  searchEl.querySelector('input')?.focus();
+                }
+              }}
+              className="text-gray-500 p-1"
+              aria-label="검색 열기"
             >
-              로그인
-            </Button>
+              <Search className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => router.push('/auth/signup')}
+              className="p-1 flex items-center justify-center group"
+              aria-label="로그인"
+            >
+              <UserAvatar user={null} size={24} className="text-gray-500" />
+            </button>
           </div>
         )}
-        */}
       </header>
 
 
       {/* 메인 배너 */}
       {/* <MainBanner /> */}
 
-      {/* 검색 바 - 책 리스트와 동일 */}
-      <div className="w-full sticky top-[73px] z-20 bg-[#F7F7F7]/95 backdrop-blur-sm px-4 py-4 transition-all">
+      {/* 검색 바 - 숨겨져 있다가 토글됨 */}
+      <div id="global-search-bar" className="w-full hidden sticky top-[73px] z-20 bg-[#F7F7F7]/95 backdrop-blur-sm px-4 py-3 transition-all border-b border-gray-100">
         <form onSubmit={handleSearch} className="w-full max-w-[1200px] mx-auto flex gap-3">
           <div className="relative group flex-1">
             <input
@@ -166,26 +203,24 @@ export default function HomePageClient({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="어떤 책을 찾으시나요?"
-              className="w-full px-5 py-3 pl-12 pr-10 bg-white text-gray-900 placeholder:text-gray-400 border border-transparent rounded-lg shadow-[0_2px_15px_rgba(0,0,0,0.04)] focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/20 focus:scale-[1.01] transition-all"
+              className="w-full px-4 py-2.5 pr-10 bg-white text-gray-900 placeholder:text-gray-400 border border-transparent rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/20 transition-all text-sm"
             />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-[#F59E0B] transition-colors" />
 
             {/* Clear button */}
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
-                aria-label="검색어 지우기"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            )}
-          </div>
-        </form>
+            {searchQuery && <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 p-1"
+                  aria-label="검색어 지우기"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              }
+            </div>
+          </form>
       </div>
 
 
@@ -196,7 +231,8 @@ export default function HomePageClient({
             <h2 className="text-xl font-bold text-gray-900">우리 아이 나이에 딱!</h2>
             <Link
               href={`/books?age=${selectedAge}`}
-              className="text-gray-900 hover:text-gray-600 transition-colors"
+              className="text-gray-900"
+              onClick={() => sendGAEvent('click_view_more', { section: 'age_recommendation', age: selectedAge })}
             >
               <ChevronRight className="w-6 h-6" />
             </Link>
@@ -209,14 +245,17 @@ export default function HomePageClient({
           {/* 연령 탭 */}
           <div className="flex gap-2 mb-6 px-2">
             {[
-              { key: '0-3', label: '0-3세' },
-              { key: '4-7', label: '4-7세' },
-              { key: '8-12', label: '8-12세' },
-              { key: 'teen', label: '13세+' }
+              { key: '0-3', label: '0~3세' },
+              { key: '4-7', label: '4~7세' },
+              { key: '8-12', label: '8~12세' },
+              { key: 'teen', label: '13세 이상' }
             ].map(age => (
               <button
                 key={age.key}
-                onClick={() => setSelectedAge(age.key)}
+                onClick={() => {
+                  setSelectedAge(age.key);
+                  sendGAEvent('click_home_age_tab', { age: age.key });
+                }}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedAge === age.key
                   ? 'bg-brand-primary text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
@@ -277,6 +316,7 @@ export default function HomePageClient({
             <Link
               href="/books?curation=caldecott"
               className="text-gray-900 hover:text-gray-600 transition-colors"
+              onClick={() => sendGAEvent('click_view_more', { section: 'caldecott' })}
             >
               <ChevronRight className="w-6 h-6" />
             </Link>
@@ -312,6 +352,7 @@ export default function HomePageClient({
             <Link
               href="/books?curation=research-council"
               className="text-gray-900 hover:text-gray-600 transition-colors"
+              onClick={() => sendGAEvent('click_view_more', { section: 'research_council' })}
             >
               <ChevronRight className="w-6 h-6" />
             </Link>
@@ -375,7 +416,7 @@ export default function HomePageClient({
             <div className="h-[280px] flex items-center justify-center">
               <div className="animate-pulse flex gap-4 overflow-hidden w-full">
                 {[1, 2, 3, 4, 5, 6, 7].map(i => (
-                  <div key={i} className="w-[160px] h-[240px] bg-gray-200 rounded-xl flex-shrink-0" />
+                  <div key={i} className="w-[160px] h-[240px] bg-gray-200 rounded-lg flex-shrink-0" />
                 ))}
               </div>
             </div>
@@ -403,6 +444,31 @@ export default function HomePageClient({
       </section >
 
       <Footer />
+
+      {/* 회원 탈퇴 완료 팝업 */}
+      <ConfirmModal
+        isOpen={isWithdrawnPopupOpen}
+        onClose={() => setIsWithdrawnPopupOpen(false)}
+        onConfirm={() => setIsWithdrawnPopupOpen(false)}
+        title="회원 탈퇴 완료"
+        description={
+          <div className="text-gray-600 leading-relaxed text-center break-keep">
+            회원 탈퇴가 완료되었습니다.<br />
+            아이와 도서관 나들이가 생각날 때<br />
+            언제든 다시 책자리를 찾아주세요.
+          </div>
+        }
+        confirmLabel="확인"
+        cancelLabel=""
+        confirmVariant="primary"
+      />
+
+      {/* 하단 토스트 팝업 */}
+      <Toast
+        message={logoutToastMessage}
+        isVisible={!!logoutToastMessage}
+        onClose={() => setLogoutToastMessage('')}
+      />
     </main >
   )
 }
@@ -410,21 +476,7 @@ export default function HomePageClient({
 // 책 카드 컴포넌트 - BookItem과 동일한 UI
 function BookCard({ book }: { book: Book }) {
 
-  // Helper to normalize age strings
-  function normalizeAge(rawAge: string): string {
-    if (!rawAge) return ""
-    const age = rawAge.replace(/\s/g, "")
-
-    if (age.includes("8~13세")) return "8~12세"
-    if (["청소년", "13세", "14세", "15세", "16세", "17세", "18세", "성인"].some(k => age.includes(k))) return "13세+"
-    if (["초등", "8세", "9세", "10세", "11세", "12세"].some(k => age.includes(k))) return "8~12세"
-    if (["유아", "유치", "4세", "5세", "6세", "7세"].some(k => age.includes(k))) return "4~7세"
-    if (["영유아", "0세", "1세", "2세", "3세"].some(k => age.includes(k))) return "0~3세"
-
-    return rawAge
-  }
-
-  const displayAge = normalizeAge(book.age || "")
+  const displayAge = getAgeDisplayLabel(book.age)
 
   // 청구기호 결정 로직 (판교도서관 고정)
   let displayCallNo = ''
@@ -438,7 +490,7 @@ function BookCard({ book }: { book: Book }) {
   return (
     <Link
       href={`/book/${book.id}`}
-      className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md h-full group"
+      className="flex flex-col bg-white rounded-lg border border-gray-100 overflow-hidden transition-all h-full group"
     >
       {/* 1. 이미지 영역 (상단) */}
       <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
@@ -446,7 +498,7 @@ function BookCard({ book }: { book: Book }) {
           <img
             src={book.image_url}
             alt={book.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover"
             loading="eager"
             fetchPriority="high"
           />
@@ -473,7 +525,7 @@ function BookCard({ book }: { book: Book }) {
 
       {/* 2. 정보 영역 (하단) */}
       <div className="flex-1 p-4 flex flex-col items-start bg-white">
-        <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight group-hover:text-gray-700 transition-colors">
+        <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight">
           {book.title}
         </h3>
 

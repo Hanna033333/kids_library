@@ -17,6 +17,7 @@
 17. **언어 정책:** 모든 문서(implementation plan, 기술 문서 등)는 **한글로 작성**해.
 18. **배포 트러블슈팅:** 배포 관련 이슈(Vercel, Render) 발생/수정 시에는 `.agent/skills/development/deployment/SKILL.md`를 반드시 참고하여 이전 사례를 검토해.
 19. **UI 구현:** 버튼 및 UI 요소 구현 시 `.agent/skills/design/color_system/SKILL.md`의 디자인 가이드를 준수해.
+20. **텍스트 구현:** UI 내의 모든 텍스트(알림, 버튼, 안내 문구) 구현 시 `.agent/skills/design/ux_writing/SKILL.md`의 톤앤매너와 규칙을 반드시 준수해.
 
 ## 🔒 보안 가이드
 1. **환경변수 관리**

@@ -19,7 +19,6 @@ export default function Footer() {
                             서비스 소개
                         </Link>
 
-                        {/* 
                         <span className="text-gray-700">|</span>
                         <Link
                             href="/terms"
@@ -36,7 +35,6 @@ export default function Footer() {
                         >
                             개인정보 처리방침
                         </Link>
-                        */}
 
                         <span className="text-gray-700">|</span>
 

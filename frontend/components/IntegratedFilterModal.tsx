@@ -20,15 +20,15 @@ interface IntegratedFilterModalProps {
 }
 
 const CATEGORY_OPTIONS = [
-    "전체", "동화", "외국", "자연", "전통", "과학", "사회", "만화", "소설",
-    "역사", "인물", "시", "예술", "학부모", "모음", "지리"
+    "전체", "동화", "자연", "전통", "과학", "사회", "만화", "소설",
+    "역사", "인물", "시", "예술", "모음", "지리"
 ];
 
 const AGE_OPTIONS = [
-    { value: "0-3", label: "0-3세" },
-    { value: "4-7", label: "4-7세" },
-    { value: "8-12", label: "8-12세" },
-    { value: "13+", label: "13세+" },
+    { value: "0-3", label: "0~3세" },
+    { value: "4-7", label: "4~7세" },
+    { value: "8-12", label: "8~12세" },
+    { value: "13+", label: "13세 이상" },
 ];
 
 const SORT_OPTIONS = [
@@ -42,8 +42,9 @@ export default function IntegratedFilterModal({
     selectedAge, onAgeChange,
     selectedSort, onSortChange
 }: IntegratedFilterModalProps) {
+    const normalizeAge = (age: string) => age === "teen" ? "13+" : age;
     const [localCategory, setLocalCategory] = useState(selectedCategory);
-    const [localAge, setLocalAge] = useState(selectedAge);
+    const [localAge, setLocalAge] = useState(normalizeAge(selectedAge));
     const [localSort, setLocalSort] = useState(selectedSort);
     const [predictedCount, setPredictedCount] = useState<number | null>(null);
     const [loadingCount, setLoadingCount] = useState(false);
@@ -55,7 +56,7 @@ export default function IntegratedFilterModal({
     useEffect(() => {
         if (isOpen) {
             setLocalCategory(selectedCategory);
-            setLocalAge(selectedAge);
+            setLocalAge(normalizeAge(selectedAge));
             setLocalSort(selectedSort);
         }
     }, [isOpen, selectedCategory, selectedAge, selectedSort]);
@@ -103,14 +104,14 @@ export default function IntegratedFilterModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="w-full md:max-w-md bg-white rounded-t-xl md:rounded-xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom md:slide-in-from-bottom-10 duration-300">
+            <div className="w-full md:max-w-md bg-white rounded-t-lg md:rounded-lg shadow-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom md:slide-in-from-bottom-10 duration-300">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                     <h2 className="text-lg font-bold text-gray-900">
                         {mode === "category" ? "카테고리 선택" : "검색 필터"}
                     </h2>
-                    <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors">
+                    <button onClick={onClose} className="p-2 -mr-2 text-gray-400 rounded-lg transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -128,7 +129,7 @@ export default function IntegratedFilterModal({
                                     onClick={() => setLocalCategory(cat)}
                                     className={`px-5 py-2.5 rounded-lg text-[15px] font-medium transition-all duration-200 border ${localCategory === cat
                                         ? "bg-gray-900 text-white border-gray-900 shadow-md shadow-gray-200 transform scale-[1.02]"
-                                        : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                                        : "bg-white text-gray-600 border-gray-200"
                                         }`}
                                 >
                                     {cat}
@@ -152,7 +153,7 @@ export default function IntegratedFilterModal({
                                             onClick={() => handleAgeToggle(option.value)}
                                             className={`px-4 py-2 rounded-lg text-[15px] font-medium transition-all duration-200 border ${localAge === option.value
                                                 ? "bg-brand-primary text-white border-brand-primary shadow-md shadow-gray-200 transform scale-[1.02]"
-                                                : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                                                : "bg-white text-gray-600 border-gray-200"
                                                 }`}
                                         >
                                             {option.label}
@@ -174,7 +175,7 @@ export default function IntegratedFilterModal({
                                             onClick={() => setLocalSort(option.value)}
                                             className={`flex-1 flex items-center justify-center py-3 px-4 rounded-lg border font-medium transition-all duration-200 ${localSort === option.value
                                                 ? "bg-brand-primary border-brand-primary text-white shadow-md shadow-gray-200"
-                                                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
+                                                : "bg-white border-gray-200 text-gray-600"
                                                 }`}
                                         >
                                             {option.label}

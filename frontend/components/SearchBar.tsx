@@ -6,10 +6,9 @@ import { Search } from "lucide-react";
 interface SearchBarProps {
   onSearch: (query: string) => void;
   initialQuery?: string;
-  onFilterClick: () => void;
 }
 
-export default function SearchBar({ onSearch, initialQuery = "", onFilterClick }: SearchBarProps) {
+export default function SearchBar({ onSearch, initialQuery = "" }: SearchBarProps) {
   const [query, setQuery] = useState(initialQuery);
 
   useEffect(() => {
@@ -34,16 +33,15 @@ export default function SearchBar({ onSearch, initialQuery = "", onFilterClick }
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="어떤 책을 찾으시나요?"
-            className="w-full px-5 py-3 pl-12 pr-10 bg-white text-gray-900 placeholder:text-gray-400 border border-transparent rounded-lg shadow-[0_2px_15px_rgba(0,0,0,0.04)] focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/20 focus:scale-[1.01] transition-all"
+            className="w-full px-5 py-3 pr-10 bg-white text-gray-900 placeholder:text-gray-400 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/20 transition-all"
           />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-[#F59E0B] transition-colors" />
 
           {/* Clear button */}
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors p-1"
               aria-label="검색어 지우기"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -53,22 +51,6 @@ export default function SearchBar({ onSearch, initialQuery = "", onFilterClick }
             </button>
           )}
         </div>
-
-        <button
-          type="button"
-          onClick={onFilterClick}
-          className="p-3 rounded-lg hover:bg-gray-100 active:scale-95 transition-all text-gray-500 hover:text-gray-900"
-          aria-label="필터 열기"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="4" x2="20" y1="21" y2="21" />
-            <line x1="4" x2="20" y1="3" y2="3" />
-            <line x1="4" x2="20" y1="12" y2="12" />
-            <circle cx="8" cy="12" r="2" />
-            <circle cx="16" cy="3" r="2" />
-            <circle cx="12" cy="21" r="2" />
-          </svg>
-        </button>
       </form>
     </div>
   );

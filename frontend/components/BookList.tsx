@@ -5,6 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import BookItem from "./BookItem";
 import { useBooks } from "@/hooks/useBooks";
 import { Book } from "@/lib/types";
+import { Spinner } from "@/components/ui/Spinner";
+import { PageLoader } from "@/components/ui/PageLoader";
+import { sendGAEvent } from "@/lib/analytics";
 
 const ITEMS_PER_PAGE = 24;
 
@@ -88,55 +91,70 @@ export default function BookList({
     };
   }, [isMobile, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  return (
-    <div className="w-full max-w-[1200px] mx-auto px-4">
-      {/* Error */}
-      {error && (
-        <div className="py-12 text-center">
-          <p className="text-red-500 font-medium mb-2">데이터를 불러오지 못했습니다.</p>
-          <p className="text-sm text-gray-400">{error}</p>
-        </div>
-      )}
+  // Track no results
+  useEffect(() => {
+    if (!loading && books.length === 0 && (searchQuery || ageFilter || categoryFilter || curationFilter)) {
+      sendGAEvent('search_no_results', { 
+        keyword: searchQuery,
+        age: ageFilter,
+        category: categoryFilter,
+        curation: curationFilter
+      });
+    }
+  }, [loading, books.length, searchQuery, ageFilter, categoryFilter, curationFilter]);
 
-      {/* Loading (first page only) */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-            <p className="text-gray-500 font-medium animate-pulse">도서 리스트 확인 중...</p>
+  return (
+    <div className="w-full px-4">
+      <div className="w-full max-w-[1200px] mx-auto">
+        {/* Error */}
+        {error && (
+          <div className="py-12 text-center">
+            <p className="text-red-500 font-medium mb-2">데이터를 불러오지 못했습니다.</p>
+            <p className="text-sm text-gray-400">{error}</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6 w-full mt-12 opacity-50">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="aspect-[1/1.6] bg-gray-200 rounded-2xl animate-pulse" />
-            ))}
-          </div>
-        </div>
-      ) : !loading && books.length === 0 ? (
-        <div className="py-32 text-center bg-white rounded-2xl border border-dashed border-gray-200">
-          <div className="text-gray-400 text-lg mb-2">검색 결과가 없습니다.</div>
-          <div className="text-gray-300 text-sm">다른 검색어나 필터로 시도해보세요.</div>
-        </div>
-      ) : (
-        <>
-          {/* Book grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-            {books.map((book) => (
-              <div key={book.id}>
-                <BookItem book={book} loanStatus={loanStatuses?.[book.id]} />
+        )}
+
+        {/* Loading (first page only) */}
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6 mt-4">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden h-[320px] animate-pulse">
+                <div className="w-full aspect-[1/1.1] bg-gray-100"></div>
+                <div className="p-4 space-y-3 flex-1 flex flex-col">
+                  <div className="h-4 bg-gray-100 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-100 rounded w-1/2"></div>
+                  <div className="mt-auto h-3 bg-gray-100 rounded w-1/3"></div>
+                </div>
               </div>
             ))}
           </div>
-
-          {/* Infinite scroll sentinel (mobile only) */}
-          {isMobile && books.length > 0 && !error && (
-            <div ref={observerTarget} className="py-8 flex justify-center">
-              {isFetchingNextPage && (
-                <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-              )}
+        ) : !loading && books.length === 0 ? (
+          <div className="py-20 text-center bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center">
+            <div className="text-gray-600 font-bold text-lg mb-1">검색 결과가 없습니다.</div>
+            <div className="text-gray-400 text-sm">다른 검색어나 필터로 시도해보세요.</div>
+          </div>
+        ) : (
+          <>
+            {/* Book grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+              {books.map((book) => (
+                <div key={book.id}>
+                  <BookItem book={book} loanStatus={loanStatuses?.[book.id]} />
+                </div>
+              ))}
             </div>
-          )}
-        </>
-      )}
+
+            {/* Infinite scroll sentinel (mobile only) */}
+            {isMobile && books.length > 0 && !error && (
+              <div ref={observerTarget} className="py-8 flex justify-center">
+                {isFetchingNextPage && (
+                  <Spinner size="md" variant="primary" />
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
