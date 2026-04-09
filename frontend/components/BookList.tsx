@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import BookItem from "./BookItem";
 import { useBooks } from "@/hooks/useBooks";
@@ -30,6 +30,7 @@ export default function BookList({
 }: BookListProps) {
   const [isMobile, setIsMobile] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
 
   // Mobile detection
   useEffect(() => {
@@ -38,6 +39,17 @@ export default function BookList({
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Fetch recommended books for the top of the list if age filter is applied without other specific filters
+  useEffect(() => {
+    if (ageFilter && !searchQuery && !curationFilter && (!categoryFilter || categoryFilter === "전체")) {
+      import("@/lib/home-api").then(({ getBooksByAge }) => {
+        getBooksByAge(ageFilter, 7).then(setRecommendedBooks);
+      });
+    } else {
+      setRecommendedBooks([]);
+    }
+  }, [ageFilter, searchQuery, curationFilter, categoryFilter]);
 
   // Fetch data with infinite scroll
   const { books, loading, error, total, hasNextPage, isFetchingNextPage, fetchNextPage } = useBooks({
@@ -50,22 +62,32 @@ export default function BookList({
     initialBooks,
   });
 
-  // Batch fetch loan statuses for all visible books (1 API call instead of 24)
-  const bookIds = books.map(b => b.id).join(',');
+  // Merge recommended books to the top and remove duplicates from the main list
+  const displayBooks = useMemo(() => {
+    if (recommendedBooks.length === 0) return books;
+    
+    const recIds = new Set(recommendedBooks.map(b => b.id));
+    const filteredMainBooks = books.filter(b => !recIds.has(b.id));
+    
+    return [...recommendedBooks, ...filteredMainBooks];
+  }, [books, recommendedBooks]);
+
+  // Batch fetch loan statuses for all visible books
+  const bookIds = displayBooks.map(b => b.id).join(',');
 
   const { data: loanStatuses } = useQuery({
     queryKey: ['batch-loan-status', bookIds],
     queryFn: async () => {
-      if (books.length === 0) return {};
+      if (displayBooks.length === 0) return {};
       try {
         const { fetchLoanStatuses } = await import("@/lib/api");
-        return await fetchLoanStatuses(books.map(b => b.id));
+        return await fetchLoanStatuses(displayBooks.map(b => b.id));
       } catch (err) {
         console.warn('Batch loan status fetch failed:', err);
         return {};
       }
     },
-    enabled: books.length > 0,
+    enabled: displayBooks.length > 0,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     retry: 1,
   });
@@ -128,7 +150,7 @@ export default function BookList({
               </div>
             ))}
           </div>
-        ) : !loading && books.length === 0 ? (
+        ) : !loading && displayBooks.length === 0 ? (
           <div className="py-20 text-center bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center">
             <div className="text-gray-600 font-bold text-lg mb-1">검색 결과가 없습니다.</div>
             <div className="text-gray-400 text-sm">다른 검색어나 필터로 시도해보세요.</div>
@@ -137,7 +159,7 @@ export default function BookList({
           <>
             {/* Book grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-              {books.map((book) => (
+              {displayBooks.map((book) => (
                 <div key={book.id}>
                   <BookItem book={book} loanStatus={loanStatuses?.[book.id]} />
                 </div>
@@ -145,7 +167,7 @@ export default function BookList({
             </div>
 
             {/* Infinite scroll sentinel (mobile only) */}
-            {isMobile && books.length > 0 && !error && (
+            {isMobile && displayBooks.length > 0 && !error && (
               <div ref={observerTarget} className="py-8 flex justify-center">
                 {isFetchingNextPage && (
                   <Spinner size="md" variant="primary" />

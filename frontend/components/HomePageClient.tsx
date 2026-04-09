@@ -248,7 +248,7 @@ export default function HomePageClient({
           </div>
 
           {/* 연령 탭 */}
-          <div className="flex gap-2 mb-6 px-2">
+          <div className="flex gap-2 mb-6 px-2 overflow-x-auto scrollbar-hide">
             {[
               { key: '0-3', label: '0~3세' },
               { key: '4-7', label: '4~7세' },
@@ -261,7 +261,7 @@ export default function HomePageClient({
                   setSelectedAge(age.key);
                   sendGAEvent('click_home_age_tab', { age: age.key });
                 }}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedAge === age.key
+                className={`flex-shrink-0 whitespace-nowrap px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedAge === age.key
                   ? 'bg-brand-primary text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                   }`}
