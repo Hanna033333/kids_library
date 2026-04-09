@@ -25,6 +25,7 @@ function normalizeAge(rawAge: string): string {
 }
 
 import { sendGAEvent } from "@/lib/analytics";
+import { getHighResImageUrl } from "@/lib/utils/image";
 
 export default function BookItem({ book, loanStatus }: BookItemProps) {
   const displayAge = normalizeAge(book.age || "");
@@ -54,7 +55,7 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
       <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
         {book.image_url ? (
           <img
-            src={book.image_url}
+            src={getHighResImageUrl(book.image_url)}
             alt={book.title}
             className="w-full h-full object-cover"
             loading="lazy"

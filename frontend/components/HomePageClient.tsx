@@ -16,6 +16,7 @@ import ConfirmModal from '@/components/ui/ConfirmModal'
 import { sendGAEvent } from '@/lib/analytics'
 import Toast from '@/components/ui/Toast'
 import UserAvatar from '@/components/UserAvatar'
+import { getHighResImageUrl } from '@/lib/utils/image'
 
 interface HomePageClientProps {
   // initialWinterBooks?: Book[];
@@ -520,7 +521,7 @@ function BookCard({ book }: { book: Book }) {
       <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
         {book.image_url ? (
           <img
-            src={book.image_url}
+            src={getHighResImageUrl(book.image_url)}
             alt={book.title}
             className="w-full h-full object-cover"
             loading="eager"

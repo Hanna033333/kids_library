@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getBookById } from '@/lib/api'
 import BookDetailClient from './BookDetailClient'
+import { getHighResImageUrl } from '@/lib/utils/image'
 
 interface Props {
     params: Promise<{ id: string }>
@@ -34,14 +35,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             openGraph: {
                 title,
                 description,
-                images: book.image_url ? [book.image_url] : [],
+                images: book.image_url ? [getHighResImageUrl(book.image_url)] : [],
                 type: 'article',
             },
             twitter: {
                 card: 'summary_large_image',
                 title,
                 description,
-                images: book.image_url ? [book.image_url] : [],
+                images: book.image_url ? [getHighResImageUrl(book.image_url)] : [],
             },
         }
     } catch (error) {
@@ -82,7 +83,7 @@ export default async function BookDetailPage({ params }: Props) {
                 '@type': 'Person',
                 'name': (book.author || '저자 미상').replace(/│/g, ', ')
             },
-            'image': book.image_url || '',
+            'image': getHighResImageUrl(book.image_url) || '',
             'description': `${book.title}의 청구기호, 도서관 위치, 대출 가능 여부를 확인하세요.`,
             'publisher': {
                 '@type': 'Organization',

@@ -25,6 +25,7 @@ import ProfileDropdown from '@/components/ProfileDropdown'
 import { Button } from '@/components/ui/Button'
 import PageHeader from '@/components/PageHeader'
 import { getAgeDisplayLabel } from '@/lib/utils/age'
+import { getHighResImageUrl } from '@/lib/utils/image'
 
 interface BookDetailClientProps {
     book: Book
@@ -283,7 +284,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                         <div className="relative aspect-[3/4] bg-gray-50 rounded-[28px] overflow-hidden shadow-2xl shadow-gray-200 border border-gray-100">
                             {book.image_url && !imageError ? (
                                 <img
-                                    src={book.image_url}
+                                    src={getHighResImageUrl(book.image_url)}
                                     alt={`${book.title} 표지`}
                                     className="w-full h-full object-cover"
                                     onError={() => setImageError(true)}
@@ -381,10 +382,13 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                 variant="secondary"
                                 size="lg"
                                 onClick={handleBuyKyobo}
-                                className="flex-1 w-full text-gray-600 font-bold border-gray-200 bg-white"
+                                className="flex-1 w-full h-14 flex flex-col items-center justify-center gap-1 border-gray-200 bg-white transition-all active:scale-[0.98]"
                             >
-                                <ShoppingCart className="w-5 h-5 mr-1" />
-                                도서 구매하기
+                                <span className="text-[10px] text-gray-400 font-medium leading-none">도서관에 갈 시간이 없다면?</span>
+                                <div className="flex items-center text-gray-700 font-bold text-sm leading-none">
+                                    <ShoppingCart className="w-4 h-4 mr-1.5" />
+                                    지금 바로 주문하세요
+                                </div>
                             </Button>
                         </div>
                     </div>

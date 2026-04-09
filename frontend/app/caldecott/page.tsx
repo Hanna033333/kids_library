@@ -3,6 +3,7 @@ import { getCaldecottBooks } from '@/lib/caldecott-api'
 import { createClient } from '@/lib/supabase-server'
 import PageHeader from '@/components/PageHeader'
 import CaldecottClient from './CaldecottClient'
+import { getHighResImageUrl } from '@/lib/utils/image'
 
 export const metadata: Metadata = {
     metadataBase: new URL("https://checkjari.com"),
@@ -49,7 +50,7 @@ export default async function CaldecottPage() {
                     name: book.author,
                 },
                 isbn: book.isbn,
-                image: book.image_url,
+                image: getHighResImageUrl(book.image_url),
                 url: `https://checkjari.com/book/${book.id}`,
             },
         })),
