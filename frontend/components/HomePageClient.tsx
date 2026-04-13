@@ -172,7 +172,7 @@ export default function HomePageClient({
             </button>
           </div>
         ) : (
-          <div className="absolute right-6 flex items-center gap-3 md:gap-4">
+          <div className="absolute right-6 flex items-center gap-2">
             <button
               onClick={() => {
                 const searchEl = document.getElementById('global-search-bar');
@@ -181,17 +181,16 @@ export default function HomePageClient({
                   searchEl.querySelector('input')?.focus();
                 }
               }}
-              className="text-gray-500 p-1"
+              className="text-gray-500 p-1.5"
               aria-label="검색 열기"
             >
               <Search className="w-5 h-5" />
             </button>
             <button
               onClick={() => router.push('/auth/signup')}
-              className="p-1 flex items-center justify-center group"
-              aria-label="로그인"
+              className="px-3 py-1.5 bg-white text-gray-700 rounded-lg text-[13px] font-bold border border-gray-200 active:scale-95 transition-all"
             >
-              <UserAvatar user={null} size={24} className="text-gray-500" />
+              로그인
             </button>
           </div>
         )}

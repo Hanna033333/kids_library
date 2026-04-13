@@ -363,18 +363,27 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                             </div>
                         </div>
 
-                        {/* Save & Share Area - 프리뷰 배포 시 찜하기 숨김 */}
-                        <div className="mt-2 pt-6 border-t border-gray-100 flex gap-3">
-                            <button
-                                onClick={handleToggleSave}
-                                className={`w-14 h-14 rounded-lg flex items-center justify-center transition-all transform active:scale-[0.98] border ${isToggling ? "pointer-events-none" : ""} ${isSaved
-                                    ? "bg-brand-primary/5 text-brand-primary border-brand-primary/30"
-                                    : "bg-white text-gray-600 border-gray-200"
-                                    }`}
-                                title={isSaved ? "찜 취소" : "찜하기"}
-                            >
-                                <Heart className={`w-6 h-6 ${isSaved ? "fill-current" : ""}`} />
-                            </button>
+                        {/* Save & Share Area */}
+                        <div className="mt-2 pt-6 border-t border-gray-100 flex gap-3 items-end">
+                            <div className="relative z-20">
+                                {!user?.id && (
+                                    <div className="absolute -top-12 left-0 z-50 whitespace-nowrap bg-brand-primary text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg pointer-events-none">
+                                        찜하고 나중에 확인!
+                                        {/* Tooltip Triangle - Pointing to the center of the W-14 button */}
+                                        <div className="absolute -bottom-1 left-7 -translate-x-1/2 w-2.5 h-2.5 bg-brand-primary rotate-45"></div>
+                                    </div>
+                                )}
+                                <button
+                                    onClick={handleToggleSave}
+                                    className={`w-14 h-14 rounded-lg flex items-center justify-center transition-all transform active:scale-[0.98] border ${isToggling ? "pointer-events-none" : ""} ${isSaved
+                                        ? "bg-brand-primary/5 text-brand-primary border-brand-primary/30"
+                                        : "bg-white text-gray-600 border-gray-200"
+                                        }`}
+                                    title={isSaved ? "찜 취소" : "찜하기"}
+                                >
+                                    <Heart className={`w-6 h-6 ${isSaved ? "fill-current" : ""}`} />
+                                </button>
+                            </div>
                             <button
                                 onClick={handleShare}
                                 className="w-14 h-14 flex items-center justify-center bg-white text-gray-600 rounded-lg transition-colors border border-gray-200 active:scale-[0.98] transform"

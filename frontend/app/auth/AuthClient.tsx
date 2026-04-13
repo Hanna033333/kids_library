@@ -31,6 +31,14 @@ export default function AuthClient() {
         } else if (errorCode === 'auth_failed') {
             setError('로그인 처리 중 오류가 발생했습니다. 다시 시도해 주세요.')
         }
+
+        // provider 파라미터가 있으면 즉시 로그인 실행
+        const autoProvider = searchParams.get('provider')
+        if (autoProvider === 'kakao') {
+            handleKakaoLogin()
+        } else if (autoProvider === 'google') {
+            handleGoogleLogin()
+        }
     }, [searchParams])
 
     const handleKakaoLogin = async () => {
