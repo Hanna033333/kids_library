@@ -17,13 +17,15 @@ except ImportError:
     from google.analytics.admin import AnalyticsAdminServiceClient
 
 # 2. Configuration
-KEY_PATH = r"c:\Users\skplanet\Desktop\kids library\ga4-key.json"
+KEY_PATH = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", r"c:\Users\skplanet\Desktop\kids library\ga4-key.json")
 
-if not os.path.exists(KEY_PATH):
-    print(f"❌ Key file not found at: {KEY_PATH}")
-    sys.exit(1)
+if os.path.exists(KEY_PATH):
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = KEY_PATH
+else:
+    print(f"⚠️ Key file not found at: {KEY_PATH}. Attempting to use default credentials...")
+    if 'GOOGLE_APPLICATION_CREDENTIALS' in os.environ:
+        del os.environ['GOOGLE_APPLICATION_CREDENTIALS']
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = KEY_PATH
 
 def get_property_id():
     """Finds the GA4 Property ID for the project."""

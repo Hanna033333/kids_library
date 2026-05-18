@@ -42,9 +42,25 @@ description: A guide for adding and managing curated book sections (e.g., Caldec
 
 ### 구현 체크리스트
 - [ ] **Data Fetching**: `lib/home-api.ts` 등에 해당 큐레이션을 위한 Fetch 함수 추가
+- [ ] **Display Logic (Quality Control)**: 홈 화면 섹션의 경우, 사용자 경험을 위해 **최소 7권 이상의 도서**가 존재할 때만 섹션을 렌더링하도록 조건부 로직 추가
 - [ ] **Component Update**: `HomePageClient.tsx`에 새로운 섹션 추가
 - [ ] **Responsiveness**: 모바일/태블릿/데스크탑 환경에서의 스크롤 및 배치 확인
 - [ ] **Link Routing**: "더보기" 클릭 시 해당 큐레이션 필터가 적용된 목록 페이지(`/books?curation=xxx`)로 이동
+
+#### [예시] 노출 품질 관리 로직 (Early return)
+```tsx
+function CurationSection({ title, books, ...props }) {
+  // 7권 미만인 경우 섹션 자체를 노출하지 않음 (유저 경험 보장)
+  if (books.length < 7) return null;
+  
+  return (
+    <section>
+      <h2>{title}</h2>
+      <BookGrid books={books} />
+    </section>
+  );
+}
+```
 
 ## 4. 검증 및 배포 (Verification)
 - **데이터 무결성 확인**: 이미지가 깨지지 않는지, ISBN이 정확한지 SQL 조회 및 UI 확인

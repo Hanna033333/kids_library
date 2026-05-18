@@ -23,6 +23,9 @@ export interface Book {
   description: string | null;
   save_count?: number;
   loan_status?: LoanStatus | null;
+  curation_tag?: string | null;
+  curation_note?: string | null;
+  confidence_score?: number | null;
 }
 
 export interface LoanStatus {

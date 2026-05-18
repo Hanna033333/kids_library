@@ -19,9 +19,9 @@ def run_ad_funnel_analysis():
     client = BetaAnalyticsDataClient()
     property_id = "518474196"
     
-    # 분석 기간 설정 (최근 14일로 확대하여 모수 확보)
-    start_date = "14daysAgo"
-    end_date = "today"
+    # 분석 기간 설정 (어제 데이터 집중 분석)
+    start_date = "yesterday"
+    end_date = "yesterday"
     
     report_lines = []
     report_lines.append(f"\n{'='*70}")

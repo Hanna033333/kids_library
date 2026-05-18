@@ -124,3 +124,29 @@ export async function getWinterBooks(limit: number = 7, client?: SupabaseClient)
     // 정확히 limit 개수만 반환 (기본 7권)
     return shuffled.slice(0, Math.min(limit, shuffled.length)) as any
 }
+
+/**
+ * 특정 큐레이션 태그가 포함된 책 가져오기 (매칭 방식: 콤마 구분자 포함 여부)
+ */
+export async function getBooksByTag(tagName: string, limit: number = 7, client?: SupabaseClient): Promise<Book[]> {
+    const supabase = client || createClient()
+
+    const { data, error } = await supabase
+        .from('childbook_items')
+        .select(`
+            id, title, author, publisher, category, age, pangyo_callno, image_url, 
+            curation_tag, curation_note, confidence_score,
+            library_info:book_library_info(library_name, callno)
+        `)
+        .ilike('curation_tag', `%${tagName}%`)
+        .or('is_hidden.is.null,is_hidden.eq.false')
+        .order('confidence_score', { ascending: false }) // 신뢰도 높은 순 우선
+        .limit(limit)
+
+    if (error) {
+        console.error(`Error fetching books by tag ${tagName}:`, error)
+        return []
+    }
+
+    return (data as any) || []
+}

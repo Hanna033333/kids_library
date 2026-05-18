@@ -6,7 +6,7 @@ import Link from 'next/link'
 
 import { Search, Bookmark, LogOut, ChevronRight, Bell, Snowflake, BookOpen, User } from 'lucide-react'
 import { getBooksByAge, getResearchCouncilBooks, getWinterBooks } from '@/lib/home-api'
-import { type Book, type LibraryInfo } from '@/lib/types'
+import { type Book } from '@/lib/types'
 import { useAuth } from '@/context/AuthContext'
 import LibrarySelector from '@/components/LibrarySelector'
 import { useLibrary } from '@/context/LibraryContext'
@@ -19,20 +19,27 @@ import UserAvatar from '@/components/UserAvatar'
 import Image from 'next/image'
 import { getOptimizedImageUrl } from '@/lib/utils/image'
 
+interface DynamicCuration {
+  subtitle: string;
+  title: string;
+  tag: string;
+  books: Book[];
+}
+
 interface HomePageClientProps {
-  // initialWinterBooks?: Book[];
   initialCaldecottBooks?: Book[];
   initialResearchBooks?: Book[];
   initialAgeBooks?: Book[];
   initialSelectedAge?: string;
+  dynamicCurations?: DynamicCuration[];
 }
 
 export default function HomePageClient({
-  // initialWinterBooks = [],
   initialCaldecottBooks = [],
   initialResearchBooks = [],
   initialAgeBooks = [],
-  initialSelectedAge = '4-7'
+  initialSelectedAge = '4-7',
+  dynamicCurations = []
 }: HomePageClientProps) {
   const router = useRouter()
   const { user, signOut } = useAuth()
@@ -48,8 +55,8 @@ export default function HomePageClient({
 
   const [ageBooks, setAgeBooks] = useState<Book[]>(initialAgeBooks)
   const [researchBooks, setResearchBooks] = useState<Book[]>(initialResearchBooks)
-  // const [winterBooks, setWinterBooks] = useState<Book[]>(initialWinterBooks)
   const [caldecottBooks] = useState<Book[]>(initialCaldecottBooks)
+
 
   // 초기 데이터가 있으면 로딩 상태 false
   const [loading, setLoading] = useState(initialAgeBooks.length === 0)
@@ -148,21 +155,15 @@ export default function HomePageClient({
         {/* 도서관 선택 버튼 숨김 처리 */}
         {/* <LibrarySelector /> */}
 
-        {user ? (
-          <div className="absolute right-6 flex items-center gap-3 md:gap-4">
-            <button
-              onClick={() => {
-                const searchEl = document.getElementById('global-search-bar');
-                if (searchEl) {
-                  searchEl.classList.toggle('hidden');
-                  searchEl.querySelector('input')?.focus();
-                }
-              }}
-              className="text-gray-500 p-1"
-              aria-label="검색 열기"
-            >
-              <Search className="w-5 h-5" />
-            </button>
+        <div className="absolute right-6 flex items-center gap-3 md:gap-4">
+          <button
+            onClick={() => router.push('/books')}
+            className="p-1 flex items-center justify-center group"
+            aria-label="검색"
+          >
+            <Search className="w-6 h-6 text-gray-500 group-hover:text-gray-900 transition-colors" />
+          </button>
+          {user ? (
             <button
               onClick={() => router.push('/my-page')}
               className="p-1 flex items-center justify-center group"
@@ -170,82 +171,44 @@ export default function HomePageClient({
             >
               <UserAvatar user={user} size={24} className="text-gray-500" />
             </button>
-          </div>
-        ) : (
-          <div className="absolute right-6 flex items-center gap-2">
-            <button
-              onClick={() => {
-                const searchEl = document.getElementById('global-search-bar');
-                if (searchEl) {
-                  searchEl.classList.toggle('hidden');
-                  searchEl.querySelector('input')?.focus();
-                }
-              }}
-              className="text-gray-500 p-1.5"
-              aria-label="검색 열기"
-            >
-              <Search className="w-5 h-5" />
-            </button>
+          ) : (
             <button
               onClick={() => router.push('/auth/signup')}
-              className="px-3 py-1.5 bg-white text-gray-700 rounded-lg text-[13px] font-bold border border-gray-200 active:scale-95 transition-all"
+              className="p-1 flex items-center justify-center group"
+              aria-label="로그인"
             >
-              로그인
+              <User className="w-6 h-6 text-gray-500 group-hover:text-gray-900 transition-colors" />
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
 
       {/* 메인 배너 */}
       {/* <MainBanner /> */}
 
-      {/* 검색 바 - 숨겨져 있다가 토글됨 */}
-      <div id="global-search-bar" className="w-full hidden sticky top-[73px] z-20 bg-[#F7F7F7]/95 backdrop-blur-sm px-4 py-3 transition-all border-b border-gray-100">
-        <form onSubmit={handleSearch} className="w-full max-w-[1200px] mx-auto flex gap-3">
-          <div className="relative group flex-1">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="어떤 책을 찾으시나요?"
-              className="w-full px-4 py-2.5 pr-10 bg-white text-gray-900 placeholder:text-gray-400 border border-transparent rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/20 transition-all text-sm"
-            />
-
-            {/* Clear button */}
-            {searchQuery && <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 p-1"
-                  aria-label="검색어 지우기"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              }
-            </div>
-          </form>
-      </div>
+      {/* 검색 바 제거 (큐레이션 집중을 위함) */}
 
 
       {/* 1. 우리 아이 나이에 딱! (연령별 추천 섹션) */}
-      <section className="py-8 px-4 bg-white">
+      <section className="py-8 px-4 bg-[#F7F7F7]">
         <div className="max-w-[1200px] mx-auto">
-          <div className="flex items-center justify-between mb-1 px-2">
-            <h2 className="text-xl font-bold text-gray-900">우리 아이 나이에 딱!</h2>
+          <div className="flex items-end justify-between mb-6 px-2">
+            <div className="flex flex-col gap-1">
+              <span className="text-[13px] font-semibold text-gray-500 tracking-tight">
+                발달 단계에 맞는 맞춤 도서를 만나보세요
+              </span>
+              <h2 className="text-2xl font-bold text-gray-900 tracking-tight leading-tight">
+                우리 아이 나이에 딱!
+              </h2>
+            </div>
             <Link
               href={`/books?age=${selectedAge}`}
-              className="text-gray-900"
+              className="text-gray-900 p-1 mb-0.5"
               onClick={() => sendGAEvent('click_view_more', { section: 'age_recommendation', age: selectedAge })}
             >
               <ChevronRight className="w-6 h-6" />
             </Link>
-          </div>
-
-          <div className="px-2 mb-4">
-            <p className="text-sm text-gray-600">발달 단계에 맞는 맞춤 도서를 만나보세요</p>
           </div>
 
           {/* 연령 탭 */}
@@ -305,88 +268,47 @@ export default function HomePageClient({
               </div>
             </>
           ) : (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-8 text-gray-500">
               해당 연령대의 책이 없습니다
             </div>
           )}
         </div>
       </section>
 
-      {/* 2. 칼데콧 수상작 섹션 */}
-      <section className="py-8 px-4">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="flex items-center justify-between mb-1 px-2">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <span>칼데콧 수상작</span>
-            </h2>
-            <Link
-              href="/books?curation=caldecott"
-              className="text-gray-900 hover:text-gray-600 transition-colors"
-              onClick={() => sendGAEvent('click_view_more', { section: 'caldecott' })}
-            >
-              <ChevronRight className="w-6 h-6" />
-            </Link>
-          </div>
 
-          <div className="px-2 mb-4">
-            <p className="text-sm text-gray-600">미국 도서관 사서들이 엄선한 최고의 그림책</p>
-          </div>
 
-          {caldecottBooks.length > 0 ? (
-            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-              <div className="flex gap-4 pb-2">
-                {caldecottBooks.map((book, index) => (
-                  <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === caldecottBooks.length - 1 ? 'mr-4' : ''}`}>
-                    <BookCard book={book} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-12 text-gray-500">
-              수상작 목록을 불러오는 중입니다...
-            </div>
-          )}
-        </div>
-      </section>
+      {/* 2. AI 큐레이션 섹션 (3일마다 랜덤 교체) */}
+      {dynamicCurations.map((curation, index) => (
+        <CurationSection
+          key={curation.tag}
+          subtitle={curation.subtitle}
+          title={curation.title}
+          books={curation.books}
+          href={`/books?curation=${encodeURIComponent(curation.tag)}`}
+          onViewMore={() => sendGAEvent('click_view_more', { section: curation.tag })}
+          bgColor={index % 2 === 0 ? 'bg-white' : 'bg-[#F7F7F7]'}
+        />
+      ))}
 
-      {/* 3. 도서 연구회 추천 섹션 */}
-      <section className="py-8 px-4 bg-white">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="flex items-center justify-between mb-1 px-2">
-            <h2 className="text-xl font-bold text-gray-900">어린이 도서 연구회 추천</h2>
-            <Link
-              href="/books?curation=research-council"
-              className="text-gray-900 hover:text-gray-600 transition-colors"
-              onClick={() => sendGAEvent('click_view_more', { section: 'research_council' })}
-            >
-              <ChevronRight className="w-6 h-6" />
-            </Link>
-          </div>
+      {/* 3. 칼데콧 수상작 섹션 */}
+      <CurationSection
+        subtitle="미국 도서관 최고의 영예"
+        title="칼데콧 수상작"
+        books={caldecottBooks}
+        href="/books?curation=caldecott"
+        onViewMore={() => sendGAEvent('click_view_more', { section: 'caldecott' })}
+        bgColor="bg-[#F7F7F7]"
+      />
 
-          <div className="px-2 mb-4">
-            <p className="text-sm text-gray-600">전문가가 엄선한 믿고 보는 필독서</p>
-          </div>
-
-          {researchBooks.length > 0 ? (
-            <>
-              <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-                <div className="flex gap-4 pb-2">
-                  {researchBooks.map((book, index) => (
-                    <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === researchBooks.length - 1 ? 'mr-4' : ''}`}>
-                      <BookCard book={book} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-12 text-gray-500">
-              추천 도서가 없습니다
-            </div>
-          )}
-        </div>
-      </section >
+      {/* 4. 도서 연구회 추천 섹션 */}
+      <CurationSection
+        subtitle="전문가가 엄선한 필독서"
+        title="어린이 도서 연구회 추천"
+        books={researchBooks}
+        href="/books?curation=research-council"
+        onViewMore={() => sendGAEvent('click_view_more', { section: 'research_council' })}
+        bgColor="bg-white"
+      />
 
       {/* 겨울방학 추천 섹션 (주석 처리) */}
       {/* 
@@ -498,19 +420,70 @@ export default function HomePageClient({
   )
 }
 
+// 재사용 가능한 큐레이션 섹션 컴포넌트
+function CurationSection({
+  subtitle,
+  title,
+  books,
+  href,
+  onViewMore,
+  bgColor = "bg-[#F7F7F7]"
+}: {
+  subtitle: string;
+  title: string;
+  books: Book[];
+  href: string;
+  onViewMore: () => void;
+  bgColor?: string;
+}) {
+  // 7권 미만인 경우 섹션 자체를 노출하지 않음 (유저 경험 보장)
+  if (books.length < 7) return null;
+
+  return (
+    <section className={`py-8 px-4 ${bgColor}`}>
+      <div className="max-w-[1200px] mx-auto">
+        <div className="flex items-end justify-between mb-8 px-2">
+          <div className="flex flex-col gap-1">
+            <span className="text-[13px] font-semibold text-gray-500 tracking-tight">
+              {subtitle}
+            </span>
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight leading-tight">
+              {title}
+            </h2>
+          </div>
+          <Link
+            href={href}
+            className="text-gray-900 p-1 mb-0.5"
+            onClick={onViewMore}
+          >
+            <ChevronRight className="w-6 h-6" />
+          </Link>
+        </div>
+
+        {books.length > 0 ? (
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+            <div className="flex gap-4 pb-4">
+              {books.map((book, index) => (
+                <div key={book.id} className={`flex-shrink-0 w-[165px] sm:w-[190px] ${index === books.length - 1 ? 'mr-4' : ''}`}>
+                  <BookCard book={book} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-16 text-gray-400 bg-black/5 rounded-2xl border border-dashed border-gray-200 mx-2">
+            <p className="text-sm">추천 도서를 불러오는 중입니다...</p>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
 // 책 카드 컴포넌트 - BookItem과 동일한 UI
 function BookCard({ book }: { book: Book }) {
 
   const displayAge = getAgeDisplayLabel(book.age)
-
-  // 청구기호 결정 로직 (판교도서관 고정)
-  let displayCallNo = ''
-  if (book.pangyo_callno && book.pangyo_callno !== '없음') {
-    displayCallNo = book.pangyo_callno
-  } else {
-    const info = book.library_info?.find((l: LibraryInfo) => l.library_name.includes('판교'))
-    if (info) displayCallNo = info.callno
-  }
 
   return (
     <Link
@@ -554,10 +527,6 @@ function BookCard({ book }: { book: Book }) {
         <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight">
           {book.title}
         </h3>
-
-        <p className={`text-[15px] font-extrabold tracking-tight mb-3 truncate w-full ${!displayCallNo ? 'text-gray-300' : 'text-[#F59E0B]'}`}>
-          {displayCallNo}
-        </p>
 
         <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
           <span className="text-gray-400 truncate max-w-[60%]">{book.publisher}</span>

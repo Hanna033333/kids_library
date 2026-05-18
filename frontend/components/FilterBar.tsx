@@ -5,6 +5,7 @@ interface FilterBarProps {
   onAgeChange: (age: string) => void;
   selectedCategory: string;
   onFilterClick: () => void;
+  showFilterButton?: boolean;
 }
 
 const AGE_OPTIONS = [
@@ -16,7 +17,8 @@ const AGE_OPTIONS = [
 
 export default function FilterBar({
   selectedAge, onAgeChange,
-  selectedCategory, onFilterClick
+  selectedCategory, onFilterClick,
+  showFilterButton = true
 }: FilterBarProps) {
 
   const handleAgeToggle = (ageVal: string) => {
@@ -34,19 +36,21 @@ export default function FilterBar({
         {/* Scrollable Filters */}
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
           {/* 통합 필터 (정렬 등) 버튼 */}
-          <button
-            onClick={onFilterClick}
-            className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all border active:scale-[0.98] ${selectedCategory && selectedCategory !== "전체"
-              ? "bg-gray-900 text-white border-gray-900"
-              : "bg-white text-gray-500 border-gray-200"
-              }`}
-            aria-label="상세 필터 및 정렬"
-          >
-            <span>{selectedCategory && selectedCategory !== "전체" ? selectedCategory : "필터"}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`w-3.5 h-3.5 ${selectedCategory && selectedCategory !== "전체" ? "text-gray-400" : "text-gray-400"}`}>
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </button>
+          {showFilterButton && (
+            <button
+              onClick={onFilterClick}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all border active:scale-[0.98] ${selectedCategory && selectedCategory !== "전체"
+                ? "bg-gray-900 text-white border-gray-900"
+                : "bg-white text-gray-500 border-gray-200"
+                }`}
+              aria-label="상세 필터 및 정렬"
+            >
+              <span>{selectedCategory && selectedCategory !== "전체" ? selectedCategory : "필터"}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`w-3.5 h-3.5 ${selectedCategory && selectedCategory !== "전체" ? "text-gray-400" : "text-gray-400"}`}>
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+          )}
 
           {/* 연령대 필터 */}
           {AGE_OPTIONS.map((option) => (

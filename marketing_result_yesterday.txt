@@ -3,31 +3,10 @@
 ==================================================
 
 [1] 🌍 Acquisition Source/Medium
-   - (not set)                      | Users:   7 | Sess:   7 | AvgTime: 25.6s
-   - news.hada.io / referral        | Users:   6 | Sess:   6 | AvgTime: 5.5s
-   - (direct) / (none)              | Users:   3 | Sess:   3 | AvgTime: 0.0s
-   - naver / organic                | Users:   2 | Sess:   2 | AvgTime: 0.0s
-   - m.search.naver.com / referral  | Users:   1 | Sess:   1 | AvgTime: 22.0s
-   - todayhumor.co.kr / referral    | Users:   1 | Sess:   1 | AvgTime: 2.0s
-   - m.cafe.naver.com / referral    | Users:   0 | Sess:   1 | AvgTime: 0.0s
+   - (direct) / (none)              | Users:   2 | Sess:   2 | AvgTime: 0.0s
 
 [2] 📄 Top Content
-   - /                              | 책자리 - 도서관 청구기호 찾기, 3초면 끝 (로그인X)          | Views:  19 | Users:  13 | AvgTime: 10.7s
-   - /books                         | 스마트폰만 보는 아이, 방학 때 뭐 읽힐까요?                | Views:   4 | Users:   1 | AvgTime: 45.0s
-   - /books                         | '내가슴에해마가산다' - 도서관에 있을까?                  | Views:   2 | Users:   1 | AvgTime: 5.0s
-   - /book/11288                    | 창덕궁에 불이 꺼지면 - 도서관 청구기호/위치 3초 확인 (책자리)    | Views:   1 | Users:   1 | AvgTime: 4.0s
-   - /book/11302                    | 불안이 사르르 사라지는 그림책 : 작은 일에도 걱정부터 앞서는 아이를 위 | Views:   1 | Users:   1 | AvgTime: 5.0s
-   - /book/11310                    | 엄마 규칙에 반대한다고? - 도서관 청구기호/위치 3초 확인 (책자리)  | Views:   1 | Users:   1 | AvgTime: 31.0s
-   - /book/7774                     | 공룡은 없어 - 도서관 청구기호/위치 3초 확인 (책자리)         | Views:   1 | Users:   1 | AvgTime: 5.0s
-   - /books                         | '소맥거핀' - 도서관에 있을까?                       | Views:   1 | Users:   1 | AvgTime: 2.0s
+   - /                              | 책자리 - 도서관 청구기호/위치 3초 확인 (내 도서관 설정)       | Views:   2 | Users:   2 | AvgTime: 0.0s
 
 [3] 📍 Top Cities
-   - Seoul                          | Users: 5
-   - Aspen                          | Users: 1
-   - Council Bluffs                 | Users: 1
-   - Gwacheon-si                    | Users: 1
-   - Incheon                        | Users: 1
-   - Namyangju-si                   | Users: 1
-   - Seongnam-si                    | Users: 1
-   - Ulsan                          | Users: 1
-   - Wonju-si                       | Users: 1
+   - Council Bluffs                 | Users: 2

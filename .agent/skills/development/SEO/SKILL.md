@@ -83,6 +83,44 @@ return (
 );
 ```
 
+### 참고: 수상작/큐레이션 전용 (Caldecott 예시)
+특정 기획성 페이지(예: `/caldecott`)의 경우, 검색 결과 노출도를 높이기 위해 다음과 같이 상세 메타데이터와 JSON-LD를 구성한다.
+
+**메타데이터 설정:**
+```typescript
+export const metadata: Metadata = {
+    title: "칼데콧 수상작 (2000-2026) - 책자리",
+    description: "2000년부터 2026년까지 칼데콧 메달을 수상한 세계 최고의 어린이 그림책 목록입니다. 판교도서관 청구기호와 대출 정보를 확인하세요.",
+    keywords: "칼데콧상, Caldecott Medal, 어린이 그림책, 수상작, 추천 도서, 판교도서관",
+    openGraph: {
+        title: "칼데콧 수상작 (2000-2026) - 책자리",
+        description: "2000년부터 2026년까지 칼데콧 메달을 수상한 세계 최고의 어린이 그림책 목록입니다.",
+        url: "https://checkjari.com/caldecott",
+        images: [{ url: "/logo.png", width: 1200, height: 630, alt: "책자리 - 칼데콧 수상작" }],
+    },
+};
+```
+
+**ItemList 기반 JSON-LD:**
+```typescript
+const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: books.map((book, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+            '@type': 'Book',
+            name: book.title,
+            author: { '@type': 'Person', name: book.author },
+            isbn: book.isbn,
+            image: book.image_url,
+            url: `https://checkjari.com/book/${book.id}`,
+        },
+    })),
+};
+```
+
 ## 4. 체크리스트
 - [ ] `Metadata` 정의 (Title, Description, Keywords)
 - [ ] `Canonical URL` 설정 (중복 콘텐츠 방지)

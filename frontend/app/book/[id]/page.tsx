@@ -20,10 +20,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             }
         }
 
-        const title = `${book.title} - 도서관 청구기호/위치 3초 확인 (책자리)`
-        // author 필드가 null일 경우 빈 문자열로 처리
-        const description = `${book.title}의 청구기호, 도서관 위치, 대출 여부를 확인하고 관심 도서로 저장하세요. 내 도서관 설정 가능.`
-        const keywords = `${book.title}, ${book.author}, 도서관, 청구기호, 어린이 도서, ${book.category || '추천도서'}, 4~7세 추천 도서, 초등 필독서, 도서관 위치, 청구기호 찾기, 책자리, 판교도서관`
+        const isCaldecott = book.curation_tag === 'caldecott'
+        const title = isCaldecott 
+            ? `${book.title} - 칼데콧 수상작 | 도서관 청구기호/위치 3초 확인 (책자리)`
+            : `${book.title} - 도서관 청구기호/위치 3초 확인 (책자리)`
+        
+        const description = isCaldecott
+            ? `[칼데콧 메달 수상작] ${book.title}의 청구기호, 도서관 위치, 대출 여부를 확인하세요. 사서가 추천하는 세계 최고의 그림책.`
+            : `${book.title}의 청구기호, 도서관 위치, 대출 여부를 확인하고 관심 도서로 저장하세요. 내 도서관 설정 가능.`
+        
+        const caldecottKeywords = isCaldecott ? '칼데콧 수상작, Caldecott Medal, 그림책 노벨상, ' : ''
+        const keywords = `${caldecottKeywords}${book.title}, ${book.author}, 도서관, 청구기호, 어린이 도서, ${book.category || '추천도서'}, 4~7세 추천 도서, 초등 필독서, 도서관 위치, 청구기호 찾기, 책자리, 판교도서관`
 
         return {
             title,
@@ -65,6 +72,8 @@ export default async function BookDetailPage({ params }: Props) {
             notFound()
         }
 
+        const isCaldecott = book.curation_tag === 'caldecott'
+
         // Schema.org 구조화 데이터 (JSON-LD)
         // ISBN이 있을 경우 교보문고 BuyAction 추가 -> Google Book Actions 리치 결과 활성화
         const generateKyoboUrl = (isbn: string) => {
@@ -84,12 +93,19 @@ export default async function BookDetailPage({ params }: Props) {
                 'name': (book.author || '저자 미상').replace(/│/g, ', ')
             },
             'image': getHighResImageUrl(book.image_url) || '',
-            'description': `${book.title}의 청구기호, 도서관 위치, 대출 가능 여부를 확인하세요.`,
+            'description': isCaldecott 
+                ? `[칼데콧 수상작] ${book.title}의 청구기호, 도서관 위치, 대출 가능 여부를 확인하세요.`
+                : `${book.title}의 청구기호, 도서관 위치, 대출 가능 여부를 확인하세요.`,
             'publisher': {
                 '@type': 'Organization',
                 'name': book.publisher || '출판사 정보 없음'
             },
             'genre': book.category || '어린이 도서'
+        }
+
+        // 칼데콧 수상작인 경우 award 정보 추가
+        if (isCaldecott) {
+            jsonLd['award'] = 'Caldecott Medal'
         }
 
         // ISBN이 있을 경우에만 BuyAction 추가 (Book Actions 리치 결과 요건)
@@ -115,3 +131,4 @@ export default async function BookDetailPage({ params }: Props) {
         notFound();
     }
 }
+

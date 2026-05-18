@@ -27,11 +27,26 @@ export default function HomeClient({ }: HomeClientProps) {
     const [ageFilter, setAgeFilter] = useState(normalizeAge(searchParams.get('age') || ""));
     const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || "전체");
     const [curationFilter] = useState(searchParams.get('curation') || "");
-    const [sortFilter, setSortFilter] = useState(searchParams.get('sort') || "pangyo_callno");
+    
+    // AI 큐레이션은 기본적으로 신뢰도(confidence_score) 높은 순으로 정렬하여 홈 화면과 동일한 순서를 유지
+    const [sortFilter, setSortFilter] = useState(() => {
+        const urlSort = searchParams.get('sort');
+        if (urlSort) return urlSort;
+        
+        const curation = searchParams.get('curation');
+        if (curation && !['겨울방학', 'winter-vacation', '어린이도서연구회', 'research-council', 'caldecott'].includes(curation)) {
+            return 'confidence_score_desc'; // confidence_score_desc 라는 가상의 sort key 사용
+        }
+        return 'pangyo_callno';
+    });
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [filterModalMode, setFilterModalMode] = useState<"integrated" | "category">("integrated");
     const [isSearchVisible, setIsSearchVisible] = useState(false);
     const { user, signOut } = useAuth();
+
+    // AI 큐레이션 태그 여부 (알려진 non-AI 큐레이션 제외)
+    const NON_AI_CURATIONS = ['겨울방학', 'winter-vacation', '어린이도서연구회', 'research-council', 'caldecott'];
+    const isAiCuration = !!curationFilter && !NON_AI_CURATIONS.includes(curationFilter);
 
     // URL 업데이트 함수
     const updateURL = useCallback((params: Record<string, string>) => {
@@ -85,16 +100,42 @@ export default function HomeClient({ }: HomeClientProps) {
 
     // URL 파라미터에 따라 동적 타이틀 결정
     const getPageTitle = () => {
-        if (curationFilter === 'research-council' || curationFilter === '어린이도서연구회') return '어린이도서연구회 추천'
-        if (curationFilter === 'winter-vacation' || curationFilter === '겨울방학') return '겨울방학 추천도서'
-        if (curationFilter === 'caldecott') return '칼데콧 수상작'
-        if (curationFilter) return curationFilter
-        if (ageFilter === '0-3') return '0~3세 추천 도서'
-        if (ageFilter === '4-7') return '4~7세 추천 도서'
-        if (ageFilter === '8-12') return '8~12세 추천 도서'
-        if (ageFilter === 'teen' || ageFilter === '13+') return '13세 이상 추천 도서'
-        if (searchQuery) return '도서 검색'
-        return '도서 검색'
+        if (curationFilter === 'research-council' || curationFilter === '어린이도서연구회') return '어린이도서연구회 추천';
+        if (curationFilter === 'winter-vacation' || curationFilter === '겨울방학') return '겨울방학 추천도서';
+        if (curationFilter === 'caldecott') return '칼데콧 수상작';
+        
+        // AI 큐레이션 타이틀 매핑
+        const aiCurationTitles: Record<string, string> = {
+            '잠자리': '포근한 잠자리 책',
+            '감정조절': '마음 처방전',
+            '자존감': '자존감 그림책',
+            '사회성': '사회성 기르기',
+            '인체': '신비한 우리 몸',
+            '판타지': '판타지 세계',
+            '환경보호': '환경 학교',
+            '생명존중': '동물 친구들',
+            '가족사랑': '가족 이야기',
+            '배려': '나눔과 배려',
+            '모험': '두근두근 모험',
+            '전래동화': '재밌는 옛이야기',
+            '예술감성': '꼬마 예술가',
+            '자연관찰': '신비한 자연 관찰',
+            '역사이야기': '지혜로운 역사',
+            '과학원리': '꼬마 과학자',
+            '다양성': '세계 시민 학교',
+            '적응': '즐거운 유치원',
+            '우리문화': '전통과 유산',
+            '계절': '여름의 추억'
+        };
+
+        if (curationFilter) return aiCurationTitles[curationFilter] || curationFilter;
+
+        if (ageFilter === '0-3') return '0~3세 추천 도서';
+        if (ageFilter === '4-7') return '4~7세 추천 도서';
+        if (ageFilter === '8-12') return '8~12세 추천 도서';
+        if (ageFilter === 'teen' || ageFilter === '13+') return '13세 이상 추천 도서';
+        if (searchQuery) return '도서 검색';
+        return '도서 검색';
     }
 
     return (
@@ -148,6 +189,7 @@ export default function HomeClient({ }: HomeClientProps) {
                 onAgeChange={handleAgeChange}
                 selectedCategory={categoryFilter}
                 onFilterClick={openIntegratedFilter}
+                showFilterButton={!isAiCuration}
             />
 
             {/* 통합 필터 모달 */}

@@ -55,12 +55,16 @@ export async function getBooksFromSupabase(
             'research-council': '어린이도서연구회'
         };
         const dbCurationTag = curationMapping[filters.curation] || filters.curation;
-        query = query.eq('curation_tag', dbCurationTag);
+        query = query.ilike('curation_tag', `%${dbCurationTag}%`);
     }
 
     // 정렬
     const sortField = filters?.sort || 'pangyo_callno';
-    query = query.order(sortField);
+    if (sortField === 'confidence_score_desc') {
+        query = query.order('confidence_score', { ascending: false });
+    } else {
+        query = query.order(sortField);
+    }
 
     // 페이징
     const start = (page - 1) * limit;

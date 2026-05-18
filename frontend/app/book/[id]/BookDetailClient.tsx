@@ -316,11 +316,29 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                         {getAgeDisplayLabel(book.age)}
                                     </span>
                                 )}
+                                {/* Curation Tags */}
+                                {book.curation_tag && book.curation_tag.split(',').map((tag) => (
+                                    <span key={tag} className="px-2.5 py-0.5 bg-brand-primary/5 text-brand-primary rounded-lg text-[11px] font-bold border border-brand-primary/10">
+                                        {tag.trim()}
+                                    </span>
+                                ))}
                             </div>
 
                             <h1 className="text-xl md:text-2xl font-black text-gray-900 leading-tight mb-2 tracking-tight line-clamp-3">
                                 {book.title}
                             </h1>
+
+                            {/* AI Curation Note */}
+                            {book.curation_note && (
+                                <div className="mt-4 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100 relative">
+                                    <div className="absolute top-0 right-4 -translate-y-1/2 px-2 py-0.5 bg-brand-primary text-white text-[10px] font-bold rounded-full shadow-sm">
+                                        전문 사서의 추천 포인트
+                                    </div>
+                                    <p className="text-[14.5px] text-gray-700 font-bold leading-relaxed tracking-tight">
+                                        “{book.curation_note}”
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="flex flex-col gap-0.5 text-gray-600 font-medium text-base mb-8">
                                 <span>{book.author || '정보 없음'}</span>
@@ -351,15 +369,16 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                         </span>
                                     )}
                                 </div>
-                                <a
-                                    href="https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs text-gray-400 hover:text-gray-600 underline mt-1.5 inline-block"
-                                    onClick={() => sendGAEvent('click_report_error', { book_id: book.id })}
+                                <button
+                                    onClick={() => {
+                                        sendGAEvent('click_report_error', { book_id: book.id });
+                                        window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
+                                    }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg text-[11px] font-medium mt-3 transition-colors"
                                 >
-                                    청구기호 다른가요?
-                                </a>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
+                                    정보가 다른가요? 제보하기
+                                </button>
                             </div>
                         </div>
 

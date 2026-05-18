@@ -16,6 +16,7 @@ description: Rules for maintaining consistency across planning, design, and deve
 - **규격화된 UI 세트 기준 정의**: 버튼(`Button`), 입력창(`Input`) 등은 `.agent/skills/design/color_system/SKILL.md`와 결합하여 정의된 일관적인 **공용 컴포넌트 디자인 시스템**을 따릅니다. 
 - **플랫(Flat) 디자인 준수**: 버튼이나 카드 디자인 등에서 무작위적인 엠보싱/그림자 처리(`shadow-lg`, `shadow-[...]` 등)를 특별한 사유 없이 사용하는 것을 지양합니다. 모던하고 일관된 룩을 유지해야 합니다.
 - 유효성 검사 등 부가 상태 인디케이터 UI 역시 각기 다른 디자인으로 만들지 말고 **가장 최근에 정립된 UI 규격(좌측 아이콘(Leading Icon) 삽입 유무 등)**을 참고합니다.
+- **섹션 타이틀 구조 일관성**: 추천 도서, 큐레이션 등 컨텐츠 섹션의 타이틀을 구성할 때는 항상 **'서브 타이틀 위, 메인 타이틀 아래'**의 2단 계층 구조를 유지하여 화면 내 정보 위계를 통일합니다.
 
 ## 💻 3. 개발 팀장 (@development) 지침
 - **공통 컴포넌트(UI) 활용 필수**: `<input className="...">` 형태로 페이지별로 하드코딩 하는 것을 엄격히 금지합니다.

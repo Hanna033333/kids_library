@@ -1,82 +1,54 @@
 ---
 name: AI_Book_Categorization
-description: 신규 도서 추가 시 AI(Gemini)와 알라딘 API를 활용하여 도서 카테고리를 자동으로 분류하는 스킬
+description: Gemini Pro를 활용하여 도서의 정서적 가치를 분석하고 20개 상황별 카테고리 큐레이션을 자동 생성하는 스킬
 ---
 
-# AI 도서 카테고리 자동 분류
+# AI 도서 프리미엄 큐레이션 시스템
 
-신규 도서를 데이터베이스에 추가할 때, 알라딘 API로 책 소개(Description)를 가져오고 Google Gemini AI를 사용하여 적절한 카테고리를 자동으로 부여하는 방법입니다.
+단순 도서 분류를 넘어, Gemini Pro AI를 활용해 도서의 줄거리를 분석하고 학부모가 공감할 수 있는 상황별 태그와 전문적인 추천사(Curation Note)를 자동으로 생성하는 기술 표준입니다.
 
-## 📁 위치
-- **스킬 경로**: `.agent/skills/development/AI_Book_Categorization`
-- **예제 코드**: `.agent/skills/development/AI_Book_Categorization/examples`
+## 📁 구성
+- **스킬 경로**: `.agent/skills/development/ai_book_categorization`
+- **핵심 스크립트**: `backend/batch_ai_tagging.py`
 
-## 🛠️ 사전 요구사항 (Prerequisites)
-1. **Google Gemini API Key** (Tier 1 권장, `.env`에 `GEMINI_API_KEY` 설정)
-2. **Aladin TTB Key** (`.env`에 `ALADIN_TTB_KEY` 설정)
-3. **Supabase Client** (`supabase_client` 모듈 사용 권장)
+## 🛠️ 핵심 사양
+1. **AI 모델**: `gemini-pro-latest` (또는 `gemini-1.5-pro`)
+   - 단순 요약을 넘어 문학적 감수성과 도서의 교육적 가치를 파악하기 위해 최상위 지능 모델 사용 필수.
+2. **표준 택소노미 (20개)**:
+   - `#잠자리`, `#감정조절`, `#자존감`, `#사회성`, `#인체`, `#판타지`, `#환경보호`, `#생명존중`, `#가족사랑`, `#배려`, `#모험`, `#전래동화`, `#예술감성`, `#자연관찰`, `#역사이야기`, `#과학원리`, `#다양성`, `#적응`, `#우리문화`, `#계절`
 
-## ⚠️ 핵심 주의사항 (Troubleshooting & Best Practices)
+## ⚠️ 운영 및 연동 정책
 
-이번 겨울방학 도서 40권 재분류 과정에서 얻은 **중요한 교훈**들입니다.
+### 1. 섹션 노출 정책 (7-Book Rule) [CRITICAL]
+- **데이터 품질 관리**: 특정 카테고리에 할당된 도서가 **7권 이상**일 때만 홈 화면 큐레이션 섹션에 노출함.
+- **이유**: 정보가 부족한 상태에서 섹션을 노출하여 유저에게 실망감을 주는 'Empty State' 방지.
+- **구현**: `CurationSection` 컴포넌트에서 `books.length < 7`인 경우 `null` 반환.
 
-### 1. 프롬프트 엔지니어링 (정확도 향상)
-단순히 "분류해줘"라고 하면 모든 책을 '동화'로 분류하는 경향이 있습니다.
-**반드시 상세한 카테고리 정의와 예시를 프롬프트에 포함해야 합니다.**
+### 2. 정렬 일관성 유지 정책 (Sorting Consistency) [CRITICAL]
+- **문제점 방지**: 홈 화면에서는 AI 신뢰도 높은 순으로 보여주다가, "더보기"를 눌러 목록 페이지(`/books`)로 이동했을 때 청구기호순(기본값)으로 풀리면서 사용자가 방금 본 책들을 찾지 못하는 문제 방지.
+- **구현 원칙**:
+  - 홈 화면 데이터 페칭 시 `confidence_score` 내림차순 정렬 (`frontend/lib/home-api.ts`)
+  - AI 큐레이션 목록 페이지(`/books?curation=태그명`) 진입 시, 기본 정렬 상태를 `confidence_score_desc`로 강제 오버라이딩 (`frontend/components/HomeClient.tsx` 및 `frontend/lib/supabase-client.ts`)
+  - 이를 통해 **"홈 화면에서 본 7권의 책이, 더보기를 누르고 들어간 목록의 최상단 7권과 정확히 일치"**하도록 사용자 경험의 연속성을 보장함.
 
-```python
-# ✅ 좋은 프롬프트 예시
-prompt = """
-## 카테고리 정의 (반드시 이 중 하나로 분류)
-- **동화**: 창작 이야기, 전래동화, 우화 (예: 아기돼지 삼형제)
-- **과학**: 과학 원리, 실험, 우주, 발명 (예: Why? 시리즈)
-- **역사**: 한국사, 세계사 (예: 한국사 편지)
-... (모든 카테고리 정의 포함)
+### 3. 전문 사서의 추천 포인트 (curation_note) 생성 가이드
+출판사가 제공하는 딱딱한 줄거리 요약을 부모님의 마음을 움직이는 셀링 포인트로 자동 가공하는 핵심 기능입니다. 백엔드 스크립트가 도서의 제목, 작가, 기존 줄거리를 Gemini Pro에 전달하여 생성합니다.
 
-## 중요 지침
-1. 제목과 책 소개를 모두 고려하여 가장 적합한 하나를 선택하세요.
-2. 논픽션(지식/정보)은 주제에 맞게 과학/역사/사회 등으로 분류하세요.
-"""
-```
+- **페르소나 부여**: AI에게 "20년 경력의 베테랑 어린이 도서 사서이자 육아 전문가" 역할을 부여.
+- **작성 규칙**:
+  - **줄거리 요약 절대 금지**: (예: "이 책은 모험 이야기입니다" -> X)
+  - **따뜻한 대화체 사용**: 부모님에게 다정하게 말을 건네는 톤 유지. (예: "~한 아이의 잠자리에서 속삭여주기 좋은 책입니다" -> O)
+  - **효용성 강조**: 이 책이 아이의 정서 발달이나 부모와의 교감에 어떤 구체적인 도움을 주는지 60자 내외로 압축하여 표현.
 
-### 2. API Rate Limit (429 에러) 해결
-Gemini Tier 1 유료 플랜이라도 **RPM(분당 요청 수) 제한**이 있습니다.
-반복 작업 시 **최소 10초 이상의 딜레이**를 주어야 429 에러를 피할 수 있습니다.
+### 4. 배치 처리 및 신뢰도 관리
+- **confidence_score**: AI가 분석한 결과의 정확도를 점수화하여 90점 이상인 도서 위주로 서비스 노출 권장.
+- **수동 보정**: 상세 페이지의 "제보하기" 기능을 통한 유저 참여형 데이터 수정 체계 운영.
 
-```python
-# ✅ 안전한 반복 실행
-for book in books:
-    await categorize_book(...)
-    await asyncio.sleep(10)  # 10초 대기 (분당 6회 요청)
-```
+## 🚀 워크플로우
+1. `childbook_items`에서 줄거리가 있으나 태깅되지 않은 도서 추출.
+2. Gemini Pro를 통해 20개 태그 중 1~3개 매칭 및 추천사 작성.
+3. Supabase DB 업데이트 (`curation_tag`, `curation_note`, `confidence_score`).
+4. 프론트엔드에서 7권 이상 확보된 섹션 자동 전시.
 
-### 3. 모델 선택 (Dynamic Model Selection)
-특정 모델(`gemini-1.5-flash`)이 지역/상황에 따라 404 에러가 날 수 있습니다. 동적으로 모델을 찾는 로직을 권장합니다.
-
-```python
-# ✅ 동적 모델 탐색
-available_models = [m.name for m in genai.list_models()]
-target_model = next((m for m in available_models if 'gemini-2.0-flash' in m), 'models/gemini-1.5-flash')
-```
-
-### 4. 환경 변수 및 DB 업데이트
-스크립트 실행 위치에 따라 `.env` 파일 경로가 달라질 수 있습니다.
-가급적 검증된 `supabase_client` 모듈을 import하여 사용하는 것이 안전합니다.
-자체적으로 `.env`를 파싱할 경우 경로 문제로 API 키가 로드되지 않을 수 있습니다.
-
-## 🚀 사용 예시
-
-### 단일 도서 분류 함수 (Wrapper)
-
-```python
-async def categorize_new_book(title, isbn):
-    # 1. 알라딘 API로 Description 조회
-    desc = await get_description(isbn)
-    
-    # 2. Gemini API로 카테고리 분류
-    category = await categorize_with_ai(title, desc)
-    
-    return category, desc
-```
-
-자세한 구현 코드는 `examples/category_helper.py`를 참고하세요.
+---
+자세한 구현 코드는 `backend/batch_ai_tagging.py`를 참고하세요.
