@@ -30,7 +30,6 @@ export default function BookList({
 }: BookListProps) {
   const [isMobile, setIsMobile] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
-  const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([]);
 
   // Mobile detection
   useEffect(() => {
@@ -40,19 +39,20 @@ export default function BookList({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Fetch recommended books for the top of the list if age filter is applied without other specific filters
-  // confidence_score_desc(AI 큐레이션 순) 정렬 중에는 실행하지 않음
-  // → 상세 페이지 뒤로가기 시 정렬이 잠깐 ㄱㄴㄷ순으로 바뀌는 현상 방지
-  useEffect(() => {
-    const isAiSort = sortFilter === 'confidence_score_desc';
-    if (ageFilter && !searchQuery && !curationFilter && !isAiSort && (!categoryFilter || categoryFilter === "전체")) {
-      import("@/lib/home-api").then(({ getBooksByAge }) => {
-        getBooksByAge(ageFilter, 7).then(setRecommendedBooks);
-      });
-    } else {
-      setRecommendedBooks([]);
-    }
-  }, [ageFilter, searchQuery, curationFilter, categoryFilter, sortFilter]);
+  // 연령분홈 코너 추천도서 (AI 큐레이션 순 제외, 일반 필터 상태에서만 사용)
+  // useQuery로 캐시화 → 상세페이지 다녀와도 캐시에서 즉시 복원 → 정렬 긜박임 제거
+  const shouldFetchRecommended = !!(ageFilter && !searchQuery && !curationFilter && sortFilter !== 'confidence_score_desc' && (!categoryFilter || categoryFilter === "전체"));
+
+  const { data: recommendedBooks = [] } = useQuery<Book[]>({
+    queryKey: ['recommended-books-by-age', ageFilter],
+    queryFn: async () => {
+      const { getBooksByAge } = await import("@/lib/home-api");
+      return getBooksByAge(ageFilter!, 7);
+    },
+    enabled: shouldFetchRecommended,
+    staleTime: 5 * 60 * 1000, // 5분 캐시 → 같은 세션에서 재요청 안 함
+    gcTime: 10 * 60 * 1000,   // 10분 동안 캐시 유지
+  });
 
   // Fetch data with infinite scroll
   const { books, loading, error, total, hasNextPage, isFetchingNextPage, fetchNextPage } = useBooks({
