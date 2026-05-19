@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import BookList from '@/components/BookList'
 import SearchBar from '@/components/SearchBar'
 import FilterBar from '@/components/FilterBar'
@@ -24,25 +25,22 @@ const ageDescriptions: Record<string, string> = {
 }
 
 export default function AgeCollectionClient({ age, initialBooks }: AgeCollectionClientProps) {
+    const router = useRouter()
     const [searchQuery, setSearchQuery] = useState('')
+    // URL이 source of truth — selectedAge는 현재 URL의 age로 초기화
     const [selectedAge, setSelectedAge] = useState<string>(age === 'teen' ? '13+' : age)
     const [selectedCategory, setSelectedCategory] = useState<string>('전체')
     const [sortBy, setSortBy] = useState<'pangyo_callno' | 'title'>('pangyo_callno')
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
 
-    useEffect(() => {
-        const jsonLd = {
-            '@context': 'https://schema.org',
-            '@type': 'ItemList',
-            name: `${ageDisplayNames[age]} 추천 도서`,
-            description: ageDescriptions[age]
+    // 탭 클릭 시 URL 이동 → 뒤로가기 UX 정상화 + GA 추적 정확도 향상
+    const handleAgeChange = (newAge: string) => {
+        setSelectedAge(newAge)
+        const urlAge = newAge === '13+' ? 'teen' : newAge
+        if (urlAge !== age) {
+            router.push(`/collections/age/${urlAge}`)
         }
-        const script = document.createElement('script')
-        script.type = 'application/ld+json'
-        script.text = JSON.stringify(jsonLd)
-        document.head.appendChild(script)
-        return () => { document.head.removeChild(script) }
-    }, [age])
+    }
 
     // initialBooks는 초기 로드 시 한 번만 사용됨. 필터가 변경되면 쿼리가 다시 실행됨.
     const currentInitialBooks = selectedAge === age ? initialBooks : undefined;
@@ -55,7 +53,7 @@ export default function AgeCollectionClient({ age, initialBooks }: AgeCollection
                     <SearchBar onSearch={setSearchQuery} />
                 </div>
                 <FilterBar selectedAge={selectedAge} selectedCategory={selectedCategory}
-                    onAgeChange={setSelectedAge} onFilterClick={() => setIsFilterModalOpen(true)} />
+                    onAgeChange={handleAgeChange} onFilterClick={() => setIsFilterModalOpen(true)} />
                 <IntegratedFilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)}
                     mode="integrated" selectedAge={selectedAge} selectedCategory={selectedCategory}
                     selectedSort={sortBy} onAgeChange={setSelectedAge} onCategoryChange={setSelectedCategory}
