@@ -41,15 +41,18 @@ export default function BookList({
   }, []);
 
   // Fetch recommended books for the top of the list if age filter is applied without other specific filters
+  // confidence_score_desc(AI 큐레이션 순) 정렬 중에는 실행하지 않음
+  // → 상세 페이지 뒤로가기 시 정렬이 잠깐 ㄱㄴㄷ순으로 바뀌는 현상 방지
   useEffect(() => {
-    if (ageFilter && !searchQuery && !curationFilter && (!categoryFilter || categoryFilter === "전체")) {
+    const isAiSort = sortFilter === 'confidence_score_desc';
+    if (ageFilter && !searchQuery && !curationFilter && !isAiSort && (!categoryFilter || categoryFilter === "전체")) {
       import("@/lib/home-api").then(({ getBooksByAge }) => {
         getBooksByAge(ageFilter, 7).then(setRecommendedBooks);
       });
     } else {
       setRecommendedBooks([]);
     }
-  }, [ageFilter, searchQuery, curationFilter, categoryFilter]);
+  }, [ageFilter, searchQuery, curationFilter, categoryFilter, sortFilter]);
 
   // Fetch data with infinite scroll
   const { books, loading, error, total, hasNextPage, isFetchingNextPage, fetchNextPage } = useBooks({
