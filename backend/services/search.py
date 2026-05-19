@@ -71,7 +71,7 @@ def search_books_service(
     책 검색 및 필터링 서비스
     """
     # 필요한 컬럼만 선택 (성능 최적화)
-    columns = "id,title,author,publisher,pangyo_callno,vol,category,age,image_url"
+    columns = "id,title,author,publisher,pangyo_callno,vol,category,age,image_url,curation_tag,curation_note,confidence_score"
     
     # 쿼리 빌드 - estimated count 사용 (훨씬 빠름)
     query = supabase.table("childbook_items").select(columns, count="estimated")
