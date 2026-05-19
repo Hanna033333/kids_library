@@ -96,12 +96,6 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
           {book.vol && `-${book.vol}`}
         </p>
 
-        {/* 사서 추천 코멘트 — AI 큐레이션이 적용된 책에만 표시 */}
-        {book.curation_note && (
-          <p className="text-[11px] text-[#5C8A70] leading-relaxed line-clamp-2 mb-2 italic">
-            &ldquo;{book.curation_note}&rdquo;
-          </p>
-        )}
 
         <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
           <span className="text-gray-400 truncate max-w-[50%]">{book.publisher}</span>
