@@ -39,21 +39,6 @@ export default function BookList({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // 연령분홈 코너 추천도서 (AI 큐레이션 순 제외, 일반 필터 상태에서만 사용)
-  // useQuery로 캐시화 → 상세페이지 다녀와도 캐시에서 즉시 복원 → 정렬 긜박임 제거
-  const shouldFetchRecommended = !!(ageFilter && !searchQuery && !curationFilter && sortFilter !== 'confidence_score_desc' && (!categoryFilter || categoryFilter === "전체"));
-
-  const { data: recommendedBooks = [] } = useQuery<Book[]>({
-    queryKey: ['recommended-books-by-age', ageFilter],
-    queryFn: async () => {
-      const { getBooksByAge } = await import("@/lib/home-api");
-      return getBooksByAge(ageFilter!, 7);
-    },
-    enabled: shouldFetchRecommended,
-    staleTime: 5 * 60 * 1000, // 5분 캐시 → 같은 세션에서 재요청 안 함
-    gcTime: 10 * 60 * 1000,   // 10분 동안 캐시 유지
-  });
-
   // Fetch data with infinite scroll
   const { books, loading, error, total, hasNextPage, isFetchingNextPage, fetchNextPage } = useBooks({
     searchQuery,
@@ -65,15 +50,40 @@ export default function BookList({
     initialBooks,
   });
 
-  // Merge recommended books to the top and remove duplicates from the main list
+  // 연령별 홈 코너 추천도서 (AI 큐레이션 순 제외, 일반 필터 상태에서만 사용)
+  // useQuery로 캐시화 → 상세페이지 다녀와도 캐시에서 즉시 복원 → 정렬 깜빡임 제거
+  const shouldFetchRecommended = !!(
+    ageFilter &&
+    !searchQuery &&
+    !curationFilter &&
+    sortFilter === "pangyo_callno" &&
+    (!categoryFilter || categoryFilter === "전체")
+  );
+
+  const { data: recommendedBooks = [], isLoading: isRecommendedLoading } = useQuery<Book[]>({
+    queryKey: ['recommended-books-by-age', ageFilter],
+    queryFn: async () => {
+      const { getBooksByAge } = await import("@/lib/home-api");
+      return getBooksByAge(ageFilter!, 7);
+    },
+    enabled: shouldFetchRecommended,
+    staleTime: 5 * 60 * 1000, // 5분 캐시
+    gcTime: 10 * 60 * 1000,   // 10분 캐시 유지
+  });
+
+  // 서버(page.tsx)에서 initialBooks를 받았거나, 추천 도서가 준비된 경우 병합 적용
+  // 그렇지 않으면 books 그대로 사용
   const displayBooks = useMemo(() => {
-    if (recommendedBooks.length === 0) return books;
-    
+    if (!shouldFetchRecommended || recommendedBooks.length === 0) return books;
+
     const recIds = new Set(recommendedBooks.map(b => b.id));
     const filteredMainBooks = books.filter(b => !recIds.has(b.id));
-    
+
     return [...recommendedBooks, ...filteredMainBooks];
-  }, [books, recommendedBooks]);
+  }, [books, recommendedBooks, shouldFetchRecommended]);
+
+  // SSR initialBooks가 없을 때만 추천 도서 로딩을 대기하여 첫 로드 레이아웃 흔들림 방지 및 SSR 성능 보존
+  const isListLoading = loading || (!initialBooks && shouldFetchRecommended && isRecommendedLoading);
 
   // Batch fetch loan statuses for all visible books
   const bookIds = displayBooks.map(b => b.id).join(',');
@@ -118,7 +128,7 @@ export default function BookList({
 
   // Track no results
   useEffect(() => {
-    if (!loading && books.length === 0 && (searchQuery || ageFilter || categoryFilter || curationFilter)) {
+    if (!isListLoading && books.length === 0 && (searchQuery || ageFilter || categoryFilter || curationFilter)) {
       sendGAEvent('search_no_results', { 
         keyword: searchQuery,
         age: ageFilter,
@@ -126,7 +136,7 @@ export default function BookList({
         curation: curationFilter
       });
     }
-  }, [loading, books.length, searchQuery, ageFilter, categoryFilter, curationFilter]);
+  }, [isListLoading, books.length, searchQuery, ageFilter, categoryFilter, curationFilter]);
 
   return (
     <div className="w-full px-4">
@@ -140,7 +150,7 @@ export default function BookList({
         )}
 
         {/* Loading (first page only) */}
-        {loading ? (
+        {isListLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6 mt-4">
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden h-[320px] animate-pulse">
@@ -153,7 +163,7 @@ export default function BookList({
               </div>
             ))}
           </div>
-        ) : !loading && displayBooks.length === 0 ? (
+        ) : !isListLoading && displayBooks.length === 0 ? (
           <div className="py-20 text-center bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center">
             <div className="text-gray-600 font-bold text-lg mb-1">검색 결과가 없습니다.</div>
             <div className="text-gray-400 text-sm">다른 검색어나 필터로 시도해보세요.</div>
