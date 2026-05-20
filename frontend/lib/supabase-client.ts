@@ -59,9 +59,17 @@ export async function getBooksFromSupabase(
     }
 
     // 정렬
-    const sortField = filters?.sort || 'pangyo_callno';
+    let sortField = filters?.sort || 'pangyo_callno';
+    
+    // 칼데콧의 경우 기본 정렬을 제목(ㄱㄴㄷ 순)으로 변경하여 홈 노출 순서와 일치시킴
+    if (!filters?.sort && filters?.curation === 'caldecott') {
+        sortField = 'title';
+    }
+
     if (sortField === 'confidence_score_desc') {
         query = query.order('confidence_score', { ascending: false });
+    } else if (sortField === 'title') {
+        query = query.order('title', { ascending: true });
     } else {
         query = query.order(sortField);
     }

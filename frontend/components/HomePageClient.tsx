@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -44,14 +44,18 @@ export default function HomePageClient({
   const router = useRouter()
   const { user, signOut } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedAge, setSelectedAge] = useState(() => {
-    // localStorage에서 마지막 선택 연령 가져오기 (재방문자 대응)
+  const [selectedAge, setSelectedAge] = useState(initialSelectedAge)
+  const isInitialRender = useRef(true)
+
+  // 클라이언트 마운트 시 localStorage에서 마지막 선택 연령 복원 (수화 오류 방지)
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('lastSelectedAge')
-      if (saved) return saved
+      if (saved && saved !== initialSelectedAge) {
+        setSelectedAge(saved)
+      }
     }
-    return initialSelectedAge
-  })
+  }, [initialSelectedAge])
 
   const [ageBooks, setAgeBooks] = useState<Book[]>(initialAgeBooks)
   const [researchBooks, setResearchBooks] = useState<Book[]>(initialResearchBooks)
@@ -86,10 +90,13 @@ export default function HomePageClient({
 
   // 연령별 책 로드 (초기 데이터가 있고 연령이 초기값과 같으면 스킵)
   useEffect(() => {
-    // 이미 데이터가 있고, 선택된 연령이 초기 연령과 같으면 페칭 안함 (SSR 활용)
-    if (ageBooks.length > 0 && selectedAge === initialSelectedAge) {
-      setLoading(false)
-      return
+    // 첫 렌더링 시점에만 SSR 데이터가 있고 선택 연령이 초기 연령과 같으면 페칭 스킵
+    if (isInitialRender.current) {
+      isInitialRender.current = false
+      if (ageBooks.length > 0 && selectedAge === initialSelectedAge) {
+        setLoading(false)
+        return
+      }
     }
 
     setLoading(true)
@@ -216,8 +223,7 @@ export default function HomePageClient({
             {[
               { key: '0-3', label: '0~3세' },
               { key: '4-7', label: '4~7세' },
-              { key: '8-12', label: '8~12세' },
-              { key: 'teen', label: '13세 이상' }
+              { key: '8-12', label: '8~12세' }
             ].map(age => (
               <button
                 key={age.key}

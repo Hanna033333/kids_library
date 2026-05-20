@@ -22,6 +22,7 @@ trigger: always_on
 18. **배포 트러블슈팅:** 배포 관련 이슈(Vercel, Render) 발생/수정 시에는 `.agent/skills/development/deployment/SKILL.md`를 반드시 참고하여 이전 사례를 검토해.
 19. **UI 구현:** 버튼 및 UI 요소 구현 시 `.agent/skills/design/color_system/SKILL.md`의 디자인 가이드를 준수해.
 20. **텍스트 구현:** UI 내의 모든 텍스트(알림, 버튼, 안내 문구) 구현 시 `.agent/skills/design/ux_writing/SKILL.md`의 톤앤매너와 규칙을 반드시 준수해.
+21. **큐레이션 목록 정렬 구현**: 큐레이션 목록 페이지(`/books?curation=xxx`) 구현 시, 홈 노출 도서 7권을 상단에 우선 고정하고, 칼데콧 등 특정 큐레이션은 제목 오름차순(ㄱㄴㄷ 순)으로 기본 정렬하는 규격(`.agent/skills/development/curation/SKILL.md`)을 철저히 준수해서 개발해.
 
 ## 🔒 보안 가이드
 1. **환경변수 관리**

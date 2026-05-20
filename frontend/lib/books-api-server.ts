@@ -62,12 +62,22 @@ export async function getBooksFromServer({
             'research-council': '어린이도서연구회'
         };
         const dbCurationTag = curationMapping[filters.curation] || filters.curation;
-        query = query.eq('curation_tag', dbCurationTag);
+        query = query.ilike('curation_tag', `%${dbCurationTag}%`);
     }
 
     // 정렬
-    const sortField = filters?.sort || 'pangyo_callno';
-    query = query.order(sortField);
+    let sortField = filters?.sort || 'pangyo_callno';
+    
+    // 칼데콧의 경우 기본 정렬을 제목(ㄱㄴㄷ 순)으로 변경하여 홈 노출 순서와 일치시킴
+    if (!filters?.sort && filters?.curation === 'caldecott') {
+        sortField = 'title';
+    }
+
+    if (sortField === 'title') {
+        query = query.order('title', { ascending: true });
+    } else {
+        query = query.order(sortField);
+    }
 
     // 페이징
     const start = (page - 1) * limit;

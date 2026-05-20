@@ -12,7 +12,7 @@ export async function getCaldecottBooks(client?: SupabaseClient): Promise<Book[]
     const { data, error } = await supabase
         .from('childbook_items')
         .select('id, title, author, publisher, category, age, pangyo_callno, image_url, isbn, curation_tag, library_info:book_library_info(library_name, callno)')
-        .eq('curation_tag', 'caldecott')
+        .ilike('curation_tag', '%caldecott%')
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('title', { ascending: true })
 

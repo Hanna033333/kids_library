@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             }
         }
 
-        const isCaldecott = book.curation_tag === 'caldecott'
+        const isCaldecott = book.curation_tag?.split(',').includes('caldecott') || book.curation_tag === 'caldecott'
         const title = isCaldecott 
             ? `${book.title} - 칼데콧 수상작 | 도서관 청구기호/위치 3초 확인 (책자리)`
             : `${book.title} - 도서관 청구기호/위치 3초 확인 (책자리)`
@@ -72,7 +72,7 @@ export default async function BookDetailPage({ params }: Props) {
             notFound()
         }
 
-        const isCaldecott = book.curation_tag === 'caldecott'
+        const isCaldecott = book.curation_tag?.split(',').includes('caldecott') || book.curation_tag === 'caldecott'
 
         // Schema.org 구조화 데이터 (JSON-LD)
         // ISBN이 있을 경우 교보문고 BuyAction 추가 -> Google Book Actions 리치 결과 활성화

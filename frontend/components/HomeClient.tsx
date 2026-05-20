@@ -7,12 +7,13 @@ import FilterBar from "@/components/FilterBar";
 import BookList from "@/components/BookList";
 import { BooksResponse } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
-import { LogIn, User, Search } from "lucide-react";
+import { LogIn, User, Search, Share2 } from "lucide-react";
 import Link from "next/link";
 import IntegratedFilterModal from "@/components/IntegratedFilterModal";
 import PageHeader from "@/components/PageHeader";
 import { sendGAEvent } from "@/lib/analytics";
 import UserAvatar from "@/components/UserAvatar";
+import Toast from "@/components/ui/Toast";
 
 interface HomeClientProps {
 }
@@ -43,6 +44,7 @@ export default function HomeClient({ }: HomeClientProps) {
     const [filterModalMode, setFilterModalMode] = useState<"integrated" | "category">("integrated");
     const [isSearchVisible, setIsSearchVisible] = useState(false);
     const { user, signOut } = useAuth();
+    const [toastMessage, setToastMessage] = useState("");
 
     // AI 큐레이션 태그 여부 (알려진 non-AI 큐레이션 제외)
     const NON_AI_CURATIONS = ['겨울방학', 'winter-vacation', '어린이도서연구회', 'research-council', 'caldecott'];
@@ -138,6 +140,46 @@ export default function HomeClient({ }: HomeClientProps) {
         return '도서 검색';
     }
 
+    const handleShareCuration = async () => {
+        const curationTitle = getPageTitle();
+        let shareUrl = '';
+        let shareText = '';
+        
+        if (curationFilter) {
+            shareUrl = `${window.location.origin}${window.location.pathname}?curation=${encodeURIComponent(curationFilter)}&utm_source=share&utm_medium=social&utm_campaign=curation_${encodeURIComponent(curationFilter)}`;
+            shareText = `우리 아이에게 딱 맞는 사서 추천 [${curationTitle}] 도서 리스트예요. 로그인 없이 대출 가능 여부까지 즉시 확인해 보세요!`;
+        } else if (ageFilter) {
+            // 연령별 상세 큐레이션 공유 대응
+            shareUrl = `${window.location.origin}${window.location.pathname}?age=${encodeURIComponent(ageFilter)}&utm_source=share&utm_medium=social&utm_campaign=age_${encodeURIComponent(ageFilter)}`;
+            shareText = `우리 아이 나이에 딱 맞는 [${curationTitle}] 리스트예요. 로그인 없이 대출 가능 여부까지 즉시 확인해 보세요!`;
+        } else {
+            return;
+        }
+        
+        const shareData = {
+            title: `책자리 - ${curationTitle}`,
+            text: shareText,
+            url: shareUrl
+        }
+
+        try {
+            if (typeof navigator.share === 'function') {
+                await navigator.share(shareData)
+            } else {
+                await navigator.clipboard.writeText(shareUrl)
+                setToastMessage('추천 리스트 링크가 복사되었습니다! 단톡방에 공유해 보세요.')
+            }
+            sendGAEvent('share_curation_list', {
+                curation_tag: curationFilter || undefined,
+                age_tag: ageFilter || undefined,
+                curation_title: curationTitle,
+                method: typeof navigator.share === 'function' ? 'native_share' : 'clipboard'
+            })
+        } catch (err) {
+            console.error('Share failed:', err)
+        }
+    }
+
     return (
         <main className="min-h-screen">
             {/* Header */}
@@ -183,13 +225,15 @@ export default function HomeClient({ }: HomeClientProps) {
                 />
             </div>
 
-            {/* 필터 바 (간소화) */}
+            {/* 필터 바 (간소화 및 공유 액션 연동) */}
             <FilterBar
                 selectedAge={ageFilter}
                 onAgeChange={handleAgeChange}
                 selectedCategory={categoryFilter}
                 onFilterClick={openIntegratedFilter}
                 showFilterButton={!isAiCuration}
+                onShareClick={handleShareCuration}
+                showShareButton={!!curationFilter || (!!ageFilter && !searchQuery)}
             />
 
             {/* 통합 필터 모달 */}
@@ -216,6 +260,13 @@ export default function HomeClient({ }: HomeClientProps) {
                     sortFilter={sortFilter}
                 />
             </div>
+
+            {/* 토스트 팝업 알림 */}
+            <Toast
+                message={toastMessage}
+                isVisible={!!toastMessage}
+                onClose={() => setToastMessage('')}
+            />
         </main>
     );
 }

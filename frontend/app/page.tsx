@@ -5,6 +5,8 @@ import { getCaldecottBooks } from '@/lib/caldecott-api'
 import { createClient } from '@/lib/supabase-server'
 import { VALID_TAXONOMY } from '@/lib/constants/taxonomy'
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://checkjari.com"),
   alternates: { canonical: '/' },

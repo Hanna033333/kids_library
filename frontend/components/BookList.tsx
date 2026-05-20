@@ -50,21 +50,36 @@ export default function BookList({
     initialBooks,
   });
 
-  // 연령별 홈 코너 추천도서 (AI 큐레이션 순 제외, 일반 필터 상태에서만 사용)
+  // 연령별 및 주요 큐레이션 홈 코너 추천도서 (AI 큐레이션 순 제외, 일반 필터 상태에서만 사용)
   // useQuery로 캐시화 → 상세페이지 다녀와도 캐시에서 즉시 복원 → 정렬 깜빡임 제거
   const shouldFetchRecommended = !!(
-    ageFilter &&
+    (ageFilter || ['caldecott', '어린이도서연구회', 'research-council', '겨울방학', 'winter-vacation'].includes(curationFilter || "")) &&
     !searchQuery &&
-    !curationFilter &&
     sortFilter === "pangyo_callno" &&
     (!categoryFilter || categoryFilter === "전체")
   );
 
   const { data: recommendedBooks = [], isLoading: isRecommendedLoading } = useQuery<Book[]>({
-    queryKey: ['recommended-books-by-age', ageFilter],
+    queryKey: ['recommended-books', ageFilter, curationFilter],
     queryFn: async () => {
-      const { getBooksByAge } = await import("@/lib/home-api");
-      return getBooksByAge(ageFilter!, 7);
+      if (ageFilter) {
+        const { getBooksByAge } = await import("@/lib/home-api");
+        return getBooksByAge(ageFilter, 7);
+      }
+      if (curationFilter === "caldecott") {
+        const { getCaldecottBooks } = await import("@/lib/caldecott-api");
+        const books = await getCaldecottBooks();
+        return books.slice(0, 7);
+      }
+      if (curationFilter === "어린이도서연구회" || curationFilter === "research-council") {
+        const { getResearchCouncilBooks } = await import("@/lib/home-api");
+        return getResearchCouncilBooks(7);
+      }
+      if (curationFilter === "겨울방학" || curationFilter === "winter-vacation") {
+        const { getWinterBooks } = await import("@/lib/home-api");
+        return getWinterBooks(7);
+      }
+      return [];
     },
     enabled: shouldFetchRecommended,
     staleTime: 5 * 60 * 1000, // 5분 캐시

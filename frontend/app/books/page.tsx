@@ -82,7 +82,7 @@ export default async function BooksPage({ searchParams }: Props) {
         const { data: books } = await supabase
             .from('childbook_items')
             .select('id, title, author, isbn, image_url')
-            .eq('curation_tag', curation)
+            .ilike('curation_tag', `%${curation}%`)
             .or('is_hidden.is.null,is_hidden.eq.false')
             .order('title', { ascending: true })
 

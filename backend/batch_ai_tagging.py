@@ -13,7 +13,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # 상수 정의
-MODEL_NAME = "gemini-pro-latest"
+MODEL_NAME = "gemini-3-flash-preview"
 BATCH_SIZE = 10
 
 # 20개 표준 카테고리 정의

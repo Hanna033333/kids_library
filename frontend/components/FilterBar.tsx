@@ -1,4 +1,4 @@
-"use client";
+import { Share2 } from "lucide-react";
 
 interface FilterBarProps {
   selectedAge: string;
@@ -6,19 +6,22 @@ interface FilterBarProps {
   selectedCategory: string;
   onFilterClick: () => void;
   showFilterButton?: boolean;
+  onShareClick?: () => void;
+  showShareButton?: boolean;
 }
 
 const AGE_OPTIONS = [
   { value: "0-3", label: "0~3세" },
   { value: "4-7", label: "4~7세" },
   { value: "8-12", label: "8~12세" },
-  { value: "13+", label: "13세 이상" },
 ];
 
 export default function FilterBar({
   selectedAge, onAgeChange,
   selectedCategory, onFilterClick,
-  showFilterButton = true
+  showFilterButton = true,
+  onShareClick,
+  showShareButton = false
 }: FilterBarProps) {
 
   const handleAgeToggle = (ageVal: string) => {
@@ -31,10 +34,10 @@ export default function FilterBar({
 
   return (
     <div className="w-full px-4 pt-2 pb-2 mb-4">
-      <div className="w-full max-w-[1200px] mx-auto">
+      <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between gap-3">
 
-        {/* Scrollable Filters */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
+        {/* Left Side: Scrollable Filters (Horizontal scroll under the thumb) */}
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1 flex-1">
           {/* 통합 필터 (정렬 등) 버튼 */}
           {showFilterButton && (
             <button
@@ -46,7 +49,7 @@ export default function FilterBar({
               aria-label="상세 필터 및 정렬"
             >
               <span>{selectedCategory && selectedCategory !== "전체" ? selectedCategory : "필터"}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`w-3.5 h-3.5 ${selectedCategory && selectedCategory !== "전체" ? "text-gray-400" : "text-gray-400"}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-gray-400">
                 <path d="m6 9 6 6 6-6" />
               </svg>
             </button>
@@ -66,6 +69,18 @@ export default function FilterBar({
             </button>
           ))}
         </div>
+
+        {/* Right Side: Sticky, space-saving Share Button (Circular Action Button) */}
+        {showShareButton && onShareClick && (
+          <button
+            onClick={onShareClick}
+            className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 active:scale-[0.95] transition-transform cursor-pointer"
+            aria-label="공유하기"
+            title="공유하기"
+          >
+            <Share2 className="w-[18px] h-[18px] text-gray-500" />
+          </button>
+        )}
       </div>
     </div>
   );

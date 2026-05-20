@@ -22,13 +22,33 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
         return []
     }
 
+    // 1. 전체 책 개수 조회 (헤드 쿼리로 속도 최적화)
+    const { count, error: countError } = await supabase
+        .from('childbook_items')
+        .select('*', { count: 'exact', head: true })
+        .in('age', ageValues)
+        .or('is_hidden.is.null,is_hidden.eq.false')
+
+    if (countError) {
+        console.error('Error fetching books count by age:', countError)
+        return []
+    }
+
+    const totalCount = count || 0
+    if (totalCount === 0) {
+        return []
+    }
+
     // 현재 주차 계산 (일주일마다 바뀜)
     const now = new Date()
     const startOfYear = new Date(now.getFullYear(), 0, 1)
     const weekNumber = Math.floor((now.getTime() - startOfYear.getTime()) / (7 * 24 * 60 * 60 * 1000))
 
-    // 주차를 offset으로 사용 (매주 다른 책 선택)
-    const offset = (weekNumber * 5) % 100 // 100개 범위 내에서 순환
+    // 2. 안전한 offset 계산 (전체 개수보다 크지 않도록 보정)
+    // 데이터가 충분하지 않으면 0부터 로드
+    const offset = totalCount > limit
+        ? (weekNumber * limit) % (totalCount - limit + 1)
+        : 0
 
     const { data, error } = await supabase
         .from('childbook_items')
@@ -52,13 +72,32 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
 export async function getResearchCouncilBooks(limit: number = 5, client?: SupabaseClient): Promise<Book[]> {
     const supabase = client || createClient()
 
+    // 1. 전체 책 개수 조회
+    const { count, error: countError } = await supabase
+        .from('childbook_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('curation_tag', '어린이도서연구회')
+        .or('is_hidden.is.null,is_hidden.eq.false')
+
+    if (countError) {
+        console.error('Error fetching research council books count:', countError)
+        return []
+    }
+
+    const totalCount = count || 0
+    if (totalCount === 0) {
+        return []
+    }
+
     // 현재 주차 계산 (일주일마다 바뀜)
     const now = new Date()
     const startOfYear = new Date(now.getFullYear(), 0, 1)
     const weekNumber = Math.floor((now.getTime() - startOfYear.getTime()) / (7 * 24 * 60 * 60 * 1000))
 
-    // 주차를 offset으로 사용 (매주 다른 책 선택)
-    const offset = (weekNumber * 5) % 50 // 50개 범위 내에서 순환
+    // 2. 안전한 offset 계산
+    const offset = totalCount > limit
+        ? (weekNumber * limit) % (totalCount - limit + 1)
+        : 0
 
     const { data, error } = await supabase
         .from('childbook_items')
