@@ -153,9 +153,6 @@ export default function HomePageClient({
               alt="책자리"
               className="h-9 w-auto"
             />
-            <span className="absolute top-1 -right-9 text-gray-400 text-xs font-bold leading-none italic">
-              beta
-            </span>
           </button>
         </h1>
 
