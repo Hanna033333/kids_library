@@ -24,11 +24,11 @@ DROP POLICY IF EXISTS "No public insert" ON public.childbook_items;
 DROP POLICY IF EXISTS "No public update" ON public.childbook_items;
 DROP POLICY IF EXISTS "No public delete" ON public.childbook_items;
 
--- 읽기: 누구나 가능 (도서 검색/조회 기능)
+-- 읽기: 누구나 가능하지만, 숨김 처리되지 않은 도서(is_hidden이 TRUE가 아닌 도서)만 조회 가능
 CREATE POLICY "Public read access"
   ON public.childbook_items
   FOR SELECT
-  USING (true);
+  USING (is_hidden IS NOT TRUE);
 
 -- 쓰기 차단: 익명/일반 유저는 INSERT 불가
 CREATE POLICY "No public insert"

@@ -253,8 +253,7 @@ def check_data_logic():
     
     # 5-2. 중복 ISBN 확인
     try:
-        result = supabase.rpc("check_duplicate_isbns").execute()
-        # RPC가 없을 수 있으므로 간단히 쿼리로 대체
+        # RPC 대신 직접 쿼리를 사용하여 중복 ISBN을 안전하게 검증합니다.
         data = supabase.table("childbook_items").select("isbn").not_.is_("isbn", "null").execute()
         
         isbns = [book["isbn"] for book in data.data if book.get("isbn")]

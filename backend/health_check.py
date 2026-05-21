@@ -116,8 +116,14 @@ def verify_db_policies(sb):
     print("\n🔍 Verifying Content Policy (At least 7 books per section)...")
 
     # 1. Winter
-    res = sb.table('childbook_items').select('id', count='exact').eq('curation_tag', '겨울방학2026').or_('is_hidden.is.null,is_hidden.eq.false').execute()
-    if not check(res.count, "Winter Books", 7): success = False
+    url = sb.supabase_url
+    print(f"ℹ️ Connecting to Supabase URL: {url}")
+    res = sb.table('childbook_items').select('id, title, curation_tag, pangyo_callno, is_hidden', count='exact').eq('curation_tag', '겨울방학2026').or_('is_hidden.is.null,is_hidden.eq.false').execute()
+    print(f"ℹ️ Winter query data count: {len(res.data) if res.data else 0}, count_exact: {res.count}")
+    if res.data:
+        for b in res.data[:3]:
+            print(f"   - {b['title']} (tag: {b.get('curation_tag')}, callno: {b.get('pangyo_callno')}, hidden: {b.get('is_hidden')})")
+    if not check(res.count if res.count is not None else len(res.data), "Winter Books", 7): success = False
 
     # 2. Research Council
     res = sb.table('childbook_items').select('id', count='exact').eq('curation_tag', '어린이도서연구회').or_('is_hidden.is.null,is_hidden.eq.false').execute()
