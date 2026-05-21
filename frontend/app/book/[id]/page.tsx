@@ -22,15 +22,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
         const isCaldecott = book.curation_tag?.split(',').includes('caldecott') || book.curation_tag === 'caldecott'
         const title = isCaldecott 
-            ? `${book.title} - 칼데콧 수상작 | 도서관 청구기호/위치 3초 확인 (책자리)`
-            : `${book.title} - 도서관 청구기호/위치 3초 확인 (책자리)`
+            ? `${book.title} - 칼데콧 메달 수상작 | 책자리 도서 큐레이션`
+            : `${book.title} - ${book.category || '어린이 추천 도서'} | 책자리 도서 큐레이션`
         
         const description = isCaldecott
-            ? `[칼데콧 메달 수상작] ${book.title}의 청구기호, 도서관 위치, 대출 여부를 확인하세요. 사서가 추천하는 세계 최고의 그림책.`
-            : `${book.title}의 청구기호, 도서관 위치, 대출 여부를 확인하고 관심 도서로 저장하세요. 내 도서관 설정 가능.`
+            ? `[칼데콧 메달 수상작] 세계가 인정한 그림책, ${book.title}. 도서관 청구기호로 바로 찾아보세요. ${book.author ? `글/그림: ${book.author}.` : ''}`
+            : `${book.title}${book.age ? ` (${book.age} 추천)` : ''}. 도서관 청구기호로 바로 찾아보세요. ${book.author ? `저자: ${book.author}.` : ''}책자리 큐레이션 도서.`
         
         const caldecottKeywords = isCaldecott ? '칼데콧 수상작, Caldecott Medal, 그림책 노벨상, ' : ''
-        const keywords = `${caldecottKeywords}${book.title}, ${book.author}, 도서관, 청구기호, 어린이 도서, ${book.category || '추천도서'}, 4~7세 추천 도서, 초등 필독서, 도서관 위치, 청구기호 찾기, 책자리, 판교도서관`
+        const keywords = `${caldecottKeywords}${book.title}, ${book.author}, 어린이 도서 추천, ${book.category || '그림책'}, ${book.age || ''} 추천도서, 도서관 청구기호, 책자리, 어린이 도서관`
 
         return {
             title,
@@ -94,8 +94,8 @@ export default async function BookDetailPage({ params }: Props) {
             },
             'image': getHighResImageUrl(book.image_url) || '',
             'description': isCaldecott 
-                ? `[칼데콧 수상작] ${book.title}의 청구기호, 도서관 위치, 대출 가능 여부를 확인하세요.`
-                : `${book.title}의 청구기호, 도서관 위치, 대출 가능 여부를 확인하세요.`,
+                ? `[칼데콧 메달 수상작] 세계가 인정한 그림책, ${book.title}. 도서관 청구기호로 바로 찾아보세요.`
+                : `${book.title}${book.age ? ` (${book.age} 추천)` : ''}. 책자리 큐레이션 도서. 도서관 청구기호로 바로 찾아보세요.`,
             'publisher': {
                 '@type': 'Organization',
                 'name': book.publisher || '출판사 정보 없음'
