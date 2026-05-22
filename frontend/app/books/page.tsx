@@ -1,16 +1,20 @@
 import HomeClient from "@/components/HomeClient";
 import { Metadata } from 'next'
+import { VALID_TAXONOMY, VALID_AI_TAGS } from '@/lib/constants/taxonomy'
 
 interface Props {
     searchParams: { age?: string; curation?: string; category?: string; q?: string }
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-    const { age, curation, q } = searchParams
+    const { age, curation: rawCuration, q } = searchParams
+    const curation = rawCuration ? decodeURIComponent(rawCuration) : undefined
 
     let title = '책자리 - 도서 검색'
     let description = '판교도서관의 도서를 검색하고 청구기호를 확인하세요.'
     let keywords = '어린이 도서, 도서 검색, 판교도서관'
+
+    const matchedTaxonomy = VALID_TAXONOMY.find(item => item.tag === curation);
 
     if (curation === 'winter-vacation' || curation === '겨울방학') {
         title = '스마트폰만 보는 아이, 방학 때 뭐 읽힐까요?'
@@ -24,6 +28,10 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         title = "칼데콧 수상작 (2000-2026)"
         description = '2000년부터 2026년까지 칼데콧 메달을 수상한 세계 최고의 어린이 그림책 목록입니다. 판교도서관 청구기호와 대출 정보를 확인하세요.'
         keywords = '칼데콧상, Caldecott Medal, 어린이 그림책, 수상작, 추천 도서, 판교도서관'
+    } else if (matchedTaxonomy) {
+        title = `${matchedTaxonomy.subtitle} ${matchedTaxonomy.title}`
+        description = `${matchedTaxonomy.subtitle}! 책자리에서 엄선한 최고의 '${matchedTaxonomy.title}' 추천 그림책 리스트를 확인하고 우리 동네 도서관에서 대출해 보세요.`
+        keywords = `${matchedTaxonomy.tag}, ${matchedTaxonomy.title}, 그림책 큐레이션, 그림책 추천, 어린이 도서, 책자리`
     } else if (age) {
         if (age === '0-3') {
             title = '우리 아이 나이에 딱! 0-3세 맞춤 도서'
@@ -73,11 +81,14 @@ import { createClient } from '@/lib/supabase-server'
 export const dynamic = 'force-dynamic';
 
 export default async function BooksPage({ searchParams }: Props) {
-    const { curation } = searchParams
+    const { curation: rawCuration } = searchParams
+    const curation = rawCuration ? decodeURIComponent(rawCuration) : undefined
     let jsonLd = null;
 
     // curation 값이 있고, 알려진 큐레이션 태그인 경우 서버 사이드에서 데이터를 가져와 구조화된 데이터 생성
-    if (curation && ['winter-vacation', 'research-council'].includes(curation)) {
+    const isKnownCuration = ['winter-vacation', 'research-council', 'caldecott'].includes(curation || '') || 
+                            (curation && VALID_AI_TAGS.includes(curation));
+    if (curation && isKnownCuration) {
         const supabase = createClient()
         const { data: books } = await supabase
             .from('childbook_items')

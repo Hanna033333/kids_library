@@ -12,13 +12,30 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://checkjari.com"),
+  title: {
+    default: "책자리 - 우리 아이를 위한 맞춤 그림책 큐레이션",
+    template: "%s | 책자리"
+  },
+  description: "아이의 발달 상황과 육아 고민에 딱 맞는 그림책을 추천해 드립니다. 잠자리, 사회성, 감정조절 등 14가지 주제별 AI 추천 그림책을 만나보세요.",
+  keywords: ["그림책 큐레이션", "그림책 추천", "어린이 도서", "잠자리 동화", "사회성 그림책", "감정조절 그림책", "책자리", "육아도서"],
   authors: [{ name: "책자리" }],
   icons: {
     icon: '/logo.png',
     apple: '/logo.png',
   },
   openGraph: {
+    title: "책자리 - 우리 아이를 위한 맞춤 그림책 큐레이션",
+    description: "아이의 발달 상황과 육아 고민에 딱 맞는 그림책을 추천해 드립니다. 잠자리, 사회성, 감정조절 등 14가지 주제별 AI 추천 그림책을 만나보세요.",
+    url: "https://checkjari.com",
     siteName: "책자리",
+    images: [
+      {
+        url: "/logo.png",
+        width: 512,
+        height: 512,
+        alt: "책자리 그림책 큐레이션"
+      }
+    ],
     locale: "ko_KR",
     type: "website",
   },
