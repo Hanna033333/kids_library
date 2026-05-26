@@ -105,6 +105,40 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
         return undefined;
     })();
 
+    // 맥락적 CTA 분기 구조 설계
+    const getPurchaseButtonProps = () => {
+        const isNoLibrary = !displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음' || normalizedStatus?.status === '미소장';
+        const isLoanedOut = normalizedStatus?.available === false;
+
+        if (isNoLibrary) {
+            return {
+                subText: "도서관에 없는 책이에요",
+                mainText: "기다림 없이 바로 구매하기",
+                variant: "primary" as const,
+                className: "flex-1 w-full h-14 bg-brand-primary text-white hover:bg-brand-primary/95 transition-all active:scale-[0.98] rounded-lg shadow-sm"
+            };
+        }
+        
+        if (isLoanedOut) {
+            return {
+                subText: "현재 대출 중인 책이에요",
+                mainText: "기다리지 않고 소장하기",
+                variant: "primary" as const,
+                className: "flex-1 w-full h-14 bg-brand-primary text-white hover:bg-brand-primary/95 transition-all active:scale-[0.98] rounded-lg shadow-sm"
+            };
+        }
+
+        // 기본 상태 (대출 가능 혹은 확인중 등)
+        return {
+            subText: "도서관에 갈 시간이 없다면",
+            mainText: "지금 바로 주문하세요",
+            variant: "secondary" as const,
+            className: "flex-1 w-full h-14 border-gray-200 bg-white text-gray-700 hover:bg-gray-50/50 transition-all active:scale-[0.98] rounded-lg"
+        };
+    };
+
+    const ctaProps = getPurchaseButtonProps();
+
     // Send GA event when book detail page is viewed
     useEffect(() => {
         sendGAEvent('view_book_detail', {
@@ -411,15 +445,17 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                 <Share2 className="w-6 h-6" />
                             </button>
                             <Button
-                                variant="secondary"
+                                variant={ctaProps.variant}
                                 size="lg"
                                 onClick={handleBuyKyobo}
-                                className="flex-1 w-full h-14 flex flex-col items-center justify-center gap-1 border-gray-200 bg-white transition-all active:scale-[0.98]"
+                                className={ctaProps.className}
                             >
-                                <span className="text-[10px] text-gray-400 font-medium leading-none">도서관에 갈 시간이 없다면?</span>
-                                <div className="flex items-center text-gray-700 font-bold text-sm leading-none">
+                                <span className={`text-[10px] font-medium leading-none ${ctaProps.variant === 'primary' ? 'text-white/80' : 'text-gray-400'}`}>
+                                    {ctaProps.subText}
+                                </span>
+                                <div className={`flex items-center font-bold text-sm leading-none ${ctaProps.variant === 'primary' ? 'text-white' : 'text-gray-700'}`}>
                                     <ShoppingCart className="w-4 h-4 mr-1.5" />
-                                    지금 바로 주문하세요
+                                    {ctaProps.mainText}
                                 </div>
                             </Button>
                         </div>
