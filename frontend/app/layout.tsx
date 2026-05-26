@@ -63,6 +63,47 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="bg-[#F7F7F7] min-h-screen text-gray-900 overflow-x-hidden">
+        {/* Google Analytics 차단 최우선 처리 스크립트 (동기식 실행하여 경쟁 상태 해결) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var isBot = false;
+                  if (typeof navigator !== "undefined") {
+                    if (navigator.webdriver) isBot = true;
+                    var ua = navigator.userAgent.toLowerCase();
+                    var botPatterns = ['headless', 'phantom', 'selenium', 'puppeteer', 'playwright', 'chrome-lighthouse', 'bot', 'crawler'];
+                    for (var i = 0; i < botPatterns.length; i++) {
+                      if (ua.indexOf(botPatterns[i]) !== -1) { isBot = true; break; }
+                    }
+                  }
+                  
+                  var hasIgnore = false;
+                  if (typeof window !== "undefined" && window.location && window.location.search) {
+                    if (window.location.search.indexOf("ignore=true") !== -1) {
+                      hasIgnore = true;
+                      localStorage.setItem("checkjari_ignore_tracking", "true");
+                    }
+                  }
+                  
+                  if (typeof localStorage !== "undefined") {
+                    if (localStorage.getItem("checkjari_ignore_tracking") === "true") {
+                      hasIgnore = true;
+                    }
+                  }
+                  
+                  if (hasIgnore || isBot) {
+                    window['ga-disable-G-FG2WYB82L9'] = true;
+                    console.log("🚫 [GA4] Tracking Disabled (ga-disable-G-FG2WYB82L9 = true)");
+                  }
+                } catch (e) {
+                  console.error("GA Ignore check error:", e);
+                }
+              })();
+            `
+          }}
+        />
         {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-FG2WYB82L9"
@@ -70,45 +111,12 @@ export default function RootLayout({
         />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
-            // Bot detection function
-            function isBotOrAutomation() {
-              if (typeof navigator === "undefined") return true;
-
-              // Check for WebDriver
-              if (navigator.webdriver) {
-                console.log("🤖 Bot detected: WebDriver");
-                return true;
-              }
-
-              // Check User-Agent
-              const ua = navigator.userAgent.toLowerCase();
-              const botPatterns = ['headless', 'phantom', 'selenium', 'puppeteer', 'playwright', 'chrome-lighthouse', 'bot', 'crawler'];
-              for (const pattern of botPatterns) {
-                if (ua.includes(pattern)) {
-                  console.log("🤖 Bot detected: " + pattern);
-                  return true;
-                }
-              }
-
-              return false;
-            }
-
-            // Check if tracking should be ignored
-            const shouldIgnore = localStorage.getItem("checkjari_ignore_tracking") === "true" || 
-                                window.location.search.includes("ignore=true") ||
-                                isBotOrAutomation();
-
-            if (shouldIgnore) {
-              if (window.location.search.includes("ignore=true")) {
-                localStorage.setItem("checkjari_ignore_tracking", "true");
-              }
-              console.log("🚫 GA Tracking Disabled");
-            } else {
+            if (!window['ga-disable-G-FG2WYB82L9']) {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
               gtag('config', 'G-FG2WYB82L9');
-              console.log("✅ GA Tracking Enabled");
+              console.log("✅ [GA4] Tracking Enabled");
             }
           `}
         </Script>
