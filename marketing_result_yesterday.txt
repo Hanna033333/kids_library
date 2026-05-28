@@ -3,10 +3,15 @@
 ==================================================
 
 [1] 🌍 Acquisition Source/Medium
-   - (direct) / (none)              | Users:   2 | Sess:   2 | AvgTime: 0.0s
+   - (direct) / (none)              | Users:   2 | Sess:   2 | AvgTime: 30.5s
+   - naver / organic                | Users:   1 | Sess:   1 | AvgTime: 26.0s
 
 [2] 📄 Top Content
-   - /                              | 책자리 - 도서관 청구기호/위치 3초 확인 (내 도서관 설정)       | Views:   2 | Users:   2 | AvgTime: 0.0s
+   - /                              | 책자리 - 우리 아이 맞춤 도서 큐레이션 & 도서관 청구기호 바로 찾기  | Views:   3 | Users:   2 | AvgTime: 13.5s
+   - /book/7703                     | 고구마구마 - 동화 | 책자리 도서 큐레이션 | 책자리           | Views:   2 | Users:   1 | AvgTime: 1.0s
+   - /books                         | 7세 책 추천 리스트 | 유치원생 필독도서 & 그림책 추천 - 책자리 | | Views:   2 | Users:   1 | AvgTime: 33.0s
+   - /collections/age/4-7           | 4-7세 유아 그림책 추천 | 유치원생 필독서 리스트 - 책자리 | 책자 | Views:   1 | Users:   1 | AvgTime: 26.0s
 
 [3] 📍 Top Cities
-   - Council Bluffs                 | Users: 2
+   - Seongnam-si                    | Users: 2
+   - Goyang-si                      | Users: 1

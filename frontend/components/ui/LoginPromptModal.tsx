@@ -14,8 +14,8 @@ interface LoginPromptModalProps {
 export default function LoginPromptModal({
     isOpen,
     onClose,
-    title = '찜한 책은 내 책장에 보관돼요!',
-    description = '다음에 도서관 갈 때 헤매지 않도록 미리 담아두세요.'
+    title = '좋은 책, 놓치지 않게!',
+    description = '전문가가 엄선한 추천작들을 책장에 담아두세요.'
 }: LoginPromptModalProps) {
     const router = useRouter();
 

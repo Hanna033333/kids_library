@@ -1,86 +1,64 @@
-# Marketing Activities & Status
+# 🎯 마케팅 활동 및 데이터 분석 현황 (Marketing Activities & Status)
 
-현재 진행 중인 마케팅 활동, 광고, SEO 및 데이터 분석 현황을 정리한 문서입니다.
-
-## 1. 진행 중인 캠페인 (Campaigns)
-
-### ❄️ 겨울방학 추천도서 캠페인
-겨울방학 시즌을 맞아 학부모와 어린이가 양질의 도서를 쉽게 찾을 수 있도록 큐레이션된 섹션을 운영합니다.
-
-*   **목표**: '겨울방학 추천도서' 섹션 유입 증대 및 도서 상세 조회(Conversion) 유도
-*   **Customer Journey**: `유입(Acquisition)` → `도서 클릭(Activation)` → `재방문(Retention)`
-*   **성과 측정**:
-    *   **도구**: Google Analytics 4 (GA4)
-    *   **워크플로우**: `/check_winter_campaign` (자동화된 성과 리포트 생성)
-    *   **주요 지표 (KPIs)**:
-        *   `sessionSourceMedium` (유입 경로 분석)
-        *   `click_book_detail` (도서 상세 클릭 수)
-        *   `Active Users` vs `New Users` (재방문율 파악)
-
-## 🔄 Phase 2: The "Click Pivot" (Current Focus)
-*Goal: Validate acquisition by removing "App" friction.*
-
-### 1. New Core Message: "Anti-App"
-- **Problem**: Users ignore the post because they fear "App Install" friction.
-- **Solution**: Explicitly scream **"No Install, No Login"**.
-
-### 2. Action Plan (Copy Testing)
-- **Angle A (Convenience)**: "Don't install apps. Just bookmark." -> Target: Lazy/Busy Moms.
-- **Angle B (FOMO)**: "Librarian's Secret List." -> Target: Edu-focused Moms.
-- **Angle C (Pain)**: "Don't stand in line at the kiosk." -> Target: Library Goers.
-
-### 3. Measurement (UTM)
-- All new posts MUST use UTM links.
-- `?utm_source=[channel]&utm_medium=social&utm_campaign=[angle]`
-- Example: `checkjari.com/?utm_source=momcafe&utm_medium=social&utm_campaign=angle_a`
+본 문서는 책자리의 서비스 피봇팅(**"AI 사서의 상황별 정서 맞춤 우리 아이 그림책 큐레이션 플랫폼"**)에 따라, 현재 진행 중인 마케팅 활동, 채널 및 광고 전략, SEO 최적화 및 데이터 분석 현황을 전면적으로 정의한 공식 문서입니다.
 
 ---
 
-## 2. 채널 및 광고 전략 (Channels & Ads)
+## 1. 진행 중인 마케팅 캠페인 (Campaigns)
 
-### 🟢 네이버 검색광고 (Naver Search Ads)
-판교 지역 학부모를 타겟으로 한 검색 광고 집행 준비 단계입니다.
+### 💤 [잠자리] 스르륵 꿀잠을 부르는 그림책 캠페인
+*   **배경:** 많은 영유아 학부모의 공통 고민인 '잠자리 떼쓰기' 및 '수면 루틴 형성'을 공략.
+*   **목표:** 감도 높은 잠자리 정서 도서 큐레이션을 통해 신규 유저를 획득하고, 상세 페이지로의 매끄러운 전환 유도.
+*   **Customer Journey:** `맘카페/SNS 유입(Acquisition)` ➡️ `큐레이션 둘러보기(Activation)` ➡️ `상세 페이지 확인(NSM 달성)` ➡️ `북마크/소장 여부 조회(Action 전환)`
+*   **주요 지표:** 
+    *   `utm_campaign=sleep` 유입 세션 수 및 체류 시간
+    *   잠자리 상세 페이지(`/book/7703` 등) 도달 및 이탈률
 
-*   **상태**: 집행 준비 중 (Setup Phase)
-*   **타겟 키워드**: `판교 도서관`, `어린이 도서 추천`, `청구기호 찾기` 등
-*   **액션 아이템**:
-    *   [ ] UTM 파라미터 전략 수립 및 세팅
-    *   [ ] 키워드 성과 모니터링 환경 구축
+### 🤝 [사회성] 유치원·어린이집 첫 등원 케어 캠페인
+*   **배경:** 등원 거부, 친구 사귀기 두려움 등 환경 변화로 힘들어하는 아이의 자존감과 감정 관리를 돕는 테마.
+*   **목표:** 맘카페 및 교육 커뮤니티에 전문가 검증 도서 리스트를 배포하여 오가닉 바이럴 루프 구축.
 
-### 📢 커뮤니티 바이럴 (Community Viral)
-*   **타겟**: 판교 지역 맘카페, 아파트 커뮤니티, 지역 기반 온라인 그룹
-*   **전략**: '도서관 청구기호 찾기의 어려움'을 해결해주는 유용한 툴로서 자연스러운 바이럴 유도
-*   **기능 지원**:
-    *   [ ] 카카오톡 공유하기 기능 도입 (개발 논의 중)
+---
+
+## 2. 채널 및 바이럴 그로스 전략 (Channels & Growth Hack)
+
+### 🟢 맘카페/커뮤니티 자연스러운 정보 바이럴
+*   **타겟:** 전국구 맘카페(맘스홀릭 베이비, 초등맘 등) 및 맘스카페(분따, 대치맘 등 로컬 고관여 카페).
+*   **전략:** 광고성 링크 삽입을 지양하고, **"정서 발달에 즉효였던 상황별 도서 꿀팁"** 포맷으로 학부모들의 북마크(저장) 욕구를 자극. 
+*   **UX 마찰 최소화 소구:** 앱 설치나 회원 가입 요구 없이, 링크 클릭만 하면 3초 만에 큐레이션 확인부터 전국 도서관 소장 현황 및 바로 구매가 가능하다는 점을 자연스럽게 알림.
+
+### 📢 소셜 공유(바이럴 루프) 도입
+*   **현황:** 특정 큐레이션 컬렉션을 학부모 단톡방 등에 간편히 공유할 수 있는 **"카카오톡 공유 카드 및 컬렉션 쉐어링"** 훅(Hook) 설계 도입 진행 중. 
+
+### 🚀 전국구 타겟팅 검색어 중심의 광고 테스트 (Phase 2)
+*   기존 판교 등 오프라인 로컬 타겟에 한정된 키워드 광고 준비를 폐기하고, 전국 단위 육아맘들을 대상으로 소액 인스타그램/네이버 블로그 키워드 광고 기획.
+*   **핵심 타겟 키워드:** `잠자리 그림책 추천`, `아이 감정 조절 동화`, `칼데콧 메달 수상작 목록`
 
 ---
 
 ## 3. SEO (검색 엔진 최적화)
 
-네이버와 구글에서의 유기적 유입(Organic Traffic)을 늘리기 위한 테크니컬 마케팅 활동입니다.
+네이버와 구글 검색엔진 장악을 통해 비용이 들지 않는 고품질의 유기적 트래픽(Organic Traffic)을 장기적으로 확보합니다.
 
 ### 🟢 네이버 (Naver Search Advisor)
-*   **완료 사항**:
-    *   `robots.txt` 설정 최적화
-    *   메타 태그(Open Graph, Description) 적용
-    *   사이트 소유권 확인 완료
-*   **진행 중**:
-    *   '수집 제한' 이슈 모니터링 및 해결
-    *   도서 상세 페이지 수집 활성화
+*   **완료 사항:**
+    *   사이트 구조에 맞는 메타 태그(Open Graph, Description)를 **AI 큐레이션 플랫폼** 톤앤매너로 수정 및 반영.
+    *   검색 포털 내 사이트 소유권 및 RSS, 사이트맵 등록 확인.
+*   **진행 사항:**
+    *   각 큐레이션 주제별 추천 도서 상세 리뷰를 포스팅하여 네이버 블로그 스마트블록 노출 시 자사 서비스 큐레이션 링크로 직접 착지(착륙)하도록 설계.
 
 ### 🔵 구글 (Google Search Console)
-*   **완료 사항**:
-    *   사이트맵(sitemap.xml) 제출
-    *   주요 페이지 인덱싱 요청
-*   **진행 중**:
-    *   구조적 데이터(Structured Data) 마크업 적용을 통한 리치 스니펫 노출 유도
+*   **완료 사항:**
+    *   Next.js App Router 기반의 동적 `sitemap.ts`를 활용하여 매번 큐레이션 태그가 업데이트될 때마다 자동으로 구글 로봇이 최신 도서 및 컬렉션 리스트를 수집하도록 설정.
+    *   도서 상세 페이지(`book/[id]/page.tsx`)와 큐레이션 목록 페이지에 Schema.org의 **Book JSON-LD 구조화 데이터** 마크업을 완벽하게 수집시켜 구글 Book Actions 및 리치 검색 결과 노출 극대화.
 
 ---
 
-## 4. 데이터 분석 인프라 (Analytics Infra)
+## 4. 데이터 분석 및 지표 모니터링 (Analytics Infra)
 
-*   **GA4 연동**: 웹사이트와 Google Analytics 4 연동 완료
-*   **맞춤 이벤트**: 도서 클릭, 검색, 카테고리 필터 사용 등 핵심 사용자 행동 이벤트 정의 및 수집
-*   **운영 도구**:
-    *   `/verify_prod`: 상용 배포 상태 및 정책 검증
-    *   `/check_winter_campaign`: 마케팅 캠페인 성과 측정
+*   **GA4 연동 및 트래픽 필터링:** 내부 개발(성남/용인 데스크톱) 트래픽을 정확히 걷어낸 순수 외부 학부모 트래픽 모니터링 체계 유지.
+*   **북스타 지표 (North Star Metric):** **[도서 상세 페이지 DAU]**를 최종 핵심 지표로 설정.
+*   **전환 퍼널(Funnel) 트래킹:**
+    1.  `홈/리스트 큐레이션 스크롤 & 체류 시간`
+    2.  `도서 상세 페이지 진입 성공률`
+    3.  `최종 액션 전환 (교보문고 구매 클릭 + 주변 도서관 소장 여부 확인 클릭)`

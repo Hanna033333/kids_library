@@ -26,11 +26,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             : `${book.title} - ${book.category || '어린이 추천 도서'} | 책자리 도서 큐레이션`
         
         const description = isCaldecott
-            ? `[칼데콧 메달 수상작] 세계가 인정한 그림책, ${book.title}. 도서관 청구기호로 바로 찾아보세요. ${book.author ? `글/그림: ${book.author}.` : ''}`
-            : `${book.title}${book.age ? ` (${book.age} 추천)` : ''}. 도서관 청구기호로 바로 찾아보세요. ${book.author ? `저자: ${book.author}.` : ''}책자리 큐레이션 도서.`
+            ? `[칼데콧 메달 수상작] 세계가 인정한 그림책, ${book.title}. 우리 아이의 마음과 정서에 꼭 맞는 엄선 그림책을 만나보세요. ${book.author ? `글/그림: ${book.author}.` : ''}`
+            : `${book.title}${book.age ? ` (${book.age} 추천)` : ''}. 우리 아이를 위한 맞춤 추천 도서. 책자리에서 전국 도서관 소장 여부와 실시간 대출 상태를 3초 만에 확인하세요. ${book.author ? `저자: ${book.author}.` : ''}`
         
         const caldecottKeywords = isCaldecott ? '칼데콧 수상작, Caldecott Medal, 그림책 노벨상, ' : ''
-        const keywords = `${caldecottKeywords}${book.title}, ${book.author}, 어린이 도서 추천, ${book.category || '그림책'}, ${book.age || ''} 추천도서, 도서관 청구기호, 책자리, 어린이 도서관`
+        const keywords = `${caldecottKeywords}${book.title}, ${book.author}, 어린이 도서 추천, ${book.category || '그림책'}, ${book.age || ''} 추천도서, 책자리, 도서관 대출 확인, 어린이 도서관`
 
         return {
             title,
@@ -55,8 +55,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     } catch (error) {
         console.error('Metadata generation failed:', error);
         return {
-            title: '책자리 – 도서관에서 책 찾기',
-            description: '도서관 청구기호와 위치 정보를 확인하세요.',
+            title: '책자리 - 우리 아이를 위한 정서 맞춤 도서 큐레이션',
+            description: '우리 아이의 연령과 정서 발달 단계에 꼭 맞는 도서를 발견하고 도서관 대출 현황을 확인하세요.',
         }
     }
 }
@@ -94,8 +94,8 @@ export default async function BookDetailPage({ params }: Props) {
             },
             'image': getHighResImageUrl(book.image_url) || '',
             'description': isCaldecott 
-                ? `[칼데콧 메달 수상작] 세계가 인정한 그림책, ${book.title}. 도서관 청구기호로 바로 찾아보세요.`
-                : `${book.title}${book.age ? ` (${book.age} 추천)` : ''}. 책자리 큐레이션 도서. 도서관 청구기호로 바로 찾아보세요.`,
+                ? `[칼데콧 메달 수상작] 세계가 인정한 그림책, ${book.title}. 우리 아이를 위한 최고의 감성 그림책을 책자리에서 확인하세요.`
+                : `${book.title}${book.age ? ` (${book.age} 추천)` : ''}. 책자리 큐레이션 도서. 전국 도서관 대출 정보와 교보문고 바로 구매 링크를 연결해 드립니다.`,
             'publisher': {
                 '@type': 'Organization',
                 'name': book.publisher || '출판사 정보 없음'

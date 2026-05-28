@@ -96,6 +96,11 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
           {book.vol && `-${book.vol}`}
         </p>
 
+        {book.national_loan_count ? (
+          <div className="flex items-center gap-1 text-[11px] text-gray-500 font-semibold mb-2 bg-gray-50 px-2.5 py-1 rounded">
+            <span>📊 전국 도서관 대출 {book.national_loan_count >= 1000 ? `${(book.national_loan_count / 1000).toFixed(1)}k` : book.national_loan_count.toLocaleString()}회</span>
+          </div>
+        ) : null}
 
         <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
           <span className="text-gray-400 truncate max-w-[50%]">{book.publisher}</span>

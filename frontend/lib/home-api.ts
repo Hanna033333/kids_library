@@ -53,7 +53,7 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
 
     const { data, error } = await supabase
         .from('childbook_items')
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, library_info:book_library_info(library_name, callno)')
+        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)')
         .in('age', ageValues)
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('id') // 일관된 정렬
@@ -104,7 +104,7 @@ export async function getResearchCouncilBooks(limit: number = 5, client?: Supaba
 
     const { data, error } = await supabase
         .from('childbook_items')
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, library_info:book_library_info(library_name, callno)')
+        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)')
         .eq('curation_tag', '어린이도서연구회')
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('id') // 일관된 정렬
@@ -133,7 +133,7 @@ export async function getWinterBooks(limit: number = 7, client?: SupabaseClient)
 
     const { data, error } = await supabase
         .from('childbook_items')
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, library_info:book_library_info(library_name, callno)')
+        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)')
         .eq('curation_tag', '겨울방학2026')
         .or('is_hidden.is.null,is_hidden.eq.false')
         // PostgreSQL RANDOM() 함수로 랜덤 정렬 (시드 기반)
@@ -177,7 +177,7 @@ export async function getBooksByTag(tagName: string, limit: number = 7, client?:
         .from('childbook_items')
         .select(`
             id, title, author, publisher, category, age, pangyo_callno, image_url, 
-            curation_tag, curation_note, confidence_score,
+            curation_tag, curation_note, confidence_score, national_loan_count,
             library_info:book_library_info(library_name, callno)
         `)
         .ilike('curation_tag', `%${tagName}%`)
