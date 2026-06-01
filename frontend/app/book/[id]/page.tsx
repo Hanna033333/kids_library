@@ -1,18 +1,76 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getBookById } from '@/lib/api'
 import BookDetailClient from './BookDetailClient'
 import { getHighResImageUrl } from '@/lib/utils/image'
+import { createClient } from '@/lib/supabase'
 
 interface Props {
     params: Promise<{ id: string }>
+}
+
+// 24시간마다 백그라운드 재검증 (ISR)
+export const revalidate = 86400
+export const dynamicParams = true
+
+// 빌드 타임에 상위 100개의 핵심 도서 상세 페이지를 정적 프리렌더링하여 초고속 응답 보장
+// (API 서버 오프라인으로 인한 빌드 에러 방지를 위해 Supabase 직접 조회 사용)
+export async function generateStaticParams() {
+    try {
+        const supabase = createClient()
+        const { data: books } = await supabase
+            .from('childbook_items')
+            .select('id')
+            .or('is_hidden.is.null,is_hidden.eq.false')
+            .order('id', { ascending: true })
+            .limit(100)
+
+        if (!books) return []
+        return books.map((book) => ({
+            id: String(book.id),
+        }))
+    } catch (e) {
+        console.error('Failed to generate static params:', e)
+        return []
+    }
+}
+
+// DB 직접 조회를 통한 도서 상세 데이터 획득 함수 (백엔드 타임아웃/오프라인 에러 방지)
+async function getBookDetailServer(id: number) {
+    const supabase = createClient()
+    
+    // 1. 책 기본 정보
+    const { data: book, error } = await supabase
+        .from('childbook_items')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle()
+
+    if (error || !book) return null
+
+    // 2. 찜 횟수 (wishlists 테이블 연동)
+    const { count } = await supabase
+        .from('wishlists')
+        .select('id', { count: 'exact', head: true })
+        .eq('book_id', id)
+
+    // 3. 다중 도서관 소장 및 청구기호 정보
+    const { data: libInfo } = await supabase
+        .from('book_library_info')
+        .select('library_name, callno')
+        .eq('book_id', id)
+
+    return {
+        ...book,
+        save_count: count || 0,
+        library_info: libInfo || []
+    }
 }
 
 // 동적 메타데이터 생성
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     try {
         const { id } = await params
-        const book = await getBookById(Number(id))
+        const book = await getBookDetailServer(Number(id))
 
         if (!book) {
             return {
@@ -66,7 +124,7 @@ export default async function BookDetailPage({ params }: Props) {
     const { id } = await params
 
     try {
-        const book = await getBookById(Number(id))
+        const book = await getBookDetailServer(Number(id))
 
         if (!book) {
             notFound()
@@ -75,7 +133,6 @@ export default async function BookDetailPage({ params }: Props) {
         const isCaldecott = book.curation_tag?.split(',').includes('caldecott') || book.curation_tag === 'caldecott'
 
         // Schema.org 구조화 데이터 (JSON-LD)
-        // ISBN이 있을 경우 교보문고 BuyAction 추가 -> Google Book Actions 리치 결과 활성화
         const generateKyoboUrl = (isbn: string) => {
             const targetUrl = `https://search.kyobobook.co.kr/search?keyword=${isbn}&gbCode=TOT&target=total`
             const encodedUrl = encodeURIComponent(targetUrl)
@@ -103,12 +160,10 @@ export default async function BookDetailPage({ params }: Props) {
             'genre': book.category || '어린이 도서'
         }
 
-        // 칼데콧 수상작인 경우 award 정보 추가
         if (isCaldecott) {
             jsonLd['award'] = 'Caldecott Medal'
         }
 
-        // ISBN이 있을 경우에만 BuyAction 추가 (Book Actions 리치 결과 요건)
         if (book.isbn) {
             jsonLd['potentialAction'] = {
                 '@type': 'BuyAction',
@@ -122,12 +177,34 @@ export default async function BookDetailPage({ params }: Props) {
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
                 />
+                
+                {/* 1번 전략: 검색 로봇 봇을 위한 오리지널 정적 시맨틱 텍스트 구조 */}
+                {/* 검색 봇(네이버, 구글)은 Javascript가 배제된 원본 HTML 파싱 시점에 큐레이션 해설과 상세 소개를 완벽하게 인덱싱합니다. */}
+                <article className="hidden" aria-hidden="true" style={{ display: 'none' }}>
+                    <h1>{book.title}</h1>
+                    <p>저자: {book.author}</p>
+                    <p>출판사: {book.publisher}</p>
+                    <p>연령: {book.age}</p>
+                    <p>분류: {book.category}</p>
+                    {book.curation_note && (
+                        <section>
+                            <h2>책자리 AI 전문 사서의 정서/상황별 맞춤 큐레이션 코멘트</h2>
+                            <p>{book.curation_note}</p>
+                        </section>
+                    )}
+                    {book.description && (
+                        <section>
+                            <h2>도서 상세 소개</h2>
+                            <div dangerouslySetInnerHTML={{ __html: book.description }} />
+                        </section>
+                    )}
+                </article>
+
                 <BookDetailClient book={book} />
             </>
         )
     } catch (error) {
         console.error('Book fetch failed:', error);
-        // 에러 발생 시 404로 처리하거나 별도 에러 페이지로 유도
         notFound();
     }
 }

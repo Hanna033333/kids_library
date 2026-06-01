@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/context/AuthContext'
@@ -33,6 +33,7 @@ interface BookDetailClientProps {
 }
 export default function BookDetailClient({ book: initialBook }: BookDetailClientProps) {
     const router = useRouter()
+    const hasTrackedView = useRef<string | null>(null)
     const { user } = useAuth()
     const [book, setBook] = useState<Book>(initialBook)
     const [isSaved, setIsSaved] = useState(false)
@@ -139,16 +140,24 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
 
     const ctaProps = getPurchaseButtonProps();
 
-    // Send GA event when book detail page is viewed
+    // Send GA event when book detail page is viewed (waits for loan status to resolve to send accurate data)
     useEffect(() => {
+        if (normalizedStatus === undefined) return;
+        
+        const trackKey = `${book.id}_${normalizedStatus.status}`;
+        if (hasTrackedView.current === trackKey) return;
+
         sendGAEvent('view_book_detail', {
             book_id: book.id,
             book_title: book.title,
             call_number: displayCallNo,
             category: book.category,
-            age: book.age
+            age: book.age,
+            loan_status: normalizedStatus.status,
+            loan_available: normalizedStatus.available
         });
-    }, [book.id]);
+        hasTrackedView.current = trackKey;
+    }, [book.id, normalizedStatus, displayCallNo]);
 
     // Check if book is saved
     useEffect(() => {

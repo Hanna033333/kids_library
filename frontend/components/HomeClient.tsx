@@ -16,18 +16,20 @@ import UserAvatar from "@/components/UserAvatar";
 import Toast from "@/components/ui/Toast";
 
 interface HomeClientProps {
+    overrideCuration?: string;
+    overrideAge?: string;
 }
 
-export default function HomeClient({ }: HomeClientProps) {
+export default function HomeClient({ overrideCuration, overrideAge }: HomeClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
     // URL에서 초기 상태 읽기 (teen → 13+ 정규화)
     const normalizeAge = (age: string) => age === "teen" ? "13+" : age;
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
-    const [ageFilter, setAgeFilter] = useState(normalizeAge(searchParams.get('age') || ""));
+    const [ageFilter, setAgeFilter] = useState(normalizeAge(overrideAge || searchParams.get('age') || ""));
     const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || "전체");
-    const [curationFilter] = useState(searchParams.get('curation') || "");
+    const [curationFilter, setCurationFilter] = useState(overrideCuration || searchParams.get('curation') || "");
     
     // AI 큐레이션은 기본적으로 신뢰도(confidence_score) 높은 순으로 정렬하여 홈 화면과 동일한 순서를 유지
     const [sortFilter, setSortFilter] = useState(() => {
@@ -63,8 +65,23 @@ export default function HomeClient({ }: HomeClientProps) {
             }
         });
 
-        router.push(`?${newParams.toString()}`, { scroll: false });
+        router.replace(`?${newParams.toString()}`, { scroll: false });
     }, [router]);
+
+    // URL 파라미터 변경 시 상태 동기화 (브라우저 뒤로가기/앞으로가기 대응)
+    useEffect(() => {
+        const q = searchParams.get('q') || "";
+        const age = normalizeAge(overrideAge || searchParams.get('age') || "");
+        const category = searchParams.get('category') || "전체";
+        const curation = overrideCuration || searchParams.get('curation') || "";
+        const sort = searchParams.get('sort') || (curation && !['겨울방학', 'winter-vacation', '어린이도서연구회', 'research-council', 'caldecott'].includes(curation) ? 'confidence_score_desc' : 'pangyo_callno');
+
+        setSearchQuery(q);
+        setAgeFilter(age);
+        setCategoryFilter(category);
+        setCurationFilter(curation);
+        setSortFilter(sort);
+    }, [searchParams, overrideAge, overrideCuration]);
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);

@@ -11,7 +11,7 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
     // 연령 그룹 매핑 (supabase-client.ts 규격과 일치시킴)
     const ageMap: Record<string, string[]> = {
         '0-3': ['0세부터', '3세부터'],
-        '4-7': ['3세부터', '5세부터', '7세부터', '유아'],
+        '4-7': ['5세부터', '7세부터', '유아'],
         '8-12': ['9세부터', '11세부터'],
         'teen': ['13세부터', '16세부터'],
         '13+': ['13세부터', '16세부터']
