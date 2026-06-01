@@ -202,7 +202,7 @@ export default function HomePageClient({
               <span className="text-[13px] font-semibold text-gray-500 tracking-tight">
                 발달 단계에 맞는 맞춤 도서를 만나보세요
               </span>
-              <h2 className="text-2xl font-bold text-gray-900 tracking-tight leading-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">
                 우리 아이 나이에 딱!
               </h2>
             </div>
@@ -306,7 +306,7 @@ export default function HomePageClient({
       {/* 4. 도서 연구회 추천 섹션 */}
       <CurationSection
         subtitle="전문가가 엄선한 필독서"
-        title="어린이 도서 연구회 추천"
+        title="어린이도서연구회 추천"
         books={researchBooks}
         href="/books?curation=research-council"
         onViewMore={() => sendGAEvent('click_view_more', { section: 'research_council' })}
@@ -450,7 +450,7 @@ function CurationSection({
             <span className="text-[13px] font-semibold text-gray-500 tracking-tight">
               {subtitle}
             </span>
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight leading-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">
               {title}
             </h2>
           </div>
