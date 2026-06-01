@@ -2,10 +2,10 @@ import { Metadata } from 'next'
 import HomePageClient from '@/components/HomePageClient'
 import { getWinterBooks, getResearchCouncilBooks, getBooksByAge, getBooksByTag } from '@/lib/home-api'
 import { getCaldecottBooks } from '@/lib/caldecott-api'
-import { createClient } from '@/lib/supabase-server'
+import { createClient } from '@/lib/supabase'
 import { VALID_TAXONOMY } from '@/lib/constants/taxonomy'
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 86400; // 24시간마다 백그라운드 재검증 (ISR)
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://checkjari.com"),

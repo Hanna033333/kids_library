@@ -111,12 +111,14 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
         const isNoLibrary = !displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음' || normalizedStatus?.status === '미소장';
         const isLoanedOut = normalizedStatus?.available === false;
 
+        const baseClass = "flex-1 w-full h-14 flex-col gap-0.5 px-2 shadow-sm";
+
         if (isNoLibrary) {
             return {
                 subText: "도서관에 없는 책이에요",
                 mainText: "기다림 없이 바로 구매하기",
                 variant: "primary" as const,
-                className: "flex-1 w-full h-14 bg-brand-primary text-white hover:bg-brand-primary/95 transition-all active:scale-[0.98] rounded-lg shadow-sm"
+                className: baseClass
             };
         }
         
@@ -125,7 +127,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                 subText: "현재 대출 중인 책이에요",
                 mainText: "기다리지 않고 소장하기",
                 variant: "primary" as const,
-                className: "flex-1 w-full h-14 bg-brand-primary text-white hover:bg-brand-primary/95 transition-all active:scale-[0.98] rounded-lg shadow-sm"
+                className: baseClass
             };
         }
 
@@ -134,7 +136,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
             subText: "도서관에 갈 시간이 없다면",
             mainText: "지금 바로 주문하세요",
             variant: "secondary" as const,
-            className: "flex-1 w-full h-14 border-gray-200 bg-white text-gray-700 hover:bg-gray-50/50 transition-all active:scale-[0.98] rounded-lg"
+            className: "flex-1 w-full h-14 flex-col gap-0.5 px-2"
         };
     };
 
@@ -463,8 +465,8 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                     {ctaProps.subText}
                                 </span>
                                 <div className={`flex items-center font-bold text-sm leading-none ${ctaProps.variant === 'primary' ? 'text-white' : 'text-gray-700'}`}>
-                                    <ShoppingCart className="w-4 h-4 mr-1.5" />
-                                    {ctaProps.mainText}
+                                    <ShoppingCart className="w-4 h-4 mr-1.5 shrink-0" />
+                                    <span className="truncate">{ctaProps.mainText}</span>
                                 </div>
                             </Button>
                         </div>
