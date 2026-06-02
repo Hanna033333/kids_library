@@ -18,54 +18,42 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
     }
 
     const ageValues = ageMap[ageGroup] || []
-
-    if (ageValues.length === 0) {
-        return []
-    }
-
-    // 1. 전체 책 개수 조회 (헤드 쿼리로 속도 최적화)
-    const { count, error: countError } = await supabase
-        .from('childbook_items')
-        .select('*', { count: 'exact', head: true })
-        .in('age', ageValues)
-        .or('is_hidden.is.null,is_hidden.eq.false')
-
-    if (countError) {
-        console.error('Error fetching books count by age:', countError)
-        return []
-    }
-
-    const totalCount = count || 0
-    if (totalCount === 0) {
-        return []
-    }
+    if (ageValues.length === 0) return []
 
     // 현재 주차 계산 (일주일마다 바뀜)
     const now = new Date()
     const startOfYear = new Date(now.getFullYear(), 0, 1)
     const weekNumber = Math.floor((now.getTime() - startOfYear.getTime()) / (7 * 24 * 60 * 60 * 1000))
 
-    // 2. 안전한 offset 계산 (전체 개수보다 크지 않도록 보정)
-    // 데이터가 충분하지 않으면 0부터 로드
-    const offset = totalCount > limit
-        ? (weekNumber * limit) % (totalCount - limit + 1)
-        : 0
+    // COUNT 없이 weekNumber 기반 offset 추정 후 단일 쿼리
+    // offset이 범위 초과시 fallback(0)으로 1회 더 시도 (최대 왕복 2회지만 대부분 1회)
+    const estimatedTotal = 1000 // 충분히 큰 상한값
+    const offset = (weekNumber * limit) % estimatedTotal
 
-    const { data, error } = await supabase
+    const fetchBooks = async (start: number) => supabase
         .from('childbook_items')
         .select('id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)')
         .in('age', ageValues)
         .or('is_hidden.is.null,is_hidden.eq.false')
-        .order('id') // 일관된 정렬
-        .range(offset, offset + limit - 1)
+        .order('id')
+        .range(start, start + limit - 1)
+
+    let { data, error } = await fetchBooks(offset)
 
     if (error) {
         console.error('Error fetching books by age:', error)
         return []
     }
 
+    // offset이 실제 데이터 범위를 초과한 경우 처음부터 재시도
+    if (!data || data.length === 0) {
+        const fallback = await fetchBooks(0)
+        if (fallback.error) return []
+        data = fallback.data
+    }
+
     const books = (data as any) || []
-    // ㄱㄴㄷ 순(제목 오름차순)으로 항상 정렬해서 반환 (홈 노출 및 상세 리스트 고정 순서 일치)
+    // ㄱㄴㄷ 순(제목 오름차순)으로 항상 정렬해서 반환
     return books.sort((a: any, b: any) => a.title.localeCompare(b.title, 'ko'))
 }
 
@@ -75,47 +63,35 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
 export async function getResearchCouncilBooks(limit: number = 5, client?: SupabaseClient): Promise<Book[]> {
     const supabase = client || createClient()
 
-    // 1. 전체 책 개수 조회
-    const { count, error: countError } = await supabase
-        .from('childbook_items')
-        .select('*', { count: 'exact', head: true })
-        .eq('curation_tag', '어린이도서연구회')
-        .or('is_hidden.is.null,is_hidden.eq.false')
-
-    if (countError) {
-        console.error('Error fetching research council books count:', countError)
-        return []
-    }
-
-    const totalCount = count || 0
-    if (totalCount === 0) {
-        return []
-    }
-
-    // 현재 주차 계산 (일주일마다 바뀜)
-    const now = new Date()
-    const startOfYear = new Date(now.getFullYear(), 0, 1)
-    const weekNumber = Math.floor((now.getTime() - startOfYear.getTime()) / (7 * 24 * 60 * 60 * 1000))
-
-    // 2. 안전한 offset 계산
-    const offset = totalCount > limit
-        ? (weekNumber * limit) % (totalCount - limit + 1)
-        : 0
-
+    // COUNT 쿼리 제거: pool을 한 번에 가져와 클라이언트에서 주차 기반 슬라이싱
+    // (DB 왕복 2회 → 1회로 단축)
+    const POOL_SIZE = 100 // 어린이도서연구회 64권 이상 커버용
     const { data, error } = await supabase
         .from('childbook_items')
         .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)')
         .eq('curation_tag', '어린이도서연구회')
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('id') // 일관된 정렬
-        .range(offset, offset + limit - 1)
+        .limit(POOL_SIZE)
 
     if (error) {
         console.error('Error fetching research council books:', error)
         return []
     }
 
-    return (data as any) || []
+    const pool = (data as any) || []
+    if (pool.length === 0) return []
+
+    // 현재 주차 계산 (일주일마다 바뀜)
+    const now = new Date()
+    const startOfYear = new Date(now.getFullYear(), 0, 1)
+    const weekNumber = Math.floor((now.getTime() - startOfYear.getTime()) / (7 * 24 * 60 * 60 * 1000))
+
+    // 클라이언트 슬라이싱: pool 범위 내에서 안전한 offset 계산
+    const maxOffset = Math.max(0, pool.length - limit)
+    const offset = maxOffset > 0 ? (weekNumber * limit) % (maxOffset + 1) : 0
+
+    return pool.slice(offset, offset + limit)
 }
 
 
