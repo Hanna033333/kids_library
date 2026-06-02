@@ -108,34 +108,11 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
 
     // 맥락적 CTA 분기 구조 설계
     const getPurchaseButtonProps = () => {
-        const isNoLibrary = !displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음' || normalizedStatus?.status === '미소장';
-        const isLoanedOut = normalizedStatus?.available === false;
-
-        const baseClass = "flex-1 w-full h-14 flex-col gap-0.5 px-2 shadow-sm";
-
-        if (isNoLibrary) {
-            return {
-                subText: "도서관에 없는 책이에요",
-                mainText: "기다림 없이 바로 구매하기",
-                variant: "primary" as const,
-                className: baseClass
-            };
-        }
-        
-        if (isLoanedOut) {
-            return {
-                subText: "현재 대출 중인 책이에요",
-                mainText: "기다리지 않고 소장하기",
-                variant: "primary" as const,
-                className: baseClass
-            };
-        }
-
-        // 기본 상태 (대출 가능 혹은 확인중 등)
+        // 대출 상태와 관계없이 항상 동일한 문구와 스타일을 반환하여 시각적 깜빡임을 해소합니다.
         return {
             subText: "도서관에 갈 시간이 없다면",
             mainText: "지금 바로 주문하세요",
-            variant: "secondary" as const,
+            variant: "secondary" as "primary" | "secondary",
             className: "flex-1 w-full h-14 flex-col gap-0.5 px-2"
         };
     };
@@ -376,7 +353,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                             {/* AI Curation Note */}
                             {book.curation_note && (
                                 <div className="mt-4 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100 relative">
-                                    <div className="absolute top-0 right-4 -translate-y-1/2 px-2 py-0.5 bg-brand-primary text-white text-[10px] font-bold rounded-full shadow-sm">
+                                    <div className="absolute top-0 right-4 -translate-y-1/2 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold rounded-full shadow-sm">
                                         전문 사서의 추천 포인트
                                     </div>
                                     <p className="text-[14.5px] text-gray-700 font-bold leading-relaxed tracking-tight">
@@ -431,10 +408,10 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                         <div className="mt-2 pt-6 border-t border-gray-100 flex gap-3 items-end">
                             <div className="relative z-20">
                                 {!user?.id && (
-                                    <div className="absolute -top-12 left-0 z-50 whitespace-nowrap bg-brand-primary text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg pointer-events-none">
+                                    <div className="absolute -top-12 left-0 z-50 whitespace-nowrap bg-gray-100 text-gray-700 text-[11px] font-bold px-2.5 py-1.5 rounded-lg pointer-events-none">
                                         찜하고 나중에 확인!
                                         {/* Tooltip Triangle - Pointing to the center of the W-14 button */}
-                                        <div className="absolute -bottom-1 left-7 -translate-x-1/2 w-2.5 h-2.5 bg-brand-primary rotate-45"></div>
+                                        <div className="absolute -bottom-1 left-7 -translate-x-1/2 w-2.5 h-2.5 bg-gray-100 rotate-45"></div>
                                     </div>
                                 )}
                                 <button
@@ -477,7 +454,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
             {/* Book Description Section */}
             <div className="mt-12 max-w-4xl mx-auto px-6">
                 <h3 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
-                    <div className="w-1.5 h-6 bg-brand-primary rounded-full" />
+                    <div className="w-1.5 h-6 bg-gray-300 rounded-full" />
                     도서 소개
                 </h3>
                 <div className="text-gray-600 leading-relaxed text-sm md:text-base font-medium">
