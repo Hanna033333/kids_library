@@ -304,7 +304,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                 <div className="flex flex-col md:flex-row gap-8 md:items-start max-w-5xl mx-auto">
                     {/* Left: Image Card */}
                     <div className="w-full md:w-[35%] shrink-0 max-w-[320px] mx-auto md:mx-0">
-                        <div className="relative aspect-[3/4] bg-gray-50 rounded-[28px] overflow-hidden shadow-2xl shadow-gray-200 border border-gray-100">
+                        <div className="relative aspect-[3/4] bg-gray-50 rounded-[28px] overflow-hidden shadow-sm">
                             {book.image_url && !imageError ? (
                                 <Image
                                     src={getOptimizedImageUrl(book.image_url, 'detail')}
@@ -396,7 +396,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                         sendGAEvent('click_report_error', { book_id: book.id });
                                         window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
                                     }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg text-[11px] font-medium mt-3 transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-400 active:bg-gray-50 active:text-gray-600 border border-gray-200 rounded-lg text-[11px] font-medium mt-3 transition-colors"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
                                     정보가 다른가요? 제보하기

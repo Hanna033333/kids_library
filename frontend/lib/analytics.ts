@@ -81,13 +81,15 @@ const shouldIgnoreTracking = () => {
     return false;
 };
 
-/**
- * Sends a custom event to Google Analytics
- * @param eventName Name of the event
- * @param eventParams Additional parameters for the event
- */
 export const sendGAEvent = (eventName: string, eventParams?: Record<string, any>) => {
-    if (shouldIgnoreTracking()) return;
+    const ignored = shouldIgnoreTracking();
+    
+    // 개발 환경에서는 차단 여부와 관계없이 콘솔에 로그를 출력하여 이벤트를 검증할 수 있도록 함
+    if (process.env.NODE_ENV === "development") {
+        console.log(`📢 [GA4 Event] ${eventName}`, eventParams, ignored ? "(Ignored by tracking policy)" : "");
+    }
+
+    if (ignored) return;
 
     if (typeof window !== "undefined" && window.gtag) {
         window.gtag("event", eventName, eventParams);

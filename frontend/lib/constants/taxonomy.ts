@@ -25,10 +25,11 @@ export const ALL_TAXONOMY: CurationTag[] = [
   { id: 17, subtitle: "서로 다름을 인정하고 존중하는 아이", title: "🌍 열린 마음 다양성 학교", tag: "다양성" },
   { id: 18, subtitle: "아침마다 등원을 거부하는 우리 아이에게", title: "🏫 유치원과 학교 적응", tag: "적응" },
   { id: 19, subtitle: "우리의 뿌리와 전통을 고스란히", title: "🌾 지혜 가득 문화 유산", tag: "우리문화" },
-  { id: 20, subtitle: "사계절이 주는 대자연의 아름다움", title: "☀️ 시원한 여름의 추억", tag: "계절" }
+  { id: 20, subtitle: "사계절이 주는 대자연의 아름다움", title: "☀️ 사계절의 아름다움 그림책", tag: "계절" },
+  { id: 21, subtitle: "상실과 이별을 다독이는", title: "🩹 상실과 이별을 다독이는 그림책", tag: "상실" }
 ];
 
-// 7권 이상 매칭되어 렌더링에 적합한 태그들 (7-Book Rule 정책 반영, 총 14개)
+// 7권 이상 매칭되어 렌더링에 적합한 태그들 (7-Book Rule 정책 반영, 총 15개)
 export const VALID_AI_TAGS = [
   "가족사랑",
   "모험",
@@ -43,7 +44,8 @@ export const VALID_AI_TAGS = [
   "자존감",
   "역사이야기",
   "감정조절",
-  "우리문화"
+  "우리문화",
+  "상실"
 ];
 
 // 노출 가능한 태그들의 전체 객체 추출

@@ -38,13 +38,13 @@ export default async function HomePage() {
   const supabase = createClient()
   const defaultAge = '4-7'
 
-  // 3일 단위 시드 계산 (날짜 기반 결정적 랜덤)
+  // 7일 단위 시드 계산 (날짜 기반 결정적 랜덤)
   const now = new Date()
   const daysSinceEpoch = Math.floor(now.getTime() / (1000 * 60 * 60 * 24))
-  const seed = Math.floor(daysSinceEpoch / 3)
+  const seed = Math.floor(daysSinceEpoch / 7)
 
   // LCG(선형합동법) 기반 시드 난수 생성기 - seed=0 포함 모든 구간에서 균등한 분포 보장
-  let lcgState = seed * 1664525 + 1013904223
+  let lcgState = (seed * 1664525 + 1013904223) & 0xffffffff
   const seededRandom = () => {
     lcgState = (lcgState * 1664525 + 1013904223) & 0xffffffff
     return (lcgState >>> 0) / 0x100000000

@@ -65,6 +65,13 @@ NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET") or env_vars.get("NAVER_CL
 DATA4LIBRARY_KEY = os.getenv("DATA4LIBRARY_KEY") or env_vars.get("DATA4LIBRARY_KEY")
 ALADIN_TTB_KEY = os.getenv("ALADIN_TTB_KEY") or env_vars.get("ALADIN_TTB_KEY")
 
+# Threads API 설정
+THREADS_ACCESS_TOKEN = os.getenv("THREADS_ACCESS_TOKEN") or env_vars.get("THREADS_ACCESS_TOKEN")
+THREADS_USER_ID = os.getenv("THREADS_USER_ID") or env_vars.get("THREADS_USER_ID")
+
+# Gemini API 설정
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or env_vars.get("GEMINI_API_KEY")
+
 
 
 

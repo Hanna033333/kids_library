@@ -18,6 +18,7 @@ import Toast from '@/components/ui/Toast'
 import UserAvatar from '@/components/UserAvatar'
 import Image from 'next/image'
 import { getOptimizedImageUrl } from '@/lib/utils/image'
+import { PageLoader } from '@/components/ui/PageLoader'
 
 interface DynamicCuration {
   subtitle: string;
@@ -140,7 +141,7 @@ export default function HomePageClient({
   }
 
   return (
-    <main className="min-h-screen bg-[#F7F7F7]">
+    <main className="min-h-screen bg-muted-bg">
       <header className="w-full bg-white border-b border-gray-100 flex items-center justify-center px-6 py-4 sticky top-0 z-50 relative">
         {/* 로고 중앙 정렬 */}
         <h1>
@@ -195,7 +196,7 @@ export default function HomePageClient({
 
 
       {/* 1. 우리 아이 나이에 딱! (연령별 추천 섹션) */}
-      <section className="py-8 px-4 bg-[#F7F7F7]">
+      <section className="py-8 px-4 bg-muted-bg">
         <div className="max-w-[1200px] mx-auto">
           <div className="flex items-end justify-between mb-6 px-2">
             <div className="flex flex-col gap-1">
@@ -230,7 +231,7 @@ export default function HomePageClient({
                 }}
                 className={`flex-shrink-0 whitespace-nowrap px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedAge === age.key
                   ? 'bg-brand-primary text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                  : 'bg-white text-gray-700 active:bg-gray-50 border border-gray-200'
                   }`}
               >
                 {age.label}
@@ -244,7 +245,7 @@ export default function HomePageClient({
               <div className="flex gap-4 pb-2">
                 {[1, 2, 3, 4, 5, 6, 7].map((i, index, array) => (
                   <div key={i} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === array.length - 1 ? 'mr-4' : ''}`}>
-                    <div className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden h-full animate-pulse">
+                    <div className="flex flex-col bg-white rounded-2xl shadow-sm overflow-hidden h-full animate-pulse">
                       {/* 이미지 스켈레톤 */}
                       <div className="w-full aspect-[1/1.1] bg-gray-200"></div>
                       {/* 정보 스켈레톤 */}
@@ -289,7 +290,7 @@ export default function HomePageClient({
           books={curation.books}
           href={`/books?curation=${encodeURIComponent(curation.tag)}`}
           onViewMore={() => sendGAEvent('click_view_more', { section: curation.tag })}
-          bgColor={index % 2 === 0 ? 'bg-white' : 'bg-[#F7F7F7]'}
+          bgColor={index % 2 === 0 ? 'bg-white' : 'bg-muted-bg'}
         />
       ))}
 
@@ -300,7 +301,7 @@ export default function HomePageClient({
         books={caldecottBooks}
         href="/books?curation=caldecott"
         onViewMore={() => sendGAEvent('click_view_more', { section: 'caldecott' })}
-        bgColor="bg-[#F7F7F7]"
+        bgColor="bg-muted-bg"
       />
 
       {/* 4. 도서 연구회 추천 섹션 */}
@@ -430,7 +431,7 @@ function CurationSection({
   books,
   href,
   onViewMore,
-  bgColor = "bg-[#F7F7F7]"
+  bgColor = "bg-muted-bg"
 }: {
   subtitle: string;
   title: string;
@@ -474,8 +475,8 @@ function CurationSection({
             </div>
           </div>
         ) : (
-          <div className="text-center py-16 text-gray-400 bg-black/5 rounded-2xl border border-dashed border-gray-200 mx-2">
-            <p className="text-sm">추천 도서를 불러오는 중입니다...</p>
+          <div className="h-[280px] flex items-center justify-center mx-2">
+            <PageLoader />
           </div>
         )}
       </div>
@@ -491,7 +492,8 @@ function BookCard({ book }: { book: Book }) {
   return (
     <Link
       href={`/book/${book.id}`}
-      className="flex flex-col bg-white rounded-lg border border-gray-100 overflow-hidden transition-all h-full group"
+      onClick={() => sendGAEvent('click_book_item', { book_id: book.id, book_title: book.title })}
+      className="flex flex-col bg-white rounded-2xl shadow-sm overflow-hidden transition-all h-full group active:scale-[0.98]"
     >
       {/* 1. 이미지 영역 (상단) */}
       <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
@@ -501,7 +503,7 @@ function BookCard({ book }: { book: Book }) {
             alt={book.title}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 group-active:scale-105"
             loading="lazy"
           />
         ) : (
