@@ -96,9 +96,9 @@ async def send_threads_text_preview(caption: str, books: List[dict], confirm_url
     # 도서 시안 텍스트 빌드
     books_text = ""
     for idx, b in enumerate(books):
-        title = b.get("title", "제목")
-        publisher = b.get("publisher", "출판사")
-        desc = b.get("description", "") or b.get("curation_note") or ""
+        title = html.escape(b.get("title", "제목"))
+        publisher = html.escape(b.get("publisher", "출판사"))
+        desc = html.escape(b.get("description", "") or b.get("curation_note") or "")
         books_text += (
             f"📖 <b>{idx+1}. {title}</b> ({publisher})\n"
             f"└ <i>요약: {desc}</i>\n\n"
@@ -107,7 +107,7 @@ async def send_threads_text_preview(caption: str, books: List[dict], confirm_url
     msg_text = (
         f"<b>[1단계: 주간 큐레이션 텍스트 시안]</b>\n\n"
         f"📝 <b>스레드 본문 캡션:</b>\n"
-        f"{caption}\n\n"
+        f"{html.escape(caption)}\n\n"
         f"━━━━━━━━━━━━━━━━━━━\n"
         f"📚 <b>카드뉴스 개별 도서 텍스트 시안:</b>\n\n"
         f"{books_text}"
