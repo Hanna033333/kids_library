@@ -1,6 +1,7 @@
 import os
 import json
 import uuid
+import time
 import urllib.parse
 import datetime
 import asyncio
@@ -376,8 +377,27 @@ async def process_telegram_feedback(feedback_text: str):
         confirm_url=confirm_url
     )
 
+async def check_if_listener_should_run() -> bool:
+    """오늘 날짜에 생성된 미승인 피드가 Supabase DB에 존재하는지 확인합니다."""
+    try:
+        tz_kst = datetime.timezone(datetime.timedelta(hours=9))
+        today_str = datetime.datetime.now(tz_kst).strftime("%Y-%m-%d")
+        
+        db_result = supabase.table("threads_feeds")\
+            .select("id")\
+            .eq("is_approved", False)\
+            .gte("created_at", f"{today_str}T00:00:00+09:00")\
+            .limit(1)\
+            .execute()
+        return bool(db_result.data)
+    except Exception as e:
+        print(f"❌ 리스너 상태 확인 실패: {e}")
+        return False
+
 async def telegram_feedback_listener():
-    """텔레그램 getUpdates API를 주기적으로 풀링하여 사용자가 보낸 피드백 텍스트를 감지하고 반영합니다."""
+    """텔레그램 getUpdates API를 조건부로 풀링하여 사용자가 보낸 피드백 텍스트를 감지하고 반영합니다.
+    월/수/금 시안 전송 직후(오늘의 미승인 피드가 DB에 존재할 때)부터 최종 승인 완료 시까지만 활성화됩니다.
+    """
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
     if not bot_token or not chat_id:
@@ -390,6 +410,14 @@ async def telegram_feedback_listener():
     
     async with httpx.AsyncClient() as client:
         while True:
+            # 1. 텔레그램 폴링을 활성화할 타이밍인지 DB 상태 확인
+            should_run = await check_if_listener_should_run()
+            if not should_run:
+                # 비활성 상태일 때는 API 호출을 차단하고 10초 대기
+                await asyncio.sleep(10)
+                continue
+                
+            # 2. 활성 상태인 경우 3초 주기로 폴링 수행
             try:
                 params = {"timeout": 10}
                 if offset is not None:
@@ -410,8 +438,13 @@ async def telegram_feedback_listener():
                                 
                             text = message.get("text")
                             from_chat_id = str(message.get("chat", {}).get("id"))
+                            msg_date = message.get("date") # Unix timestamp
                             
-                            if text and from_chat_id == chat_id and not text.startswith("/"):
+                            # 최근 30분 이내의 메시지만 처리하도록 안전장치 확보
+                            current_time = time.time()
+                            is_recent = (current_time - msg_date) < 1800 if msg_date else False
+                            
+                            if text and from_chat_id == chat_id and not text.startswith("/") and is_recent:
                                 print(f"💬 [Telegram Feedback] 사용자 피드백 감지: '{text}'")
                                 await process_telegram_feedback(text)
             except Exception as e:
