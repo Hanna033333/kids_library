@@ -3,7 +3,13 @@ from fastapi import APIRouter, HTTPException, status
 import os
 from core.database import supabase
 
-from childbook_crawler import fetch_all_childbook_recommendations
+import sys
+import os as _os
+# childbook_crawler는 scripts/crawling/ 디렉터리로 이동된 일회성 크롤링 스크립트입니다.
+# 운영 서버에서 이 엔드포인트는 ENV=production 시 403으로 막히므로 실제 실행되지 않습니다.
+_crawling_dir = _os.path.join(_os.path.dirname(__file__), '..', 'scripts', 'crawling')
+sys.path.insert(0, _os.path.abspath(_crawling_dir))
+
 
 router = APIRouter(prefix="/api/sync", tags=["sync"])
 
@@ -19,7 +25,8 @@ def sync_childbook():
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="Sync API is disabled in production"
         )
-        
+
+    from childbook_crawler import fetch_all_childbook_recommendations
     books = fetch_all_childbook_recommendations()
     
     for b in books:
