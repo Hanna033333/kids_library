@@ -63,11 +63,13 @@ def select_five_books(curation_tag: str) -> List[dict]:
             
     return books[:5]
 
+_TRIM_FILLER = " 아이의 호기심과 상상력을 풍부하게 키워주고 부모와 함께 읽으며 따뜻한 감동과 소중한 교훈을 배울 수 있는 그림책입니다."
+
 def trim_text_fallback(text: str) -> str:
     """텍스트를 3줄을 꽉 채우는 75자 ~ 85자 범위의 자연스러운 문장으로 다듬습니다. (문장 완성형 종결 보장)"""
     sentences = text.replace("\r", "").split(".")
     sentences = [s.strip() for s in sentences if s.strip()]
-    
+
     combined = []
     current_len = 0
     for s in sentences:
@@ -78,18 +80,38 @@ def trim_text_fallback(text: str) -> str:
             if not combined:
                 combined.append(s[:78] + ".")
             break
-            
+
     result = " ".join(combined)
+
+    # 분량이 짧을 경우 뒤를 메워 3줄을 꽉 채움 (filler는 어떤 짧은 입력도 75자 이상 보장)
     if len(result) < 75:
-        # 분량이 다소 짧을 경우 뒤를 메워 3줄을 꽉 채움
-        needed = 78 - len(result)
-        filler = " 아이와 함께 읽으며 따뜻한 감동과 교훈을 배울 수 있는 그림책입니다."
-        result = (result + filler)[:82]
+        result = result + _TRIM_FILLER
+        if len(result) > 85:
+            cut = result[:86].rfind(" ")
+            result = result[:cut] if cut >= 60 else result[:85]
         if not result.endswith("."):
-            result = result.rstrip(".") + "."
-            
+            result = result.rstrip() + "."
+
+    # 존댓말 종결 보정 — 어절 경계에서 잘라 "이야기입니다." 추가
     if not result.endswith("다."):
-        result = result[:78] + " 이야기입니다."
+        trim_at = min(len(result), 78)
+        last_space = result[:trim_at].rfind(" ")
+        cut = last_space if last_space >= 40 else trim_at
+        result = result[:cut].rstrip() + " 이야기입니다."
+    return result
+
+def _safety_trim(text: str, max_len: int = 90) -> str:
+    """Gemini 생성 설명이 max_len을 초과할 경우 어절 경계에서 잘라 존댓말로 종결합니다."""
+    text = text.strip()
+    if len(text) <= max_len:
+        return text
+    cut = text[:max_len].rfind(" ")
+    result = text[:cut] if cut >= 40 else text[:max_len]
+    result = result.rstrip(".")
+    if not result.endswith("다"):
+        result = result + " 이야기입니다."
+    else:
+        result = result + "."
     return result
 
 def generate_fallback_content(curation_title: str, curation_tag: str, books: List[dict]) -> dict:
@@ -158,6 +180,7 @@ def generate_ai_threads_content(curation_title: str, curation_tag: str, books: L
 [작성 지침 - 중요]
 1. 본문 캡션(caption) 작성 지침:
    - 양육자(부모님)와 깊이 공감하는 다정하고 따뜻한 존댓말 톤앤매너로 작성하세요.
+   - **문단 수 엄수**: 캡션은 반드시 본문 1문단 + 링크 1줄, 총 2문단으로만 구성하세요. 문단을 3개 이상으로 늘리지 마세요.
    - 큐레이션 기획 의도와 관련된 공감되는 실제 양육 에피소드(혹은 부모로서 겪는 고민)가 캡션 첫머리에 필수적으로 배치되어야 합니다.
    - 마지막에는 서비스 유입을 위한 상세 랜딩 링크를 반드시 다음 형식으로 포함하세요:
      "🔗 https://checkjari.com/collections/curation/{urllib.parse.quote(curation_tag)}"
@@ -188,6 +211,7 @@ def generate_ai_threads_content(curation_title: str, curation_tag: str, books: L
         res_data = json.loads(response.text)
         if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 5:
             raise ValueError("Invalid response structure")
+        res_data["card_descriptions"] = [_safety_trim(d) for d in res_data["card_descriptions"]]
         return res_data
     except Exception as e:
         print(f"❌ Gemini API 오류 발생: {e}. 스마트 폴백 메커니즘을 작동합니다.")
@@ -244,6 +268,7 @@ async def apply_feedback_with_gemini(
 [작성 지침 - 중요]
 1. 본문 캡션(caption) 작성 지침:
    - 사용자의 피드백을 반영하되, 양육자와 공감하는 다정하고 따뜻한 존댓말 톤앤매너를 시종일관 유지해 주세요.
+   - **문단 수 엄수**: 캡션은 반드시 본문 1문단 + 링크 1줄, 총 2문단으로만 구성하세요. 문단을 3개 이상으로 늘리지 마세요.
    - 큐레이션 기획 의도와 관련된 공감되는 실제 양육 에피소드가 캡션 첫머리에 반드시 유지되어야 합니다.
    - 캡션 하단의 서비스 상세 랜딩 링크 형식을 그대로 지켜서 노출하세요. (예: 🔗 https://checkjari.com/collections/curation/...)
    - 맞춤법 및 오타가 절대 없도록 철저히 다시 보정해 주세요.
@@ -272,6 +297,7 @@ async def apply_feedback_with_gemini(
         res_data = json.loads(response.text)
         if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 5:
             raise ValueError("Invalid response structure")
+        res_data["card_descriptions"] = [_safety_trim(d) for d in res_data["card_descriptions"]]
         return res_data
     except Exception as e:
         print(f"❌ Gemini 피드백 수정 중 오류: {e}")
