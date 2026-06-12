@@ -125,7 +125,7 @@ export default async function CurationPage({ params }: Props) {
             {/* 1번 전략: 검색 봇이 100% 긁어갈 수 있는 정적 텍스트 정보 노출 */}
             <article className="hidden" aria-hidden="true" style={{ display: 'none' }}>
                 <h1>책자리 {curation} 맞춤 도서 추천 컬렉션</h1>
-                <p>어떤 책을 읽혀야 할지 모르는 부모님을 위한 AI 사서의 특별 큐레이션</p>
+                <p>어떤 책을 읽혀야 할지 모르는 부모님을 위한 특별 큐레이션</p>
                 {jsonLd && (
                     <ul>
                         {(jsonLd as any).itemListElement.map((el: any) => (

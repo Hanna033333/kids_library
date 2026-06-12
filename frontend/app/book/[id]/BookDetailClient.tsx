@@ -112,7 +112,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
         return {
             subText: "도서관에 갈 시간이 없다면",
             mainText: "지금 바로 주문하세요",
-            variant: "secondary" as "primary" | "secondary",
+            variant: "primary" as "primary" | "secondary",
             className: "flex-1 w-full h-14 flex-col gap-0.5 px-2"
         };
     };
@@ -454,7 +454,6 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
             {/* Book Description Section */}
             <div className="mt-12 max-w-4xl mx-auto px-6">
                 <h3 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
-                    <div className="w-1.5 h-6 bg-gray-300 rounded-full" />
                     도서 소개
                 </h3>
                 <div className="text-gray-600 leading-relaxed text-sm md:text-base font-medium">
