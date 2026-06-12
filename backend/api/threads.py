@@ -14,7 +14,7 @@ import httpx
 from PIL import Image
 
 from core.config import GEMINI_API_KEY, THREADS_ACCESS_TOKEN, THREADS_USER_ID
-from core.taxonomy import get_weekly_curations
+from core.taxonomy import get_weekly_curations, ALL_TAXONOMY
 from core.database import supabase
 from services.card_generator import generate_card_news
 from services.threads_publisher import upload_image_to_supabase, publish_carousel_to_threads
@@ -24,6 +24,13 @@ router = APIRouter(prefix="/api/threads", tags=["threads"])
 
 # 관리자 인증 토큰 (보안 적용)
 THREADS_ADMIN_TOKEN = os.getenv("THREADS_ADMIN_TOKEN", "checkjari_threads_admin_2026")
+
+def get_slug_by_tag(tag: str) -> str:
+    """한글 태그명에 매핑되는 영어 슬러그를 반환합니다. 매핑이 없으면 그대로 반환합니다."""
+    for item in ALL_TAXONOMY:
+        if item.get("tag") == tag:
+            return item.get("slug", tag)
+    return tag
 
 class ThreadsTriggerRequest(BaseModel):
     curation_tag: Optional[str] = None
@@ -117,12 +124,13 @@ def _safety_trim(text: str, max_len: int = 90) -> str:
 
 def generate_fallback_content(curation_title: str, curation_tag: str, books: List[dict]) -> dict:
     """Gemini API 호출이 불가할 때 로컬 DB의 도서 소개 및 요약 정보를 정제하여 스마트 폴백 텍스트를 구성합니다."""
+    curation_slug = get_slug_by_tag(curation_tag)
     caption = (
         f"오늘의 추천 큐레이션은 <{curation_title}> 입니다.\n\n"
         f"우리 아이에게 꼭 맞는 책들을 엄선하여 소개해 드려요. "
         f"함께 소중한 독서 시간을 가져보는 건 어떨까요?\n\n"
         f"자세한 도서 목록과 정보는 아래 링크에서 확인해 보세요!\n"
-        f"🔗 https://checkjari.com/collections/curation/{urllib.parse.quote(curation_tag)}"
+        f"🔗 https://checkjari.com/collections/curation/{curation_slug}"
     )
     
     card_descriptions = []
@@ -142,6 +150,8 @@ def generate_ai_threads_content(curation_title: str, curation_tag: str, books: L
         return generate_fallback_content(curation_title, curation_tag, books)
         
     genai.configure(api_key=GEMINI_API_KEY)
+    
+    curation_slug = get_slug_by_tag(curation_tag)
     
     try:
         model = genai.GenerativeModel(
@@ -174,6 +184,7 @@ def generate_ai_threads_content(curation_title: str, curation_tag: str, books: L
 [큐레이션 정보]
 - 테마 제목: {curation_title}
 - 분류 태그: {curation_tag}
+- 영어 슬러그: {curation_slug}
 
 [도서 목록]
 {json.dumps(books_info, ensure_ascii=False, indent=2)}
@@ -184,7 +195,7 @@ def generate_ai_threads_content(curation_title: str, curation_tag: str, books: L
    - **문단 수 엄수**: 캡션은 반드시 본문 1문단 + 링크 1줄, 총 2문단으로만 구성하세요. 문단을 3개 이상으로 늘리지 마세요.
    - 큐레이션 기획 의도와 관련된 공감되는 실제 양육 에피소드(혹은 부모로서 겪는 고민)가 캡션 첫머리에 필수적으로 배치되어야 합니다.
    - 마지막에는 서비스 유입을 위한 상세 랜딩 링크를 반드시 다음 형식으로 포함하세요:
-     "🔗 https://checkjari.com/collections/curation/{{urllib.parse.quote(curation_tag)}}"
+     "🔗 https://checkjari.com/collections/curation/{curation_slug}"
    - 맞춤법, 띄어쓰기, 문장 완성도에 오타("막맘하셨지요" 등)가 전혀 없도록 철저히 검수하세요.
 
 2. 카드뉴스 도서 요약(card_descriptions) 작성 지침 (비주얼 가이드):
