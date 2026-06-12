@@ -103,7 +103,7 @@ async def send_threads_text_preview(caption: str, books: List[dict], confirm_url
             f"📖 <b>{idx+1}. {title}</b> ({publisher})\n"
             f"└ <i>요약: {desc}</i>\n\n"
         )
-        
+
     msg_text = (
         f"<b>[1단계: 주간 큐레이션 텍스트 시안]</b>\n\n"
         f"📝 <b>스레드 본문 캡션:</b>\n"
