@@ -125,12 +125,13 @@ def _safety_trim(text: str, max_len: int = 90) -> str:
 def generate_fallback_content(curation_title: str, curation_tag: str, books: List[dict]) -> dict:
     """Gemini API 호출이 불가할 때 로컬 DB의 도서 소개 및 요약 정보를 정제하여 스마트 폴백 텍스트를 구성합니다."""
     curation_slug = get_slug_by_tag(curation_tag)
+    tag_encoded = urllib.parse.quote(curation_tag)
     caption = (
         f"오늘의 추천 큐레이션은 <{curation_title}> 입니다.\n\n"
         f"우리 아이에게 꼭 맞는 책들을 엄선하여 소개해 드려요. "
         f"함께 소중한 독서 시간을 가져보는 건 어떨까요?\n\n"
         f"자세한 도서 목록과 정보는 아래 링크에서 확인해 보세요!\n"
-        f"🔗 https://checkjari.com/collections/curation/{curation_slug}"
+        f"🔗 https://checkjari.com/collections/curation/{curation_slug}?utm_source=threads&utm_medium=referral&utm_campaign=weekly_{tag_encoded}"
     )
     
     card_descriptions = []
@@ -192,11 +193,10 @@ def generate_ai_threads_content(curation_title: str, curation_tag: str, books: L
 [작성 지침 - 중요]
 1. 본문 캡션(caption) 작성 지침:
    - 양육자(부모님)와 깊이 공감하는 다정하고 따뜻한 존댓말 톤앤매너로 작성하세요.
-   - **문단 수 엄수**: 캡션은 반드시 본문 1문단 + 링크 1줄, 총 2문단으로만 구성하세요. 문단을 3개 이상으로 늘리지 마세요.
-   - 큐레이션 기획 의도와 관련된 공감되는 실제 양육 에피소드(혹은 부모로서 겪는 고민)가 캡션 첫머리에 필수적으로 배치되어야 합니다.
-   - 마지막에는 서비스 유입을 위한 상세 랜딩 링크를 반드시 다음 형식으로 포함하세요:
-     "🔗 https://checkjari.com/collections/curation/{curation_slug}"
-   - 맞춤법, 띄어쓰기, 문장 완성도에 오타("막맘하셨지요" 등)가 전혀 없도록 철저히 검수하세요.
+   - **가독성을 위한 줄바꿈 및 레이아웃**: 캡션 본문(양육 에피소드 및 큐레이션 기획 의도 등)은 가독성을 위해 적절히 줄바꿈(엔터)을 사용하여 2~3개의 정돈된 단락으로 보기 쉽게 작성하세요.
+   - **링크 구분**: 본문이 모두 끝나면 반드시 한 줄을 띄우고(빈 줄 추가), 마지막에 다음 형식의 상세 랜딩 링크를 단독으로 노출시키세요 (아래 문자열 그대로 삽입하되, 중복 유입 분석을 위해 UTM 파라미터가 정확하게 유지되어야 합니다):
+     "🔗 https://checkjari.com/collections/curation/{curation_slug}?utm_source=threads&utm_medium=referral&utm_campaign=weekly_{curation_slug}"
+   - 맞춤법, 띄어쓰기, 문장 완성도에 오타가 전혀 없도록 철저히 검수하세요.
 
 2. 카드뉴스 도서 요약(card_descriptions) 작성 지침 (비주얼 가이드):
     - **글자 수 정밀 통제**: 각 도서별로 3줄을 거의 꽉 채울 수 있도록 반드시 공백 포함 60자에서 70자 사이의 완성도 있는 텍스트로 작성하세요. (글자 수가 너무 짧아지면 카드뉴스에서 2줄만 노출되어 균형이 깨지고, 70자를 초과하면 4줄이 되어 뒷부분이 잘리게 되므로, 반드시 60자~70자 범위를 맞춰 3줄을 꽉 채울 것)
@@ -282,9 +282,8 @@ async def apply_feedback_with_gemini(
 [작성 지침 - 중요]
 1. 본문 캡션(caption) 작성 지침:
    - 사용자의 피드백을 반영하되, 양육자와 공감하는 다정하고 따뜻한 존댓말 톤앤매너를 시종일관 유지해 주세요.
-   - **문단 수 엄수**: 캡션은 반드시 본문 1문단 + 링크 1줄, 총 2문단으로만 구성하세요. 문단을 3개 이상으로 늘리지 마세요.
-   - 큐레이션 기획 의도와 관련된 공감되는 실제 양육 에피소드가 캡션 첫머리에 반드시 유지되어야 합니다.
-   - 캡션 하단의 서비스 상세 랜딩 링크 형식을 그대로 지켜서 노출하세요. (예: 🔗 https://checkjari.com/collections/curation/...)
+   - **가독성을 위한 줄바꿈 및 레이아웃**: 캡션 본문은 가독성을 위해 적절히 줄바꿈(엔터)을 사용하여 2~3개의 정돈된 단락으로 보기 쉽게 작성하세요.
+   - **링크 구분**: 본문이 모두 끝나면 반드시 한 줄을 띄우고(빈 줄 추가), 마지막에 다음 형식의 상세 랜딩 링크를 단독으로 노출시키세요 (예: 🔗 https://checkjari.com/collections/curation/영어슬러그?utm_source=threads&utm_medium=referral&utm_campaign=weekly_영어슬러그 와 같이 UTM 캠페인 명에도 영어 슬러그가 포함되도록 하세요).
    - 맞춤법 및 오타가 절대 없도록 철저히 다시 보정해 주세요.
 
 2. 카드뉴스 도서 요약(card_descriptions) 작성 지침:
