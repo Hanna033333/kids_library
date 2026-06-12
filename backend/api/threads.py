@@ -778,3 +778,67 @@ async def weekly_threads_scheduler():
             print(f"❌ [Weekly Threads Scheduler Loop Error]: {e}")
             
         await asyncio.sleep(60) # 1분 간격 체크
+
+
+@router.get("/debug-telegram")
+async def debug_telegram():
+    import os
+    import httpx
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    backend_url = os.getenv("BACKEND_URL")
+    
+    status_info = {
+        "bot_token_configured": bool(bot_token),
+        "bot_token_length": len(bot_token) if bot_token else 0,
+        "chat_id_configured": bool(chat_id),
+        "chat_id_value": chat_id,
+        "backend_url_configured": bool(backend_url),
+        "backend_url_value": backend_url,
+    }
+    
+    if not bot_token or not chat_id:
+        return {"status": "error", "message": "TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not configured", "details": status_info}
+        
+    api_base = f"https://api.telegram.org/bot{bot_token}"
+    async with httpx.AsyncClient() as client:
+        try:
+            # 1. 봇 정보 확인 테스트 (getMe)
+            me_res = await client.get(f"{api_base}/getMe", timeout=5.0)
+            me_data = me_res.json()
+            
+            # 2. 테스트 텍스트 메시지 발송 시도
+            msg_res = await client.post(
+                f"{api_base}/sendMessage",
+                json={
+                    "chat_id": chat_id,
+                    "text": "🛠️ [Render 상용 서버 디버그] 텔레그램 메시지 발송 테스트 성공!"
+                },
+                timeout=5.0
+            )
+            msg_data = msg_res.json()
+            
+            # 3. 인라인 키보드 버튼을 포함한 메시지 발송 테스트 (URL 정책 확인용)
+            confirm_url = f"{backend_url or 'http://lvh.me:8000'}/api/threads/approve-text?feed_id=test"
+            btn_res = await client.post(
+                f"{api_base}/sendMessage",
+                json={
+                    "chat_id": chat_id,
+                    "text": f"🛠️ [Render 상용 서버 디버그] 인라인 버튼 전송 테스트\nURL: {confirm_url}",
+                    "reply_markup": {
+                        "inline_keyboard": [[{"text": "테스트 승인", "url": confirm_url}]]
+                    }
+                },
+                timeout=5.0
+            )
+            btn_data = btn_res.json()
+            
+            return {
+                "status": "success",
+                "details": status_info,
+                "getMe": me_data,
+                "sendMessage_simple": msg_data,
+                "sendMessage_button": btn_data
+            }
+        except Exception as e:
+            return {"status": "error", "message": str(e), "details": status_info}
