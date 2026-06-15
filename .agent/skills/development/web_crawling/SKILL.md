@@ -283,6 +283,11 @@ if author_name and author_name in result_author:
     pass
 ```
 
+### 4. 임시 파일 격리 및 정리
+
+- 크롤링 중 발생하는 임시 JSON 결과물, 일회성 마이그레이션 SQL, 테스트 스크립트 등은 프로젝트 루트나 `backend/` 최상위 디렉토리에 생성 또는 방치해서는 안 됩니다.
+- 이러한 임시 파일들은 프로젝트 외부 관리 폴더인 `.gemini/antigravity-ide/scratch/`에 저장하여 작업하고, 영구 보존이 필요한 문서인 경우에만 `docs/` 하위로 이동하여 관리하십시오.
+
 ---
 
 ## 📊 성공률 향상 팁

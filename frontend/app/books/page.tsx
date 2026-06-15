@@ -1,6 +1,8 @@
 import HomeClient from "@/components/HomeClient";
 import { Metadata } from 'next'
 import { VALID_TAXONOMY, VALID_AI_TAGS } from '@/lib/constants/taxonomy'
+import { Suspense } from 'react'
+import { PageLoader } from '@/components/ui/PageLoader'
 
 interface Props {
     searchParams: { age?: string; curation?: string; category?: string; q?: string }
@@ -136,7 +138,9 @@ export default async function BooksPage({ searchParams }: Props) {
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
                 />
             )}
-            <HomeClient />
+            <Suspense fallback={<PageLoader />}>
+                <HomeClient />
+            </Suspense>
         </>
     );
 }

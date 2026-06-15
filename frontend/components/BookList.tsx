@@ -100,22 +100,42 @@ export default function BookList({
   // SSR initialBooks가 없을 때만 추천 도서 로딩을 대기하여 첫 로드 레이아웃 흔들림 방지 및 SSR 성능 보존
   const isListLoading = loading || (!initialBooks && shouldFetchRecommended && isRecommendedLoading);
 
-  // Batch fetch loan statuses for all visible books
-  const bookIds = displayBooks.map(b => b.id).join(',');
+  // 폴백 추천 도서 활성화 조건
+  const isFallbackEnabled = !isListLoading && displayBooks.length === 0;
+
+  // 폴백 추천 도서 fetch 쿼리
+  const { data: fallbackBooks = [] } = useQuery<Book[]>({
+    queryKey: ['fallback-books', ageFilter, searchQuery],
+    queryFn: async () => {
+      if (ageFilter) {
+        const { getPopularBooksByAge } = await import("@/lib/home-api");
+        return getPopularBooksByAge(ageFilter, 8);
+      } else {
+        const { getPopularBooksOverall } = await import("@/lib/home-api");
+        return getPopularBooksOverall(8);
+      }
+    },
+    enabled: isFallbackEnabled,
+    staleTime: 5 * 60 * 1000, // 5분 캐싱
+  });
+
+  // Batch fetch loan statuses for all visible books (including fallback books when list is empty)
+  const visibleBooksForLoan = displayBooks.length > 0 ? displayBooks : fallbackBooks;
+  const bookIds = visibleBooksForLoan.map(b => b.id).join(',');
 
   const { data: loanStatuses } = useQuery({
     queryKey: ['batch-loan-status', bookIds],
     queryFn: async () => {
-      if (displayBooks.length === 0) return {};
+      if (visibleBooksForLoan.length === 0) return {};
       try {
         const { fetchLoanStatuses } = await import("@/lib/api");
-        return await fetchLoanStatuses(displayBooks.map(b => b.id));
+        return await fetchLoanStatuses(visibleBooksForLoan.map(b => b.id));
       } catch (err) {
         console.warn('Batch loan status fetch failed:', err);
         return {};
       }
     },
-    enabled: displayBooks.length > 0,
+    enabled: visibleBooksForLoan.length > 0,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     retry: 1,
   });
@@ -179,9 +199,36 @@ export default function BookList({
             ))}
           </div>
         ) : !isListLoading && displayBooks.length === 0 ? (
-          <div className="py-20 text-center bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center">
-            <div className="text-gray-600 font-bold text-lg mb-1">검색 결과가 없습니다.</div>
-            <div className="text-gray-400 text-sm">다른 검색어나 필터로 시도해보세요.</div>
+          <div className="space-y-8 w-full">
+            {/* Empty State Box - Level 1 shadow, no borders */}
+            <div className="py-16 text-center bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex flex-col items-center justify-center">
+              <div className="text-gray-600 font-bold text-lg mb-1">검색 결과가 없습니다.</div>
+              <div className="text-gray-400 text-sm">다른 검색어나 필터로 시도해보세요.</div>
+            </div>
+
+            {/* Fallback Recommendation Box - Level 1 shadow, no borders */}
+            {fallbackBooks.length > 0 && (
+              <div className="p-6 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+                {/* 2단 타이틀 구조 (서브 타이틀 위, 메인 타이틀 아래) */}
+                <div className="mb-6">
+                  <span className="text-xs text-amber-500 font-semibold block mb-1">
+                    조건에 맞는 책이 없지만 이 책은 어떨까요?
+                  </span>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">
+                    {ageFilter ? `${ageFilter}세 추천 도서` : "인기 도서 추천"}
+                  </h3>
+                </div>
+
+                {/* 도서 그리드 */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+                  {fallbackBooks.map((book) => (
+                    <div key={book.id}>
+                      <BookItem book={book} loanStatus={loanStatuses?.[book.id]} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <>

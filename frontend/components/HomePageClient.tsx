@@ -431,7 +431,8 @@ function CurationSection({
   books,
   href,
   onViewMore,
-  bgColor = "bg-muted-bg"
+  bgColor = "bg-muted-bg",
+  minBooks = 7
 }: {
   subtitle: string;
   title: string;
@@ -439,9 +440,10 @@ function CurationSection({
   href: string;
   onViewMore: () => void;
   bgColor?: string;
+  minBooks?: number;
 }) {
-  // 7권 미만인 경우 섹션 자체를 노출하지 않음 (유저 경험 보장)
-  if (books.length < 7) return null;
+  // 지정된 권수 미만인 경우 섹션 자체를 노출하지 않음 (유저 경험 보장)
+  if (books.length < minBooks) return null;
 
   return (
     <section className={`py-8 px-4 ${bgColor}`}>

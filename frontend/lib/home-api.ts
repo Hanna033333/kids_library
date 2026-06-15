@@ -168,3 +168,58 @@ export async function getBooksByTag(tagName: string, limit: number = 7, client?:
 
     return (data as any) || []
 }
+
+/**
+ * 연령대별 전국 인기 도서 가져오기 (대출수 기준)
+ */
+export async function getPopularBooksByAge(ageGroup: string, limit: number = 8, client?: SupabaseClient): Promise<Book[]> {
+    const supabase = client || createClient()
+
+    const ageMap: Record<string, string[]> = {
+        '0-3': ['0세부터', '3세부터'],
+        '4-7': ['5세부터', '7세부터', '유아'],
+        '8-12': ['9세부터', '11세부터'],
+        'teen': ['13세부터', '16세부터'],
+        '13+': ['13세부터', '16세부터']
+    }
+
+    const ageValues = ageMap[ageGroup] || []
+    if (ageValues.length === 0) return []
+
+    const { data, error } = await supabase
+        .from('childbook_items')
+        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)')
+        .in('age', ageValues)
+        .or('is_hidden.is.null,is_hidden.eq.false')
+        .order('national_loan_count', { ascending: false })
+        .limit(limit)
+
+    if (error) {
+        console.error('Error fetching popular books by age:', error)
+        return []
+    }
+
+    return (data as any) || []
+}
+
+/**
+ * 전체 도서 중 전국 인기 도서 가져오기 (대출수 기준)
+ */
+export async function getPopularBooksOverall(limit: number = 8, client?: SupabaseClient): Promise<Book[]> {
+    const supabase = client || createClient()
+
+    const { data, error } = await supabase
+        .from('childbook_items')
+        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)')
+        .or('is_hidden.is.null,is_hidden.eq.false')
+        .order('national_loan_count', { ascending: false })
+        .limit(limit)
+
+    if (error) {
+        console.error('Error fetching popular books overall:', error)
+        return []
+    }
+
+    return (data as any) || []
+}
+
