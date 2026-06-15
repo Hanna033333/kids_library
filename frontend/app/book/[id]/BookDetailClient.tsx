@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/context/AuthContext'
@@ -33,6 +33,7 @@ interface BookDetailClientProps {
 }
 export default function BookDetailClient({ book: initialBook }: BookDetailClientProps) {
     const router = useRouter()
+    const hasTrackedView = useRef<string | null>(null)
     const { user } = useAuth()
     const [book, setBook] = useState<Book>(initialBook)
     const [isSaved, setIsSaved] = useState(false)
@@ -105,16 +106,37 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
         return undefined;
     })();
 
-    // Send GA event when book detail page is viewed
+    // 맥락적 CTA 분기 구조 설계
+    const getPurchaseButtonProps = () => {
+        // 대출 상태와 관계없이 항상 동일한 문구와 스타일을 반환하여 시각적 깜빡임을 해소합니다.
+        return {
+            subText: "도서관에 갈 시간이 없다면",
+            mainText: "지금 바로 주문하세요",
+            variant: "primary" as "primary" | "secondary",
+            className: "flex-1 w-full h-14 flex-col gap-0.5 px-2"
+        };
+    };
+
+    const ctaProps = getPurchaseButtonProps();
+
+    // Send GA event when book detail page is viewed (waits for loan status to resolve to send accurate data)
     useEffect(() => {
+        if (normalizedStatus === undefined) return;
+        
+        const trackKey = `${book.id}_${normalizedStatus.status}`;
+        if (hasTrackedView.current === trackKey) return;
+
         sendGAEvent('view_book_detail', {
             book_id: book.id,
             book_title: book.title,
             call_number: displayCallNo,
             category: book.category,
-            age: book.age
+            age: book.age,
+            loan_status: normalizedStatus.status,
+            loan_available: normalizedStatus.available
         });
-    }, [book.id]);
+        hasTrackedView.current = trackKey;
+    }, [book.id, normalizedStatus, displayCallNo]);
 
     // Check if book is saved
     useEffect(() => {
@@ -217,7 +239,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
     const handleShare = async () => {
         const shareData = {
             title: book.title,
-            text: `${book.title} - 이 책, 지금 도서관에 있을까? 헛걸음 전 3초 확인!`,
+            text: `${book.title}${book.age ? ` (${book.age} 추천)` : ''} - 책자리에서 발견했어요. 도서관 청구기호도 바로 확인 가능!`,
             url: window.location.href
         }
 
@@ -282,7 +304,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                 <div className="flex flex-col md:flex-row gap-8 md:items-start max-w-5xl mx-auto">
                     {/* Left: Image Card */}
                     <div className="w-full md:w-[35%] shrink-0 max-w-[320px] mx-auto md:mx-0">
-                        <div className="relative aspect-[3/4] bg-gray-50 rounded-[28px] overflow-hidden shadow-2xl shadow-gray-200 border border-gray-100">
+                        <div className="relative aspect-[3/4] bg-gray-50 rounded-[28px] overflow-hidden shadow-sm">
                             {book.image_url && !imageError ? (
                                 <Image
                                     src={getOptimizedImageUrl(book.image_url, 'detail')}
@@ -331,7 +353,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                             {/* AI Curation Note */}
                             {book.curation_note && (
                                 <div className="mt-4 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100 relative">
-                                    <div className="absolute top-0 right-4 -translate-y-1/2 px-2 py-0.5 bg-brand-primary text-white text-[10px] font-bold rounded-full shadow-sm">
+                                    <div className="absolute top-0 right-4 -translate-y-1/2 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold rounded-full shadow-sm">
                                         전문 사서의 추천 포인트
                                     </div>
                                     <p className="text-[14.5px] text-gray-700 font-bold leading-relaxed tracking-tight">
@@ -374,7 +396,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                         sendGAEvent('click_report_error', { book_id: book.id });
                                         window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
                                     }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg text-[11px] font-medium mt-3 transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-400 active:bg-gray-50 active:text-gray-600 border border-gray-200 rounded-lg text-[11px] font-medium mt-3 transition-colors"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
                                     정보가 다른가요? 제보하기
@@ -386,10 +408,10 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                         <div className="mt-2 pt-6 border-t border-gray-100 flex gap-3 items-end">
                             <div className="relative z-20">
                                 {!user?.id && (
-                                    <div className="absolute -top-12 left-0 z-50 whitespace-nowrap bg-brand-primary text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg pointer-events-none">
+                                    <div className="absolute -top-12 left-0 z-50 whitespace-nowrap bg-gray-100 text-gray-700 text-[11px] font-bold px-2.5 py-1.5 rounded-lg pointer-events-none">
                                         찜하고 나중에 확인!
                                         {/* Tooltip Triangle - Pointing to the center of the W-14 button */}
-                                        <div className="absolute -bottom-1 left-7 -translate-x-1/2 w-2.5 h-2.5 bg-brand-primary rotate-45"></div>
+                                        <div className="absolute -bottom-1 left-7 -translate-x-1/2 w-2.5 h-2.5 bg-gray-100 rotate-45"></div>
                                     </div>
                                 )}
                                 <button
@@ -411,15 +433,17 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                 <Share2 className="w-6 h-6" />
                             </button>
                             <Button
-                                variant="secondary"
+                                variant={ctaProps.variant}
                                 size="lg"
                                 onClick={handleBuyKyobo}
-                                className="flex-1 w-full h-14 flex flex-col items-center justify-center gap-1 border-gray-200 bg-white transition-all active:scale-[0.98]"
+                                className={ctaProps.className}
                             >
-                                <span className="text-[10px] text-gray-400 font-medium leading-none">도서관에 갈 시간이 없다면?</span>
-                                <div className="flex items-center text-gray-700 font-bold text-sm leading-none">
-                                    <ShoppingCart className="w-4 h-4 mr-1.5" />
-                                    지금 바로 주문하세요
+                                <span className={`text-[10px] font-medium leading-none ${ctaProps.variant === 'primary' ? 'text-white/80' : 'text-gray-400'}`}>
+                                    {ctaProps.subText}
+                                </span>
+                                <div className={`flex items-center font-bold text-sm leading-none ${ctaProps.variant === 'primary' ? 'text-white' : 'text-gray-700'}`}>
+                                    <ShoppingCart className="w-4 h-4 mr-1.5 shrink-0" />
+                                    <span className="truncate">{ctaProps.mainText}</span>
                                 </div>
                             </Button>
                         </div>
@@ -430,7 +454,6 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
             {/* Book Description Section */}
             <div className="mt-12 max-w-4xl mx-auto px-6">
                 <h3 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
-                    <div className="w-1.5 h-6 bg-brand-primary rounded-full" />
                     도서 소개
                 </h3>
                 <div className="text-gray-600 leading-relaxed text-sm md:text-base font-medium">
@@ -450,8 +473,8 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
             <LoginPromptModal
                 isOpen={isLoginModalOpen}
                 onClose={() => setIsLoginModalOpen(false)}
-                title="찜한 책은 내 책장에 보관돼요!"
-                description="다음에 도서관 갈 때 헤매지 않도록 미리 담아두세요."
+                title="좋은 책, 놓치지 않게!"
+                description="전문가가 엄선한 추천작들을 책장에 담아두세요."
             />
         </main >
     )

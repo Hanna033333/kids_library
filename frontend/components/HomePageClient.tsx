@@ -18,6 +18,7 @@ import Toast from '@/components/ui/Toast'
 import UserAvatar from '@/components/UserAvatar'
 import Image from 'next/image'
 import { getOptimizedImageUrl } from '@/lib/utils/image'
+import { PageLoader } from '@/components/ui/PageLoader'
 
 interface DynamicCuration {
   subtitle: string;
@@ -140,7 +141,7 @@ export default function HomePageClient({
   }
 
   return (
-    <main className="min-h-screen bg-[#F7F7F7]">
+    <main className="min-h-screen bg-muted-bg">
       <header className="w-full bg-white border-b border-gray-100 flex items-center justify-center px-6 py-4 sticky top-0 z-50 relative">
         {/* 로고 중앙 정렬 */}
         <h1>
@@ -153,9 +154,6 @@ export default function HomePageClient({
               alt="책자리"
               className="h-9 w-auto"
             />
-            <span className="absolute top-1 -right-9 text-gray-400 text-xs font-bold leading-none italic">
-              beta
-            </span>
           </button>
         </h1>
 
@@ -198,14 +196,14 @@ export default function HomePageClient({
 
 
       {/* 1. 우리 아이 나이에 딱! (연령별 추천 섹션) */}
-      <section className="py-8 px-4 bg-[#F7F7F7]">
+      <section className="py-8 px-4 bg-muted-bg">
         <div className="max-w-[1200px] mx-auto">
           <div className="flex items-end justify-between mb-6 px-2">
             <div className="flex flex-col gap-1">
               <span className="text-[13px] font-semibold text-gray-500 tracking-tight">
                 발달 단계에 맞는 맞춤 도서를 만나보세요
               </span>
-              <h2 className="text-2xl font-bold text-gray-900 tracking-tight leading-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">
                 우리 아이 나이에 딱!
               </h2>
             </div>
@@ -233,7 +231,7 @@ export default function HomePageClient({
                 }}
                 className={`flex-shrink-0 whitespace-nowrap px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedAge === age.key
                   ? 'bg-brand-primary text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                  : 'bg-white text-gray-700 active:bg-gray-50 border border-gray-200'
                   }`}
               >
                 {age.label}
@@ -247,7 +245,7 @@ export default function HomePageClient({
               <div className="flex gap-4 pb-2">
                 {[1, 2, 3, 4, 5, 6, 7].map((i, index, array) => (
                   <div key={i} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === array.length - 1 ? 'mr-4' : ''}`}>
-                    <div className="flex flex-col bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 overflow-hidden h-full animate-pulse">
+                    <div className="flex flex-col bg-white rounded-2xl shadow-sm overflow-hidden h-full animate-pulse">
                       {/* 이미지 스켈레톤 */}
                       <div className="w-full aspect-[1/1.1] bg-gray-200"></div>
                       {/* 정보 스켈레톤 */}
@@ -292,7 +290,7 @@ export default function HomePageClient({
           books={curation.books}
           href={`/books?curation=${encodeURIComponent(curation.tag)}`}
           onViewMore={() => sendGAEvent('click_view_more', { section: curation.tag })}
-          bgColor={index % 2 === 0 ? 'bg-white' : 'bg-[#F7F7F7]'}
+          bgColor={index % 2 === 0 ? 'bg-white' : 'bg-muted-bg'}
         />
       ))}
 
@@ -303,13 +301,13 @@ export default function HomePageClient({
         books={caldecottBooks}
         href="/books?curation=caldecott"
         onViewMore={() => sendGAEvent('click_view_more', { section: 'caldecott' })}
-        bgColor="bg-[#F7F7F7]"
+        bgColor="bg-muted-bg"
       />
 
       {/* 4. 도서 연구회 추천 섹션 */}
       <CurationSection
         subtitle="전문가가 엄선한 필독서"
-        title="어린이 도서 연구회 추천"
+        title="어린이도서연구회 추천"
         books={researchBooks}
         href="/books?curation=research-council"
         onViewMore={() => sendGAEvent('click_view_more', { section: 'research_council' })}
@@ -433,7 +431,7 @@ function CurationSection({
   books,
   href,
   onViewMore,
-  bgColor = "bg-[#F7F7F7]"
+  bgColor = "bg-muted-bg"
 }: {
   subtitle: string;
   title: string;
@@ -453,7 +451,7 @@ function CurationSection({
             <span className="text-[13px] font-semibold text-gray-500 tracking-tight">
               {subtitle}
             </span>
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight leading-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">
               {title}
             </h2>
           </div>
@@ -477,8 +475,8 @@ function CurationSection({
             </div>
           </div>
         ) : (
-          <div className="text-center py-16 text-gray-400 bg-black/5 rounded-2xl border border-dashed border-gray-200 mx-2">
-            <p className="text-sm">추천 도서를 불러오는 중입니다...</p>
+          <div className="h-[280px] flex items-center justify-center mx-2">
+            <PageLoader />
           </div>
         )}
       </div>
@@ -494,7 +492,8 @@ function BookCard({ book }: { book: Book }) {
   return (
     <Link
       href={`/book/${book.id}`}
-      className="flex flex-col bg-white rounded-lg border border-gray-100 overflow-hidden transition-all h-full group"
+      onClick={() => sendGAEvent('click_book_item', { book_id: book.id, book_title: book.title })}
+      className="flex flex-col bg-white rounded-2xl shadow-sm overflow-hidden transition-all h-full group active:scale-[0.98]"
     >
       {/* 1. 이미지 영역 (상단) */}
       <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
@@ -504,7 +503,7 @@ function BookCard({ book }: { book: Book }) {
             alt={book.title}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 group-active:scale-105"
             loading="lazy"
           />
         ) : (
@@ -533,6 +532,14 @@ function BookCard({ book }: { book: Book }) {
         <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight">
           {book.title}
         </h3>
+
+        {/*
+        {book.national_loan_count ? (
+          <div className="flex items-center gap-1 text-[11px] text-gray-500 font-semibold mb-2 bg-gray-50 px-2.5 py-1 rounded">
+            <span>📊 전국 도서관 대출 {book.national_loan_count >= 1000 ? `${(book.national_loan_count / 1000).toFixed(1)}k` : book.national_loan_count.toLocaleString()}회</span>
+          </div>
+        ) : null}
+        */}
 
         <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
           <span className="text-gray-400 truncate max-w-[60%]">{book.publisher}</span>

@@ -22,6 +22,7 @@ export interface Book {
   image_url: string | null;
   description: string | null;
   save_count?: number;
+  national_loan_count?: number | null;
   loan_status?: LoanStatus | null;
   curation_tag?: string | null;
   curation_note?: string | null;

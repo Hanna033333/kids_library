@@ -31,7 +31,7 @@ export async function getBooksFromSupabase(
         // 나이 필터 매핑: 프론트엔드 값 → DB 값
         const ageMapping: Record<string, string[]> = {
             '0-3': ['0세부터', '3세부터'], // 유아 제외 (4-7세 수준)
-            '4-7': ['3세부터', '5세부터', '7세부터', '유아'],
+            '4-7': ['5세부터', '7세부터', '유아'],
             '8-12': ['9세부터', '11세부터'], // 7세 제외 (4-7세로 분류)
             'teen': ['13세부터', '16세부터'], // Backward compatibility
             '13+': ['13세부터', '16세부터'] // 11세 제외 (8-12세로 분류)
@@ -61,8 +61,9 @@ export async function getBooksFromSupabase(
     // 정렬
     let sortField = filters?.sort || 'pangyo_callno';
     
-    // 칼데콧의 경우 기본 정렬을 제목(ㄱㄴㄷ 순)으로 변경하여 홈 노출 순서와 일치시킴
-    if (!filters?.sort && filters?.curation === 'caldecott') {
+    // 칼데콧, 겨울방학, 어린이도서연구회 등 특별 큐레이션 또는 연령대 필터의 경우 기본 정렬을 제목(ㄱㄴㄷ 순)으로 변경하여 홈 노출 순서와 일치시킴
+    const isSpecialCuration = !!filters?.curation && ['caldecott', 'winter-vacation', '겨울방학', 'research-council', '어린이도서연구회'].includes(filters.curation);
+    if ((sortField === 'pangyo_callno' || !filters?.sort) && (isSpecialCuration || filters?.age)) {
         sortField = 'title';
     }
 

@@ -50,28 +50,32 @@ const config: Config = {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
-        // 책자리 브랜드 컬러 팔레트
+        // 책자리 브랜드 컬러 팔레트 (UI-KIT 기준)
         brand: {
           primary: {
-            DEFAULT: '#F59E0B',      // 메인 오렌지 (Amber-500)
-            hover: '#F59E0B',         // 호버 상태 (기본색과 동일)
-            active: '#D97706',        // 클릭 상태 (Amber-600)
+            DEFAULT: '#F59E0B',       // 메인 노랑 (Primary)
+            hover: '#D97706',         // 호버 상태
+            active: '#D97706',        // 클릭 상태
+            light: '#FEF3C7',         // Primary Light
+            200: '#FDE68A',           // Secondary BG
+            dim: 'rgba(245, 158, 11, 0.10)' // Primary Dim
           },
           accent: {
             DEFAULT: '#FF4D00',       // 강조 레드-오렌지
-            hover: '#FF4D00',         // 호버 상태 (기본색과 동일)
+            hover: '#FF4D00',         
           },
           kakao: {
             DEFAULT: '#FEE500',       // 카카오 브랜드 컬러
-            hover: '#FEE500',         // 호버 상태 (기본색과 동일)
+            hover: '#FEE500',         
             active: '#FCC419',
             text: '#191919',          // 카카오 텍스트 컬러
           },
           intro: {
-            DEFAULT: '#FFB300',       // 인트로 페이지 전용 (Amber-400)
-            hover: '#FFB300',         // 호버 상태 (기본색과 동일)
+            DEFAULT: '#FFB300',       // 인트로 페이지 전용
+            hover: '#FFB300',         
           },
         },
+        'muted-bg': '#F5F5F8',        // Muted BG (UI-KIT)
       },
       borderRadius: {
         lg: "var(--radius)",

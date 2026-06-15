@@ -2,20 +2,20 @@ import { Metadata } from 'next'
 import HomePageClient from '@/components/HomePageClient'
 import { getWinterBooks, getResearchCouncilBooks, getBooksByAge, getBooksByTag } from '@/lib/home-api'
 import { getCaldecottBooks } from '@/lib/caldecott-api'
-import { createClient } from '@/lib/supabase-server'
+import { createClient } from '@/lib/supabase'
 import { VALID_TAXONOMY } from '@/lib/constants/taxonomy'
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 86400; // 24시간마다 백그라운드 재검증 (ISR)
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://checkjari.com"),
   alternates: { canonical: '/' },
-  title: "책자리 - 도서관 청구기호/위치 3초 확인 (내 도서관 설정)",
-  description: "도서관 책 찾기 필수템. 우리 아이 나이 맞춤 도서와 내 동네 도서관 검색 결과를 로그인 한 번으로 더 편리하게 확인하세요.",
-  keywords: "도서관, 어린이 도서관, 도서관 도서검색, 청구기호 찾기, 어린이 도서, 책자리, 판교도서관, 새 학기 추천도서, 초등 필독서",
+  title: "책자리 - 상황별 정서 맞춤 우리 아이 그림책 큐레이션",
+  description: "아이의 정서적 상태(잠자리, 감정, 사회성 등)와 발달 단계에 딱 맞춘 상황별 도서 큐레이션 플랫폼. 발견한 책의 전국 도서관 소장 여부와 교보문고 바로 구매를 연결해 드립니다.",
+  keywords: "어린이 도서 추천, 유아 그림책 큐레이션, 초등 필독서, 칼데콧 수상작, 어린이도서연구회, 연령별 추천도서, 책자리, 어린이 정서 교육, 아이 감정 발달, 상황별 그림책",
   openGraph: {
-    title: "책자리 - 도서관 청구기호/위치 3초 확인 (내 도서관 설정)",
-    description: "도서관 책 찾기 필수템. 우리 아이 나이 맞춤 도서와 내 동네 도서관 검색 결과를 로그인 한 번으로 더 편리하게 확인하세요.",
+    title: "책자리 - 상황별 정서 맞춤 우리 아이 그림책 큐레이션",
+    description: "아이의 정서적 상태(잠자리, 감정, 사회성 등)와 발달 단계에 딱 맞춘 상황별 도서 큐레이션 플랫폼. 발견한 책의 전국 도서관 소장 여부와 교보문고 바로 구매를 연결해 드립니다.",
     url: "https://checkjari.com",
     images: [
       {
@@ -28,8 +28,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "책자리 - 도서관 청구기호/위치 3초 확인 (내 도서관 설정)",
-    description: "도서관 책 찾기 필수템. 우리 아이 나이 맞춤 도서와 내 동네 도서관 검색 결과를 로그인 한 번으로 더 편리하게 확인하세요.",
+    title: "책자리 - 상황별 정서 맞춤 우리 아이 그림책 큐레이션",
+    description: "아이의 정서적 상태(잠자리, 감정, 사회성 등)와 발달 단계에 딱 맞춘 상황별 도서 큐레이션 플랫폼. 발견한 책의 전국 도서관 소장 여부와 교보문고 바로 구매를 연결해 드립니다.",
     images: ["/logo.png"],
   },
 };
@@ -38,13 +38,13 @@ export default async function HomePage() {
   const supabase = createClient()
   const defaultAge = '4-7'
 
-  // 3일 단위 시드 계산 (날짜 기반 결정적 랜덤)
+  // 7일 단위 시드 계산 (날짜 기반 결정적 랜덤)
   const now = new Date()
   const daysSinceEpoch = Math.floor(now.getTime() / (1000 * 60 * 60 * 24))
-  const seed = Math.floor(daysSinceEpoch / 3)
+  const seed = Math.floor(daysSinceEpoch / 7)
 
   // LCG(선형합동법) 기반 시드 난수 생성기 - seed=0 포함 모든 구간에서 균등한 분포 보장
-  let lcgState = seed * 1664525 + 1013904223
+  let lcgState = (seed * 1664525 + 1013904223) & 0xffffffff
   const seededRandom = () => {
     lcgState = (lcgState * 1664525 + 1013904223) & 0xffffffff
     return (lcgState >>> 0) / 0x100000000

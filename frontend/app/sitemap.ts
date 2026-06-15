@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase'
+import { VALID_AI_TAGS } from '@/lib/constants/taxonomy'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = createClient()
@@ -23,6 +24,41 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         { url: `${baseUrl}/collections/research-council`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
         { url: `${baseUrl}/caldecott`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 }
     ]
+
+    // AI curation tags (New semantic path parameter style)
+    VALID_AI_TAGS.forEach((tag) => {
+        routes.push({
+            url: `${baseUrl}/collections/curation/${encodeURIComponent(tag)}`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.9,
+        })
+        // Fallback backward compatibility
+        routes.push({
+            url: `${baseUrl}/books?curation=${encodeURIComponent(tag)}`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.8,
+        })
+    })
+
+    // Additional specific curations
+    const specialCurations = ['winter-vacation', 'research-council', 'caldecott']
+    specialCurations.forEach((curation) => {
+        routes.push({
+            url: `${baseUrl}/collections/curation/${curation}`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.9,
+        })
+        // Fallback backward compatibility
+        routes.push({
+            url: `${baseUrl}/books?curation=${curation}`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.8,
+        })
+    })
 
     // Book detail pages
     if (books) {

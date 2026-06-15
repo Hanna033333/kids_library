@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+requests
+beautifulsoup4
+python-dotenv
+supabase
+fuzzywuzzy
+rapidfuzz
+aiohttp
+Pillow
+google-generativeai
+httpx

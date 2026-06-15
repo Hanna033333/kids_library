@@ -9,26 +9,26 @@ const buttonVariants = cva(
         variants: {
             variant: {
                 primary:
-                    "bg-brand-primary text-white",
+                    "bg-brand-primary text-white hover:bg-brand-primary active:bg-brand-primary-active",
                 secondary:
-                    "bg-white text-gray-700 border border-gray-200",
+                    "bg-brand-primary-200 text-brand-primary border border-transparent active:opacity-80",
                 outline:
-                    "bg-white text-brand-primary border border-brand-primary font-bold",
+                    "bg-white text-brand-primary border border-brand-primary font-bold active:bg-gray-50",
                 kakao:
-                    "bg-brand-kakao text-brand-kakao-text font-semibold",
+                    "bg-brand-kakao text-brand-kakao-text font-semibold active:bg-brand-kakao-active",
                 intro:
-                    "bg-brand-intro text-white",
+                    "bg-brand-intro text-white active:opacity-80",
                 accent:
-                    "bg-brand-accent text-white font-bold",
+                    "bg-brand-accent text-white font-bold active:opacity-80",
                 ghost:
-                    "text-gray-500 rounded-lg",
+                    "text-gray-500 rounded-lg active:bg-gray-100",
                 destructive:
-                    "bg-red-600 text-white",
+                    "bg-red-600 text-white active:bg-red-700",
             },
             size: {
-                sm: "h-9 px-3 text-sm",
-                md: "h-11 px-5 text-base",
-                lg: "h-14 px-6 text-base",
+                sm: "h-11 px-4 text-[13px] font-semibold", // Gray 보조 액션 (44px)
+                md: "h-12 px-5 text-[15px] font-semibold", // Medium/Secondary (48px)
+                lg: "h-14 px-6 text-[16px] font-bold", // CTA (56px)
                 icon: "h-10 w-10",
             },
         },

@@ -10,6 +10,7 @@ from api.books import router as books_router
 from api.sync import router as sync_router
 from api.auth import router as auth_router
 from api.wishlists import router as wishlists_router
+from api.threads import router as threads_router
 
 app = FastAPI(
     title="Kids Library API",
@@ -37,7 +38,15 @@ app.include_router(books_router)
 app.include_router(sync_router)
 app.include_router(auth_router)
 app.include_router(wishlists_router)
+app.include_router(threads_router)
 
+
+@app.on_event("startup")
+async def startup_event():
+    import asyncio
+    from api.threads import weekly_threads_scheduler, telegram_feedback_listener
+    asyncio.create_task(weekly_threads_scheduler())
+    asyncio.create_task(telegram_feedback_listener())
 
 @app.get("/")
 def read_root():

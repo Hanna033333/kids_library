@@ -16,18 +16,20 @@ import UserAvatar from "@/components/UserAvatar";
 import Toast from "@/components/ui/Toast";
 
 interface HomeClientProps {
+    overrideCuration?: string;
+    overrideAge?: string;
 }
 
-export default function HomeClient({ }: HomeClientProps) {
+export default function HomeClient({ overrideCuration, overrideAge }: HomeClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
     // URL에서 초기 상태 읽기 (teen → 13+ 정규화)
     const normalizeAge = (age: string) => age === "teen" ? "13+" : age;
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
-    const [ageFilter, setAgeFilter] = useState(normalizeAge(searchParams.get('age') || ""));
+    const [ageFilter, setAgeFilter] = useState(normalizeAge(overrideAge || searchParams.get('age') || ""));
     const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || "전체");
-    const [curationFilter] = useState(searchParams.get('curation') || "");
+    const [curationFilter, setCurationFilter] = useState(overrideCuration || searchParams.get('curation') || "");
     
     // AI 큐레이션은 기본적으로 신뢰도(confidence_score) 높은 순으로 정렬하여 홈 화면과 동일한 순서를 유지
     const [sortFilter, setSortFilter] = useState(() => {
@@ -63,8 +65,23 @@ export default function HomeClient({ }: HomeClientProps) {
             }
         });
 
-        router.push(`?${newParams.toString()}`, { scroll: false });
+        router.replace(`?${newParams.toString()}`, { scroll: false });
     }, [router]);
+
+    // URL 파라미터 변경 시 상태 동기화 (브라우저 뒤로가기/앞으로가기 대응)
+    useEffect(() => {
+        const q = searchParams.get('q') || "";
+        const age = normalizeAge(overrideAge || searchParams.get('age') || "");
+        const category = searchParams.get('category') || "전체";
+        const curation = overrideCuration || searchParams.get('curation') || "";
+        const sort = searchParams.get('sort') || (curation && !['겨울방학', 'winter-vacation', '어린이도서연구회', 'research-council', 'caldecott'].includes(curation) ? 'confidence_score_desc' : 'pangyo_callno');
+
+        setSearchQuery(q);
+        setAgeFilter(age);
+        setCategoryFilter(category);
+        setCurationFilter(curation);
+        setSortFilter(sort);
+    }, [searchParams, overrideAge, overrideCuration]);
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
@@ -108,26 +125,26 @@ export default function HomeClient({ }: HomeClientProps) {
         
         // AI 큐레이션 타이틀 매핑
         const aiCurationTitles: Record<string, string> = {
-            '잠자리': '포근한 잠자리 책',
-            '감정조절': '마음 처방전',
-            '자존감': '자존감 그림책',
-            '사회성': '사회성 기르기',
-            '인체': '신비한 우리 몸',
-            '판타지': '판타지 세계',
-            '환경보호': '환경 학교',
-            '생명존중': '동물 친구들',
-            '가족사랑': '가족 이야기',
-            '배려': '나눔과 배려',
-            '모험': '두근두근 모험',
-            '전래동화': '재밌는 옛이야기',
-            '예술감성': '꼬마 예술가',
-            '자연관찰': '신비한 자연 관찰',
-            '역사이야기': '지혜로운 역사',
-            '과학원리': '꼬마 과학자',
-            '다양성': '세계 시민 학교',
-            '적응': '즐거운 유치원',
-            '우리문화': '전통과 유산',
-            '계절': '여름의 추억'
+            '잠자리': '스르륵 꿀잠 그림책',
+            '감정조절': '마음 처방전 그림책',
+            '자존감': '단단한 자존감 그림책',
+            '사회성': '다정한 첫 사회성',
+            '인체': '신비한 우리 몸 그림책',
+            '판타지': '호기심 가득 판타지',
+            '환경보호': '초록 생태 환경 그림책',
+            '생명존중': '사랑스러운 동물 친구들',
+            '가족사랑': '따뜻한 가족 사랑',
+            '배려': '다정한 배려 그림책',
+            '모험': '씩씩한 모험 이야기',
+            '전래동화': '구수한 옛이야기',
+            '예술감성': '감성 풍부 꼬마 예술가',
+            '자연관찰': '호기심 자연 관찰',
+            '역사이야기': '지혜로운 역사 이야기',
+            '과학원리': '호기심 가득 과학 원리',
+            '다양성': '열린 마음 다양성 학교',
+            '적응': '유치원과 학교 적응',
+            '우리문화': '지혜 가득 문화 유산',
+            '계절': '시원한 여름의 추억'
         };
 
         if (curationFilter) return aiCurationTitles[curationFilter] || curationFilter;

@@ -1,3 +1,4 @@
+@import url('https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/variable/SUIT-Variable.min.css');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,7 +12,7 @@
     --card-foreground: 20 14.3% 4.1%;
     --popover: 0 0% 100%;
     --popover-foreground: 20 14.3% 4.1%;
-    --primary: 47.9 95.8% 53.1%;
+    --primary: 37.7 92.1% 50.2%;
     --primary-foreground: 26 83.3% 14.1%;
     --secondary: 60 4.8% 95.9%;
     --secondary-foreground: 24 9.8% 10%;
@@ -23,7 +24,7 @@
     --destructive-foreground: 60 9.1% 97.8%;
     --border: 20 5.9% 90%;
     --input: 20 5.9% 90%;
-    --ring: 20 14.3% 4.1%;
+    --ring: 37.7 92.1% 50.2%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -38,7 +39,7 @@
     --card-foreground: 60 9.1% 97.8%;
     --popover: 20 14.3% 4.1%;
     --popover-foreground: 60 9.1% 97.8%;
-    --primary: 47.9 95.8% 53.1%;
+    --primary: 37.7 92.1% 50.2%;
     --primary-foreground: 26 83.3% 14.1%;
     --secondary: 12 6.5% 15.1%;
     --secondary-foreground: 60 9.1% 97.8%;
@@ -50,7 +51,7 @@
     --destructive-foreground: 60 9.1% 97.8%;
     --border: 12 6.5% 15.1%;
     --input: 12 6.5% 15.1%;
-    --ring: 35.5 91.7% 32.9%;
+    --ring: 37.7 92.1% 50.2%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -68,7 +69,7 @@ body {
 body {
   color: hsl(var(--foreground));
   background: hsl(var(--background));
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'SUIT Variable', 'SUIT', -apple-system, sans-serif;
 }
 
 @layer utilities {
