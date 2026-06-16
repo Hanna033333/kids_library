@@ -161,13 +161,13 @@ export default function HomePageClient({
         {/* <LibrarySelector /> */}
 
         <div className="absolute right-6 flex items-center gap-3 md:gap-4">
-          <button
-            onClick={() => router.push('/books')}
+          <Link
+            href="/books"
             className="p-1 flex items-center justify-center group"
             aria-label="검색"
           >
             <Search className="w-6 h-6 text-gray-500 group-hover:text-gray-900 transition-colors" />
-          </button>
+          </Link>
           {user ? (
             <button
               onClick={() => router.push('/my-page')}

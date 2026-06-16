@@ -59,10 +59,10 @@ Vercel Preview 환경이 배포될 때마다 도메인이 유동적으로 생성
 # 변경 사항 확인 및 브랜치 체크
 git status
 
-# 커밋 및 원격 리포지토리 dev/feature 브랜치로 푸시
+# 커밋 및 원격 리포지토리 preview 브랜치로 푸시
 git add .
 git commit -m "feat: 프리뷰 검증 완료 및 배포 트리거"
-git push origin <your-feature-branch>
+git push origin preview
 ```
 
 > [!TIP]

@@ -11,10 +11,10 @@
 
 ## 🔒 브랜치별 필수 워크플로우
 
-### Preview 배포 (dev 브랜치)
+### Preview 배포 (preview 브랜치)
 - **대상**: 기능 개발, 버그 수정, 텍스트 변경 등 모든 코드 변경
 - **필수 실행**: `.agent/workflows/deploy_preview.md` 전 단계 완료 후 push
-- **push 대상**: `dev` 브랜치 (절대 `main` 아님)
+- **push 대상**: `preview` 브랜치 (절대 `main` 아님)
 
 ### Production 배포 (main 브랜치)
 - **대상**: dev에서 충분히 검증이 완료된 변경사항
@@ -44,7 +44,7 @@
 5. **브랜치 확인 후 push**
    ```bash
    git branch  # 현재 브랜치 반드시 확인
-   git push origin dev  # preview는 반드시 dev로
+   git push origin preview  # preview는 반드시 preview로
    ```
 
 ---

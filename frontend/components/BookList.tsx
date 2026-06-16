@@ -29,15 +29,19 @@ export default function BookList({
   initialBooks,
 }: BookListProps) {
   const [isMobile, setIsMobile] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Mobile detection
+  // Mobile detection & mount flag
   useEffect(() => {
+    setIsMounted(true);
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  const isSearchWaitingState = !searchQuery && !ageFilter && (!categoryFilter || categoryFilter === "전체") && !curationFilter;
 
   // Fetch data with infinite scroll
   const { books, loading, error, total, hasNextPage, isFetchingNextPage, fetchNextPage } = useBooks({
@@ -48,6 +52,18 @@ export default function BookList({
     sortFilter,
     limit: ITEMS_PER_PAGE,
     initialBooks,
+    enabled: !isSearchWaitingState,
+  });
+
+  // 검색 대기 중 인기 도서 추천 쿼리
+  const { data: searchWaitingRecommendedBooks = [], isLoading: isSearchWaitingRecommendedLoading } = useQuery<Book[]>({
+    queryKey: ['search-waiting-recommended-books'],
+    queryFn: async () => {
+      const { getPopularBooksOverall } = await import("@/lib/home-api");
+      return getPopularBooksOverall(8);
+    },
+    enabled: isSearchWaitingState && isMounted,
+    staleTime: 5 * 60 * 1000,
   });
 
   // 연령별 및 주요 큐레이션 홈 코너 추천도서 (AI 큐레이션 순 제외, 일반 필터 상태에서만 사용)
@@ -81,7 +97,7 @@ export default function BookList({
       }
       return [];
     },
-    enabled: shouldFetchRecommended,
+    enabled: shouldFetchRecommended && isMounted,
     staleTime: 5 * 60 * 1000, // 5분 캐시
     gcTime: 10 * 60 * 1000,   // 10분 캐시 유지
   });
@@ -98,10 +114,12 @@ export default function BookList({
   }, [books, recommendedBooks, shouldFetchRecommended]);
 
   // SSR initialBooks가 없을 때만 추천 도서 로딩을 대기하여 첫 로드 레이아웃 흔들림 방지 및 SSR 성능 보존
-  const isListLoading = loading || (!initialBooks && shouldFetchRecommended && isRecommendedLoading);
+  const isListLoading = !isMounted || (isSearchWaitingState
+    ? isSearchWaitingRecommendedLoading
+    : (loading || (!initialBooks && shouldFetchRecommended && isRecommendedLoading)));
 
   // 폴백 추천 도서 활성화 조건
-  const isFallbackEnabled = !isListLoading && displayBooks.length === 0;
+  const isFallbackEnabled = isMounted && !isListLoading && displayBooks.length === 0 && !isSearchWaitingState;
 
   // 폴백 추천 도서 fetch 쿼리
   const { data: fallbackBooks = [] } = useQuery<Book[]>({
@@ -120,7 +138,11 @@ export default function BookList({
   });
 
   // Batch fetch loan statuses for all visible books (including fallback books when list is empty)
-  const visibleBooksForLoan = displayBooks.length > 0 ? displayBooks : fallbackBooks;
+  const visibleBooksForLoan = displayBooks.length > 0 
+    ? displayBooks 
+    : isSearchWaitingState 
+      ? searchWaitingRecommendedBooks 
+      : fallbackBooks;
   const bookIds = visibleBooksForLoan.map(b => b.id).join(',');
 
   const { data: loanStatuses } = useQuery({
@@ -173,17 +195,20 @@ export default function BookList({
     }
   }, [isListLoading, books.length, searchQuery, ageFilter, categoryFilter, curationFilter]);
 
+  if (error) {
+    return (
+      <div className="w-full px-4">
+        <div className="w-full max-w-[1200px] mx-auto py-12 text-center">
+          <p className="text-red-500 font-medium mb-2">데이터를 불러오지 못했습니다.</p>
+          <p className="text-sm text-gray-400">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full px-4">
       <div className="w-full max-w-[1200px] mx-auto">
-        {/* Error */}
-        {error && (
-          <div className="py-12 text-center">
-            <p className="text-red-500 font-medium mb-2">데이터를 불러오지 못했습니다.</p>
-            <p className="text-sm text-gray-400">{error}</p>
-          </div>
-        )}
-
         {/* Loading (first page only) */}
         {isListLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6 mt-4">
@@ -198,6 +223,32 @@ export default function BookList({
               </div>
             ))}
           </div>
+        ) : isSearchWaitingState ? (
+          /* 검색 대기 상태 UI */
+          <div className="space-y-8 w-full mt-4">
+            {searchWaitingRecommendedBooks.length > 0 && (
+              <div className="p-6 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+                {/* 2단 타이틀 구조 (서브 타이틀 위, 메인 타이틀 아래) */}
+                <div className="mb-6">
+                  <span className="text-[13px] text-gray-500 font-semibold block mb-1">
+                    가장 많이 찾는 그림책
+                  </span>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">
+                    인기 추천 도서
+                  </h3>
+                </div>
+
+                {/* 도서 그리드 */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+                  {searchWaitingRecommendedBooks.map((book) => (
+                    <div key={book.id}>
+                      <BookItem book={book} loanStatus={loanStatuses?.[book.id]} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         ) : !isListLoading && displayBooks.length === 0 ? (
           <div className="space-y-8 w-full">
             {/* Empty State Box - Level 1 shadow, no borders */}
@@ -211,7 +262,7 @@ export default function BookList({
               <div className="p-6 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
                 {/* 2단 타이틀 구조 (서브 타이틀 위, 메인 타이틀 아래) */}
                 <div className="mb-6">
-                  <span className="text-xs text-amber-500 font-semibold block mb-1">
+                  <span className="text-[13px] text-gray-500 font-semibold block mb-1">
                     조건에 맞는 책이 없지만 이 책은 어떨까요?
                   </span>
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">

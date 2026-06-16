@@ -8,13 +8,15 @@ export async function searchBooks(
   category?: string,
   sort?: string,
   page: number = 1,
-  limit: number = 20
+  limit: number = 20,
+  curation?: string
 ): Promise<BooksResponse> {
   const params = new URLSearchParams();
   if (query) params.append("q", query);
   if (age) params.append("age", age);
   if (category && category !== "전체") params.append("category", category);
   if (sort) params.append("sort", sort);
+  if (curation) params.append("curation", curation);
   params.append("page", page.toString());
   params.append("limit", limit.toString());
 

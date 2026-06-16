@@ -3,13 +3,11 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SearchBar from "@/components/SearchBar";
-import FilterBar from "@/components/FilterBar";
 import BookList from "@/components/BookList";
 import { BooksResponse } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
 import { LogIn, User, Search, Share2 } from "lucide-react";
 import Link from "next/link";
-import IntegratedFilterModal from "@/components/IntegratedFilterModal";
 import PageHeader from "@/components/PageHeader";
 import { sendGAEvent } from "@/lib/analytics";
 import UserAvatar from "@/components/UserAvatar";
@@ -30,6 +28,9 @@ export default function HomeClient({ overrideCuration, overrideAge }: HomeClient
     const [ageFilter, setAgeFilter] = useState(normalizeAge(overrideAge || searchParams.get('age') || ""));
     const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || "전체");
     const [curationFilter, setCurationFilter] = useState(overrideCuration || searchParams.get('curation') || "");
+    const [isSearchVisible, setIsSearchVisible] = useState(() => {
+        return !!searchQuery || (!overrideCuration && !searchParams.get('curation') && !searchParams.get('age'));
+    });
     
     // AI 큐레이션은 기본적으로 신뢰도(confidence_score) 높은 순으로 정렬하여 홈 화면과 동일한 순서를 유지
     const [sortFilter, setSortFilter] = useState(() => {
@@ -44,7 +45,6 @@ export default function HomeClient({ overrideCuration, overrideAge }: HomeClient
     });
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const [filterModalMode, setFilterModalMode] = useState<"integrated" | "category">("integrated");
-    const [isSearchVisible, setIsSearchVisible] = useState(false);
     const { user, signOut } = useAuth();
     const [toastMessage, setToastMessage] = useState("");
 
@@ -81,6 +81,10 @@ export default function HomeClient({ overrideCuration, overrideAge }: HomeClient
         setCategoryFilter(category);
         setCurationFilter(curation);
         setSortFilter(sort);
+
+        if (q || (!curation && !age)) {
+            setIsSearchVisible(true);
+        }
     }, [searchParams, overrideAge, overrideCuration]);
 
     const handleSearch = useCallback((query: string) => {
@@ -268,7 +272,7 @@ export default function HomeClient({ overrideCuration, overrideAge }: HomeClient
                             className="text-gray-500 hover:text-gray-900 transition-colors p-1"
                             aria-label="검색 열기"
                         >
-                            <Search className="w-5 h-5" />
+                            <Search className="w-6 h-6" />
                         </button>
                         {user ? (
                             <button
@@ -300,30 +304,7 @@ export default function HomeClient({ overrideCuration, overrideAge }: HomeClient
                 />
             </div>
 
-            {/* 필터 바 (간소화 및 공유 액션 연동) */}
-            <FilterBar
-                selectedAge={ageFilter}
-                onAgeChange={handleAgeChange}
-                selectedCategory={categoryFilter}
-                onFilterClick={openIntegratedFilter}
-                showFilterButton={!isAiCuration}
-                onShareClick={handleShareCuration}
-                showShareButton={!!curationFilter || (!!ageFilter && !searchQuery)}
-            />
 
-            {/* 통합 필터 모달 */}
-            <IntegratedFilterModal
-                isOpen={isFilterModalOpen}
-                onClose={() => setIsFilterModalOpen(false)}
-                mode={filterModalMode}
-                searchQuery={searchQuery}
-                selectedCategory={categoryFilter}
-                onCategoryChange={handleCategoryChange}
-                selectedAge={ageFilter}
-                onAgeChange={handleAgeChange}
-                selectedSort={sortFilter}
-                onSortChange={handleSortChange}
-            />
 
             {/* 책 리스트 */}
             <div className="w-full max-w-7xl mx-auto pb-4 md:pb-6 pt-0">

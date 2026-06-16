@@ -7,6 +7,7 @@ def build_search_query(
     q: Optional[str] = None,
     age: Optional[str] = None,
     category: Optional[str] = None,
+    curation: Optional[str] = None,
     sort: str = "pangyo_callno"
 ):
     """
@@ -27,6 +28,25 @@ def build_search_query(
     # 카테고리 필터링
     if category and category != "전체":
         query = query.eq("category", category)
+        
+    # 큐레이션 필터링
+    if curation:
+        curation = curation.strip()
+        if curation:
+            curation_mapping = {
+                '겨울방학': '겨울방학2026',
+                'winter-vacation': '겨울방학2026',
+                '어린이도서연구회': '어린이도서연구회',
+                'research-council': '어린이도서연구회'
+            }
+            db_curation_tag = curation_mapping.get(curation, curation)
+            special_tags = ['겨울방학2026', '어린이도서연구회', 'caldecott']
+            
+            if db_curation_tag in special_tags:
+                query = query.ilike('curation_tag', f'%{db_curation_tag}%')
+            else:
+                or_filter = f'curation_tag.eq."{db_curation_tag}",curation_tag.like."{db_curation_tag},%",curation_tag.eq."#{db_curation_tag}",curation_tag.like."#{db_curation_tag},%"'
+                query = query.or_(or_filter)
     
     # 검색어 필터링 (제목 또는 저자에 검색어 포함)
     if q:
@@ -63,6 +83,7 @@ def search_books_service(
     q: Optional[str] = None,
     age: Optional[str] = None,
     category: Optional[str] = None,
+    curation: Optional[str] = None,
     sort: str = "pangyo_callno",
     page: int = 1,
     limit: int = 20
@@ -82,6 +103,25 @@ def search_books_service(
     # 카테고리 필터링
     if category and category != "전체":
         query = query.eq("category", category)
+        
+    # 큐레이션 필터링
+    if curation:
+        curation = curation.strip()
+        if curation:
+            curation_mapping = {
+                '겨울방학': '겨울방학2026',
+                'winter-vacation': '겨울방학2026',
+                '어린이도서연구회': '어린이도서연구회',
+                'research-council': '어린이도서연구회'
+            }
+            db_curation_tag = curation_mapping.get(curation, curation)
+            special_tags = ['겨울방학2026', '어린이도서연구회', 'caldecott']
+            
+            if db_curation_tag in special_tags:
+                query = query.ilike('curation_tag', f'%{db_curation_tag}%')
+            else:
+                or_filter = f'curation_tag.eq."{db_curation_tag}",curation_tag.like."{db_curation_tag},%",curation_tag.eq."#{db_curation_tag}",curation_tag.like."#{db_curation_tag},%"'
+                query = query.or_(or_filter)
     
     # 검색어 필터링 (제목 또는 저자에 검색어 포함)
     if q:

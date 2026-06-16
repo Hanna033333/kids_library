@@ -15,6 +15,7 @@ interface UseBooksParams {
   sortFilter?: string;
   limit?: number;
   initialBooks?: Book[];
+  enabled?: boolean;
 }
 
 export function useBooks({
@@ -25,6 +26,7 @@ export function useBooks({
   sortFilter = "pangyo_callno",
   limit = 24,
   initialBooks,
+  enabled = true,
 }: UseBooksParams) {
   const {
     data,
@@ -35,6 +37,7 @@ export function useBooks({
     error,
   } = useInfiniteQuery({
     queryKey: ["books-infinite", searchQuery, ageFilter, categoryFilter, curationFilter, sortFilter],
+    enabled,
     queryFn: async ({ pageParam }): Promise<BooksResponse> => {
       const page = pageParam as number;
 
@@ -45,7 +48,8 @@ export function useBooks({
           categoryFilter || undefined,
           sortFilter,
           page,
-          limit
+          limit,
+          curationFilter || undefined
         );
       }
 

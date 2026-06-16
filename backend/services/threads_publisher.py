@@ -3,7 +3,7 @@ import time
 import httpx
 from PIL import Image
 from core.config import THREADS_ACCESS_TOKEN, THREADS_USER_ID
-from supabase_client import supabase
+from core.database import supabase
 
 async def upload_image_to_supabase(image: Image.Image, file_name: str) -> str:
     """
