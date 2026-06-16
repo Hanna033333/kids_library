@@ -5,7 +5,7 @@ import { getCaldecottBooks } from '@/lib/caldecott-api'
 import { createClient } from '@/lib/supabase'
 import { VALID_TAXONOMY, CurationTag } from '@/lib/constants/taxonomy'
 
-export const revalidate = 86400; // 24시간마다 백그라운드 재검증 (ISR)
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://checkjari.com"),
