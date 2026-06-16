@@ -100,12 +100,20 @@ export default async function BooksPage({ searchParams }: Props) {
                             (curation && VALID_AI_TAGS.includes(curation));
     if (curation && isKnownCuration) {
         const supabase = createClient()
-        const { data: books } = await supabase
+        let query = supabase
             .from('childbook_items')
             .select('id, title, author, isbn, image_url')
-            .ilike('curation_tag', `%${curation}%`)
             .or('is_hidden.is.null,is_hidden.eq.false')
-            .order('title', { ascending: true })
+
+        const SPECIAL_TAGS = ['winter-vacation', 'research-council', 'caldecott', '겨울방학2026', '어린이도서연구회'];
+        if (SPECIAL_TAGS.includes(curation)) {
+            query = query.ilike('curation_tag', `%${curation}%`);
+        } else {
+            const orFilter = `curation_tag.eq."${curation}",curation_tag.like."${curation},%",curation_tag.eq."#${curation}",curation_tag.like."#${curation},%"`;
+            query = query.or(orFilter);
+        }
+
+        const { data: books } = await query.order('title', { ascending: true })
 
         if (books && books.length > 0) {
             jsonLd = {

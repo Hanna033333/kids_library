@@ -46,7 +46,13 @@ def select_five_books(curation_tag: str) -> List[dict]:
     query = query.or_("is_hidden.is.null,is_hidden.eq.false")
     query = query.not_.is_("image_url", "null")
     query = query.neq("image_url", "")
-    query = query.ilike("curation_tag", f"%{curation_tag}%")
+    
+    SPECIAL_TAGS = ['winter-vacation', 'research-council', 'caldecott', '겨울방학2026', '어린이도서연구회']
+    if curation_tag in SPECIAL_TAGS:
+        query = query.ilike("curation_tag", f"%{curation_tag}%")
+    else:
+        or_filter = f'curation_tag.eq."{curation_tag}",curation_tag.like."{curation_tag},%",curation_tag.eq."#{curation_tag}",curation_tag.like."#{curation_tag},%"'
+        query = query.or_(or_filter)
     
     # 큐레이션 기본 정렬 기준 (ㄱㄴㄷ 오름차순) 적용
     query = query.order("title")

@@ -339,11 +339,15 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                     </span>
                                 )}
                                 {/* Curation Tags */}
-                                {book.curation_tag && book.curation_tag.split(',').map((tag) => (
-                                    <span key={tag} className="px-2.5 py-0.5 bg-brand-primary/5 text-brand-primary rounded-lg text-[11px] font-bold border border-brand-primary/10">
-                                        {tag.trim()}
-                                    </span>
-                                ))}
+                                {book.curation_tag && book.curation_tag.split(',')
+                                    .map((tag) => tag.trim())
+                                    .filter(Boolean)
+                                    .slice(0, 4)
+                                    .map((tag) => (
+                                        <span key={tag} className="px-2.5 py-0.5 bg-brand-primary/5 text-brand-primary rounded-lg text-[11px] font-bold border border-brand-primary/10">
+                                            {tag}
+                                        </span>
+                                    ))}
                             </div>
 
                             <h1 className="text-xl md:text-2xl font-black text-gray-900 leading-tight mb-2 tracking-tight line-clamp-3">

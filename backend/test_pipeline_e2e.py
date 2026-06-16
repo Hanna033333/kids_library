@@ -15,7 +15,7 @@ async def test_e2e_pipeline():
     try:
         # 1. 책 5권 엄선
         print("\n📚 [Step 1] 도서 5권 선정 중...")
-        books = select_five_books(curation_tag=None, age_group="4-7")
+        books = select_five_books(curation_tag="가족사랑")
         print(f"✅ 도서 선정 완료 (총 {len(books)}권): {[b.get('title') for b in books]}")
         
         if len(books) < 5:

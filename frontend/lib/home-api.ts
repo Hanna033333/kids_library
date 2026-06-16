@@ -149,6 +149,8 @@ export async function getWinterBooks(limit: number = 7, client?: SupabaseClient)
 export async function getBooksByTag(tagName: string, limit: number = 7, client?: SupabaseClient): Promise<Book[]> {
     const supabase = client || createClient()
 
+    const orFilter = `curation_tag.eq."${tagName}",curation_tag.like."${tagName},%",curation_tag.eq."#${tagName}",curation_tag.like."#${tagName},%"`;
+
     const { data, error } = await supabase
         .from('childbook_items')
         .select(`
@@ -156,7 +158,7 @@ export async function getBooksByTag(tagName: string, limit: number = 7, client?:
             curation_tag, curation_note, confidence_score, national_loan_count,
             library_info:book_library_info(library_name, callno)
         `)
-        .ilike('curation_tag', `%${tagName}%`)
+        .or(orFilter)
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('confidence_score', { ascending: false }) // 신뢰도 높은 순 우선
         .limit(limit)

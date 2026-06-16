@@ -5,7 +5,7 @@ from pathlib import Path
 # backend 디렉토리를 path에 추가
 sys.path.append(str(Path(__file__).parent))
 
-from supabase_client import supabase
+from core.database import supabase
 
 THEMES_CONFIG = {
     "가족사랑": ["가족", "엄마", "아빠", "할머니", "할아버지", "동생", "형", "누나", "사랑"],

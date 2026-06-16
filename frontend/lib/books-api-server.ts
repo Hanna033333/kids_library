@@ -63,7 +63,14 @@ export async function getBooksFromServer({
             'research-council': '어린이도서연구회'
         };
         const dbCurationTag = curationMapping[filters.curation] || filters.curation;
-        query = query.ilike('curation_tag', `%${dbCurationTag}%`);
+        
+        const SPECIAL_TAGS = ['겨울방학2026', '어린이도서연구회', 'caldecott'];
+        if (SPECIAL_TAGS.includes(dbCurationTag)) {
+            query = query.ilike('curation_tag', `%${dbCurationTag}%`);
+        } else {
+            const orFilter = `curation_tag.eq."${dbCurationTag}",curation_tag.like."${dbCurationTag},%",curation_tag.eq."#${dbCurationTag}",curation_tag.like."#${dbCurationTag},%"`;
+            query = query.or(orFilter);
+        }
     }
 
     // 정렬
