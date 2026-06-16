@@ -4,45 +4,56 @@
 export function getAgeDisplayLabel(dbAge: string | null): string {
     if (!dbAge) return '';
 
-    // 0~3세: '0세부터', '1세부터', '2세부터', '3세부터', '0-3'
+    // 정확한 매칭 우선 적용
     if (
-        dbAge.includes('0세') ||
-        dbAge.includes('1세') ||
-        dbAge.includes('2세') ||
-        dbAge.includes('3세') ||
+        dbAge === '0세부터' ||
+        dbAge === '1세부터' ||
+        dbAge === '2세부터' ||
+        dbAge === '3세부터' ||
         dbAge === '0-3'
     ) {
         return '0~3세';
     }
 
-    // 4~7세: '5세부터', '7세부터', '4-7'
     if (
-        dbAge.includes('5세') ||
-        dbAge.includes('7세') ||
+        dbAge === '4세부터' ||
+        dbAge === '5세부터' ||
+        dbAge === '6세부터' ||
+        dbAge === '7세부터' ||
         dbAge === '4-7' ||
         dbAge.includes('유아')
     ) {
         return '4~7세';
     }
 
-    // 8~12세: '9세부터', '11세부터', '8-12'
     if (
-        dbAge.includes('8세') ||
-        dbAge.includes('9세') ||
-        dbAge.includes('11세') ||
+        dbAge === '8세부터' ||
+        dbAge === '9세부터' ||
+        dbAge === '10세부터' ||
+        dbAge === '11세부터' ||
+        dbAge === '12세부터' ||
         dbAge === '8-12'
     ) {
         return '8~12세';
     }
 
-    // 13세 이상: '13세부터', '16세부터', '13+', 'teen'
     if (
-        dbAge.includes('13') ||
-        dbAge.includes('16') ||
+        dbAge === '13세부터' ||
+        dbAge === '16세부터' ||
         dbAge === '13+' ||
         dbAge === 'teen'
     ) {
         return '13세 이상';
+    }
+
+    // fallback: 숫자를 안전하게 정규식으로 파싱하여 처리
+    const match = dbAge.match(/(\d+)세/);
+    if (match) {
+        const ageNum = parseInt(match[1], 10);
+        if (ageNum >= 0 && ageNum <= 3) return '0~3세';
+        if (ageNum >= 4 && ageNum <= 7) return '4~7세';
+        if (ageNum >= 8 && ageNum <= 12) return '8~12세';
+        if (ageNum >= 13) return '13세 이상';
     }
 
     // 매핑되지 않은 경우 원래 값 반환

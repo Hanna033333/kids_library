@@ -40,13 +40,13 @@ def build_search_query(
         age = age.strip()
         if age:
             if age == "0-3":
-                query = query.or_(f"age.ilike.%0세%,age.ilike.%1세%,age.ilike.%2세%,age.ilike.%3세%,age.ilike.%{age}%")
+                query = query.or_("age.eq.0세부터,age.eq.1세부터,age.eq.2세부터,age.eq.3세부터,age.eq.0-3")
             elif age == "4-7":
-                query = query.or_(f"age.ilike.%4세%,age.ilike.%5세%,age.ilike.%6세%,age.ilike.%7세%,age.ilike.%{age}%")
+                query = query.or_("age.eq.4세부터,age.eq.5세부터,age.eq.6세부터,age.eq.7세부터,age.eq.4-7,age.ilike.%유아%")
             elif age == "8-12":
-                query = query.or_(f"age.ilike.%8세%,age.ilike.%9세%,age.ilike.%10세%,age.ilike.%11세%,age.ilike.%12세%,age.ilike.%{age}%")
-            elif age == "13+":
-                query = query.or_(f"age.ilike.%13세%,age.ilike.%13%")
+                query = query.or_("age.eq.8세부터,age.eq.9세부터,age.eq.10세부터,age.eq.11세부터,age.eq.12세부터,age.eq.8-12")
+            elif age == "13+" or age == "teen":
+                query = query.or_("age.eq.13세부터,age.eq.16세부터,age.eq.13+,age.eq.teen")
             else:
                 query = query.ilike("age", f"%{age}%")
     
@@ -96,17 +96,13 @@ def search_books_service(
         if age:
             age_conditions = []
             if age == "0-3":
-                # 0세, 1세, 2세, 3세
-                age_conditions = ["age.ilike.%0세%", "age.ilike.%1세%", "age.ilike.%2세%", "age.ilike.%3세%"]
+                age_conditions = ["age.eq.0세부터", "age.eq.1세부터", "age.eq.2세부터", "age.eq.3세부터", "age.eq.0-3"]
             elif age == "4-7":
-                # 4세, 5세, 6세, 7세, 유아 포함 (3세 제외하여 0-3과 분리)
-                age_conditions = ["age.ilike.%4세%", "age.ilike.%5세%", "age.ilike.%6세%", "age.ilike.%7세%", "age.ilike.%유아%"]
+                age_conditions = ["age.eq.4세부터", "age.eq.5세부터", "age.eq.6세부터", "age.eq.7세부터", "age.eq.4-7", "age.ilike.%유아%"]
             elif age == "8-12":
-                # 8, 9, 10, 11, 12세 포함 (7세 제외)
-                age_conditions = ["age.ilike.%8세%", "age.ilike.%9세%", "age.ilike.%10세%", "age.ilike.%11세%", "age.ilike.%12세%"]
+                age_conditions = ["age.eq.8세부터", "age.eq.9세부터", "age.eq.10세부터", "age.eq.11세부터", "age.eq.12세부터", "age.eq.8-12"]
             elif age == "13+" or age == "teen":
-                # 13세부터, 16세부터, 13+ 데이터 포함
-                age_conditions = ["age.ilike.%13세%", "age.ilike.%16세%", "age.ilike.%13%"]
+                age_conditions = ["age.eq.13세부터", "age.eq.16세부터", "age.eq.13+", "age.eq.teen"]
             else:
                 age_conditions = [f"age.ilike.%{age}%"]
             
