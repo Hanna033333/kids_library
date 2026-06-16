@@ -90,7 +90,7 @@ export default async function HomePage() {
     ]},
     // 6주 (8/3 ~ 8/9)
     { start: "2026-08-03", end: "2026-08-09", curations: [
-      { id: 8, subtitle: "슬프고 낯선 이별의 감정을 안아줘요", title: "🩹 상실과 이별을 다독이는 그림책", tag: "상실" as any, slug: "loss" },
+      { id: 18, subtitle: "괜찮다고 말해주는 다정한 위로", title: "🧸 따뜻한 위로 그림책", tag: "위로" as any, slug: "comfort" },
       { id: 11, subtitle: "정직하게 말하는 마음의 힘", title: "💎 바른 마음 정직 그림책", tag: "정직" as any, slug: "honesty" },
       { id: 38, subtitle: "작은 생명 곤충들의 위대한 한살이", title: "🦋 꿈틀꿈틀 곤충 나라", tag: "곤충" as any, slug: "bugs" }
     ]},
@@ -104,7 +104,7 @@ export default async function HomePage() {
     { start: "2026-08-17", end: "2026-08-23", curations: [
       { id: 13, subtitle: "폭발하는 감정을 다스리는 지혜", title: "🔥 화를 가라앉히는 그림책", tag: "분노조절" as any, slug: "anger" },
       { id: 23, subtitle: "함께 사는 사회의 바른 규칙", title: "🚦 약속을 지키는 그림책", tag: "규칙" as any, slug: "rules" },
-      { id: 40, subtitle: "수억 년 전 지구를 지배한 주인공", title: "🦖 거대한 공룡의 세계", tag: "공룡" as any, slug: "dinosaurs" }
+      { id: 77, subtitle: "포유류부터 조류까지 다양한 동물의 특징", title: "🦁 생생한 동물 도감", tag: "동물도감" as any, slug: "animal-encyclopedia" }
     ]},
     // 9주 (8/24 ~ 8/30)
     { start: "2026-08-24", end: "2026-08-30", curations: [
@@ -175,7 +175,7 @@ export default async function HomePage() {
     // 20주 (11/9 ~ 11/15)
     { start: "2026-11-09", end: "2026-11-15", curations: [
       { id: 60, subtitle: "나만의 생각과 감정을 담은 첫 글쓰기", title: "✍️ 상상 가득 글쓰기", tag: "글쓰기" as any, slug: "writing" },
-      { id: 65, subtitle: "머릿속에서 펼쳐지는 기발한 상상들", title: "💭 상상의 날개를 활짝", tag: "상상력" as any, slug: "imagination" },
+      { id: 62, subtitle: "상상하는 모든 것이 이루어지는 곳", title: "🦄 호기심 가득 판타지", tag: "판타지" as any, slug: "fantasy" },
       { id: 66, subtitle: "하늘 위를 훨훨 날고 싶은 꼬마 새", title: "✈️ 하늘을 나는 상상", tag: "하늘" as any, slug: "aviation" }
     ]},
     // 21주 (11/16 ~ 11/22)

@@ -9,9 +9,13 @@ import json
 import datetime
 from pathlib import Path
 from typing import List
+from dotenv import load_dotenv
 
-# backend 디렉토리를 path에 추가하여 supabase_client 로딩 지원
-sys.path.append(str(Path(__file__).parent))
+# backend/.env 파일을 명시적으로 로드
+load_dotenv(dotenv_path="/Users/1004823/Desktop/kids_library/backend/.env", override=True)
+
+# backend/scripts/data 디렉토리를 path에 추가하여 supabase_client 로딩 지원
+sys.path.append(str(Path(__file__).parent / "scripts" / "data"))
 
 try:
     from supabase_client import supabase
@@ -205,8 +209,8 @@ def main():
     blog_content = generate_blog_content(tag, books)
 
     # 3. 아티팩트 경로에 저장
-    # Antigravity가 이 파일의 존재를 감지하고 띄울 수 있도록 아티팩트 디렉토리에 저장합니다.
     possible_dirs = [
+        Path("/Users/1004823/.gemini/antigravity-ide/brain/7e72f194-cca6-498b-ac99-a2519ed4e13b"),
         Path("/Users/1004823/.gemini/antigravity-ide/brain/a290fb72-aa04-4d36-8b25-6d1abd1d9a58"),
         Path("/Users/1004823/.gemini/antigravity-ide/brain/2deb7665-edf7-4024-9ab6-c2682fcdf678")
     ]
@@ -220,7 +224,7 @@ def main():
         # 폴백으로 로컬 backend 경로에 저장
         artifact_dir = Path(__file__).parent
         
-    output_file = artifact_dir / "naver_blog_post.md"
+    output_file = artifact_dir / f"naver_blog_post_{tag}.md"
     
     try:
         with open(output_file, "w", encoding="utf-8") as f:

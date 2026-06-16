@@ -181,7 +181,7 @@ def get_weekly_curations(now_date: datetime.date = None) -> list:
             "start": datetime.date(2026, 8, 3),
             "end": datetime.date(2026, 8, 9),
             "curations": [
-                { "id": 8, "subtitle": "슬프고 낯선 이별의 감정을 안아줘요", "title": "🩹 상실과 이별을 다독이는 그림책", "tag": "상실", "slug": "loss" },
+                { "id": 18, "subtitle": "괜찮다고 말해주는 다정한 위로", "title": "🧸 따뜻한 위로 그림책", "tag": "위로", "slug": "comfort" },
                 { "id": 11, "subtitle": "정직하게 말하는 마음의 힘", "title": "💎 바른 마음 정직 그림책", "tag": "정직", "slug": "honesty" },
                 { "id": 38, "subtitle": "작은 생명 곤충들의 위대한 한살이", "title": "🦋 꿈틀꿈틀 곤충 나라", "tag": "곤충", "slug": "bugs" }
             ]
@@ -203,7 +203,7 @@ def get_weekly_curations(now_date: datetime.date = None) -> list:
             "curations": [
                 { "id": 13, "subtitle": "폭발하는 감정을 다스리는 지혜", "title": "🔥 화를 가라앉히는 그림책", "tag": "분노조절", "slug": "anger" },
                 { "id": 23, "subtitle": "함께 사는 사회의 바른 규칙", "title": "🚦 약속을 지키는 그림책", "tag": "규칙", "slug": "rules" },
-                { "id": 40, "subtitle": "수억 년 전 지구를 지배한 주인공", "title": "🦖 거대한 공룡의 세계", "tag": "공룡", "slug": "dinosaurs" }
+                { "id": 77, "subtitle": "포유류부터 조류까지 다양한 동물의 특징", "title": "🦁 생생한 동물 도감", "tag": "동물도감", "slug": "animal-encyclopedia" }
             ]
         },
         # 9주: 8/24 ~ 8/30 (슬픔, 다문화, 바다)
@@ -322,7 +322,7 @@ def get_weekly_curations(now_date: datetime.date = None) -> list:
             "end": datetime.date(2026, 11, 15),
             "curations": [
                 { "id": 60, "subtitle": "나만의 생각과 감정을 담은 첫 글쓰기", "title": "✍️ 상상 가득 글쓰기", "tag": "글쓰기", "slug": "writing" },
-                { "id": 65, "subtitle": "머릿속에서 펼쳐지는 기발한 상상들", "title": "💭 상상의 날개를 활짝", "tag": "상상력", "slug": "imagination" },
+                { "id": 62, "subtitle": "상상하는 모든 것이 이루어지는 곳", "title": "🦄 호기심 가득 판타지", "tag": "판타지", "slug": "fantasy" },
                 { "id": 66, "subtitle": "하늘 위를 훨훨 날고 싶은 꼬마 새", "title": "✈️ 하늘을 나는 상상", "tag": "하늘", "slug": "aviation" }
             ]
         },
