@@ -17,7 +17,7 @@ import aiohttp
 from datetime import datetime
 
 # Add backend to path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append('/Users/1004823/Desktop/kids_library/backend')
 
 from core.database import supabase
 from dotenv import load_dotenv
