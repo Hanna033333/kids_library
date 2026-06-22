@@ -1,9 +1,42 @@
 import io
-import time
+import asyncio
 import httpx
 from PIL import Image
 from core.config import THREADS_ACCESS_TOKEN, THREADS_USER_ID
 from core.database import supabase
+
+async def poll_container_status(container_id: str, access_token: str, max_retries: int = 20, interval: int = 5) -> str:
+    """
+    Threads 미디어 컨테이너가 FINISHED 상태가 될 때까지 폴링합니다.
+    Threads API는 컨테이너가 FINISHED 상태가 되기 전에 carousel 조립을 시도하면 500 에러를 반환합니다.
+    """
+    url = f"https://graph.threads.net/v1.0/{container_id}"
+    params = {
+        "fields": "status,error_message",
+        "access_token": access_token
+    }
+
+    for attempt in range(max_retries):
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, params=params, timeout=15)
+            if response.status_code != 200:
+                print(f"⚠️ 상태 조회 실패 (시도 {attempt+1}/{max_retries}): {response.text}")
+                await asyncio.sleep(interval)
+                continue
+
+            data = response.json()
+            status = data.get("status", "UNKNOWN")
+            print(f"  ↳ 컨테이너 {container_id} 상태: {status}")
+
+            if status == "FINISHED":
+                return status
+            elif status in ("ERROR", "EXPIRED"):
+                error_msg = data.get("error_message", "알 수 없는 오류")
+                raise RuntimeError(f"❌ 컨테이너 {container_id} 오류 상태: {status} - {error_msg}")
+
+        await asyncio.sleep(interval)
+
+    raise TimeoutError(f"❌ 컨테이너 {container_id}가 {max_retries * interval}초 내에 FINISHED 상태가 되지 않았습니다.")
 
 async def upload_image_to_supabase(image: Image.Image, file_name: str) -> str:
     """
@@ -111,27 +144,31 @@ async def publish_carousel_to_threads(text: str, image_urls: list) -> str:
         raise ValueError("❌ 발행할 이미지 URL 목록이 비어있습니다.")
         
     print(f"🚀 Threads 캐러셀 업로드 시작 (총 {len(image_urls)}개 이미지)")
-    
-    # 1. 개별 이미지 컨테이너 병렬/순차 생성
+
+    # 1. 개별 이미지 컨테이너 생성 → 각각 FINISHED 상태 확인
     container_ids = []
     for idx, img_url in enumerate(image_urls):
         print(f"📦 [{idx+1}/{len(image_urls)}] 개별 이미지 컨테이너 생성 중...")
         item_id = await create_threads_item_container(img_url, THREADS_ACCESS_TOKEN, THREADS_USER_ID)
         container_ids.append(item_id)
-        # API 과도한 호출 방지 위해 미세한 지연 추가
-        time.sleep(1)
-        
+        await asyncio.sleep(1)
+
+    # 모든 자식 컨테이너가 FINISHED 상태가 될 때까지 대기 (캐러셀 조립 전 필수)
+    print("⏳ 자식 컨테이너 처리 완료 대기 중...")
+    for cid in container_ids:
+        await poll_container_status(cid, THREADS_ACCESS_TOKEN)
+
     # 2. 캐러셀 부모 컨테이너 생성
     print("📂 캐러셀 부모 컨테이너 조립 중...")
     parent_id = await create_threads_carousel_parent(container_ids, text, THREADS_ACCESS_TOKEN, THREADS_USER_ID)
-    
-    # 미디어가 완전히 처리될 수 있도록 업로드 완료 대기 (권장)
-    print("⏳ Meta 미디어 서버 처리 대기 (5초)...")
-    time.sleep(5)
-    
+
+    # 부모 컨테이너도 FINISHED 상태 확인 후 발행
+    print("⏳ 부모 컨테이너 처리 완료 대기 중...")
+    await poll_container_status(parent_id, THREADS_ACCESS_TOKEN)
+
     # 3. 최종 스레드 퍼블리시
     print("📣 스레드 피드에 최종 발행 중...")
     post_id = await publish_threads_container(parent_id, THREADS_ACCESS_TOKEN, THREADS_USER_ID)
     print(f"🎉 스레드 캐러셀 발행 성공! 포스트 ID: {post_id}")
-    
+
     return post_id

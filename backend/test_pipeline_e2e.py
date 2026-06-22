@@ -24,7 +24,7 @@ async def test_e2e_pipeline():
         # 2. Gemini AI 요약문구 생성
         curation_title = "아이의 감정 조절을 돕는 그림책"
         print(f"\n🧠 [Step 2] Gemini AI 콘텐츠 생성 중 (주제: '{curation_title}')...")
-        ai_content = generate_ai_threads_content(curation_title, books)
+        ai_content = generate_ai_threads_content(curation_title, "가족사랑", books)
         
         caption = ai_content.get("caption")
         card_descriptions = ai_content.get("cards", [])
@@ -65,8 +65,7 @@ async def test_e2e_pipeline():
                 publisher=publisher,
                 cover_url=cover_url,
                 description=desc,
-                curation_title=curation_title,
-                dialogue_question=question
+                curation_title=curation_title
             )
             
             # 파일 업로드 (E2E 테스트용 고유 폴더에 적재)
