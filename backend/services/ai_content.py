@@ -39,7 +39,7 @@ def generate_fallback_content(
         f"우리 아이에게 꼭 맞는 책들을 엄선하여 소개해 드려요. "
         f"함께 소중한 독서 시간을 가져보는 건 어떨까요?\n\n"
         f"자세한 도서 목록과 정보는 아래 링크에서 확인해 보세요!\n"
-        f"🔗 https://checkjari.com/collections/curation/{urllib.parse.quote(curation_tag)}"
+        f"🔗 https://checkjari.com/c/{urllib.parse.quote(curation_tag)}"
     )
 
     card_descriptions = []
@@ -76,7 +76,7 @@ def generate_ai_threads_content(
         for idx, b in enumerate(books)
     ]
 
-    landing_url = f"https://checkjari.com/collections/curation/{urllib.parse.quote(curation_tag)}"
+    landing_url = f"https://checkjari.com/c/{urllib.parse.quote(curation_tag)}"
     prompt = f"""
 당신은 아동 도서 전문 큐레이션 서비스 '책자리'의 AI 전문 사서입니다.
 아래 도서 목록과 큐레이션 테마 정보를 바탕으로, 인스타그램 스레드(Threads)에 발행할 SNS 본문용 캡션(caption)과 각 도서 카드뉴스 이미지 내부에 들어갈 순수한 3줄짜리 책 요약 설명(card_descriptions)을 생성해 주세요.

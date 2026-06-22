@@ -210,6 +210,8 @@ def main():
 
     # 3. 아티팩트 경로에 저장
     possible_dirs = [
+        Path("/Users/1004823/.gemini/antigravity-ide/brain/000a513c-46a2-49bf-9432-925415ba6911"),
+        Path("/Users/1004823/.gemini/antigravity-ide/brain/000a513c-46a2-49bf-9432-925415ba6911/scratch"),
         Path("/Users/1004823/.gemini/antigravity-ide/brain/7e72f194-cca6-498b-ac99-a2519ed4e13b"),
         Path("/Users/1004823/.gemini/antigravity-ide/brain/a290fb72-aa04-4d36-8b25-6d1abd1d9a58"),
         Path("/Users/1004823/.gemini/antigravity-ide/brain/2deb7665-edf7-4024-9ab6-c2682fcdf678")

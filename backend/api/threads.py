@@ -137,7 +137,7 @@ def generate_fallback_content(curation_title: str, curation_tag: str, books: Lis
         f"우리 아이에게 꼭 맞는 책들을 엄선하여 소개해 드려요. "
         f"함께 소중한 독서 시간을 가져보는 건 어떨까요?\n\n"
         f"자세한 도서 목록과 정보는 아래 링크에서 확인해 보세요!\n"
-        f"🔗 https://checkjari.com/collections/curation/{curation_slug}?utm_source=threads&utm_medium=referral&utm_campaign=weekly_{tag_encoded}"
+        f"🔗 https://checkjari.com/c/{curation_slug}"
     )
     
     card_descriptions = []
@@ -200,8 +200,8 @@ def generate_ai_threads_content(curation_title: str, curation_tag: str, books: L
 1. 본문 캡션(caption) 작성 지침:
    - 양육자(부모님)와 깊이 공감하는 다정하고 따뜻한 존댓말 톤앤매너로 작성하세요.
    - **가독성을 위한 줄바꿈 및 레이아웃**: 캡션 본문(양육 에피소드 및 큐레이션 기획 의도 등)은 가독성을 위해 적절히 줄바꿈(엔터)을 사용하여 2~3개의 정돈된 단락으로 보기 쉽게 작성하세요.
-   - **링크 구분**: 본문이 모두 끝나면 반드시 한 줄을 띄우고(빈 줄 추가), 마지막에 다음 형식의 상세 랜딩 링크를 단독으로 노출시키세요 (아래 문자열 그대로 삽입하되, 중복 유입 분석을 위해 UTM 파라미터가 정확하게 유지되어야 합니다):
-     "🔗 https://checkjari.com/collections/curation/{curation_slug}?utm_source=threads&utm_medium=referral&utm_campaign=weekly_{curation_slug}"
+   - **링크 구분**: 본문이 모두 끝나면 반드시 한 줄을 띄우고(빈 줄 추가), 마지막에 다음 형식의 단축 랜딩 링크를 단독으로 노출시키세요:
+     "🔗 https://checkjari.com/c/{curation_slug}"
    - 맞춤법, 띄어쓰기, 문장 완성도에 오타가 전혀 없도록 철저히 검수하세요.
 
 2. 카드뉴스 도서 요약(card_descriptions) 작성 지침 (비주얼 가이드):
@@ -289,7 +289,7 @@ async def apply_feedback_with_gemini(
 1. 본문 캡션(caption) 작성 지침:
    - 사용자의 피드백을 반영하되, 양육자와 공감하는 다정하고 따뜻한 존댓말 톤앤매너를 시종일관 유지해 주세요.
    - **가독성을 위한 줄바꿈 및 레이아웃**: 캡션 본문은 가독성을 위해 적절히 줄바꿈(엔터)을 사용하여 2~3개의 정돈된 단락으로 보기 쉽게 작성하세요.
-   - **링크 구분**: 본문이 모두 끝나면 반드시 한 줄을 띄우고(빈 줄 추가), 마지막에 다음 형식의 상세 랜딩 링크를 단독으로 노출시키세요 (예: 🔗 https://checkjari.com/collections/curation/영어슬러그?utm_source=threads&utm_medium=referral&utm_campaign=weekly_영어슬러그 와 같이 UTM 캠페인 명에도 영어 슬러그가 포함되도록 하세요).
+   - **링크 구분**: 본문이 모두 끝나면 반드시 한 줄을 띄우고(빈 줄 추가), 마지막에 다음 형식의 단축 랜딩 링크를 단독으로 노출시키세요 (예: 🔗 https://checkjari.com/c/영어슬러그).
    - 맞춤법 및 오타가 절대 없도록 철저히 다시 보정해 주세요.
 
 2. 카드뉴스 도서 요약(card_descriptions) 작성 지침:
@@ -921,3 +921,46 @@ async def debug_telegram():
             }
         except Exception as e:
             return {"status": "error", "message": str(e), "details": status_info}
+
+
+@router.post("/republish/{feed_id}")
+async def republish_feed(feed_id: int):
+    """
+    특정 feed_id의 피드를 수동으로 즉시 재발행합니다.
+    스케줄러 오류 등으로 인해 발행되지 못한 피드를 복구할 때 사용합니다.
+    """
+    import datetime
+    tz_kst = datetime.timezone(datetime.timedelta(hours=9))
+
+    feed_result = supabase.table("threads_feeds").select("*").eq("id", feed_id).execute()
+    if not feed_result.data:
+        raise HTTPException(status_code=404, detail=f"피드 ID {feed_id}를 찾을 수 없습니다.")
+
+    feed = feed_result.data[0]
+
+    if feed.get("published_at"):
+        raise HTTPException(status_code=400, detail=f"피드 ID {feed_id}는 이미 발행된 피드입니다. (published_at: {feed['published_at']})")
+
+    if not feed.get("is_approved"):
+        raise HTTPException(status_code=400, detail=f"피드 ID {feed_id}는 아직 승인되지 않은 피드입니다.")
+
+    image_urls = feed.get("image_urls") or []
+    if not image_urls:
+        raise HTTPException(status_code=400, detail=f"피드 ID {feed_id}에 이미지 URL이 없습니다.")
+
+    caption = feed.get("content", "")
+
+    try:
+        await send_telegram_message(f"🔄 <b>[수동 재발행]</b> 피드 ID {feed_id} 재발행을 시작합니다...")
+        post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
+
+        supabase.table("threads_feeds").update(
+            {"published_at": datetime.datetime.now(tz_kst).isoformat()}
+        ).eq("id", feed_id).execute()
+
+        await send_telegram_message(f"🎉 <b>[수동 재발행 완료]</b> 피드 ID {feed_id} 발행 성공. 포스트 ID: <code>{post_id}</code>")
+        return {"status": "success", "feed_id": feed_id, "post_id": post_id}
+
+    except Exception as e:
+        await send_telegram_message(f"❌ <b>[수동 재발행 실패]</b> 피드 ID {feed_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
