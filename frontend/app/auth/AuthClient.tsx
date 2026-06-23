@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { PageLoader } from '@/components/ui/PageLoader'
 import { sendGAEvent } from '@/lib/analytics'
+import BackButton from '@/components/BackButton'
 
 
 export default function AuthClient() {
@@ -80,7 +81,12 @@ export default function AuthClient() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6 pb-20">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6 pb-20 relative">
+            {/* 뒤로가기 버튼 */}
+            <div className="absolute top-6 left-6">
+                <BackButton />
+            </div>
+
             <div className="w-full max-w-[320px] flex flex-col items-center text-center">
                 {/* 로고 */}
                 <img
