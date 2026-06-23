@@ -146,10 +146,10 @@ export default function AuthClient() {
                         )}
                         <Button
                             onClick={handleGoogleLogin}
-                            variant="secondary"
+                            variant="google"
                             size="lg"
                             disabled={isLoading}
-                            className="w-full relative py-7 border-gray-200"
+                            className="w-full relative py-7"
                         >
                             <div className="absolute left-6">
                                 <svg width="20" height="20" viewBox="0 0 24 24">
