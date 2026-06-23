@@ -7,6 +7,7 @@ generate_fallback_content()    : Gemini 불가 시 로컬 DB 기반 폴백
 """
 
 import json
+import re
 import urllib.parse
 from typing import Optional, List
 
@@ -14,6 +15,21 @@ import google.generativeai as genai
 
 from core.config import GEMINI_API_KEY
 from services.text_trimmer import force_trim_description, trim_text_fallback
+
+
+def fix_caption_hashtags(caption: str, curation_tag: str) -> str:
+    """캡션 하단 해시태그 중 #책자리, #그림책추천, #분류태그에서 # 기호가 누락된 경우 강제 보정합니다."""
+    clean_tag = curation_tag.lstrip("#").split(",")[0].strip()
+    
+    # (?<!#)(?<!\S)는 앞에 # 기호가 없고, 공백 문자나 시작 지점만 허용하는 매칭 패턴입니다.
+    caption = re.sub(r'(?<!#)(?<!\S)책자리', '#책자리', caption)
+    caption = re.sub(r'(?<!#)(?<!\S)그림책추천', '#그림책추천', caption)
+    
+    if clean_tag:
+        escaped_tag = re.escape(clean_tag)
+        caption = re.sub(rf'(?<!#)(?<!\S){escaped_tag}', f'#{clean_tag}', caption)
+        
+    return caption
 
 
 def _get_gemini_model():
@@ -76,7 +92,6 @@ def generate_ai_threads_content(
         for idx, b in enumerate(books)
     ]
 
-    landing_url = f"https://checkjari.com/c/{urllib.parse.quote(curation_tag)}"
     prompt = f"""
 당신은 아동 도서 전문 큐레이션 서비스 '책자리'의 AI 전문 사서입니다.
 아래 도서 목록과 큐레이션 테마 정보를 바탕으로, 인스타그램 스레드(Threads)에 발행할 SNS 본문용 캡션(caption)과 각 도서 카드뉴스 이미지 내부에 들어갈 순수한 3줄짜리 책 요약 설명(card_descriptions)을 생성해 주세요.
@@ -91,29 +106,39 @@ def generate_ai_threads_content(
 [작성 지침 - 중요]
 1. 본문 캡션(caption) 작성 지침:
    - 양육자(부모님)와 깊이 공감하는 다정하고 따뜻한 존댓말 톤앤매너로 작성하세요.
-   - 큐레이션 기획 의도와 관련된 공감되는 실제 양육 에피소드(혹은 부모로서 겪는 고민)가 캡션 첫머리에 필수적으로 배치되어야 합니다.
-   - 마지막에는 서비스 유입을 위한 상세 랜딩 링크를 반드시 다음 형식으로 포함하세요:
-     "🔗 {landing_url}"
+   - **반드시 다음 5단계의 정확한 레이아웃 순서(2단락 구조)를 엄격히 준수하여 빈 줄 개행까지 똑같이 생성하세요.** 다른 불필요한 서두 멘트, 이정표, 꼬리표([본문], [해시태그] 등)는 절대로 붙여선 안 됩니다.
+     --- (레이아웃 순서 시작) ---
+     안녕하세요, 책자리 입니다. 📚
+     (빈 줄)
+     [단락 1: 양육자의 일상 고민이나 공감대를 자극하는 실제 육아 에피소드 인트로 (3~4문장)]
+     (빈 줄)
+     [단락 2: 해당 고민을 함께 나누고 덜어줄 이번 주 큐레이션 테마의 기획 의도 및 엄선된 추천 도서들 소개 (3~4문장)]
+     (빈 줄)
+     👉 더 많은 도서 목록은 첫 댓글의 링크를 확인해 보세요!
+     (빈 줄)
+     #책자리 #그림책추천 #{curation_tag}
+     --- (레이아웃 순서 끝) ---
+   - **경고 (링크 노출 금지)**: 본문 캡션 내에 직접적인 URL 링크(예: http://..., checkjari.com/...)는 **절대로 포함해서는 안 됩니다**. (링크는 첫 번째 댓글에 별도로 달리므로 캡션에서는 생략해야 함)
    - 맞춤법, 띄어쓰기, 문장 완성도에 오타가 전혀 없도록 철저히 검수하세요.
 
 2. 카드뉴스 도서 요약(card_descriptions) 작성 지침 (비주얼 가이드):
-    - **글자 수 정밀 통제**: 각 도서별로 3줄을 거의 꽉 채울 수 있도록 반드시 공백 포함 60자에서 70자 사이의 완성도 있는 텍스트로 작성하세요.
+    - **글자 수 정밀 통제**: 각 도서별로 3줄을 거의 꽉 채울 수 있도록 반드시 공백 포함 60자에서 70자 사이의 완성도 있는 텍스트로 작성하세요. (글자 수가 너무 짧아지면 카드뉴스에서 2줄만 노출되어 균형이 깨지고, 70자를 초과하면 4줄이 되어 뒷부분이 잘리게 되므로, 반드시 60자~70자 범위를 맞춰 3줄을 꽉 채울 것)
     - **연결성 극대화 (뚝뚝 끊김 절대 금지)**: 명사형 종결이나 단어/구절의 단순 나열을 절대 금지합니다. 문맥이 부드럽고 자연스럽게 한 문장 혹은 두 문장으로 유기적으로 연결된 완성형 글로 작성해 주세요.
-    - **존댓말 종결 어미 필수 (반말 금지)**: 반드시 신뢰감을 주는 정중하고 부드러운 존댓말 종결 어미(예: "~이야기입니다.", "~소개해 줍니다.", "~그려내고 있습니다.", "~담고 있습니다.")만 사용하세요.
-    - 양육자용 추천평 멘트는 완전히 배제하고, 순수한 책의 줄거리 요약으로만 작성하세요.
-    - 꼬리표 기호나 마크다운 기호는 절대 포함하지 마세요.
+    - **존댓말 종결 어미 필수 (반말 금지)**: 반드시 신뢰감을 주는 정중하고 부드러운 존댓말 종결 어미(예: "~이야기입니다.", "~소개해 줍니다.", "~그려내고 있습니다.", "~담고 있습니다.")만 사용하세요. 반말(예: "~한다.", "~이야기.")로 끝나는 것은 엄격히 금지됩니다.
+    - 양육자용 추천평 멘트(예: "엄마랑 읽기 좋아요", "강력 추천합니다")는 완전히 배제하고, 순수한 책의 줄거리 요약으로만 완성도 있게 작성하세요.
+    - 꼬리표 기호(예: "[줄거리 요약]" 등)나 마크다운 기호는 가독성을 방해하므로 절대 포함하지 마세요.
     - 문장이 끊기거나 말줄임표(...)로 끝나서는 안 됩니다.
 
 [반환 형식]
 반드시 다음 JSON 구조로 응답해야 합니다:
 {{
-  "caption": "스레드 본문에 노출할 캡션 텍스트",
+  "caption": "스레드 본문에 노출할 5단계 규격의 캡션 텍스트",
   "card_descriptions": [
-    "1번 책의 3줄 줄거리 요약",
-    "2번 책의 3줄 줄거리 요약",
-    "3번 책의 3줄 줄거리 요약",
-    "4번 책의 3줄 줄거리 요약",
-    "5번 책의 3줄 줄거리 요약"
+    "1번 책의 3줄 줄거리 요약 (60~70자)",
+    "2번 책의 3줄 줄거리 요약 (60~70자)",
+    "3번 책의 3줄 줄거리 요약 (60~70자)",
+    "4번 책의 3줄 줄거리 요약 (60~70자)",
+    "5번 책의 3줄 줄거리 요약 (60~70자)"
   ]
 }}
 """
@@ -123,6 +148,13 @@ def generate_ai_threads_content(
         res_data = json.loads(response.text)
         if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 5:
             raise ValueError("Invalid response structure")
+            
+        caption = res_data["caption"].strip()
+        caption = fix_caption_hashtags(caption, curation_tag)
+        if not caption.startswith("안녕하세요, 책자리 입니다"):
+            caption = "안녕하세요, 책자리 입니다. 📚\n\n" + caption
+        res_data["caption"] = caption
+        
         res_data["card_descriptions"] = [
             force_trim_description(desc) for desc in res_data.get("card_descriptions", [])
         ]
@@ -171,18 +203,41 @@ async def apply_feedback_with_gemini(
 {json.dumps(books_info, ensure_ascii=False, indent=2)}
 
 [작성 지침 - 중요]
-1. 본문 캡션(caption): 피드백 반영, 따뜻한 존댓말 유지, 랜딩 링크 형식 유지, 맞춤법 보정.
-2. 카드뉴스 도서 요약(card_descriptions): 피드백 반영, 공백 포함 60~70자, 완성형 존댓말 문장.
+1. 본문 캡션(caption) 작성 지침:
+   - 사용자의 피드백을 반영하되, 양육자와 공감하는 다정하고 따뜻한 존댓말 톤앤매너를 유지하세요.
+   - **반드시 다음 5단계의 정확한 레이아웃 순서(2단락 구조)를 엄격히 준수하여 빈 줄 개행까지 똑같이 생성하세요.**
+     --- (레이아웃 순서 시작) ---
+     안녕하세요, 책자리 입니다. 📚
+     (빈 줄)
+     [단락 1: 피드백이 반영된 양육자의 일상 고민이나 공감대 에피소드 인트로]
+     (빈 줄)
+     [단락 2: 피드백이 반영된 이번 주 큐레이션 테마 기획 의도 및 도서 안내]
+     (빈 줄)
+     👉 더 많은 도서 목록은 첫 댓글의 링크를 확인해 보세요!
+     (빈 줄)
+     #책자리 #그림책추천 #[분류태그]
+     --- (레이아웃 순서 끝) ---
+   - **경고 (링크 노출 금지)**: 본문 캡션 내에 직접적인 URL 링크(예: http://..., checkjari.com/...)는 **절대로 포함해서는 안 됩니다**.
+   - 맞춤법 및 오타가 절대 없도록 철저히 다시 보정해 주세요.
+
+2. 카드뉴스 도서 요약(card_descriptions) 작성 지침:
+    - 사용자의 피드백을 반영하여 각 도서의 3줄 요약 설명(공백 포함 60자에서 70자 사이)을 새로 정제하세요. (글자 수가 너무 짧아지면 카드뉴스에서 2줄만 노출되어 균형이 깨지고, 70자를 초과하면 4줄이 되어 뒷부분이 잘리게 되므로, 반드시 60자~70자 범위를 맞춰 3줄을 꽉 채울 것)
+    - **연결성 극대화 (뚝뚝 끊김 절대 금지)**: 단어 중심의 명사형 종결이나 단절된 나열식 문장을 절대 금지하고, 자연스럽고 부드럽게 이어지는 완성형 문장들로 유기적으로 작문해 주세요.
+    - **존댓말 종결 어미 필수 (반말 금지)**: 반드시 정중하고 격식 있는 존댓말 종결 어미(예: "~합니다.", "~입니다.", "~그려내고 있습니다.", "~소개해 줍니다.")로 마침표를 찍어 주세요.
+    - 추천평 및 주관적인 형용사는 배제하고, 순수한 줄거리 요약으로만 3줄을 완성하세요.
+    - 꼬리표 기호(예: "[줄거리 요약]" 등)나 마크다운 기호는 절대 넣지 마세요.
+    - 말줄임표(...)로 끝나서는 안 되며 마침표로 정중히 문장을 매끄럽게 종결해 주세요.
 
 [반환 형식]
+반드시 다음 JSON 구조로 응답해야 합니다:
 {{
   "caption": "수정 반영된 스레드 본문 캡션 텍스트",
   "card_descriptions": [
-    "수정 반영된 1번 책의 3줄 요약",
-    "수정 반영된 2번 책의 3줄 요약",
-    "수정 반영된 3번 책의 3줄 요약",
-    "수정 반영된 4번 책의 3줄 요약",
-    "수정 반영된 5번 책의 3줄 요약"
+    "수정 반영된 1번 책의 3줄 요약 (60~70자)",
+    "수정 반영된 2번 책의 3줄 요약 (60~70자)",
+    "수정 반영된 3번 책의 3줄 요약 (60~70자)",
+    "수정 반영된 4번 책의 3줄 요약 (60~70자)",
+    "수정 반영된 5번 책의 3줄 요약 (60~70자)"
   ]
 }}
 """
@@ -192,6 +247,21 @@ async def apply_feedback_with_gemini(
         res_data = json.loads(response.text)
         if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 5:
             raise ValueError("Invalid response structure")
+            
+        caption = res_data["caption"].strip()
+        
+        # books 첫 도서의 curation_tag로부터 복구
+        curation_tag = ""
+        if books:
+            raw_tag = books[0].get("curation_tag") or ""
+            if raw_tag:
+                curation_tag = raw_tag.split(",")[0].strip().lstrip("#")
+                
+        caption = fix_caption_hashtags(caption, curation_tag)
+        if not caption.startswith("안녕하세요, 책자리 입니다"):
+            caption = "안녕하세요, 책자리 입니다. 📚\n\n" + caption
+        res_data["caption"] = caption
+        
         res_data["card_descriptions"] = [
             force_trim_description(desc) for desc in res_data.get("card_descriptions", [])
         ]

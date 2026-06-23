@@ -9,16 +9,16 @@ from typing import Optional, List
 from fastapi import APIRouter, Query, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-import google.generativeai as genai
 import httpx
 from PIL import Image
 
-from core.config import GEMINI_API_KEY, THREADS_ACCESS_TOKEN, THREADS_USER_ID
+from core.config import THREADS_ACCESS_TOKEN, THREADS_USER_ID
 from core.taxonomy import get_weekly_curations, ALL_TAXONOMY
 from core.database import supabase
 from services.card_generator import generate_card_news
-from services.threads_publisher import upload_image_to_supabase, publish_carousel_to_threads
+from services.threads_publisher import upload_image_to_supabase, publish_carousel_to_threads, publish_reply_to_threads
 from services.telegram_notifier import send_threads_preview, send_threads_text_preview, send_telegram_message
+from services.ai_content import generate_ai_threads_content, apply_feedback_with_gemini
 
 router = APIRouter(prefix="/api/threads", tags=["threads"])
 
@@ -113,216 +113,6 @@ def trim_text_fallback(text: str) -> str:
         cut = last_space if last_space >= 40 else trim_at
         result = result[:cut].rstrip() + " 이야기입니다."
     return result
-
-def _safety_trim(text: str, max_len: int = 90) -> str:
-    """Gemini 생성 설명이 max_len을 초과할 경우 어절 경계에서 잘라 존댓말로 종결합니다."""
-    text = text.strip()
-    if len(text) <= max_len:
-        return text
-    cut = text[:max_len].rfind(" ")
-    result = text[:cut] if cut >= 40 else text[:max_len]
-    result = result.rstrip(".")
-    if not result.endswith("다"):
-        result = result + " 이야기입니다."
-    else:
-        result = result + "."
-    return result
-
-def generate_fallback_content(curation_title: str, curation_tag: str, books: List[dict]) -> dict:
-    """Gemini API 호출이 불가할 때 로컬 DB의 도서 소개 및 요약 정보를 정제하여 스마트 폴백 텍스트를 구성합니다."""
-    curation_slug = get_slug_by_tag(curation_tag)
-    tag_encoded = urllib.parse.quote(curation_tag)
-    caption = (
-        f"오늘의 추천 큐레이션은 <{curation_title}> 입니다.\n\n"
-        f"우리 아이에게 꼭 맞는 책들을 엄선하여 소개해 드려요. "
-        f"함께 소중한 독서 시간을 가져보는 건 어떨까요?\n\n"
-        f"자세한 도서 목록과 정보는 아래 링크에서 확인해 보세요!\n"
-        f"🔗 https://checkjari.com/c/{curation_slug}"
-    )
-    
-    card_descriptions = []
-    for b in books:
-        raw_desc = b.get("description") or b.get("curation_note") or f"{b.get('title')} 도서입니다."
-        card_descriptions.append(trim_text_fallback(raw_desc))
-        
-    return {
-        "caption": caption,
-        "card_descriptions": card_descriptions
-    }
-
-def generate_ai_threads_content(curation_title: str, curation_tag: str, books: List[dict]) -> dict:
-    """Gemini API를 사용하여 스레드용 캡션 및 5권 도서의 3줄 요약 설명(각 65자 내외)을 생성합니다."""
-    if not GEMINI_API_KEY:
-        print("⚠️ GEMINI_API_KEY가 존재하지 않아 스마트 폴백 메커니즘을 작동합니다.")
-        return generate_fallback_content(curation_title, curation_tag, books)
-        
-    genai.configure(api_key=GEMINI_API_KEY)
-    
-    curation_slug = get_slug_by_tag(curation_tag)
-    
-    try:
-        model = genai.GenerativeModel(
-            'gemini-2.5-flash',
-            generation_config={"response_mime_type": "application/json"}
-        )
-    except Exception:
-        try:
-            model = genai.GenerativeModel(
-                'gemini-2.0-flash',
-                generation_config={"response_mime_type": "application/json"}
-            )
-        except Exception as e:
-            print(f"❌ GenerativeModel 생성 실패: {e}. 스마트 폴백을 작동합니다.")
-            return generate_fallback_content(curation_title, curation_tag, books)
-        
-    books_info = []
-    for idx, b in enumerate(books):
-        books_info.append({
-            "index": idx + 1,
-            "title": b.get("title"),
-            "publisher": b.get("publisher"),
-            "description": b.get("description") or b.get("curation_note") or ""
-        })
-        
-    prompt = f"""
-당신은 아동 도서 전문 큐레이션 서비스 '책자리'의 AI 전문 사서입니다.
-아래 도서 목록과 큐레이션 테마 정보를 바탕으로, 인스타그램 스레드(Threads)에 발행할 SNS 본문용 캡션(caption)과 각 도서 카드뉴스 이미지 내부에 들어갈 순수한 3줄짜리 책 요약 설명(card_descriptions)을 생성해 주세요.
-
-[큐레이션 정보]
-- 테마 제목: {curation_title}
-- 분류 태그: {curation_tag}
-- 영어 슬러그: {curation_slug}
-
-[도서 목록]
-{json.dumps(books_info, ensure_ascii=False, indent=2)}
-
-[작성 지침 - 중요]
-1. 본문 캡션(caption) 작성 지침:
-   - 양육자(부모님)와 깊이 공감하는 다정하고 따뜻한 존댓말 톤앤매너로 작성하세요.
-   - **가독성을 위한 줄바꿈 및 레이아웃**: 캡션 본문(양육 에피소드 및 큐레이션 기획 의도 등)은 가독성을 위해 적절히 줄바꿈(엔터)을 사용하여 2~3개의 정돈된 단락으로 보기 쉽게 작성하세요.
-   - **링크 구분**: 본문이 모두 끝나면 반드시 한 줄을 띄우고(빈 줄 추가), 마지막에 다음 형식의 단축 랜딩 링크를 단독으로 노출시키세요:
-     "🔗 https://checkjari.com/c/{curation_slug}"
-   - 맞춤법, 띄어쓰기, 문장 완성도에 오타가 전혀 없도록 철저히 검수하세요.
-
-2. 카드뉴스 도서 요약(card_descriptions) 작성 지침 (비주얼 가이드):
-    - **글자 수 정밀 통제**: 각 도서별로 3줄을 거의 꽉 채울 수 있도록 반드시 공백 포함 60자에서 70자 사이의 완성도 있는 텍스트로 작성하세요. (글자 수가 너무 짧아지면 카드뉴스에서 2줄만 노출되어 균형이 깨지고, 70자를 초과하면 4줄이 되어 뒷부분이 잘리게 되므로, 반드시 60자~70자 범위를 맞춰 3줄을 꽉 채울 것)
-    - **연결성 극대화 (뚝뚝 끊김 절대 금지)**: 명사형 종결이나 단어/구절의 단순 나열(예: "~의 일대기. ~의 삶. ~한 이야기.")을 **절대 금지**합니다. 문맥이 부드럽고 자연스럽게 한 문장 혹은 두 문장으로 유기적으로 연결된 완성형 글로 작성해 주세요.
-    - **존댓말 종결 어미 필수 (반말 금지)**: 반말(예: "~그린다.", "~지켰다.", "~이야기.")로 종결되는 문장을 **엄격히 금지**합니다. 반드시 신뢰감을 주는 정중하고 부드러운 존댓말 종결 어미(예: "~이야기입니다.", "~소개해 줍니다.", "~그려내고 있습니다.", "~담고 있습니다.")만 사용하여 문장을 매끄럽게 끝맺어 주세요.
-    - 양육자용 추천평 멘트(예: "부모님과 읽기 좋아요", "강력 추천합니다")는 완전히 배제하고, 순수한 책의 줄거리 요약으로만 완성도 있게 작성하세요.
-    - 꼬리표 기호(예: "[줄거리 요약]", "[추천평]" 등)나 마크다운 기호는 가독성을 방해하므로 절대 포함하지 마세요.
-    - 문장이 끊기거나 말줄임표(...)로 끝나서는 안 됩니다.
-
-[반환 형식]
-반드시 다음 JSON 구조로 응답해야 합니다:
-{{
-  "caption": "스레드 본문에 노출할 캡션 텍스트",
-  "card_descriptions": [
-    "1번 책의 3줄 줄거리 요약",
-    "2번 책의 3줄 줄거리 요약",
-    "3번 책의 3줄 줄거리 요약",
-    "4번 책의 3줄 줄거리 요약",
-    "5번 책의 3줄 줄거리 요약"
-  ]
-}}
-"""
-
-    try:
-        response = model.generate_content(prompt)
-        res_data = json.loads(response.text)
-        if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 5:
-            raise ValueError("Invalid response structure")
-        res_data["card_descriptions"] = [_safety_trim(d) for d in res_data["card_descriptions"]]
-        return res_data
-    except Exception as e:
-        print(f"❌ Gemini API 오류 발생: {e}. 스마트 폴백 메커니즘을 작동합니다.")
-        return generate_fallback_content(curation_title, curation_tag, books)
-
-async def apply_feedback_with_gemini(
-    feedback_text: str,
-    old_caption: str,
-    old_descriptions: List[str],
-    books: List[dict]
-) -> Optional[dict]:
-    """Gemini API에 기존 텍스트 시안과 관리자의 피드백 내용을 전달하여 텍스트를 정교하게 재생성합니다."""
-    if not GEMINI_API_KEY:
-        return None
-        
-    genai.configure(api_key=GEMINI_API_KEY)
-    try:
-        model = genai.GenerativeModel(
-            'gemini-2.5-flash',
-            generation_config={"response_mime_type": "application/json"}
-        )
-    except Exception:
-        try:
-            model = genai.GenerativeModel(
-                'gemini-2.0-flash',
-                generation_config={"response_mime_type": "application/json"}
-            )
-        except Exception:
-            return None
-        
-    books_info = []
-    for idx, b in enumerate(books):
-        books_info.append({
-            "index": idx + 1,
-            "title": b.get("title"),
-            "publisher": b.get("publisher"),
-            "old_description": old_descriptions[idx] if idx < len(old_descriptions) else ""
-        })
-        
-    prompt = f"""
-당신은 아동 도서 전문 큐레이션 서비스 '책자리'의 AI 전문 사서입니다.
-사용자(관리자)로부터 이전에 작성된 스레드 캡션 및 개별 도서 요약본에 대한 수정 요청(피드백)을 받았습니다.
-이를 바탕으로 캡션과 각 도서의 요약을 업데이트해 주세요.
-
-[사용자 수정 요청 (피드백)]
-"{feedback_text}"
-
-[기존 캡션]
-"{old_caption}"
-
-[기존 도서 정보 및 이전 요약]
-{json.dumps(books_info, ensure_ascii=False, indent=2)}
-
-[작성 지침 - 중요]
-1. 본문 캡션(caption) 작성 지침:
-   - 사용자의 피드백을 반영하되, 양육자와 공감하는 다정하고 따뜻한 존댓말 톤앤매너를 시종일관 유지해 주세요.
-   - **가독성을 위한 줄바꿈 및 레이아웃**: 캡션 본문은 가독성을 위해 적절히 줄바꿈(엔터)을 사용하여 2~3개의 정돈된 단락으로 보기 쉽게 작성하세요.
-   - **링크 구분**: 본문이 모두 끝나면 반드시 한 줄을 띄우고(빈 줄 추가), 마지막에 다음 형식의 단축 랜딩 링크를 단독으로 노출시키세요 (예: 🔗 https://checkjari.com/c/영어슬러그).
-   - 맞춤법 및 오타가 절대 없도록 철저히 다시 보정해 주세요.
-
-2. 카드뉴스 도서 요약(card_descriptions) 작성 지침:
-    - 사용자의 피드백을 반영하여 각 도서의 3줄 요약 설명(공백 포함 60자에서 70자 사이)을 새로 정제하세요. (글자 수가 너무 짧아지면 카드뉴스에서 2줄만 노출되어 균형이 깨지고, 70자를 초과하면 4줄이 되어 뒷부분이 잘리게 되므로, 반드시 60자~70자 범위를 맞춰 3줄을 꽉 채울 것)
-    - **연결성 극대화 (뚝뚝 끊김 절대 금지)**: 단어 중심의 명사형 종결이나 단절된 나열식 문장을 **절대 금지**하고, 자연스럽고 부드럽게 이어지는 **완성형 문장**들로 유기적으로 작문해 주세요.
-    - **존댓말 종결 어미 필수 (반말 금지)**: 반말(예: "~그린다.", "~했다.")로 끝나는 것을 **엄격히 금지**합니다. 반드시 정중하고 격식 있는 존댓말 종결 어미(예: "~합니다.", "~입니다.", "~그려내고 있습니다.", "~소개해 줍니다.")로 마침표를 찍어 주세요.
-    - 추천평 및 주관적인 형용사는 배제하고, 순수한 줄거리 요약으로만 3줄을 완성하세요.
-    - 꼬리표 기호(예: "[줄거리 요약]" 등)나 마크다운 기호는 절대 넣지 마세요.
-    - 말줄임표(...)로 끝나서는 안 되며 마침표로 정중히 문장을 매끄럽게 종결해 주세요.
-
-[반환 형식]
-반드시 다음 JSON 구조로 응답해야 합니다:
-{{
-  "caption": "수정 반영된 스레드 본문 캡션 텍스트",
-  "card_descriptions": [
-    "수정 반영된 1번 책의 3줄 요약",
-    "수정 반영된 2번 책의 3줄 요약",
-    "수정 반영된 3번 책의 3줄 요약",
-    "수정 반영된 4번 책의 3줄 요약",
-    "수정 반영된 5번 책의 3줄 요약"
-  ]
-}}
-"""
-    try:
-        response = model.generate_content(prompt)
-        res_data = json.loads(response.text)
-        if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 5:
-            raise ValueError("Invalid response structure")
-        res_data["card_descriptions"] = [_safety_trim(d) for d in res_data["card_descriptions"]]
-        return res_data
-    except Exception as e:
-        print(f"❌ Gemini 피드백 수정 중 오류: {e}")
-        return None
 
 async def process_telegram_feedback(feedback_text: str):
     """사용자가 텔레그램 방에 보낸 피드백 텍스트를 기반으로 오늘자 미승인 피드를 수정하여 재생성합니다."""
@@ -478,7 +268,7 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
         raise ValueError(f"해당 인덱스({index})의 주간 큐레이션이 존재하지 않습니다.")
         
     curation = curations[index]
-    c_tag = curation_tag or curation["tag"]
+    c_tag = (curation_tag or curation["tag"]).lstrip("#")
     c_title = curation_title or curation["title"]
     
     print(f"📚 [스레드 발행 파이프라인] 테마: '{c_title}' (태그: '{c_tag}') 작업 시작")
@@ -836,6 +626,18 @@ async def weekly_threads_scheduler():
                                 await send_telegram_message("📢 <b>[스케줄러] 최종 승인된 카드뉴스의 Threads 최종 배포를 진행합니다...</b>")
                                 post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
                                 
+                                # 첫 댓글로 자동 링크 연동 (옵션 B)
+                                curation_tag = feed.get("curation_tag") or "추천"
+                                try:
+                                    tag_clean = curation_tag.lstrip("#")
+                                    slug = get_slug_by_tag(tag_clean)
+                                    reply_text = f"🔗 https://checkjari.com/c/{slug}"
+                                    await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
+                                    print(f"✅ [스케줄러] 첫 댓글 등록 성공 (태그: {curation_tag} -> 슬러그: {slug})")
+                                except Exception as reply_err:
+                                    print(f"❌ [스케줄러] 첫 댓글 등록 실패: {reply_err}")
+                                    await send_telegram_message(f"⚠️ [스케줄러 경고] 피드({feed_id}) 발행에는 성공했으나, 첫 댓글 등록 중 오류 발생: {reply_err}")
+                                
                                 supabase.table("threads_feeds").update({
                                     "published_at": datetime.datetime.now(tz_kst).isoformat()
                                 }).eq("id", feed_id).execute()
@@ -953,6 +755,18 @@ async def republish_feed(feed_id: int):
     try:
         await send_telegram_message(f"🔄 <b>[수동 재발행]</b> 피드 ID {feed_id} 재발행을 시작합니다...")
         post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
+        
+        # 첫 댓글로 자동 링크 연동 (옵션 B)
+        curation_tag = feed.get("curation_tag") or "추천"
+        try:
+            tag_clean = curation_tag.lstrip("#")
+            slug = get_slug_by_tag(tag_clean)
+            reply_text = f"🔗 https://checkjari.com/c/{slug}"
+            await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
+            print(f"✅ [수동 재발행] 첫 댓글 등록 성공 (태그: {curation_tag} -> 슬러그: {slug})")
+        except Exception as reply_err:
+            print(f"❌ [수동 재발행] 첫 댓글 등록 실패: {reply_err}")
+            await send_telegram_message(f"⚠️ [재발행 경고] 피드({feed_id}) 발행에는 성공했으나, 첫 댓글 등록 중 오류 발생: {reply_err}")
 
         supabase.table("threads_feeds").update(
             {"published_at": datetime.datetime.now(tz_kst).isoformat()}

@@ -39,27 +39,22 @@ def download_image(url: str) -> Image.Image:
         return img
 
 def wrap_text(text: str, font: ImageFont.FreeTypeFont, max_width: int) -> list:
-    """텍스트가 최대 가로 길이를 넘지 않도록 자동 줄바꿈 처리"""
-    words = text.split()
-    if not words:
-        words = list(text)
-        
+    """텍스트가 최대 가로 길이를 넘지 않도록 글자 단위(Character-wrap)로 꼼꼼하게 줄바꿈 처리"""
     lines = []
-    current_line = []
-    
     original_paragraphs = text.split('\n')
     
     for paragraph in original_paragraphs:
-        words = paragraph.split()
-        if not words and paragraph:
-            words = list(paragraph)
-        elif not paragraph:
+        if not paragraph:
             lines.append("")
             continue
             
-        current_line = []
-        for word in words:
-            test_line = " ".join(current_line + [word])
+        current_line = ""
+        for char in paragraph:
+            # 줄 시작 부분의 공백은 무시하여 비주얼 정렬 유지
+            if not current_line and char == " ":
+                continue
+                
+            test_line = current_line + char
             if hasattr(font, 'getbbox'):
                 bbox = font.getbbox(test_line)
                 width = bbox[2] - bbox[0]
@@ -67,15 +62,16 @@ def wrap_text(text: str, font: ImageFont.FreeTypeFont, max_width: int) -> list:
                 width = font.getsize(test_line)[0]
                 
             if width <= max_width:
-                current_line.append(word)
+                current_line = test_line
             else:
                 if current_line:
-                    lines.append(" ".join(current_line))
-                current_line = [word]
+                    lines.append(current_line)
+                current_line = char
         if current_line:
-            lines.append(" ".join(current_line))
+            lines.append(current_line)
             
     return lines
+
 
 def generate_card_news(
     title: str,

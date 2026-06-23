@@ -172,3 +172,42 @@ async def publish_carousel_to_threads(text: str, image_urls: list) -> str:
     print(f"🎉 스레드 캐러셀 발행 성공! 포스트 ID: {post_id}")
 
     return post_id
+
+
+async def publish_reply_to_threads(parent_post_id: str, reply_text: str) -> str:
+    """
+    부모 스레드 포스트 ID(parent_post_id)를 받아서 첫 번째 댓글(reply_text)을 자동으로 등록합니다.
+    """
+    if not THREADS_ACCESS_TOKEN or not THREADS_USER_ID:
+        raise ValueError("❌ 환경 변수에 THREADS_ACCESS_TOKEN 또는 THREADS_USER_ID가 설정되어 있지 않습니다.")
+        
+    print(f"💬 Threads 댓글 작성 시작 (부모 포스트 ID: {parent_post_id})")
+    
+    # 1. 댓글 미디어 컨테이너 생성 (TEXT 타입)
+    url = f"https://graph.threads.net/v1.0/{THREADS_USER_ID}/threads"
+    params = {
+        "media_type": "TEXT",
+        "text": reply_text,
+        "reply_to_id": parent_post_id,
+        "access_token": THREADS_ACCESS_TOKEN
+    }
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, params=params, timeout=15)
+        if response.status_code != 200:
+            print(f"❌ 댓글 컨테이너 생성 실패: {response.text}")
+            response.raise_for_status()
+            
+        data = response.json()
+        container_id = data["id"]
+        
+    # 2. 댓글 컨테이너 상태 폴링
+    print(f"⏳ 댓글 컨테이너 {container_id} 처리 완료 대기 중...")
+    await poll_container_status(container_id, THREADS_ACCESS_TOKEN)
+    
+    # 3. 댓글 최종 발행
+    print("📣 스레드 댓글 최종 게시 중...")
+    reply_post_id = await publish_threads_container(container_id, THREADS_ACCESS_TOKEN, THREADS_USER_ID)
+    print(f"🎉 스레드 댓글 등록 성공! 댓글 포스트 ID: {reply_post_id}")
+    
+    return reply_post_id

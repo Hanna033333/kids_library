@@ -5,9 +5,11 @@ import uuid
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from api.threads import select_five_books, generate_ai_threads_content
+import urllib.parse
+from api.threads import select_five_books
+from services.ai_content import generate_ai_threads_content
 from services.card_generator import generate_card_news
-from services.threads_publisher import upload_image_to_supabase
+from services.threads_publisher import upload_image_to_supabase, publish_carousel_to_threads, publish_reply_to_threads
 
 async def test_e2e_pipeline():
     print("🚀 [E2E 파이프라인 테스트] 시작 (Storage 업로드 및 Gemini 연동 검증)")
@@ -27,29 +29,20 @@ async def test_e2e_pipeline():
         ai_content = generate_ai_threads_content(curation_title, "가족사랑", books)
         
         caption = ai_content.get("caption")
-        card_descriptions = ai_content.get("cards", [])
+        card_descriptions = ai_content.get("card_descriptions", [])
         
         print("✅ Gemini 생성 결과:")
         print(f" - 캡션 본문: {caption}")
         for idx, card_data in enumerate(card_descriptions):
-            if isinstance(card_data, str):
-                print(f" - 카드 {idx+1} 추천평: {card_data}")
-            else:
-                print(f" - 카드 {idx+1} 추천평: {card_data.get('description')} | 질문: {card_data.get('question')}")
+            print(f" - 카드 {idx+1} 설명: {card_data}")
             
         # 3. 카드뉴스 이미지 생성 및 Supabase Storage 업로드
         print("\n🎨 [Step 3] Pillow 카드뉴스 이미지 빌드 및 Supabase Storage 업로드 중...")
         public_image_urls = []
         
         for idx, book in enumerate(books):
-            card_data = card_descriptions[idx] if idx < len(card_descriptions) else {"description": "따뜻한 그림책 추천", "question": "아이와 함께 읽어보세요."}
-            
-            if isinstance(card_data, str):
-                desc = card_data
-                question = "아이와 함께 읽어보세요."
-            else:
-                desc = card_data.get("description", "따뜻한 그림책 추천")
-                question = card_data.get("question", "아이와 함께 읽어보세요.")
+            card_data = card_descriptions[idx] if idx < len(card_descriptions) else "따뜻한 그림책 추천입니다."
+            desc = card_data if isinstance(card_data, str) else card_data.get("description", "따뜻한 그림책 추천입니다.")
                 
             title = book.get("title", "제목")
             author = book.get("author", "저자")
@@ -81,10 +74,17 @@ async def test_e2e_pipeline():
             print(f"   [{idx+1}] {url}")
             
         # 4. 스레드 실제 발행 테스트
-        from services.threads_publisher import publish_carousel_to_threads
         print("\n📣 [Step 4] 스레드 계정에 실제 캐러셀 카드뉴스 발행 중...")
         post_id = await publish_carousel_to_threads(text=caption, image_urls=public_image_urls)
         print(f"🎉 [Step 4] 스레드 실제 발행 성공! 포스트 ID: {post_id}")
+        
+        # 5. 스레드 첫 댓글 발행 테스트
+        print("\n💬 [Step 5] 첫 댓글로 단축 링크 발행 중...")
+        from api.threads import get_slug_by_tag
+        slug = get_slug_by_tag("가족사랑")
+        reply_text = f"🔗 https://checkjari.com/c/{slug}"
+        reply_id = await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
+        print(f"🎉 [Step 5] 첫 댓글 발행 성공! 댓글 ID: {reply_id}")
         
     except Exception as e:
         print(f"\n❌ E2E 테스트 실패: {e}")
