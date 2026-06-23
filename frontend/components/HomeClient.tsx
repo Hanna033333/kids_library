@@ -307,7 +307,7 @@ export default function HomeClient({ overrideCuration, overrideAge }: HomeClient
 
 
             {/* 책 리스트 */}
-            <div className="w-full max-w-7xl mx-auto pb-4 md:pb-6 pt-0">
+            <div className={`w-full max-w-7xl mx-auto pb-4 md:pb-6 ${isSearchVisible ? 'pt-2' : 'pt-6'}`}>
                 <BookList
                     searchQuery={searchQuery || undefined}
                     ageFilter={ageFilter || undefined}

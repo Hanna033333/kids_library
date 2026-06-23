@@ -16,6 +16,8 @@ const buttonVariants = cva(
                     "bg-white text-brand-primary border border-brand-primary font-bold active:bg-gray-50",
                 kakao:
                     "bg-brand-kakao text-brand-kakao-text font-semibold active:bg-brand-kakao-active",
+                google:
+                    "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 font-semibold active:bg-gray-100",
                 intro:
                     "bg-brand-intro text-white active:opacity-80",
                 accent:
