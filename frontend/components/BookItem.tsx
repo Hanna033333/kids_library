@@ -3,6 +3,7 @@ import { ImageOff, Tags, BookOpen } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { getAgeDisplayLabel } from "@/lib/utils/age";
+import { useLibrary } from "@/context/LibraryContext";
 
 interface BookItemProps {
   book: Book;
@@ -11,23 +12,56 @@ interface BookItemProps {
 
 import { sendGAEvent } from "@/lib/analytics";
 import { getOptimizedImageUrl } from "@/lib/utils/image";
+import { useAuth } from "@/context/AuthContext";
 
 export default function BookItem({ book, loanStatus }: BookItemProps) {
+  const { user } = useAuth();
+  const { selectedLibrary } = useLibrary();
   const displayAge = getAgeDisplayLabel(book.age);
 
+  // 청구기호 결정 로직
+  let displayCallNo = '청구기호 없음';
+  if (selectedLibrary === '판교도서관') {
+    if (book.pangyo_callno && book.pangyo_callno !== '없음') {
+      displayCallNo = book.pangyo_callno;
+    } else {
+      const info = book.library_info?.find(l => l.library_name.includes('판교'));
+      if (info) displayCallNo = info.callno;
+    }
+  } else {
+    const info = book.library_info?.find(l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary));
+    if (info) {
+      displayCallNo = info.callno;
+    } else {
+      displayCallNo = '보유 정보 없음';
+    }
+  }
+
   // Normalize loan status to show 4 states: 대출가능, 대출중, 미소장, 확인불가
-  const normalizedStatus = loanStatus ? (() => {
-    const status = loanStatus.status;
-    // Map "시간초과" to "확인불가"
-    if (status === "시간초과") {
-      return { ...loanStatus, status: "확인불가", available: null };
+  const normalizedStatus = (() => {
+    // 1. 청구기호가 없거나 보유 정보가 없는 경우 무조건 '미소장' 처리 (상세페이지 정책과 일치)
+    if (!displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음') {
+      return { status: "미소장", available: null };
     }
-    // Map "정보없음" to "미소장"
-    if (status === "정보없음") {
-      return { ...loanStatus, status: "미소장", available: null };
+
+    if (loanStatus) {
+      const status = loanStatus.status;
+      // Map "시간초과" to "확인불가"
+      if (status === "시간초과") {
+        return { ...loanStatus, status: "확인불가", available: null };
+      }
+      // Map "정보없음" to "확인중"
+      if (status === "정보없음") {
+        return { ...loanStatus, status: "확인중", available: null };
+      }
+      // Map "미소장" to "확인중" (청구기호가 존재하는데 API가 미소장이라고 반환한 경우)
+      if (status === "미소장") {
+        return { ...loanStatus, status: "확인중", available: null };
+      }
+      return loanStatus;
     }
-    return loanStatus;
-  })() : undefined;
+    return undefined;
+  })();
 
   return (
     <Link
@@ -75,10 +109,12 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
           {book.title}
         </h3>
 
-        <p className="text-[15px] font-extrabold text-[#F59E0B] tracking-tight mb-3 line-clamp-2 break-all">
-          {book.pangyo_callno}
-          {book.vol && `-${book.vol}`}
-        </p>
+        {user && (
+          <p className="text-[15px] font-extrabold text-[#F59E0B] tracking-tight mb-3 line-clamp-2 break-all">
+            {displayCallNo}
+            {book.vol && `-${book.vol}`}
+          </p>
+        )}
 
         {/*
         {book.national_loan_count ? (
@@ -89,15 +125,17 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
         */}
 
         <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
-          <span className="text-gray-400 truncate max-w-[50%]">{book.publisher}</span>
-          {normalizedStatus && (
+          <span className={`text-gray-400 truncate ${user && normalizedStatus ? 'max-w-[50%]' : 'max-w-full'}`}>{book.publisher}</span>
+          {user && normalizedStatus && (
             <span className={`px-2 py-1 rounded-full text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
               ? "bg-green-100 text-green-700"
               : normalizedStatus.available === false
                 ? "bg-red-100 text-red-700"
                 : normalizedStatus.status === "미소장"
                   ? "bg-gray-100 text-gray-700"
-                  : "bg-white text-gray-600 border border-gray-300"
+                  : normalizedStatus.status === "확인중"
+                    ? "bg-orange-100 text-orange-700"
+                    : "bg-white text-gray-600 border border-gray-300"
               }`}>
               {normalizedStatus.status}
             </span>

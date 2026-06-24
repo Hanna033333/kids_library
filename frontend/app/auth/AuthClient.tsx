@@ -175,7 +175,7 @@ export default function AuthClient() {
                             onClick={() => {
                                 localStorage.setItem('supabase.auth.token', 'TEST_QA_TOKEN');
                                 sessionStorage.setItem('qa_mode', 'true');
-                                router.push('/auth/callback?step=2');
+                                window.location.href = '/auth/callback?step=2';
                             }}
                             variant="outline"
                             size="lg"

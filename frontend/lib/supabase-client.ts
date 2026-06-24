@@ -17,7 +17,7 @@ export async function getBooksFromSupabase(
 ) {
     let query = supabase
         .from('childbook_items')
-        .select('*', { count: 'exact' });
+        .select('*, library_info:book_library_info(library_name, callno)', { count: 'exact' });
 
     // is_hidden 필터 (컬럼이 있으면 적용)
     try {
