@@ -60,7 +60,8 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
       }
       return loanStatus;
     }
-    return undefined;
+    // API 조회 완료 전에는 기본적으로 '확인중' 노출
+    return { status: "확인중", available: null };
   })();
 
   return (
