@@ -57,7 +57,8 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     # print(f"[DEBUG] Validating token: {token[:10]}...") # Too noisy?
     
     # QA 전용 테스터 토큰 처리
-    if token == "TEST_QA_TOKEN" and os.getenv("ENV") != "production":
+    is_qa_allowed = os.getenv("ENV") != "production" or os.getenv("ALLOW_QA_MOCK") == "true"
+    if token == "TEST_QA_TOKEN" and is_qa_allowed:
         from types import SimpleNamespace
         print("[DEBUG] QA Tester Token detected")
         return SimpleNamespace(
