@@ -10,9 +10,13 @@ from core.config import DATA4LIBRARY_KEY
 LOAN_CACHE: Dict[str, tuple[Dict, datetime]] = {}
 CACHE_TTL = timedelta(minutes=30)
 
-# 판교 도서관 코드
+# 도서관 코드 매핑 (판교도서관: 141231, 송파어린이도서관: 111117)
+LIBRARY_CODE_MAP = {
+    "판교도서관": "141231",
+    "송파어린이도서관": "111117"
+}
 
-# 판교 도서관 코드
+# 기본 도서관 코드
 PANGYO_LIB_CODE = "141231"
 
 # 전역 세마포어 (Lazy Init)
@@ -28,36 +32,40 @@ def get_semaphore() -> asyncio.Semaphore:
 
 
 
-def get_cached_loan(isbn: str) -> Optional[Dict]:
-    """캐시에서 대출 정보 조회"""
-    if isbn in LOAN_CACHE:
-        data, timestamp = LOAN_CACHE[isbn]
+def get_cached_loan(lib_code: str, isbn: str) -> Optional[Dict]:
+    """캐시에서 도서관별 대출 정보 조회"""
+    cache_key = f"{lib_code}:{isbn}"
+    if cache_key in LOAN_CACHE:
+        data, timestamp = LOAN_CACHE[cache_key]
         if datetime.now() - timestamp < CACHE_TTL:
             return data
     return None
 
 
-def set_cached_loan(isbn: str, data: Dict):
-    """캐시에 대출 정보 저장"""
-    LOAN_CACHE[isbn] = (data, datetime.now())
+def set_cached_loan(lib_code: str, isbn: str, data: Dict):
+    """캐시에 도서관별 대출 정보 저장"""
+    cache_key = f"{lib_code}:{isbn}"
+    LOAN_CACHE[cache_key] = (data, datetime.now())
 
 
 async def fetch_loan_status_single(
     session: aiohttp.ClientSession, 
-    isbn: str
+    isbn: str,
+    lib_code: str = PANGYO_LIB_CODE
 ) -> Dict:
     """
-    단일 책의 대출 정보 조회 (비동기)
+    단일 책의 특정 도서관 대출 정보 조회 (비동기)
     
     Args:
         session: aiohttp 세션
         isbn: ISBN 번호
+        lib_code: 도서관 기관 코드
         
     Returns:
         대출 정보 딕셔너리
     """
     # 캐시 확인
-    cached = get_cached_loan(isbn)
+    cached = get_cached_loan(lib_code, isbn)
     if cached:
         return cached
     
@@ -65,7 +73,7 @@ async def fetch_loan_status_single(
     url = "http://data4library.kr/api/bookExist"
     params = {
         "authKey": DATA4LIBRARY_KEY,
-        "libCode": PANGYO_LIB_CODE,
+        "libCode": lib_code,
         "isbn13": isbn,
         "format": "json"
     }
@@ -93,7 +101,7 @@ async def fetch_loan_status_single(
                 }
             
             # 캐시 저장
-            set_cached_loan(isbn, result)
+            set_cached_loan(lib_code, isbn, result)
             return result
             
     except asyncio.TimeoutError:
@@ -111,12 +119,13 @@ async def fetch_loan_status_single(
         }
 
 
-async def fetch_loan_status_batch(books: List[Dict]) -> Dict[int, Dict]:
+async def fetch_loan_status_batch(books: List[Dict], library_name: Optional[str] = None) -> Dict[int, Dict]:
     """
-    여러 책의 대출 정보를 병렬로 조회
+    여러 책의 특정 도서관 대출 정보를 병렬로 조회
     
     Args:
         books: 책 리스트 (각 책은 id, isbn 필드 필요)
+        library_name: 조회 대상 도서관 명칭 (기본: 판교도서관)
         
     Returns:
         {book_id: loan_info} 형태의 딕셔너리
@@ -124,6 +133,11 @@ async def fetch_loan_status_batch(books: List[Dict]) -> Dict[int, Dict]:
     if not DATA4LIBRARY_KEY:
         # API 키가 없으면 빈 결과 반환
         return {}
+    
+    # 도서관 코드 확인
+    lib_code = PANGYO_LIB_CODE
+    if library_name and library_name in LIBRARY_CODE_MAP:
+        lib_code = LIBRARY_CODE_MAP[library_name]
     
     # ISBN이 있는 책만 필터링
     books_with_isbn = [
@@ -139,7 +153,7 @@ async def fetch_loan_status_batch(books: List[Dict]) -> Dict[int, Dict]:
 
     async def fetch_with_sem(session, isbn):
         async with semaphore:
-            return await fetch_loan_status_single(session, isbn)
+            return await fetch_loan_status_single(session, isbn, lib_code)
 
     # 타임아웃 설정을 포함한 세션
     timeout = aiohttp.ClientTimeout(total=10)
@@ -177,6 +191,7 @@ async def fetch_loan_status_batch(books: List[Dict]) -> Dict[int, Dict]:
             }
     
     return loan_info
+
 
 
 

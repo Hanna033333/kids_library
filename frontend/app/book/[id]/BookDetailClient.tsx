@@ -72,9 +72,9 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
 
     // React Query for Loan Status
     const { data: loanStatuses, isError: isLoanError } = useQuery({
-        queryKey: ['book-loan-status', book.id],
+        queryKey: ['book-loan-status', book.id, selectedLibrary],
         queryFn: async () => {
-            return await fetchLoanStatuses([book.id]);
+            return await fetchLoanStatuses([book.id], selectedLibrary);
         },
         enabled: !!displayCallNo && displayCallNo !== '청구기호 없음' && displayCallNo !== '보유 정보 없음',
         staleTime: 5 * 60 * 1000,
@@ -156,11 +156,19 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
     }, [user, book.id])
 
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+    const [loginModalProps, setLoginModalProps] = useState({
+        title: "좋은 책, 놓치지 않게!",
+        description: "전문가가 엄선한 추천작들을 책장에 담아두세요."
+    })
 
     const handleToggleSave = async () => {
         if (!user) {
             sessionStorage.setItem('returnUrl', window.location.pathname)
             sessionStorage.setItem('pendingAction', `like_book_${book.id}`)
+            setLoginModalProps({
+                title: "좋은 책, 놓치지 않게!",
+                description: "전문가가 엄선한 추천작들을 책장에 담아두세요."
+            })
             setIsLoginModalOpen(true)
             return
         }
@@ -371,41 +379,62 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                 <span className="text-gray-400 text-sm">{book.publisher || '정보 없음'}</span>
                             </div>
 
-                            <div className="mb-2">
-                                <span className="text-sm text-gray-600 block mb-1.5 flex items-center gap-1">
-                                    <MapPin className="w-3.5 h-3.5" />
-                                    {selectedLibrary}
-                                </span>
-                                <div className="flex items-center gap-3">
-                                    <span className={`font-black text-2xl tracking-tight ${displayCallNo === '보유 정보 없음' ? 'text-gray-300' : 'text-gray-900'}`}>
-                                        {displayCallNo}{book.vol ? `-${book.vol}` : ''}
-                                    </span>
-                                    {normalizedStatus && (
-                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${normalizedStatus.available === true
-                                            ? "bg-green-50 text-green-700 border-green-200"
-                                            : normalizedStatus.available === false
-                                                ? "bg-red-50 text-red-700 border-red-200"
-                                                : normalizedStatus.status === "미소장"
-                                                    ? "bg-gray-100 text-gray-700 border-gray-200"
-                                                    : normalizedStatus.status === "확인중"
-                                                        ? "bg-orange-50 text-orange-600 border-orange-200"
-                                                        : "bg-white text-gray-600 border-gray-300"
-                                            }`}>
-                                            {normalizedStatus.status}
+                            {user ? (
+                                <div className="mb-2">
+                                    <div className="mb-2 flex items-center">
+                                        <button
+                                            onClick={() => router.push('/my-page')}
+                                            className="text-sm font-bold text-gray-900 border-b-2 pb-0.5 border-gray-900/10 hover:border-gray-900 transition-colors"
+                                        >
+                                            <span>{selectedLibrary} ▼</span>
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className={`font-black text-2xl tracking-tight ${displayCallNo === '보유 정보 없음' ? 'text-gray-300' : 'text-gray-900'}`}>
+                                            {displayCallNo}{book.vol ? `-${book.vol}` : ''}
                                         </span>
-                                    )}
+                                        {normalizedStatus && (
+                                            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${normalizedStatus.available === true
+                                                ? "bg-green-50 text-green-700 border-green-200"
+                                                : normalizedStatus.available === false
+                                                    ? "bg-red-50 text-red-700 border-red-200"
+                                                    : normalizedStatus.status === "미소장"
+                                                        ? "bg-gray-100 text-gray-700 border-gray-200"
+                                                        : normalizedStatus.status === "확인중"
+                                                            ? "bg-orange-50 text-orange-600 border-orange-200"
+                                                            : "bg-white text-gray-600 border-gray-300"
+                                                }`}>
+                                                {normalizedStatus.status}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            sendGAEvent('click_report_error', { book_id: book.id });
+                                            window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
+                                        }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-400 active:bg-gray-50 active:text-gray-600 border border-gray-200 rounded-lg text-[11px] font-medium mt-3 transition-colors"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
+                                        정보가 다른가요? 제보하기
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        sendGAEvent('click_report_error', { book_id: book.id });
-                                        window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
-                                    }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-400 active:bg-gray-50 active:text-gray-600 border border-gray-200 rounded-lg text-[11px] font-medium mt-3 transition-colors"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
-                                    정보가 다른가요? 제보하기
-                                </button>
-                            </div>
+                            ) : (
+                                <div className="mb-4 py-1">
+                                    <button
+                                        onClick={() => {
+                                            setLoginModalProps({
+                                                title: "좋은 책, 놓치지 않게!",
+                                                description: "자주 가는 도서관을 등록하고 실시간 대출 상태와 청구기호를 바로 확인해보세요."
+                                            });
+                                            setIsLoginModalOpen(true);
+                                        }}
+                                        className="text-xs sm:text-sm font-semibold text-gray-700 active:text-gray-900 transition-colors underline underline-offset-2"
+                                    >
+                                        내 도서관 설정 &gt;
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Save & Share Area */}
@@ -477,8 +506,8 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
             <LoginPromptModal
                 isOpen={isLoginModalOpen}
                 onClose={() => setIsLoginModalOpen(false)}
-                title="좋은 책, 놓치지 않게!"
-                description="전문가가 엄선한 추천작들을 책장에 담아두세요."
+                title={loginModalProps.title}
+                description={loginModalProps.description}
             />
         </main >
     )

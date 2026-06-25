@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronRight, Lock, Loader2, Check } from 'lucide-react'
+import LibrarySelector from '@/components/LibrarySelector'
 import PageHeader from '@/components/PageHeader'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
@@ -364,7 +365,7 @@ export default function MyPageClient() {
                             </button>
 
                             <div className="flex flex-col">
-                                <div className="py-2 border-b-8 border-gray-50">
+                                <div className="py-2 border-b-8 border-gray-50 divide-y divide-gray-100">
                                     <button
                                         onClick={() => router.push('/my-library')}
                                         className="w-full flex items-center justify-between px-6 py-3.5 transition-colors"
@@ -372,6 +373,10 @@ export default function MyPageClient() {
                                         <span className="font-medium text-gray-900 text-[15px]">내 책장</span>
                                         <ChevronRight className="w-5 h-5 text-gray-400" />
                                     </button>
+                                     <div className="w-full flex items-center justify-between px-6 py-3.5">
+                                         <span className="font-medium text-gray-900 text-[15px]">내 도서관 설정</span>
+                                         <LibrarySelector />
+                                     </div>
                                 </div>
                                 <div className="py-2 border-b-8 border-gray-50 divide-y divide-gray-100">
                                     <Link href="/terms" className="w-full flex items-center justify-between px-6 py-3.5 transition-colors">

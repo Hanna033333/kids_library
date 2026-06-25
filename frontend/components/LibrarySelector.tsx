@@ -65,7 +65,7 @@ export default function LibrarySelector({ whiteMode = false }: { whiteMode?: boo
                                 도서관을 선택해주세요
                             </h3>
                             <p className="text-gray-500 text-sm mb-6 px-1">
-                                선택한 도서관의 청구기호를 우선적으로 보여드립니다.
+                                선택한 도서관의 청구기호를 보여드립니다.
                             </p>
 
                             <div className="space-y-2">

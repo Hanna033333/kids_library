@@ -45,7 +45,7 @@ export default function LoginPromptModal({
                     </Button>
                     <Button
                         onClick={() => router.push('/auth/signup?provider=google')}
-                        variant="secondary"
+                        variant="google"
                         size="md"
                         className="w-full relative rounded-lg font-bold text-[14px]"
                     >

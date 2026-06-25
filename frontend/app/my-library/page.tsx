@@ -5,6 +5,8 @@ import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { getSavedBookIds } from '@/lib/supabase-api'
 import { getBooksByIds, fetchLoanStatuses } from '@/lib/api'
+import { useLibrary } from '@/context/LibraryContext'
+import LibrarySelector from '@/components/LibrarySelector'
 import { Book } from '@/lib/types'
 import BookItem from '@/components/BookItem'
 import { Loader2, BookOpen } from 'lucide-react'
@@ -17,6 +19,7 @@ import { PageLoader } from '@/components/ui/PageLoader'
 
 export default function MyLibraryPage() {
     const { user, isLoading: authLoading } = useAuth()
+    const { selectedLibrary } = useLibrary()
     const [books, setBooks] = useState<Book[]>([])
     const [isLoading, setIsLoading] = useState(true)
     // const supabase = createClient() <-- 제거됨
@@ -44,7 +47,7 @@ export default function MyLibraryPage() {
                 // Fetch loan statuses in background
                 setBooks(booksData)
 
-                const loanStatuses = await fetchLoanStatuses(savedIds)
+                const loanStatuses = await fetchLoanStatuses(savedIds, selectedLibrary)
                 const updatedBooks = booksData.map(book => ({
                     ...book,
                     loan_status: loanStatuses[book.id] || null
@@ -60,7 +63,7 @@ export default function MyLibraryPage() {
         if (user) {
             fetchSavedBooks()
         }
-    }, [user, supabase])
+    }, [user, supabase, selectedLibrary])
 
     if (authLoading || (isLoading && books.length === 0)) {
         return (
@@ -74,8 +77,9 @@ export default function MyLibraryPage() {
             <PageHeader title="내 책장" backHref="/" rightSlot={<ProfileDropdown />} />
 
             <div className="max-w-7xl mx-auto px-6 py-10">
-                <div className="mb-8">
+                <div className="mb-8 flex items-center justify-between border-b border-gray-100 pb-4">
                     <p className="text-gray-500 font-medium">총 {books.length}권</p>
+                    <LibrarySelector />
                 </div>
 
                 {books.length === 0 ? (

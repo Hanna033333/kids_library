@@ -1,6 +1,7 @@
 """책 검색 및 조회 API 라우터"""
 from fastapi import APIRouter, Query, Body
 from typing import Optional, List
+from datetime import datetime
 from services.search import search_books_service
 from services.loan_status import fetch_loan_status_batch
 from core.database import supabase
@@ -50,26 +51,80 @@ def get_books():
 
 
 
+from pydantic import BaseModel
+
+class LoanStatusRequest(BaseModel):
+    book_ids: List[int]
+    library_name: Optional[str] = "판교도서관"
+
+
 @router.post("/loan-status")
-async def get_loan_status(book_ids: List[int] = Body(..., description="책 ID 리스트")):
+async def get_loan_status(req: LoanStatusRequest = Body(..., description="대출 정보 조회 요청")):
     """
-    여러 책의 대출 정보를 병렬로 조회
+    여러 책의 특정 도서관 대출 정보를 병렬로 조회 (청구기호가 없으면 API 조회 없이 '미소장'으로 즉시 응답)
     
     Args:
-        book_ids: 조회할 책 ID 리스트
+        req: book_ids 리스트와 library_name이 담긴 요청 객체
         
     Returns:
         {book_id: loan_info} 형태의 딕셔너리
     """
-    # DB에서 책 정보 조회 (ISBN 필요)
-    books_data = supabase.table("childbook_items").select("id, isbn").in_("id", book_ids).execute()
+    # DB에서 책 정보 및 판교 청구기호 조회
+    books_data = supabase.table("childbook_items").select("id, isbn, pangyo_callno").in_("id", req.book_ids).execute()
     
     if not books_data.data:
         return {}
+        
+    # 선택된 도서관의 청구기호 정보를 book_library_info에서 조회
+    lib_infos = []
+    if req.library_name:
+        lib_data = supabase.table("book_library_info") \
+            .select("book_id, library_name, callno") \
+            .in_("book_id", req.book_ids) \
+            .ilike("library_name", f"%{req.library_name}%") \
+            .execute()
+        lib_infos = lib_data.data if lib_data.data else []
+        
+    # 각 도서별 청구기호 소유 여부 판별
+    has_callno_map = {}
+    for book in books_data.data:
+        b_id = book['id']
+        has_callno = False
+        
+        if req.library_name == "판교도서관" or not req.library_name:
+            p_call = book.get('pangyo_callno')
+            if p_call and p_call != '없음' and p_call.strip():
+                has_callno = True
+            else:
+                for info in lib_infos:
+                    if info['book_id'] == b_id and ('판교' in info['library_name']) and info.get('callno') and info['callno'] != '없음' and info['callno'].strip():
+                        has_callno = True
+                        break
+        else:
+            for info in lib_infos:
+                if info['book_id'] == b_id and info.get('callno') and info['callno'] != '없음' and info['callno'].strip():
+                    has_callno = True
+                    break
+        
+        has_callno_map[b_id] = has_callno
+
+    # 청구기호가 존재하는 책들만 대출 현황 조회 대상으로 분류
+    books_to_fetch = [b for b in books_data.data if has_callno_map.get(b['id'])]
     
-    # 대출 정보 병렬 조회
-    loan_statuses = await fetch_loan_status_batch(books_data.data)
-    
+    loan_statuses = {}
+    if books_to_fetch:
+        loan_statuses = await fetch_loan_status_batch(books_to_fetch, req.library_name)
+        
+    # 청구기호가 없는 책들은 API 콜과 상관없이 '미소장'으로 덮어씀
+    for book in books_data.data:
+        b_id = book['id']
+        if not has_callno_map.get(b_id):
+            loan_statuses[b_id] = {
+                "available": None,
+                "status": "미소장",
+                "updated_at": datetime.now().isoformat()
+            }
+            
     return loan_statuses
 
 
