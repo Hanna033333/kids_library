@@ -7,7 +7,12 @@ import { useBooks } from "@/hooks/useBooks";
 import { Book } from "@/lib/types";
 import { Spinner } from "@/components/ui/Spinner";
 import { PageLoader } from "@/components/ui/PageLoader";
+import { useLibrary } from "@/context/LibraryContext";
+import LibrarySelector from "@/components/LibrarySelector";
 import { sendGAEvent } from "@/lib/analytics";
+import { useAuth } from "@/context/AuthContext";
+import LoginPromptModal from "@/components/ui/LoginPromptModal";
+import { useRouter } from "next/navigation";
 
 const ITEMS_PER_PAGE = 24;
 
@@ -28,6 +33,10 @@ export default function BookList({
   sortFilter = "pangyo_callno",
   initialBooks,
 }: BookListProps) {
+  const router = useRouter();
+  const { user } = useAuth();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const { selectedLibrary } = useLibrary();
   const [isMobile, setIsMobile] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -121,6 +130,7 @@ export default function BookList({
   // 폴백 추천 도서 활성화 조건
   const isFallbackEnabled = isMounted && !isListLoading && displayBooks.length === 0 && !isSearchWaitingState;
 
+
   // 폴백 추천 도서 fetch 쿼리
   const { data: fallbackBooks = [] } = useQuery<Book[]>({
     queryKey: ['fallback-books', ageFilter, searchQuery],
@@ -146,12 +156,12 @@ export default function BookList({
   const bookIds = visibleBooksForLoan.map(b => b.id).join(',');
 
   const { data: loanStatuses } = useQuery({
-    queryKey: ['batch-loan-status', bookIds],
+    queryKey: ['batch-loan-status', bookIds, selectedLibrary],
     queryFn: async () => {
       if (visibleBooksForLoan.length === 0) return {};
       try {
         const { fetchLoanStatuses } = await import("@/lib/api");
-        return await fetchLoanStatuses(visibleBooksForLoan.map(b => b.id));
+        return await fetchLoanStatuses(visibleBooksForLoan.map(b => b.id), selectedLibrary);
       } catch (err) {
         console.warn('Batch loan status fetch failed:', err);
         return {};
@@ -209,6 +219,25 @@ export default function BookList({
   return (
     <div className="w-full px-4">
       <div className="w-full max-w-[1200px] mx-auto">
+        {!isSearchWaitingState && isMounted && (
+          <div className="flex justify-end mb-4 px-2">
+            {user ? (
+              <button
+                onClick={() => router.push('/my-page')}
+                className="text-sm font-bold text-gray-900 border-b-2 pb-0.5 border-gray-900/10 hover:border-gray-900 transition-colors"
+              >
+                <span>{selectedLibrary} ▼</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsLoginModalOpen(true)}
+                className="text-xs sm:text-sm font-semibold text-gray-700 active:text-gray-900 transition-colors underline underline-offset-2"
+              >
+                <span>내 도서관 설정 &gt;</span>
+              </button>
+            )}
+          </div>
+        )}
         {/* Loading (first page only) */}
         {isListLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6 mt-4">
@@ -302,6 +331,12 @@ export default function BookList({
             )}
           </>
         )}
+        <LoginPromptModal
+          isOpen={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
+          title="좋은 책, 놓치지 않게!"
+          description="자주 가는 도서관을 등록하고 실시간 대출 상태와 청구기호를 바로 확인해보세요."
+        />
       </div>
     </div>
   );
