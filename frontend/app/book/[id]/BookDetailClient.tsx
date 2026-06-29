@@ -93,9 +93,12 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
         const rawStatus = loanStatuses?.[book.id];
         if (rawStatus) {
             const status = rawStatus.status;
-            if (status === "시간초과") return { ...rawStatus, status: "확인불가", available: null };
-            if (status === "정보없음") return { ...rawStatus, status: "확인중", available: null };
-            if (status === "미소장") return { ...rawStatus, status: "확인중", available: null };
+            if (status === "시간초과" || status === "확인불가" || status === "확인중") {
+                return { ...rawStatus, status: "확인중", available: null };
+            }
+            if (status === "정보없음" || status === "미소장") {
+                return { ...rawStatus, status: "미소장", available: null };
+            }
             return rawStatus;
         }
 

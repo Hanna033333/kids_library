@@ -4,6 +4,11 @@ import aiohttp
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 from core.config import DATA4LIBRARY_KEY
+from services.telegram_notifier import send_telegram_message
+
+
+# 쿨다운 방지를 위한 마지막 경고 전송 시각
+LAST_WARNING_SENT_AT: Optional[datetime] = None
 
 
 # 인메모리 캐시 (30분 TTL)
@@ -79,8 +84,25 @@ async def fetch_loan_status_single(
     }
     
     try:
-        async with session.get(url, params=params, timeout=3) as response:
-            data = await response.json()
+        async with session.get(url, params=params, timeout=30, allow_redirects=False) as response:
+            # 302 리다이렉트 = 정보나루 API 점검/한도초과 상태
+            if response.status in (301, 302, 303, 307, 308):
+                result = {
+                    "available": None,
+                    "status": "확인중",
+                    "updated_at": datetime.now().isoformat()
+                }
+                return result
+            
+            try:
+                data = await response.json()
+            except Exception:
+                # JSON 파싱 실패 (HTML 응답 등)
+                return {
+                    "available": None,
+                    "status": "확인중",
+                    "updated_at": datetime.now().isoformat()
+                }
             
             # 응답 파싱
             result_data = data.get("response", {}).get("result", {})
@@ -107,13 +129,13 @@ async def fetch_loan_status_single(
     except asyncio.TimeoutError:
         return {
             "available": None,
-            "status": "시간초과",
+            "status": "확인중",
             "updated_at": datetime.now().isoformat()
         }
     except Exception as e:
         return {
             "available": None,
-            "status": "확인불가",
+            "status": "확인중",
             "error": str(e),
             "updated_at": datetime.now().isoformat()
         }
@@ -156,7 +178,7 @@ async def fetch_loan_status_batch(books: List[Dict], library_name: Optional[str]
             return await fetch_loan_status_single(session, isbn, lib_code)
 
     # 타임아웃 설정을 포함한 세션
-    timeout = aiohttp.ClientTimeout(total=10)
+    timeout = aiohttp.ClientTimeout(total=60)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         tasks = [
             fetch_with_sem(session, book['isbn'])
@@ -176,7 +198,7 @@ async def fetch_loan_status_batch(books: List[Dict], library_name: Optional[str]
         else:
             loan_info[book['id']] = {
                 "available": None,
-                "status": "확인불가",
+                "status": "확인중",
                 "error": str(result),
                 "updated_at": datetime.now().isoformat()
             }
@@ -186,9 +208,30 @@ async def fetch_loan_status_batch(books: List[Dict], library_name: Optional[str]
         if book['id'] not in loan_info:
             loan_info[book['id']] = {
                 "available": None,
-                "status": "정보없음", # ISBN 없음 등
+                "status": "미소장",
                 "updated_at": datetime.now().isoformat()
             }
+    
+    # 3. 전체 도서 '확인중' (API 장애/차단) 감지 및 텔레그램 알림 발송
+    if len(books_with_isbn) >= 5:
+        all_failed = all(
+            loan_info[book['id']].get("status") == "확인중"
+            for book in books_with_isbn
+        )
+        if all_failed:
+            global LAST_WARNING_SENT_AT
+            now = datetime.now()
+            # 1시간 쿨다운 체크
+            if LAST_WARNING_SENT_AT is None or (now - LAST_WARNING_SENT_AT) > timedelta(hours=1):
+                LAST_WARNING_SENT_AT = now
+                warning_text = (
+                    f"🚨 <b>[책자리 API 경고] 도서관 정보나루 연동 장애 감지</b>\n\n"
+                    f"조회 대상 도서 전체가 '확인중' 상태로 반환되었습니다. IP 차단이나 정보나루 API 서버 장애 가능성이 높습니다.\n"
+                    f"- 조회 도서 수: {len(books_with_isbn)}권\n"
+                    f"- 감지 시간: {now.strftime('%Y-%m-%d %H:%M:%S')} (KST)"
+                )
+                # 비차단(Non-blocking)을 위해 백그라운드 태스크로 전송
+                asyncio.create_task(send_telegram_message(warning_text))
     
     return loan_info
 
