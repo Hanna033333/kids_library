@@ -170,7 +170,7 @@ export default function AuthClient() {
                     </div>
 
                     {/* QA 테스터 로그인 (개발 환경 전용) */}
-                    {(process.env.NODE_ENV === 'development' || (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app'))) && (
+                    {(process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_ALLOW_QA_MOCK === 'true') && (
                         <Button
                             onClick={() => {
                                 localStorage.setItem('supabase.auth.token', 'TEST_QA_TOKEN');
