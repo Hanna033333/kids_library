@@ -37,7 +37,7 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
     }
   }
 
-  // Normalize loan status to show 4 states: 대출가능, 대출중, 미소장, 확인불가
+  // Normalize loan status to show 3 states: 대출가능, 대출중, 미소장, 확인중
   const normalizedStatus = (() => {
     // 1. 청구기호가 없거나 보유 정보가 없는 경우 무조건 '미소장' 처리 (상세페이지 정책과 일치)
     if (!displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음') {
@@ -46,17 +46,13 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
 
     if (loanStatus) {
       const status = loanStatus.status;
-      // Map "시간초과" to "확인불가"
-      if (status === "시간초과") {
-        return { ...loanStatus, status: "확인불가", available: null };
-      }
-      // Map "정보없음" to "확인중"
-      if (status === "정보없음") {
+      // Map "시간초과" or "확인불가" to "확인중" (오렌지 배지)
+      if (status === "시간초과" || status === "확인불가" || status === "확인중") {
         return { ...loanStatus, status: "확인중", available: null };
       }
-      // Map "미소장" to "확인중" (청구기호가 존재하는데 API가 미소장이라고 반환한 경우)
-      if (status === "미소장") {
-        return { ...loanStatus, status: "확인중", available: null };
+      // Map "정보없음" or "미소장" to "미소장" (규격 일치)
+      if (status === "정보없음" || status === "미소장") {
+        return { ...loanStatus, status: "미소장", available: null };
       }
       return loanStatus;
     }

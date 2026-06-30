@@ -1,6 +1,6 @@
 """책 검색 및 조회 API 라우터"""
 from fastapi import APIRouter, Query, Body
-from typing import Optional, List
+from typing import Optional, List, Union
 from datetime import datetime
 from services.search import search_books_service
 from services.loan_status import fetch_loan_status_batch
@@ -59,29 +59,37 @@ class LoanStatusRequest(BaseModel):
 
 
 @router.post("/loan-status")
-async def get_loan_status(req: LoanStatusRequest = Body(..., description="대출 정보 조회 요청")):
+async def get_loan_status(req: Union[LoanStatusRequest, List[int]] = Body(..., description="대출 정보 조회 요청")):
     """
     여러 책의 특정 도서관 대출 정보를 병렬로 조회 (청구기호가 없으면 API 조회 없이 '미소장'으로 즉시 응답)
     
     Args:
-        req: book_ids 리스트와 library_name이 담긴 요청 객체
+        req: book_ids 리스트와 library_name이 담긴 요청 객체 혹은 raw book_ids 리스트
         
     Returns:
         {book_id: loan_info} 형태의 딕셔너리
     """
+    # 구버전(단순 숫자 리스트) 및 신버전(JSON Object) 요청 포맷 유연하게 대응
+    if isinstance(req, list):
+        book_ids = req
+        library_name = "판교도서관"
+    else:
+        book_ids = req.book_ids
+        library_name = req.library_name or "판교도서관"
+
     # DB에서 책 정보 및 판교 청구기호 조회
-    books_data = supabase.table("childbook_items").select("id, isbn, pangyo_callno").in_("id", req.book_ids).execute()
+    books_data = supabase.table("childbook_items").select("id, isbn, pangyo_callno").in_("id", book_ids).execute()
     
     if not books_data.data:
         return {}
         
     # 선택된 도서관의 청구기호 정보를 book_library_info에서 조회
     lib_infos = []
-    if req.library_name:
+    if library_name:
         lib_data = supabase.table("book_library_info") \
             .select("book_id, library_name, callno") \
-            .in_("book_id", req.book_ids) \
-            .ilike("library_name", f"%{req.library_name}%") \
+            .in_("book_id", book_ids) \
+            .ilike("library_name", f"%{library_name}%") \
             .execute()
         lib_infos = lib_data.data if lib_data.data else []
         
@@ -91,7 +99,7 @@ async def get_loan_status(req: LoanStatusRequest = Body(..., description="대출
         b_id = book['id']
         has_callno = False
         
-        if req.library_name == "판교도서관" or not req.library_name:
+        if library_name == "판교도서관" or not library_name:
             p_call = book.get('pangyo_callno')
             if p_call and p_call != '없음' and p_call.strip():
                 has_callno = True
@@ -113,7 +121,7 @@ async def get_loan_status(req: LoanStatusRequest = Body(..., description="대출
     
     loan_statuses = {}
     if books_to_fetch:
-        loan_statuses = await fetch_loan_status_batch(books_to_fetch, req.library_name)
+        loan_statuses = await fetch_loan_status_batch(books_to_fetch, library_name)
         
     # 청구기호가 없는 책들은 API 콜과 상관없이 '미소장'으로 덮어씀
     for book in books_data.data:

@@ -125,9 +125,12 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
         const rawStatus = loanStatuses?.[book.id];
         if (rawStatus) {
             const status = rawStatus.status;
-            if (status === "시간초과") return { ...rawStatus, status: "확인불가", available: null };
-            if (status === "정보없음") return { ...rawStatus, status: "확인중", available: null };
-            if (status === "미소장") return { ...rawStatus, status: "확인중", available: null };
+            if (status === "시간초과" || status === "확인불가" || status === "확인중") {
+                return { ...rawStatus, status: "확인중", available: null };
+            }
+            if (status === "정보없음" || status === "미소장") {
+                return { ...rawStatus, status: "미소장", available: null };
+            }
             return rawStatus;
         }
 
@@ -410,15 +413,15 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                             {displayCallNo}{book.vol ? `-${book.vol}` : ''}
                                         </span>
                                         {normalizedStatus && (
-                                            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${normalizedStatus.available === true
-                                                ? "bg-green-50 text-green-700 border-green-200"
+                                            <span className={`px-2 py-1 rounded-full text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
+                                                ? "bg-green-100 text-green-700"
                                                 : normalizedStatus.available === false
-                                                    ? "bg-red-50 text-red-700 border-red-200"
+                                                    ? "bg-red-100 text-red-700"
                                                     : normalizedStatus.status === "미소장"
-                                                        ? "bg-gray-100 text-gray-700 border-gray-200"
+                                                        ? "bg-gray-100 text-gray-700"
                                                         : normalizedStatus.status === "확인중"
-                                                            ? "bg-orange-50 text-orange-600 border-orange-200"
-                                                            : "bg-white text-gray-600 border-gray-300"
+                                                            ? "bg-orange-100 text-orange-700"
+                                                            : "bg-white text-gray-600 border border-gray-300"
                                                 }`}>
                                                 {normalizedStatus.status}
                                             </span>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import BookItem from "./BookItem";
 import { useBooks } from "@/hooks/useBooks";
 import { Book } from "@/lib/types";
@@ -164,12 +164,13 @@ export default function BookList({
         return await fetchLoanStatuses(visibleBooksForLoan.map(b => b.id), selectedLibrary);
       } catch (err) {
         console.warn('Batch loan status fetch failed:', err);
-        return {};
+        throw err;
       }
     },
     enabled: visibleBooksForLoan.length > 0,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     retry: 1,
+    placeholderData: keepPreviousData,
   });
 
   // Infinite scroll observer (mobile only)

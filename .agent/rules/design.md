@@ -125,3 +125,6 @@ trigger: always_on
 - **Tab Bar**: Top Tab Bar(높이 46px), Content Tab Bar(높이 48px), Active 시 하단 2px 인디케이터 적용.
 - **Badge & Chip**: Success/Primary/Error (Radius 6px) / Count 및 Chip (Radius 9999px).
 - **Empty State & FAB**: Empty 텍스트는 16px 700 (#6B7280). FAB는 52x52px, 그림자 적용.
+- **실시간 대출 상태 배지 톤앤매너**:
+  - 사용자에게 부정적 인식을 줄 수 있는 `'확인불가'`, `'시간초과'` 등의 강한 표현을 지양하고, **`'확인중'`** 배지(연한 주황색 배경, 주황색 텍스트: `bg-orange-100 text-orange-700`)로 순화하여 통일합니다.
+  - `'정보없음'`과 `'미소장'`은 사용자 인지 복잡도를 낮추기 위해 **`'미소장'`**(회색 배경, 회색 텍스트: `bg-gray-100 text-gray-700`)으로 일관되게 단일화하여 표현합니다.
