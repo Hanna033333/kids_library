@@ -340,22 +340,23 @@ export default function MyPageClient() {
     }
 
     return (
-        <main className="min-h-screen bg-[#F7F7F7]">
-            <div className="max-w-lg mx-auto bg-white min-h-screen sm:shadow-sm sm:border-x border-gray-100">
+        <main className="min-h-screen bg-[#F5F5F8]">
+            <div className="max-w-lg mx-auto bg-[#F5F5F8] min-h-screen sm:shadow-sm sm:border-x border-gray-100 flex flex-col">
                 <PageHeader
                     title={getTitle()}
                     backOnClick={getBackHandler()}
                 />
-                <div className="pb-12">
+                <div className="flex-1 p-4 pb-12 space-y-4">
 
                     {/* ===== MAIN ===== */}
                     {currentView === 'main' && (
-                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-4">
+                            {/* 프로필 카드 */}
                             <button
                                 onClick={() => setCurrentView('account')}
-                                className="w-full text-left px-6 py-8 border-b-8 border-gray-50 flex items-center gap-4 transition-colors"
+                                className="w-full text-left p-5 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex items-center gap-4 active:scale-[0.98] transition-all transform"
                             >
-                                <div className="w-16 h-16 bg-[#FDF6E3] rounded-full flex items-center justify-center text-[#F59E0B] text-2xl font-bold shrink-0">
+                                <div className="w-14 h-14 bg-[#FDF6E3] rounded-full flex items-center justify-center text-[#F59E0B] text-xl font-bold shrink-0">
                                     {user.email?.[0].toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -364,44 +365,50 @@ export default function MyPageClient() {
                                 <ChevronRight className="w-5 h-5 text-gray-400 shrink-0" />
                             </button>
 
-                            <div className="flex flex-col">
-                                <div className="py-2 border-b-8 border-gray-50 divide-y divide-gray-100">
-                                    <button
-                                        onClick={() => router.push('/my-library')}
-                                        className="w-full flex items-center justify-between px-6 py-3.5 transition-colors"
-                                    >
-                                        <span className="font-medium text-gray-900 text-[15px]">내 책장</span>
-                                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                                    </button>
-                                     <div className="w-full flex items-center justify-between px-6 py-3.5">
-                                         <span className="font-medium text-gray-900 text-[15px]">내 도서관 설정</span>
-                                         <LibrarySelector />
-                                     </div>
+                            {/* 내 활동 및 도서관 설정 카드 */}
+                            <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden divide-y divide-gray-100">
+                                <button
+                                    onClick={() => router.push('/my-library')}
+                                    className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors"
+                                >
+                                    <span className="font-semibold text-gray-900 text-[15px]">내 책장</span>
+                                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                                </button>
+                                <div className="w-full flex items-center justify-between px-5 py-4">
+                                    <span className="font-semibold text-gray-900 text-[15px]">내 도서관 설정</span>
+                                    <LibrarySelector />
                                 </div>
-                                <div className="py-2 border-b-8 border-gray-50 divide-y divide-gray-100">
-                                    <Link href="/terms" className="w-full flex items-center justify-between px-6 py-3.5 transition-colors">
-                                        <span className="font-medium text-gray-900 text-[15px]">이용약관</span>
-                                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                                    </Link>
-                                    <Link href="/privacy" className="w-full flex items-center justify-between px-6 py-3.5 transition-colors">
-                                        <span className="font-medium text-gray-900 text-[15px]">개인정보보호정책</span>
-                                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                                    </Link>
-                                    <a 
-                                        href="mailto:contact@chaekjari.com" 
-                                        className="w-full flex items-center justify-between px-6 py-3.5 transition-colors"
-                                        onClick={() => sendGAEvent('click_customer_inquiry')}
-                                    >
-                                        <span className="font-medium text-gray-900 text-[15px]">고객문의</span>
-                                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                                    </a>
-                                </div>
-                                <div className="py-2">
-                                    <button onClick={handleSignOut} className="w-full flex items-center justify-between px-6 py-3.5 transition-colors">
-                                        <span className="font-medium text-gray-900 text-[15px]">로그아웃</span>
-                                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                                    </button>
-                                </div>
+                            </div>
+
+                            {/* 지원 및 정보 카드 */}
+                            <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden divide-y divide-gray-100">
+                                <Link href="/terms" className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors">
+                                    <span className="font-semibold text-gray-900 text-[15px]">이용약관</span>
+                                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                                </Link>
+                                <Link href="/privacy" className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors">
+                                    <span className="font-semibold text-gray-900 text-[15px]">개인정보보호정책</span>
+                                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                                </Link>
+                                <a 
+                                    href="mailto:contact@chaekjari.com" 
+                                    className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors"
+                                    onClick={() => sendGAEvent('click_customer_inquiry')}
+                                >
+                                    <span className="font-semibold text-gray-900 text-[15px]">고객문의</span>
+                                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                                </a>
+                            </div>
+
+                            {/* 로그아웃 */}
+                            <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
+                                <button 
+                                    onClick={handleSignOut} 
+                                    className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors"
+                                >
+                                    <span className="font-semibold text-gray-900 text-[15px]">로그아웃</span>
+                                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                                </button>
                             </div>
                         </div>
                     )}
@@ -409,17 +416,17 @@ export default function MyPageClient() {
                     {/* ===== ACCOUNT ===== */}
                     {currentView === 'account' && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                            <div className="py-2 divide-y divide-gray-100">
+                            <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden divide-y divide-gray-100">
                                 <button
                                     onClick={() => setCurrentView('password')}
-                                    className="w-full flex items-center justify-between px-6 py-3.5 transition-colors"
+                                    className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors"
                                 >
-                                    <span className="font-medium text-gray-900 text-[15px]">비밀번호 변경</span>
+                                    <span className="font-semibold text-gray-900 text-[15px]">비밀번호 변경</span>
                                     <ChevronRight className="w-5 h-5 text-gray-400" />
                                 </button>
                                 {/* 마케팅 수신 동의 토글 */}
-                                <div className="w-full flex items-center justify-between px-6 py-3.5">
-                                    <span className="font-medium text-gray-900 text-[15px]">마케팅 및 광고 수신 동의</span>
+                                <div className="w-full flex items-center justify-between px-5 py-4">
+                                    <span className="font-semibold text-gray-900 text-[15px]">마케팅 및 광고 수신 동의</span>
                                     <button
                                         onClick={handleToggleClick}
                                         disabled={isMarketingLoading}
@@ -435,9 +442,9 @@ export default function MyPageClient() {
                                 </div>
                                 <button
                                     onClick={() => { setCurrentView('delete-notice'); fetchWishlistCount() }}
-                                    className="w-full flex items-center justify-between px-6 py-3.5 transition-colors"
+                                    className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors"
                                 >
-                                    <span className="font-medium text-red-400 text-[15px]">회원 탈퇴</span>
+                                    <span className="font-semibold text-red-500 text-[15px]">회원 탈퇴</span>
                                     <ChevronRight className="w-5 h-5 text-gray-400" />
                                 </button>
                             </div>
@@ -446,15 +453,15 @@ export default function MyPageClient() {
 
                     {/* ===== PASSWORD CHANGE ===== */}
                     {currentView === 'password' && (
-                        <section className="animate-in fade-in slide-in-from-right-4 duration-300 px-6 py-6">
-                            <div className="mb-8 text-center mt-4">
+                        <section className="animate-in fade-in slide-in-from-right-4 duration-300 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-6">
+                            <div className="mb-6 text-center mt-2">
                                 <p className="text-gray-500 text-[15px] leading-relaxed">
                                     주기적인 비밀번호 변경을 통해<br />계정을 안전하게 보호하세요.
                                 </p>
                             </div>
                             <form onSubmit={handleUpdatePassword} className="space-y-4 max-w-sm mx-auto">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 ml-1">현재 비밀번호</label>
+                                <div className="space-y-2 flex flex-col items-start">
+                                    <label className="text-sm font-semibold text-gray-700 ml-1">현재 비밀번호</label>
                                     <Input
                                         type="password"
                                         value={currentPassword}
@@ -463,8 +470,8 @@ export default function MyPageClient() {
                                         required
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 ml-1">새 비밀번호</label>
+                                <div className="space-y-2 flex flex-col items-start">
+                                    <label className="text-sm font-semibold text-gray-700 ml-1">새 비밀번호</label>
                                     <Input
                                         type="password"
                                         value={newPassword}
@@ -474,7 +481,7 @@ export default function MyPageClient() {
                                         minLength={8}
                                         maxLength={20}
                                     />
-                                    <div className="mt-2.5 flex items-center gap-4 text-xs ml-1">
+                                    <div className="mt-2 flex items-center gap-4 text-xs ml-1">
                                         <div className="flex items-center gap-1">
                                             <Check className={`w-3.5 h-3.5 ${/[a-zA-Z]/.test(newPassword) ? 'text-green-500' : 'text-gray-300'}`} />
                                             <span className={/[a-zA-Z]/.test(newPassword) ? 'text-green-600 font-medium' : 'text-gray-500'}>영문포함</span>
@@ -489,8 +496,8 @@ export default function MyPageClient() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 ml-1">새 비밀번호 확인</label>
+                                <div className="space-y-2 flex flex-col items-start">
+                                    <label className="text-sm font-semibold text-gray-700 ml-1">새 비밀번호 확인</label>
                                     <Input
                                         type="password"
                                         value={confirmPassword}
@@ -498,7 +505,7 @@ export default function MyPageClient() {
                                         placeholder="비밀번호 확인"
                                         required
                                     />
-                                    <div className="mt-2.5 flex items-center gap-1 text-xs ml-1">
+                                    <div className="mt-2 flex items-center gap-1 text-xs ml-1">
                                         <Check className={`w-3.5 h-3.5 ${confirmPassword.length > 0 && newPassword === confirmPassword ? 'text-green-500' : 'text-gray-300'}`} />
                                         <span className={confirmPassword.length > 0 && newPassword === confirmPassword ? 'text-green-600 font-medium' : 'text-gray-500'}>비밀번호 일치</span>
                                     </div>
@@ -536,8 +543,7 @@ export default function MyPageClient() {
 
                     {/* ===== DELETE STEP 1: 유의사항 확인 ===== */}
                     {currentView === 'delete-notice' && (
-                        <div className="animate-in fade-in slide-in-from-right-4 duration-300 px-6 py-6">
-
+                        <div className="animate-in fade-in slide-in-from-right-4 duration-300 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-6">
                             {/* 이용 현황 카드 */}
                             <div className="py-4 border-b border-gray-100 mb-6">
                                 <p className="text-[13px] font-bold text-gray-800 mb-3">{user.email?.split('@')[0]}의 책자리</p>
@@ -574,7 +580,7 @@ export default function MyPageClient() {
                                 >
                                     {deleteAgreed && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                                 </div>
-                                <span className="text-[13px] text-gray-700 leading-relaxed">
+                                <span className="text-[13px] text-gray-700 leading-relaxed text-left">
                                     회원 탈퇴에 관한 모든 내용을 숙지하였고, 회원 탈퇴를 신청합니다.
                                 </span>
                             </label>
@@ -583,7 +589,7 @@ export default function MyPageClient() {
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => { resetDelete(); setCurrentView('main') }}
-                                    className="flex-1 py-3.5 text-gray-600 font-bold bg-gray-100 rounded-lg transition-colors text-[15px]"
+                                    className="flex-1 py-3.5 text-gray-600 font-bold bg-gray-100 rounded-lg active:bg-gray-200 transition-colors text-[15px]"
                                 >
                                     나중에 하기
                                 </button>
@@ -592,7 +598,7 @@ export default function MyPageClient() {
                                     onClick={() => setCurrentView('delete-reason')}
                                     className={`flex-1 py-3.5 font-bold rounded-lg transition-colors text-[15px] ${
                                         deleteAgreed
-                                            ? 'bg-[#F59E0B] text-white'
+                                            ? 'bg-[#F59E0B] text-white active:bg-[#D97706]'
                                             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                     }`}
                                 >
@@ -604,7 +610,7 @@ export default function MyPageClient() {
 
                     {/* ===== DELETE STEP 2: 탈퇴 사유 입력 ===== */}
                     {currentView === 'delete-reason' && (
-                        <div className="animate-in fade-in slide-in-from-right-4 duration-300 px-6 py-6">
+                        <div className="animate-in fade-in slide-in-from-right-4 duration-300 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-6">
                             <h2 className="text-[17px] font-bold text-gray-900 mb-5">탈퇴 사유 입력</h2>
 
                             <div className="divide-y divide-gray-100 mb-6">
@@ -646,7 +652,7 @@ export default function MyPageClient() {
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => { resetDelete(); setCurrentView('main') }}
-                                    className="flex-1 py-3.5 text-gray-600 font-bold bg-gray-100 rounded-lg transition-colors text-[15px]"
+                                    className="flex-1 py-3.5 text-gray-600 font-bold bg-gray-100 rounded-lg active:bg-gray-200 transition-colors text-[15px]"
                                 >
                                     나중에 하기
                                 </button>
@@ -655,7 +661,7 @@ export default function MyPageClient() {
                                     onClick={() => setCurrentView('delete-password')}
                                     className={`flex-1 py-3.5 font-bold rounded-lg transition-colors text-[15px] ${
                                         deleteReason && !(deleteReason === '기타(직접 작성)' && !deleteReasonText.trim())
-                                            ? 'bg-[#F59E0B] text-white'
+                                            ? 'bg-[#F59E0B] text-white active:bg-[#D97706]'
                                             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                     }`}
                                 >
@@ -667,8 +673,7 @@ export default function MyPageClient() {
 
                     {/* ===== DELETE STEP 3: 비밀번호 확인 ===== */}
                     {currentView === 'delete-password' && (
-                        <section className="animate-in fade-in slide-in-from-right-4 duration-300 px-6 py-6">
-                            {/* 기존 비밀번호 변경과 동일한 UI 스타일 */}
+                        <section className="animate-in fade-in slide-in-from-right-4 duration-300 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-6">
                             <div className="mb-8 text-center mt-4">
                                 <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-[#FDF6E3] flex items-center justify-center">
                                     <Lock className="w-7 h-7 text-[#F59E0B]" />
@@ -679,8 +684,8 @@ export default function MyPageClient() {
                             </div>
 
                             <form onSubmit={handleDeleteAccount} className="space-y-4 max-w-sm mx-auto">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 ml-1">
+                                <div className="space-y-2 flex flex-col items-start">
+                                    <label className="text-sm font-semibold text-gray-700 ml-1">
                                         비밀번호 <span className="text-red-400">*</span>
                                     </label>
                                     <Input
