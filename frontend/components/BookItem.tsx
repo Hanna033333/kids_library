@@ -122,17 +122,15 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
         */}
 
         <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
-          <span className={`text-gray-400 truncate ${user && normalizedStatus ? 'max-w-[50%]' : 'max-w-full'}`}>{book.publisher}</span>
-          {user && normalizedStatus && (
+          <span className={`text-gray-400 truncate ${user && normalizedStatus && normalizedStatus.status !== "확인중" ? 'max-w-[50%]' : 'max-w-full'}`}>{book.publisher}</span>
+          {user && normalizedStatus && normalizedStatus.status !== "확인중" && (
             <span className={`px-2 py-1 rounded-full text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
               ? "bg-green-100 text-green-700"
               : normalizedStatus.available === false
                 ? "bg-red-100 text-red-700"
                 : normalizedStatus.status === "미소장"
                   ? "bg-gray-100 text-gray-700"
-                  : normalizedStatus.status === "확인중"
-                    ? "bg-orange-100 text-orange-700"
-                    : "bg-white text-gray-600 border border-gray-300"
+                  : "bg-white text-gray-600 border border-gray-300"
               }`}>
               {normalizedStatus.status}
             </span>

@@ -84,7 +84,7 @@ async def fetch_loan_status_single(
     }
     
     try:
-        async with session.get(url, params=params, timeout=30, allow_redirects=False) as response:
+        async with session.get(url, params=params, timeout=5, allow_redirects=False) as response:
             # 302 리다이렉트 = 정보나루 API 점검/한도초과 상태
             if response.status in (301, 302, 303, 307, 308):
                 result = {
@@ -178,7 +178,7 @@ async def fetch_loan_status_batch(books: List[Dict], library_name: Optional[str]
             return await fetch_loan_status_single(session, isbn, lib_code)
 
     # 타임아웃 설정을 포함한 세션
-    timeout = aiohttp.ClientTimeout(total=60)
+    timeout = aiohttp.ClientTimeout(total=15)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         tasks = [
             fetch_with_sem(session, book['isbn'])

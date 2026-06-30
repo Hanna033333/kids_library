@@ -34,12 +34,15 @@ import google.generativeai as genai
 
 # 1. 큐레이션 도서 조회
 def select_curation_books(curation_tag: str) -> List[dict]:
-    """도서 데이터베이스에서 조건에 맞는 책 5권을 조회합니다. (is_hidden=False, 이미지 필수)"""
+    """도서 데이터베이스에서 조건에 맞는 책 5권을 조회합니다. (is_hidden=False, 이미지 필수, 첫 번째 태그 정밀 매칭)"""
     query = supabase.table("childbook_items").select("*")
     query = query.or_("is_hidden.is.null,is_hidden.eq.false")
     query = query.not_.is_("image_url", "null")
     query = query.neq("image_url", "")
-    query = query.ilike("curation_tag", f"%{curation_tag}%")
+    
+    # 첫 번째 태그 정밀 매칭 (Rule 29 준수)
+    or_filter = f'curation_tag.eq."{curation_tag}",curation_tag.like."{curation_tag},%",curation_tag.eq."#{curation_tag}",curation_tag.like."#{curation_tag},%"'
+    query = query.or_(or_filter)
     query = query.order("title")
     
     result = query.execute()

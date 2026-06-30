@@ -32,7 +32,7 @@ export default function LibrarySelector({ whiteMode = false }: { whiteMode?: boo
             {/* Trigger Button */}
             <button
                 onClick={() => setIsOpen(true)}
-                className={`flex items-center gap-1.5 text-sm font-bold border-b-2 pb-0.5 transition-colors ${whiteMode
+                className={`flex items-center gap-1.5 text-sm font-bold border-b-2 py-1.5 px-0.5 transition-colors ${whiteMode
                     ? 'text-white border-white/40 hover:border-white'
                     : 'text-gray-900 border-gray-900/10 hover:border-gray-900'
                     }`}
