@@ -4,7 +4,7 @@ description: 개발 변경사항의 로컬 빌드 및 프리뷰(Preview) 배포 
 
 # 🚀 /deploy-preview 배포 자동 검증 워크플로우
 
-이 워크플로우는 사용자가 `/deploy-preview`를 호출했을 때, 로컬 개발 환경의 변경 사항이 Vercel 및 Render Preview 환경에 에러 없이 안전하게 배포되도록 사전 검증을 일괄 처리하고 배포를 진행하는 표준 지침입니다.
+이 워크플로우는 사용자가 `/deploy-preview`를 호출했을 때, 로컬 개발 환경의 변경 사항이 Vercel Preview 환경에 에러 없이 안전하게 배포되도록 사전 검증을 일괄 처리하고 배포를 진행하는 표준 지침입니다. 백엔드(FastAPI)는 AWS Lightsail에서 운영되며 (`https://api.checkjari.com`), 별도의 preview 환경 없이 단일 프로덕션 서버로 운영됩니다.
 
 ---
 

@@ -17,19 +17,24 @@ from core.config import GEMINI_API_KEY
 from services.text_trimmer import force_trim_description, trim_text_fallback
 
 
-def fix_caption_hashtags(caption: str, curation_tag: str) -> str:
-    """캡션 하단 해시태그 중 #책자리, #그림책추천, #분류태그에서 # 기호가 누락된 경우 강제 보정합니다."""
-    clean_tag = curation_tag.lstrip("#").split(",")[0].strip()
-    
-    # (?<!#)(?<!\S)는 앞에 # 기호가 없고, 공백 문자나 시작 지점만 허용하는 매칭 패턴입니다.
-    caption = re.sub(r'(?<!#)(?<!\S)책자리', '#책자리', caption)
-    caption = re.sub(r'(?<!#)(?<!\S)그림책추천', '#그림책추천', caption)
-    
-    if clean_tag:
-        escaped_tag = re.escape(clean_tag)
-        caption = re.sub(rf'(?<!#)(?<!\S){escaped_tag}', f'#{clean_tag}', caption)
-        
-    return caption
+def remove_hashtags_and_clean(caption: str) -> str:
+    """본문 캡션에서 해시태그(#으로 시작하는 단어)를 완전히 제거하고 공백을 정돈합니다."""
+    # #으로 시작하는 단어 제거
+    caption = re.sub(r'#\S+', '', caption)
+    # 줄바꿈 및 불필요한 연속 공백 정돈
+    caption = re.sub(r'\n{3,}', '\n\n', caption)
+    return caption.strip()
+
+
+def normalize_caption_intro(caption: str) -> str:
+    """기존 캡션의 시작 또는 도입부에 존재할 수 있는 첫인사(안녕하세요, 책자리 입니다) 문구를 제거하고 일관되게 맨 앞에 한 번만 덧붙입니다."""
+    lines = caption.split('\n')
+    if lines and '안녕하세요' in lines[0] and '책자리' in lines[0]:
+        lines.pop(0)
+        while lines and not lines[0].strip():
+            lines.pop(0)
+        caption = '\n'.join(lines)
+    return "안녕하세요, 책자리 입니다. 📚\n\n" + caption
 
 
 def _get_gemini_model():
@@ -106,7 +111,7 @@ def generate_ai_threads_content(
 [작성 지침 - 중요]
 1. 본문 캡션(caption) 작성 지침:
    - 양육자(부모님)와 깊이 공감하는 다정하고 따뜻한 존댓말 톤앤매너로 작성하세요.
-   - **반드시 다음 5단계의 정확한 레이아웃 순서(2단락 구조)를 엄격히 준수하여 빈 줄 개행까지 똑같이 생성하세요.** 다른 불필요한 서두 멘트, 이정표, 꼬리표([본문], [해시태그] 등)는 절대로 붙여선 안 됩니다.
+   - **반드시 다음 4단계의 정확한 레이아웃 순서(2단락 구조)를 엄격히 준수하여 빈 줄 개행까지 똑같이 생성하세요.** 다른 불필요한 서두 멘트, 이정표, 꼬리표([본문] 등)는 절대로 붙여선 안 됩니다.
      --- (레이아웃 순서 시작) ---
      안녕하세요, 책자리 입니다. 📚
      (빈 줄)
@@ -115,10 +120,8 @@ def generate_ai_threads_content(
      [단락 2: 해당 고민을 함께 나누고 덜어줄 이번 주 큐레이션 테마의 기획 의도 및 엄선된 추천 도서들 소개 (3~4문장)]
      (빈 줄)
      👉 더 많은 도서 목록은 첫 댓글의 링크를 확인해 보세요!
-     (빈 줄)
-     #책자리 #그림책추천 #{curation_tag}
      --- (레이아웃 순서 끝) ---
-   - **경고 (링크 노출 금지)**: 본문 캡션 내에 직접적인 URL 링크(예: http://..., checkjari.com/...)는 **절대로 포함해서는 안 됩니다**. (링크는 첫 번째 댓글에 별도로 달리므로 캡션에서는 생략해야 함)
+   - **경고 (태그 및 링크 노출 금지)**: 본문 캡션 내에 직접적인 URL 링크(예: http://..., checkjari.com/...) 및 해시태그(예: #책자리 등)는 **절대로 포함해서는 안 됩니다**. (링크와 태그는 제외하고 캡션을 생성해 주세요)
    - 맞춤법, 띄어쓰기, 문장 완성도에 오타가 전혀 없도록 철저히 검수하세요.
 
 2. 카드뉴스 도서 요약(card_descriptions) 작성 지침 (비주얼 가이드):
@@ -150,9 +153,10 @@ def generate_ai_threads_content(
             raise ValueError("Invalid response structure")
             
         caption = res_data["caption"].strip()
-        caption = fix_caption_hashtags(caption, curation_tag)
-        if not caption.startswith("안녕하세요, 책자리 입니다"):
-            caption = "안녕하세요, 책자리 입니다. 📚\n\n" + caption
+        # 1. 해시태그 제거 및 공백 정돈
+        caption = remove_hashtags_and_clean(caption)
+        # 2. 첫인사 중복 방지 및 강제 1회 추가
+        caption = normalize_caption_intro(caption)
         res_data["caption"] = caption
         
         res_data["card_descriptions"] = [
@@ -205,7 +209,7 @@ async def apply_feedback_with_gemini(
 [작성 지침 - 중요]
 1. 본문 캡션(caption) 작성 지침:
    - 사용자의 피드백을 반영하되, 양육자와 공감하는 다정하고 따뜻한 존댓말 톤앤매너를 유지하세요.
-   - **반드시 다음 5단계의 정확한 레이아웃 순서(2단락 구조)를 엄격히 준수하여 빈 줄 개행까지 똑같이 생성하세요.**
+   - **반드시 다음 4단계의 정확한 레이아웃 순서(2단락 구조)를 엄격히 준수하여 빈 줄 개행까지 똑같이 생성하세요.**
      --- (레이아웃 순서 시작) ---
      안녕하세요, 책자리 입니다. 📚
      (빈 줄)
@@ -214,10 +218,8 @@ async def apply_feedback_with_gemini(
      [단락 2: 피드백이 반영된 이번 주 큐레이션 테마 기획 의도 및 도서 안내]
      (빈 줄)
      👉 더 많은 도서 목록은 첫 댓글의 링크를 확인해 보세요!
-     (빈 줄)
-     #책자리 #그림책추천 #[분류태그]
      --- (레이아웃 순서 끝) ---
-   - **경고 (링크 노출 금지)**: 본문 캡션 내에 직접적인 URL 링크(예: http://..., checkjari.com/...)는 **절대로 포함해서는 안 됩니다**.
+   - **경고 (태그 및 링크 노출 금지)**: 본문 캡션 내에 직접적인 URL 링크(예: http://..., checkjari.com/...) 및 해시태그(예: #책자리 등)는 **절대로 포함해서는 안 됩니다**.
    - 맞춤법 및 오타가 절대 없도록 철저히 다시 보정해 주세요.
 
 2. 카드뉴스 도서 요약(card_descriptions) 작성 지침:
@@ -249,17 +251,10 @@ async def apply_feedback_with_gemini(
             raise ValueError("Invalid response structure")
             
         caption = res_data["caption"].strip()
-        
-        # books 첫 도서의 curation_tag로부터 복구
-        curation_tag = ""
-        if books:
-            raw_tag = books[0].get("curation_tag") or ""
-            if raw_tag:
-                curation_tag = raw_tag.split(",")[0].strip().lstrip("#")
-                
-        caption = fix_caption_hashtags(caption, curation_tag)
-        if not caption.startswith("안녕하세요, 책자리 입니다"):
-            caption = "안녕하세요, 책자리 입니다. 📚\n\n" + caption
+        # 1. 해시태그 제거 및 공백 정돈
+        caption = remove_hashtags_and_clean(caption)
+        # 2. 첫인사 중복 방지 및 강제 1회 추가
+        caption = normalize_caption_intro(caption)
         res_data["caption"] = caption
         
         res_data["card_descriptions"] = [

@@ -40,6 +40,11 @@ description: A guide for adding and managing curated book sections (e.g., Caldec
 - **기존 섹션 참조**: 새로운 섹션은 기존의 '겨울방학 추천 도서', '어린이 도서 연구회' 섹션과 **동일한 UI 구조**를 유지해야 합니다.
 - **컴포넌트 재사용**: `BookList`, `BookCard` 등 이미 검증된 공통 컴포넌트를 사용하여 개발 효율성과 사용자 경험의 일관성을 확보합니다.
 
+### 모바일 큐레이션 레이아웃 및 터치 스와이프 인터랙션
+- **가로 스크롤 카드 레이아웃(Horizontal Scroll)**: 모바일(가로폭 360px)에서 화면 높이를 아끼고 여러 큐레이션을 한눈에 훑어볼 수 있도록 큐레이션 도서 목록은 기본적으로 가로 스크롤(Flex wrap 대신 `overflow-x-auto`, `flex-nowrap`)이 가능한 형태로 구현한다.
+- **가로 스크롤 지연 방지**: 터치 스와이프가 매끄럽게 동작하도록 CSS `scroll-behavior: smooth`와 `-webkit-overflow-scrolling: touch` 속성을 부여한다.
+- **마지막 아이템 여백**: 가로 스크롤 시 마지막 도서 카드가 화면 우측 끝에 너무 달라붙지 않도록, 컨테이너 끝에 적절한 padding-right(최소 `16px`)를 확보해 모바일 터치 사용성을 높인다.
+
 ### 구현 체크리스트
 - [ ] **Data Fetching**: `lib/home-api.ts` 등에 해당 큐레이션을 위한 Fetch 함수 추가
 - [ ] **Display Logic (Quality Control)**: 홈 화면 섹션의 경우, 사용자 경험을 위해 **최소 7권 이상의 도서**가 존재할 때만 섹션을 렌더링하도록 조건부 로직 추가
