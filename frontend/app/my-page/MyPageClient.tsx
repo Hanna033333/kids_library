@@ -341,12 +341,12 @@ export default function MyPageClient() {
 
     return (
         <main className="min-h-screen bg-[#F5F5F8]">
-            <div className="max-w-lg mx-auto bg-[#F5F5F8] min-h-screen sm:shadow-sm sm:border-x border-gray-100 flex flex-col">
+            <div className="w-full min-h-screen flex flex-col">
                 <PageHeader
                     title={getTitle()}
                     backOnClick={getBackHandler()}
                 />
-                <div className="flex-1 p-4 pb-12 space-y-4">
+                <div className="flex-1 w-full max-w-2xl mx-auto p-4 sm:p-6 pb-12 space-y-4">
 
                     {/* ===== MAIN ===== */}
                     {currentView === 'main' && (
