@@ -13,11 +13,16 @@ export async function getBooksFromSupabase(
         category?: string;
         sort?: string;
         curation?: string;
-    }
+    },
+    includeLibraryInfo: boolean = false
 ) {
+    const selectFields = includeLibraryInfo
+        ? '*, library_info:book_library_info(library_name, callno)'
+        : '*';
+
     let query = supabase
         .from('childbook_items')
-        .select('*, library_info:book_library_info(library_name, callno)', { count: 'exact' });
+        .select(selectFields, { count: 'exact' });
 
     // is_hidden 필터 (컬럼이 있으면 적용)
     try {
@@ -86,7 +91,7 @@ export async function getBooksFromSupabase(
     const start = (page - 1) * limit;
     query = query.range(start, start + limit - 1);
 
-    const { data, count, error } = await query;
+    const { data, count, error } = await (query as any);
 
     if (error) {
         console.error('Supabase query error:', error);

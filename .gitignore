@@ -69,3 +69,4 @@ backend/logs/
 # 임시 테스트 이미지 (assets로 이동)
 backend/assets/*.gif
 backend/assets/*.png
+.vercel

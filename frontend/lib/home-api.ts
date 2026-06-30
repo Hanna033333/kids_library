@@ -5,7 +5,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 /**
  * 연령별 책 추천 가져오기 (일주일마다 랜덤 변경)
  */
-export async function getBooksByAge(ageGroup: string, limit: number = 5, client?: SupabaseClient): Promise<Book[]> {
+export async function getBooksByAge(ageGroup: string, limit: number = 5, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
 
     // 연령 그룹 매핑 (supabase-client.ts 규격과 일치시킴)
@@ -30,9 +30,13 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
     const estimatedTotal = 1000 // 충분히 큰 상한값
     const offset = (weekNumber * limit) % estimatedTotal
 
+    const selectFields = includeLibraryInfo
+        ? 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)'
+        : 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count';
+
     const fetchBooks = async (start: number) => supabase
         .from('childbook_items')
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)')
+        .select(selectFields)
         .in('age', ageValues)
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('id')
@@ -60,15 +64,20 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
 /**
  * 어린이 도서 연구회 추천 책 가져오기 (일주일마다 랜덤 변경)
  */
-export async function getResearchCouncilBooks(limit: number = 5, client?: SupabaseClient): Promise<Book[]> {
+export async function getResearchCouncilBooks(limit: number = 5, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
 
     // COUNT 쿼리 제거: pool을 한 번에 가져와 클라이언트에서 주차 기반 슬라이싱
     // (DB 왕복 2회 → 1회로 단축)
     const POOL_SIZE = 100 // 어린이도서연구회 64권 이상 커버용
+    
+    const selectFields = includeLibraryInfo
+        ? 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)'
+        : 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count';
+
     const { data, error } = await supabase
         .from('childbook_items')
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)')
+        .select(selectFields)
         .eq('curation_tag', '어린이도서연구회')
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('id') // 일관된 정렬
@@ -99,7 +108,7 @@ export async function getResearchCouncilBooks(limit: number = 5, client?: Supaba
  * 겨울방학 추천 도서 가져오기 (매일 랜덤 7권 선정)
  * 정책: 항상 정확히 7권 노출 보장 (랜덤 선택)
  */
-export async function getWinterBooks(limit: number = 7, client?: SupabaseClient): Promise<Book[]> {
+export async function getWinterBooks(limit: number = 7, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
 
     // 날짜 기반 시드로 하루 동안 일관된 랜덤 순서 유지
@@ -107,9 +116,13 @@ export async function getWinterBooks(limit: number = 7, client?: SupabaseClient)
     const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / (24 * 60 * 60 * 1000))
     const seed = dayOfYear * 0.001 // 0~1 사이 값으로 변환
 
+    const selectFields = includeLibraryInfo
+        ? 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)'
+        : 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count';
+
     const { data, error } = await supabase
         .from('childbook_items')
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)')
+        .select(selectFields)
         .eq('curation_tag', '겨울방학2026')
         .or('is_hidden.is.null,is_hidden.eq.false')
         // PostgreSQL RANDOM() 함수로 랜덤 정렬 (시드 기반)
@@ -146,18 +159,25 @@ export async function getWinterBooks(limit: number = 7, client?: SupabaseClient)
 /**
  * 특정 큐레이션 태그가 포함된 책 가져오기 (매칭 방식: 콤마 구분자 포함 여부)
  */
-export async function getBooksByTag(tagName: string, limit: number = 7, client?: SupabaseClient): Promise<Book[]> {
+export async function getBooksByTag(tagName: string, limit: number = 7, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
 
     const orFilter = `curation_tag.eq."${tagName}",curation_tag.like."${tagName},%",curation_tag.eq."#${tagName}",curation_tag.like."#${tagName},%"`;
 
-    const { data, error } = await supabase
-        .from('childbook_items')
-        .select(`
+    const selectFields = includeLibraryInfo
+        ? `
             id, title, author, publisher, category, age, pangyo_callno, image_url, 
             curation_tag, curation_note, confidence_score, national_loan_count,
             library_info:book_library_info(library_name, callno)
-        `)
+        `
+        : `
+            id, title, author, publisher, category, age, pangyo_callno, image_url, 
+            curation_tag, curation_note, confidence_score, national_loan_count
+        `;
+
+    const { data, error } = await supabase
+        .from('childbook_items')
+        .select(selectFields)
         .or(orFilter)
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('confidence_score', { ascending: false }) // 신뢰도 높은 순 우선
@@ -174,7 +194,7 @@ export async function getBooksByTag(tagName: string, limit: number = 7, client?:
 /**
  * 연령대별 전국 인기 도서 가져오기 (대출수 기준)
  */
-export async function getPopularBooksByAge(ageGroup: string, limit: number = 8, client?: SupabaseClient): Promise<Book[]> {
+export async function getPopularBooksByAge(ageGroup: string, limit: number = 8, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
 
     const ageMap: Record<string, string[]> = {
@@ -188,9 +208,13 @@ export async function getPopularBooksByAge(ageGroup: string, limit: number = 8, 
     const ageValues = ageMap[ageGroup] || []
     if (ageValues.length === 0) return []
 
+    const selectFields = includeLibraryInfo
+        ? 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)'
+        : 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count';
+
     const { data, error } = await supabase
         .from('childbook_items')
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)')
+        .select(selectFields)
         .in('age', ageValues)
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('national_loan_count', { ascending: false })
@@ -207,12 +231,16 @@ export async function getPopularBooksByAge(ageGroup: string, limit: number = 8, 
 /**
  * 전체 도서 중 전국 인기 도서 가져오기 (대출수 기준)
  */
-export async function getPopularBooksOverall(limit: number = 8, client?: SupabaseClient): Promise<Book[]> {
+export async function getPopularBooksOverall(limit: number = 8, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
+
+    const selectFields = includeLibraryInfo
+        ? 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)'
+        : 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count';
 
     const { data, error } = await supabase
         .from('childbook_items')
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)')
+        .select(selectFields)
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('national_loan_count', { ascending: false })
         .limit(limit)

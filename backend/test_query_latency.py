@@ -17,53 +17,47 @@ async def measure_query(name, query_func):
         print(f"[{name}] FAILED in {latency:.4f}s - Error: {e}")
         return latency, None
 
-def query_research_council_count():
+def query_research_council_select(with_join=True, offset=0, limit=7):
+    select_fields = 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count'
+    if with_join:
+        select_fields += ', library_info:book_library_info(library_name, callno)'
     return supabase.table('childbook_items')\
-        .select('id', count='exact')\
-        .eq('curation_tag', '어린이도서연구회')\
-        .or_('is_hidden.is.null,is_hidden.eq.false')\
-        .execute()
-
-def query_research_council_select(offset=0, limit=7):
-    # book_library_info 조인 포함
-    return supabase.table('childbook_items')\
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)')\
+        .select(select_fields)\
         .eq('curation_tag', '어린이도서연구회')\
         .or_('is_hidden.is.null,is_hidden.eq.false')\
         .order('id')\
         .range(offset, offset + limit - 1)\
         .execute()
 
-def query_books_by_age_count(age_values):
+def query_books_by_age_select(age_values, with_join=True, offset=0, limit=7):
+    select_fields = 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count'
+    if with_join:
+        select_fields += ', library_info:book_library_info(library_name, callno)'
     return supabase.table('childbook_items')\
-        .select('id', count='exact')\
-        .in_('age', age_values)\
-        .or_('is_hidden.is.null,is_hidden.eq.false')\
-        .execute()
-
-def query_books_by_age_select(age_values, offset=0, limit=7):
-    # book_library_info 조인 포함
-    return supabase.table('childbook_items')\
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)')\
+        .select(select_fields)\
         .in_('age', age_values)\
         .or_('is_hidden.is.null,is_hidden.eq.false')\
         .order('id')\
         .range(offset, offset + limit - 1)\
         .execute()
 
-def query_caldecott():
-    # book_library_info 조인 포함
+def query_caldecott(with_join=True):
+    select_fields = 'id, title, author, publisher, category, age, pangyo_callno, image_url, isbn, curation_tag'
+    if with_join:
+        select_fields += ', library_info:book_library_info(library_name, callno)'
     return supabase.table('childbook_items')\
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, isbn, curation_tag, library_info:book_library_info(library_name, callno)')\
+        .select(select_fields)\
         .ilike('curation_tag', '%caldecott%')\
         .or_('is_hidden.is.null,is_hidden.eq.false')\
         .order('title', desc=False)\
         .execute()
 
-def query_books_by_tag(tag, limit=7):
-    # book_library_info 조인 포함
+def query_books_by_tag(tag, with_join=True, limit=7):
+    select_fields = 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, curation_note, confidence_score, national_loan_count'
+    if with_join:
+        select_fields += ', library_info:book_library_info(library_name, callno)'
     return supabase.table('childbook_items')\
-        .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, curation_note, confidence_score, national_loan_count, library_info:book_library_info(library_name, callno)')\
+        .select(select_fields)\
         .ilike('curation_tag', f'%{tag}%')\
         .or_('is_hidden.is.null,is_hidden.eq.false')\
         .order('confidence_score', desc=True)\
@@ -73,66 +67,61 @@ def query_books_by_tag(tag, limit=7):
 async def main():
     print("=== Supabase Database Query Latency Test ===")
     
-    # 4-7세 연령값들
     age_values = ['5세부터', '7세부터', '유아']
-    
-    # 임의의 dynamic 큐레이션 태그 3개
     selected_tags = ['잠자리', '감정표현', '사회성']
     
-    # 1. 개별 동기식 실행 측정
-    print("\n--- Running queries sequentially (Synchronous) ---")
+    # 1. With Joins (Sequential)
+    print("\n--- [WITH library_info JOIN] Sequential Execution ---")
     seq_start = time.perf_counter()
-    
-    # Research Council (Count + Select)
-    await measure_query("Research Council Count", query_research_council_count)
-    await measure_query("Research Council Select", lambda: query_research_council_select(offset=5, limit=7))
-    
-    # Books by Age (Count + Select)
-    await measure_query("Books by Age Count", lambda: query_books_by_age_count(age_values))
-    await measure_query("Books by Age Select", lambda: query_books_by_age_select(age_values, offset=10, limit=7))
-    
-    # Caldecott
-    await measure_query("Caldecott Books Select", query_caldecott)
-    
-    # Dynamic Tags
+    await measure_query("RC Select (Join)", lambda: query_research_council_select(with_join=True, offset=5, limit=7))
+    await measure_query("Age Select (Join)", lambda: query_books_by_age_select(age_values, with_join=True, offset=10, limit=7))
+    await measure_query("Caldecott (Join)", lambda: query_caldecott(with_join=True))
     for tag in selected_tags:
-        await measure_query(f"Books by Tag [{tag}]", lambda t=tag: query_books_by_tag(t))
-        
+        await measure_query(f"Tag [{tag}] (Join)", lambda t=tag: query_books_by_tag(t, with_join=True))
     seq_total = time.perf_counter() - seq_start
-    print(f"Total sequential execution time: {seq_total:.4f}s")
+    print(f"Total time with join (sequential): {seq_total:.4f}s")
     
-    # 2. 병렬식 실행 측정 (Next.js Promise.all과 모사)
-    print("\n--- Running queries in parallel (Simulating Next.js Promise.all) ---")
-    par_start = time.perf_counter()
+    # 2. Without Joins (Sequential)
+    print("\n--- [WITHOUT library_info JOIN] Sequential Execution ---")
+    seq_no_join_start = time.perf_counter()
+    await measure_query("RC Select (No Join)", lambda: query_research_council_select(with_join=False, offset=5, limit=7))
+    await measure_query("Age Select (No Join)", lambda: query_books_by_age_select(age_values, with_join=False, offset=10, limit=7))
+    await measure_query("Caldecott (No Join)", lambda: query_caldecott(with_join=False))
+    for tag in selected_tags:
+        await measure_query(f"Tag [{tag}] (No Join)", lambda t=tag: query_books_by_tag(t, with_join=False))
+    seq_no_join_total = time.perf_counter() - seq_no_join_start
+    print(f"Total time without join (sequential): {seq_no_join_total:.4f}s")
+
+    # 3. Parallel Comparison
+    print("\n--- Parallel Comparison (Simulating Promise.all) ---")
     
-    tasks = [
-        # Count와 Select를 같이 실행하는 것 대신, home-api logic을 최대한 따라갑니다.
-        # 실제 HomePage의 Promise.all에서는 getResearchCouncilBooks, getBooksByAge, getCaldecottBooks, getBooksByTag가 병렬로 실행됩니다.
-        # 하지만 getResearchCouncilBooks와 getBooksByAge 내부에서는 Count를 한 뒤 Select를 하므로,
-        # 이 두 함수는 각각 내부에서 await count를 한 뒤 await select를 합니다. 즉, count와 select는 직렬로 수행되고,
-        # 각각의 함수들은 서로 병렬로 수행됩니다.
-        
-        # Helper task for Research Council
-        asyncio.create_task(measure_query("Research Council Full (Sequential within task)", lambda: (
-            query_research_council_count(),
-            query_research_council_select(offset=5, limit=7)
-        ))),
-        # Helper task for Age Books
-        asyncio.create_task(measure_query("Books by Age Full (Sequential within task)", lambda: (
-            query_books_by_age_count(age_values),
-            query_books_by_age_select(age_values, offset=10, limit=7)
-        ))),
-        # Caldecott
-        asyncio.create_task(measure_query("Caldecott", query_caldecott)),
-        # Dynamic Tags
-        asyncio.create_task(measure_query(f"Tag [{selected_tags[0]}]", lambda: query_books_by_tag(selected_tags[0]))),
-        asyncio.create_task(measure_query(f"Tag [{selected_tags[1]}]", lambda: query_books_by_tag(selected_tags[1]))),
-        asyncio.create_task(measure_query(f"Tag [{selected_tags[2]}]", lambda: query_books_by_tag(selected_tags[2])))
+    # Parallel WITH Joins
+    par_join_start = time.perf_counter()
+    tasks_join = [
+        asyncio.create_task(measure_query("RC (Join)", lambda: query_research_council_select(with_join=True, offset=5, limit=7))),
+        asyncio.create_task(measure_query("Age (Join)", lambda: query_books_by_age_select(age_values, with_join=True, offset=10, limit=7))),
+        asyncio.create_task(measure_query("Caldecott (Join)", lambda: query_caldecott(with_join=True))),
+        asyncio.create_task(measure_query(f"Tag [{selected_tags[0]}] (Join)", lambda: query_books_by_tag(selected_tags[0], with_join=True))),
+        asyncio.create_task(measure_query(f"Tag [{selected_tags[1]}] (Join)", lambda: query_books_by_tag(selected_tags[1], with_join=True))),
+        asyncio.create_task(measure_query(f"Tag [{selected_tags[2]}] (Join)", lambda: query_books_by_tag(selected_tags[2], with_join=True)))
     ]
-    
-    await asyncio.gather(*tasks)
-    par_total = time.perf_counter() - par_start
-    print(f"Total parallel execution time: {par_total:.4f}s")
+    await asyncio.gather(*tasks_join)
+    par_join_total = time.perf_counter() - par_join_start
+    print(f"Parallel with join: {par_join_total:.4f}s")
+
+    # Parallel WITHOUT Joins
+    par_no_join_start = time.perf_counter()
+    tasks_no_join = [
+        asyncio.create_task(measure_query("RC (No Join)", lambda: query_research_council_select(with_join=False, offset=5, limit=7))),
+        asyncio.create_task(measure_query("Age (No Join)", lambda: query_books_by_age_select(age_values, with_join=False, offset=10, limit=7))),
+        asyncio.create_task(measure_query("Caldecott (No Join)", lambda: query_caldecott(with_join=False))),
+        asyncio.create_task(measure_query(f"Tag [{selected_tags[0]}] (No Join)", lambda: query_books_by_tag(selected_tags[0], with_join=False))),
+        asyncio.create_task(measure_query(f"Tag [{selected_tags[1]}] (No Join)", lambda: query_books_by_tag(selected_tags[1], with_join=False))),
+        asyncio.create_task(measure_query(f"Tag [{selected_tags[2]}] (No Join)", lambda: query_books_by_tag(selected_tags[2], with_join=False)))
+    ]
+    await asyncio.gather(*tasks_no_join)
+    par_no_join_total = time.perf_counter() - par_no_join_start
+    print(f"Parallel without join: {par_no_join_total:.4f}s")
     
 if __name__ == "__main__":
     asyncio.run(main())

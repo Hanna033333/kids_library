@@ -64,6 +64,17 @@ description: Kids Library 프로젝트의 Vercel(Next.js) 및 AWS Lightsail(Fast
 *   **원인**: Next.js는 `NEXT_PUBLIC_` 접두사가 붙지 않은 환경 변수를 보안상 브라우저에 노출하지 않음.
 *   **해결 방법**: 모든 클라이언트 사용 변수명을 `VITE_SUPABASE_URL` ➡️ `NEXT_PUBLIC_SUPABASE_URL` 등으로 변경.
 
+### 🌐 Vercel 커스텀 도메인 소유권 인증 문제 (`Verification Needed` / `This domain is linked to another Vercel account.`)
+*   **증상**: 상용 도메인(`checkjari.com`) 접속 시 최신 배포본이 적용되지 않고 오래된 버전(예: 5일 전 버전)이 계속 서빙되거나, Vercel 대시보드 Domains 설정에서 도메인 상태가 빨간색 경고(`Verification Needed`)로 뜸.
+*   **원인**: 
+    1. **네임서버(DNS) 혼용**: AWS 마이그레이션 등을 위해 도메인 관리처(가비아 등)에서 네임서버 설정에 Vercel 네임서버 외에 **AWS 네임서버를 추가 기입/혼용**하여 Vercel의 네임서버 자동 인증 위임이 깨진 경우.
+    2. **도메인 강제 재등록**: 대시보드에서 도메인을 새롭게 추가(`Add Existing`)하려 할 때, Vercel 시스템 내부적으로 타계정/타프로젝트와의 소유권 충돌이 발생한 경우.
+*   **해결 방법**:
+    1. Vercel 도메인 탭에서 제공하는 본인 확인용 **`TXT` 레코드값**(`_vercel` / `vc-domain-verify=...`)을 복사합니다.
+    2. 도메인 대행사(가비아, 후이즈 등)의 **SPF(TXT) 레코드 관리** 혹은 **고급 네임서버 설정** 메뉴로 진입합니다.
+    3. 복사한 호스트명(`_vercel`)과 TXT 값(`vc-domain-verify=...`)을 입력하고 **신청/저장**합니다. (루트 도메인용 및 `www`용 둘 다 등록하는 것을 권장)
+    4. 약 1~2분 대기 후 Vercel 대시보드에서 **`Refresh`**를 누르면 초록색 **`Valid Configuration`**으로 상태가 복구되며 최신 배포가 정상 전파됩니다.
+
 ---
 
 ## 2. AWS Lightsail (Backend - FastAPI)

@@ -5,7 +5,7 @@ import { getCaldecottBooks } from '@/lib/caldecott-api'
 import { createClient } from '@/lib/supabase'
 import { VALID_TAXONOMY, CurationTag } from '@/lib/constants/taxonomy'
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // 1시간 주기 ISR 캐시 활성화
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://checkjari.com"),
@@ -231,12 +231,12 @@ export default async function HomePage() {
   }
 
 
-  // 서버 사이드 병렬 데이터 페칭
+  // 서버 사이드 병렬 데이터 페칭 (홈 화면에서는 도서관 소장 정보 조인을 생략하여 TTFB 단축)
   const [researchBooks, ageBooks, caldecottBooks, ...dynamicBooks] = await Promise.all([
-    getResearchCouncilBooks(7, supabase),
-    getBooksByAge(defaultAge, 7, supabase),
-    getCaldecottBooks(supabase),
-    ...selectedTags.map(t => getBooksByTag(t.tag, 7, supabase))
+    getResearchCouncilBooks(7, supabase, false),
+    getBooksByAge(defaultAge, 7, supabase, false),
+    getCaldecottBooks(supabase, false),
+    ...selectedTags.map(t => getBooksByTag(t.tag, 7, supabase, false))
   ])
 
   // HomePageClient에 전달할 동적 큐레이션 데이터 구성

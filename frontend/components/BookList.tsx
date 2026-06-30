@@ -62,14 +62,15 @@ export default function BookList({
     limit: ITEMS_PER_PAGE,
     initialBooks,
     enabled: !isSearchWaitingState,
+    includeLibraryInfo: !!user,
   });
 
   // 검색 대기 중 인기 도서 추천 쿼리
   const { data: searchWaitingRecommendedBooks = [], isLoading: isSearchWaitingRecommendedLoading } = useQuery<Book[]>({
-    queryKey: ['search-waiting-recommended-books'],
+    queryKey: ['search-waiting-recommended-books', !!user],
     queryFn: async () => {
       const { getPopularBooksOverall } = await import("@/lib/home-api");
-      return getPopularBooksOverall(8);
+      return getPopularBooksOverall(8, undefined, !!user);
     },
     enabled: isSearchWaitingState && isMounted,
     staleTime: 5 * 60 * 1000,
@@ -85,24 +86,24 @@ export default function BookList({
   );
 
   const { data: recommendedBooks = [], isLoading: isRecommendedLoading } = useQuery<Book[]>({
-    queryKey: ['recommended-books', ageFilter, curationFilter],
+    queryKey: ['recommended-books', ageFilter, curationFilter, !!user],
     queryFn: async () => {
       if (ageFilter) {
         const { getBooksByAge } = await import("@/lib/home-api");
-        return getBooksByAge(ageFilter, 7);
+        return getBooksByAge(ageFilter, 7, undefined, !!user);
       }
       if (curationFilter === "caldecott") {
         const { getCaldecottBooks } = await import("@/lib/caldecott-api");
-        const books = await getCaldecottBooks();
+        const books = await getCaldecottBooks(undefined, !!user);
         return books.slice(0, 7);
       }
       if (curationFilter === "어린이도서연구회" || curationFilter === "research-council") {
         const { getResearchCouncilBooks } = await import("@/lib/home-api");
-        return getResearchCouncilBooks(7);
+        return getResearchCouncilBooks(7, undefined, !!user);
       }
       if (curationFilter === "겨울방학" || curationFilter === "winter-vacation") {
         const { getWinterBooks } = await import("@/lib/home-api");
-        return getWinterBooks(7);
+        return getWinterBooks(7, undefined, !!user);
       }
       return [];
     },
@@ -133,14 +134,14 @@ export default function BookList({
 
   // 폴백 추천 도서 fetch 쿼리
   const { data: fallbackBooks = [] } = useQuery<Book[]>({
-    queryKey: ['fallback-books', ageFilter, searchQuery],
+    queryKey: ['fallback-books', ageFilter, searchQuery, !!user],
     queryFn: async () => {
       if (ageFilter) {
         const { getPopularBooksByAge } = await import("@/lib/home-api");
-        return getPopularBooksByAge(ageFilter, 8);
+        return getPopularBooksByAge(ageFilter, 8, undefined, !!user);
       } else {
         const { getPopularBooksOverall } = await import("@/lib/home-api");
-        return getPopularBooksOverall(8);
+        return getPopularBooksOverall(8, undefined, !!user);
       }
     },
     enabled: isFallbackEnabled,

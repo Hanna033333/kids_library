@@ -9,7 +9,8 @@ export async function searchBooks(
   sort?: string,
   page: number = 1,
   limit: number = 20,
-  curation?: string
+  curation?: string,
+  includeLibraryInfo: boolean = false
 ): Promise<BooksResponse> {
   const params = new URLSearchParams();
   if (query) params.append("q", query);
@@ -19,6 +20,7 @@ export async function searchBooks(
   if (curation) params.append("curation", curation);
   params.append("page", page.toString());
   params.append("limit", limit.toString());
+  params.append("include_library_info", includeLibraryInfo.toString());
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -43,7 +45,8 @@ export async function getBooks(
   category?: string,
   sort?: string,
   page: number = 1,
-  limit: number = 20
+  limit: number = 20,
+  includeLibraryInfo: boolean = false
 ): Promise<BooksResponse> {
   const params = new URLSearchParams();
   if (age) params.append("age", age);
@@ -51,6 +54,7 @@ export async function getBooks(
   if (sort) params.append("sort", sort);
   params.append("page", page.toString());
   params.append("limit", limit.toString());
+  params.append("include_library_info", includeLibraryInfo.toString());
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 30000);

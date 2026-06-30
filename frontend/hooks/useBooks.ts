@@ -16,6 +16,7 @@ interface UseBooksParams {
   limit?: number;
   initialBooks?: Book[];
   enabled?: boolean;
+  includeLibraryInfo?: boolean;
 }
 
 export function useBooks({
@@ -27,6 +28,7 @@ export function useBooks({
   limit = 24,
   initialBooks,
   enabled = true,
+  includeLibraryInfo = false,
 }: UseBooksParams) {
   const {
     data,
@@ -36,7 +38,7 @@ export function useBooks({
     isLoading,
     error,
   } = useInfiniteQuery({
-    queryKey: ["books-infinite", searchQuery, ageFilter, categoryFilter, curationFilter, sortFilter],
+    queryKey: ["books-infinite", searchQuery, ageFilter, categoryFilter, curationFilter, sortFilter, includeLibraryInfo],
     enabled,
     queryFn: async ({ pageParam }): Promise<BooksResponse> => {
       const page = pageParam as number;
@@ -49,7 +51,8 @@ export function useBooks({
           sortFilter,
           page,
           limit,
-          curationFilter || undefined
+          curationFilter || undefined,
+          includeLibraryInfo
         );
       }
 
@@ -59,7 +62,7 @@ export function useBooks({
         category: categoryFilter,
         curation: curationFilter,
         sort: sortFilter,
-      });
+      }, includeLibraryInfo);
     },
     getNextPageParam: (lastPage, allPages) => {
       const currentPage = allPages.length;

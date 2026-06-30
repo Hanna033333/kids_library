@@ -86,13 +86,16 @@ def search_books_service(
     curation: Optional[str] = None,
     sort: str = "pangyo_callno",
     page: int = 1,
-    limit: int = 20
+    limit: int = 20,
+    include_library_info: bool = False
 ):
     """
     책 검색 및 필터링 서비스
     """
     # 필요한 컬럼만 선택 (성능 최적화 및 다중 도서관 정보 조인)
-    columns = "id,title,author,publisher,pangyo_callno,vol,category,age,image_url,curation_tag,curation_note,confidence_score,national_loan_count,library_info:book_library_info(library_name, callno)"
+    columns = "id,title,author,publisher,pangyo_callno,vol,category,age,image_url,curation_tag,curation_note,confidence_score,national_loan_count"
+    if include_library_info:
+        columns += ",library_info:book_library_info(library_name, callno)"
     
     # 쿼리 빌드 - estimated count 사용 (훨씬 빠름)
     query = supabase.table("childbook_items").select(columns, count="estimated")
