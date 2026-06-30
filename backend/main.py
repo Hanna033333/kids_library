@@ -12,6 +12,9 @@ from api.auth import router as auth_router
 from api.wishlists import router as wishlists_router
 from api.threads import router as threads_router
 
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
 app = FastAPI(
     title="Kids Library API",
     description="어린이 도서 추천 및 검색 API",
@@ -34,6 +37,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Request Validation (422) 에러 로그 출력을 위한 전역 핸들러 추가
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    print("⚠️ Request Validation Error Detected!")
+    try:
+        body = await request.body()
+        print(f"👉 Request Body: {body.decode('utf-8')}")
+    except Exception as e:
+        print(f"❌ Failed to read request body: {e}")
+    print(f"👉 Errors Details: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "body": str(exc.body)},
+    )
 
 # 라우터 등록
 app.include_router(books_router)
