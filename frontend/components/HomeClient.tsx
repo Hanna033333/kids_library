@@ -12,6 +12,8 @@ import PageHeader from "@/components/PageHeader";
 import { sendGAEvent } from "@/lib/analytics";
 import UserAvatar from "@/components/UserAvatar";
 import Toast from "@/components/ui/Toast";
+import FilterBar from "@/components/FilterBar";
+import IntegratedFilterModal from "@/components/IntegratedFilterModal";
 
 interface HomeClientProps {
     overrideCuration?: string;
@@ -304,7 +306,30 @@ export default function HomeClient({ overrideCuration, overrideAge }: HomeClient
                 />
             </div>
 
+            {/* 필터 바 (간소화 및 공유 액션 연동) */}
+            <FilterBar
+                selectedAge={ageFilter}
+                onAgeChange={handleAgeChange}
+                selectedCategory={categoryFilter}
+                onFilterClick={openIntegratedFilter}
+                showFilterButton={!isAiCuration}
+                onShareClick={handleShareCuration}
+                showShareButton={!!curationFilter || (!!ageFilter && !searchQuery)}
+            />
 
+            {/* 통합 필터 모달 */}
+            <IntegratedFilterModal
+                isOpen={isFilterModalOpen}
+                onClose={() => setIsFilterModalOpen(false)}
+                mode={filterModalMode}
+                searchQuery={searchQuery}
+                selectedCategory={categoryFilter}
+                onCategoryChange={handleCategoryChange}
+                selectedAge={ageFilter}
+                onAgeChange={handleAgeChange}
+                selectedSort={sortFilter}
+                onSortChange={handleSortChange}
+            />
 
             {/* 책 리스트 */}
             <div className={`w-full max-w-7xl mx-auto pb-4 md:pb-6 ${isSearchVisible ? 'pt-2' : 'pt-6'}`}>
