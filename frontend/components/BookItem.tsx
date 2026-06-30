@@ -60,7 +60,8 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
       }
       return loanStatus;
     }
-    return undefined;
+    // 데이터 로딩 중이거나 데이터 누락 시 "확인중"을 기본 노출하여 배지가 뚫려 보이지 않게 함
+    return { status: "확인중", available: null };
   })();
 
   return (

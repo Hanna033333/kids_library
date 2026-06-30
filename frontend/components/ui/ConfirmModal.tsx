@@ -63,7 +63,7 @@ export default function ConfirmModal({
                 <div className={`flex gap-3 ${description ? '' : 'mt-4'}`}>
                     {cancelLabel && (
                         <Button
-                            variant="secondary"
+                            variant="google"
                             size="md"
                             onClick={onClose}
                             disabled={isLoading}

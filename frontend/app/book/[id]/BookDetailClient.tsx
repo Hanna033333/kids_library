@@ -210,7 +210,8 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
         // 낙관적 업데이트: DB 응답 기다리지 않고 즉시 UI 반영
         const prevSaved = isSaved
         const prevCount = saveCount
-        setIsSaved(!isSaved)
+        const nextSaved = !isSaved
+        setIsSaved(nextSaved)
         setSaveCount(prev => isSaved ? Math.max(0, prev - 1) : prev + 1)
         setIsToggling(true)
 
@@ -220,18 +221,18 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
             } else {
                 await saveBook(supabase, user.id, book.id)
             }
+            sendGAEvent('toggle_save_book', {
+                book_id: book.id,
+                book_title: book.title,
+                state: nextSaved ? 'save' : 'unsave'
+            })
         } catch (err) {
-            // 실패 시 이전 상태로 롤백
+            // 실패 시 이전 상태로 롤백 (반짝임 최소화: state 직접 복원)
             console.error('Failed to toggle save:', err)
             setIsSaved(prevSaved)
             setSaveCount(prevCount)
         } finally {
             setIsToggling(false)
-            sendGAEvent('toggle_save_book', {
-                book_id: book.id,
-                book_title: book.title,
-                state: !prevSaved ? 'save' : 'unsave'
-            })
         }
     }
 
@@ -464,13 +465,14 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                 )}
                                 <button
                                     onClick={handleToggleSave}
-                                    className={`w-14 h-14 rounded-lg flex items-center justify-center transition-all transform active:scale-[0.98] border ${isToggling ? "pointer-events-none" : ""} ${isSaved
+                                    disabled={isToggling}
+                                    className={`w-14 h-14 rounded-lg flex items-center justify-center transition-all transform active:scale-[0.98] border disabled:opacity-60 disabled:cursor-not-allowed ${isSaved
                                         ? "bg-brand-primary/5 text-brand-primary border-brand-primary/30"
                                         : "bg-white text-gray-600 border-gray-200"
                                         }`}
                                     title={isSaved ? "찜 취소" : "찜하기"}
                                 >
-                                    <Heart className={`w-6 h-6 ${isSaved ? "fill-current" : ""}`} />
+                                    <Heart className={`w-6 h-6 transition-all ${isSaved ? "fill-current" : ""}`} />
                                 </button>
                             </div>
                             <button
