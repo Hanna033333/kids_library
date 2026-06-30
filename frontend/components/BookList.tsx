@@ -228,7 +228,7 @@ export default function BookList({
                 onClick={() => setIsLoginModalOpen(true)}
                 className="text-xs sm:text-sm font-semibold text-gray-700 active:text-gray-900 transition-colors underline underline-offset-2"
               >
-                <span>내 도서관 설정하기</span>
+                <span>내 도서관 대출 정보 확인</span>
               </button>
             )}
           </div>
