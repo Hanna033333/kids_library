@@ -222,18 +222,13 @@ export default function BookList({
         {!isSearchWaitingState && isMounted && (
           <div className="flex justify-end mb-4 px-2">
             {user ? (
-              <button
-                onClick={() => router.push('/my-page')}
-                className="text-sm font-bold text-gray-900 border-b-2 pb-0.5 border-gray-900/10 hover:border-gray-900 transition-colors"
-              >
-                <span>{selectedLibrary} ▼</span>
-              </button>
+              <LibrarySelector />
             ) : (
               <button
                 onClick={() => setIsLoginModalOpen(true)}
                 className="text-xs sm:text-sm font-semibold text-gray-700 active:text-gray-900 transition-colors underline underline-offset-2"
               >
-                <span>내 도서관 설정 &gt;</span>
+                <span>내 도서관 설정하기</span>
               </button>
             )}
           </div>

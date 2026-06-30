@@ -50,6 +50,38 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
         setIsSaved(false)
     }, [initialBook])
 
+    // 태그 리스트 생성 (최대 4개 노출)
+    const visibleTags = (() => {
+        const tags = []
+        if (book.category) {
+            tags.push({
+                type: 'category',
+                text: book.category,
+                className: 'bg-blue-50 text-blue-600 border-blue-100'
+            })
+        }
+        if (book.age) {
+            tags.push({
+                type: 'age',
+                text: getAgeDisplayLabel(book.age),
+                className: 'bg-amber-50 text-amber-600 border-amber-100'
+            })
+        }
+        if (book.curation_tag) {
+            const curationTags = book.curation_tag.split(',')
+                .map((tag) => tag.trim())
+                .filter(Boolean)
+            curationTags.forEach((tag) => {
+                tags.push({
+                    type: 'curation',
+                    text: tag,
+                    className: 'bg-brand-primary/5 text-brand-primary border-brand-primary/10'
+                })
+            })
+        }
+        return tags.slice(0, 4)
+    })()
+
     // const supabase = createClient()  <-- 제거됨
 
     // 청구기호 결정 로직
@@ -336,26 +368,14 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                         <div className="mb-4">
                             {/* Tags Row */}
                             <div className="flex flex-wrap gap-2 mb-3">
-                                {book.category && (
-                                    <span className="px-2.5 py-0.5 bg-blue-50 text-blue-600 rounded-lg text-[11px] font-bold border border-blue-100">
-                                        {book.category}
+                                {visibleTags.map((tag, idx) => (
+                                    <span 
+                                        key={`${tag.type}-${tag.text}-${idx}`} 
+                                        className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold border ${tag.className}`}
+                                    >
+                                        {tag.text}
                                     </span>
-                                )}
-                                {book.age && (
-                                    <span className="px-2.5 py-0.5 bg-amber-50 text-amber-600 rounded-lg text-[11px] font-bold border border-amber-100">
-                                        {getAgeDisplayLabel(book.age)}
-                                    </span>
-                                )}
-                                {/* Curation Tags */}
-                                {book.curation_tag && book.curation_tag.split(',')
-                                    .map((tag) => tag.trim())
-                                    .filter(Boolean)
-                                    .slice(0, 4)
-                                    .map((tag) => (
-                                        <span key={tag} className="px-2.5 py-0.5 bg-brand-primary/5 text-brand-primary rounded-lg text-[11px] font-bold border border-brand-primary/10">
-                                            {tag}
-                                        </span>
-                                    ))}
+                                ))}
                             </div>
 
                             <h1 className="text-xl md:text-2xl font-black text-gray-900 leading-tight mb-2 tracking-tight line-clamp-3">
@@ -380,14 +400,9 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                             </div>
 
                             {user ? (
-                                <div className="mb-2">
+                                <div className="mb-4">
                                     <div className="mb-2 flex items-center">
-                                        <button
-                                            onClick={() => router.push('/my-page')}
-                                            className="text-sm font-bold text-gray-900 border-b-2 pb-0.5 border-gray-900/10 hover:border-gray-900 transition-colors"
-                                        >
-                                            <span>{selectedLibrary} ▼</span>
-                                        </button>
+                                        <LibrarySelector />
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className={`font-black text-2xl tracking-tight ${displayCallNo === '보유 정보 없음' ? 'text-gray-300' : 'text-gray-900'}`}>
@@ -431,7 +446,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                                         }}
                                         className="text-xs sm:text-sm font-semibold text-gray-700 active:text-gray-900 transition-colors underline underline-offset-2"
                                     >
-                                        내 도서관 설정 &gt;
+                                        내 도서관 설정하기
                                     </button>
                                 </div>
                             )}
