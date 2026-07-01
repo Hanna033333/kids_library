@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import (
     RunReportRequest, 
@@ -21,8 +21,10 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = key_path
 def run_monday_analysis():
     client = BetaAnalyticsDataClient()
     property_id = "518474196"
-    
-    start_date = "2026-06-01"
+    today = datetime.now()
+    # Monday of this week
+    monday = today - timedelta(days=today.weekday())
+    start_date = monday.strftime("%Y-%m-%d")
     end_date = "yesterday"
     
     report_lines = []

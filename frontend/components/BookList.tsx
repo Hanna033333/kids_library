@@ -221,7 +221,7 @@ export default function BookList({
     <div className="w-full px-4">
       <div className="w-full max-w-[1200px] mx-auto">
         {!isSearchWaitingState && isMounted && (
-          <div className="flex justify-end mb-4 px-2">
+          <div className="flex justify-end mt-0 mb-4 px-2">
             {user ? (
               <LibrarySelector />
             ) : (

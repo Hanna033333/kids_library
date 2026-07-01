@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import BookDetailClient from './BookDetailClient'
 import { getHighResImageUrl } from '@/lib/utils/image'
 import { createClient } from '@/lib/supabase'
+import { getBooksByTag, getPopularBooksByAge } from '@/lib/home-api'
+import { getAgeGroupKey } from '@/lib/utils/age'
 
 interface Props {
     params: Promise<{ id: string }>
@@ -80,12 +82,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
         const isCaldecott = book.curation_tag?.split(',').includes('caldecott') || book.curation_tag === 'caldecott'
         const title = isCaldecott 
-            ? `${book.title} - 칼데콧 메달 수상작 | 책자리 도서 큐레이션`
-            : `${book.title} - ${book.category || '어린이 추천 도서'} | 책자리 도서 큐레이션`
+            ? `${book.title} - 칼데콧 메달 수상작 및 주변 도서관 책 검색 | 책자리`
+            : `${book.title} - 주변 도서관 책 검색 및 대출 가능 여부 | 책자리`
         
         const description = isCaldecott
-            ? `[칼데콧 메달 수상작] 세계가 인정한 그림책, ${book.title}. 우리 아이의 마음과 정서에 꼭 맞는 엄선 그림책을 만나보세요. ${book.author ? `글/그림: ${book.author}.` : ''}`
-            : `${book.title}${book.age ? ` (${book.age} 추천)` : ''}. 우리 아이를 위한 맞춤 추천 도서. 책자리에서 전국 도서관 소장 여부와 실시간 대출 상태를 3초 만에 확인하세요. ${book.author ? `저자: ${book.author}.` : ''}`
+            ? `[칼데콧 메달 수상작] 세계가 인정한 그림책, ${book.title}. 우리 아이의 마음과 정서에 꼭 맞는 그림책을 발견하고, 주변 도서관 실시간 대출 가능 여부를 책자리에서 3초 만에 확인하세요. ${book.author ? `글/그림: ${book.author}.` : ''}`
+            : `[주변 도서관 책 검색] ${book.title}${book.age ? ` (${book.age} 추천)` : ''}. 우리 아이 맞춤형 도서 추천부터 내 근처 도서관 실시간 대출 가능 여부와 청구기호 확인까지 책자리에서 3초 만에 완료하세요. ${book.author ? `저자: ${book.author}.` : ''}`
         
         const caldecottKeywords = isCaldecott ? '칼데콧 수상작, Caldecott Medal, 그림책 노벨상, ' : ''
         const keywords = `${caldecottKeywords}${book.title}, ${book.author}, 어린이 도서 추천, ${book.category || '그림책'}, ${book.age || ''} 추천도서, 책자리, 도서관 대출 확인, 어린이 도서관`
@@ -129,6 +131,38 @@ export default async function BookDetailPage({ params }: Props) {
         if (!book) {
             notFound()
         }
+
+        const ageGroupKey = getAgeGroupKey(book.age)
+
+        // 동일 큐레이션 추천 도서 (7권)
+        const tags = book.curation_tag
+            ? book.curation_tag.split(',').map((t: string) => t.trim()).filter(Boolean)
+            : []
+        const primaryTag = tags[0]
+
+        let curationRecommended: any[] = []
+        if (primaryTag) {
+            const rawCurationBooks = await getBooksByTag(primaryTag, 8)
+            curationRecommended = rawCurationBooks
+                .filter((b: any) => b.id !== book.id)
+                .slice(0, 7)
+        }
+
+        // 폴백: 동일 큐레이션 추천 도서가 7권 미만인 경우 연령별 인기 도서로 채움
+        if (curationRecommended.length < 7) {
+            const needCount = 7 - curationRecommended.length
+            const fallbackBooks = await getPopularBooksByAge(ageGroupKey, 12)
+            const filteredFallback = fallbackBooks.filter(
+                (b: any) => b.id !== book.id && !curationRecommended.some((cr) => cr.id === b.id)
+            )
+            curationRecommended = [...curationRecommended, ...filteredFallback.slice(0, needCount)]
+        }
+
+        // 연령별 인기 추천 도서 (7권)
+        const rawAgeBooks = await getPopularBooksByAge(ageGroupKey, 8)
+        const ageRecommended = rawAgeBooks
+            .filter((b: any) => b.id !== book.id)
+            .slice(0, 7)
 
         const isCaldecott = book.curation_tag?.split(',').includes('caldecott') || book.curation_tag === 'caldecott'
 
@@ -200,7 +234,11 @@ export default async function BookDetailPage({ params }: Props) {
                     )}
                 </article>
 
-                <BookDetailClient book={book} />
+                <BookDetailClient 
+                    book={book} 
+                    curationRecommended={curationRecommended} 
+                    ageRecommended={ageRecommended} 
+                />
             </>
         )
     } catch (error) {
