@@ -221,13 +221,13 @@ export default function BookList({
     <div className="w-full px-4">
       <div className="w-full max-w-[1200px] mx-auto">
         {!isSearchWaitingState && isMounted && (
-          <div className="flex justify-end mt-0 mb-4 px-2">
+          <div className="flex justify-end mt-0 mb-6 px-2">
             {user ? (
               <LibrarySelector />
             ) : (
               <button
                 onClick={() => setIsLoginModalOpen(true)}
-                className="text-xs sm:text-sm font-semibold text-gray-700 active:text-gray-900 transition-colors underline underline-offset-2"
+                className="text-sm sm:text-base font-semibold text-gray-700 active:text-gray-900 transition-colors underline underline-offset-2 py-2 px-1"
               >
                 <span>내 도서관 대출 정보 확인</span>
               </button>
