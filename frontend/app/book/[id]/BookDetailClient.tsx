@@ -14,8 +14,13 @@ import {
     BookOpen,
     MapPin,
     Share2,
-    ShoppingCart
+    ShoppingCart,
+    Home,
+    ChevronRight,
+    User
 } from 'lucide-react'
+import Link from 'next/link'
+import BookCard from '@/components/home/BookCard'
 import LibrarySelector from '@/components/LibrarySelector'
 import BackButton from '@/components/BackButton'
 import { useLibrary } from '@/context/LibraryContext'
@@ -27,11 +32,18 @@ import PageHeader from '@/components/PageHeader'
 import { getAgeDisplayLabel } from '@/lib/utils/age'
 import Image from 'next/image'
 import { getOptimizedImageUrl } from '@/lib/utils/image'
+import UserAvatar from '@/components/UserAvatar'
 
 interface BookDetailClientProps {
     book: Book
+    curationRecommended: Book[]
+    ageRecommended: Book[]
 }
-export default function BookDetailClient({ book: initialBook }: BookDetailClientProps) {
+export default function BookDetailClient({ 
+    book: initialBook,
+    curationRecommended,
+    ageRecommended
+}: BookDetailClientProps) {
     const router = useRouter()
     const hasTrackedView = useRef<string | null>(null)
     const { user } = useAuth()
@@ -79,7 +91,7 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
                 })
             })
         }
-        return tags.slice(0, 4)
+        return tags.slice(0, 5)
     })()
 
     // const supabase = createClient()  <-- 제거됨
@@ -340,9 +352,33 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
     }
 
     return (
-        <main className="min-h-screen bg-white pb-20">
+        <main className="min-h-screen bg-white pb-6">
             {/* Top Header */}
-            <PageHeader title="도서 정보" rightSlot={<ProfileDropdown />} />
+            <PageHeader 
+                title="도서 정보" 
+                backHref="/"
+                rightSlot={
+                    <div className="flex items-center">
+                        {user ? (
+                            <button
+                                onClick={() => router.push('/my-page')}
+                                className="p-2 flex items-center justify-center group -mr-2"
+                                aria-label="마이 페이지"
+                            >
+                                <UserAvatar user={user} size={24} className="text-gray-500" />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => router.push('/auth/signup')}
+                                className="p-2 flex items-center justify-center group -mr-2"
+                                aria-label="로그인"
+                            >
+                                <User className="w-6 h-6 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                            </button>
+                        )}
+                    </div>
+                }
+            />
 
             <div className="max-w-4xl mx-auto px-6 pt-8">
                 <div className="flex flex-col md:flex-row gap-8 md:items-start max-w-5xl mx-auto">
@@ -520,6 +556,74 @@ export default function BookDetailClient({ book: initialBook }: BookDetailClient
 
 
             </div>
+
+            {/* Recommendations Section B: Age Group Popular (bg-muted-bg) */}
+            {ageRecommended && ageRecommended.length > 0 && (
+                <div className="bg-muted-bg pt-8 pb-10 mt-12 w-full px-6">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="flex items-end justify-between mb-6 px-2">
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-[12px] font-bold text-gray-500 tracking-tight">
+                                    또래 아이들이 많이 보는
+                                </span>
+                                <h3 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight leading-tight">
+                                    {getAgeDisplayLabel(book.age)} 책 추천 리스트
+                                </h3>
+                            </div>
+                            <Link 
+                                href={`/books?age=${encodeURIComponent(book.age || '')}`} 
+                                className="text-gray-950 p-1 mb-0.5"
+                                aria-label="더보기"
+                            >
+                                <ChevronRight className="w-6 h-6" />
+                            </Link>
+                        </div>
+                        <div className="overflow-x-auto scrollbar-hide -mx-6 px-6">
+                            <div className="flex gap-4 pb-2">
+                                {ageRecommended.map((b) => (
+                                    <div key={`age-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
+                                        <BookCard book={b} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Recommendations Section A: Same Curation Tag (bg-white) */}
+            {curationRecommended && curationRecommended.length > 0 && (
+                <div className="bg-white pt-8 pb-2 w-full px-6">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="flex items-end justify-between mb-6 px-2">
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-[12px] font-bold text-gray-500 tracking-tight">
+                                    이 책과 함께 읽으면 좋은
+                                </span>
+                                <h3 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight leading-tight">
+                                    {book.curation_tag?.split(',')[0]?.trim() || '추천'} 책 추천 리스트
+                                </h3>
+                            </div>
+                            <Link 
+                                href={`/books?curation=${encodeURIComponent(book.curation_tag?.split(',')[0]?.trim() || '')}`} 
+                                className="text-gray-950 p-1 mb-0.5"
+                                aria-label="더보기"
+                            >
+                                <ChevronRight className="w-6 h-6" />
+                            </Link>
+                        </div>
+                        <div className="overflow-x-auto scrollbar-hide -mx-6 px-6">
+                            <div className="flex gap-4 pb-2">
+                                {curationRecommended.map((b) => (
+                                    <div key={`curation-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
+                                        <BookCard book={b} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <LoginPromptModal
                 isOpen={isLoginModalOpen}

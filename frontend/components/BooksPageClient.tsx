@@ -6,7 +6,7 @@ import SearchBar from "@/components/SearchBar";
 import BookList from "@/components/BookList";
 import { BooksResponse } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
-import { LogIn, User, Search, Share2 } from "lucide-react";
+import { LogIn, User, Search, Share2, Home } from "lucide-react";
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import { sendGAEvent } from "@/lib/analytics";
@@ -14,13 +14,14 @@ import UserAvatar from "@/components/UserAvatar";
 import Toast from "@/components/ui/Toast";
 import FilterBar from "@/components/FilterBar";
 import IntegratedFilterModal from "@/components/IntegratedFilterModal";
+import BackButton from "@/components/BackButton";
 
-interface HomeClientProps {
+interface BooksPageClientProps {
     overrideCuration?: string;
     overrideAge?: string;
 }
 
-export default function HomeClient({ overrideCuration, overrideAge }: HomeClientProps) {
+export default function BooksPageClient({ overrideCuration, overrideAge }: BooksPageClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -306,15 +307,13 @@ export default function HomeClient({ overrideCuration, overrideAge }: HomeClient
                 />
             </div>
 
-            {/* 필터 바 (간소화 및 공유 액션 연동) */}
+            {/* 필터 바 (간소화) */}
             <FilterBar
                 selectedAge={ageFilter}
                 onAgeChange={handleAgeChange}
                 selectedCategory={categoryFilter}
                 onFilterClick={openIntegratedFilter}
-                showFilterButton={!isAiCuration}
-                onShareClick={handleShareCuration}
-                showShareButton={!!curationFilter || (!!ageFilter && !searchQuery)}
+                showFilterButton={!!searchQuery}
             />
 
             {/* 통합 필터 모달 */}
@@ -332,7 +331,7 @@ export default function HomeClient({ overrideCuration, overrideAge }: HomeClient
             />
 
             {/* 책 리스트 */}
-            <div className={`w-full max-w-7xl mx-auto pb-4 md:pb-6 ${isSearchVisible ? 'pt-2' : 'pt-6'}`}>
+            <div className="w-full max-w-7xl mx-auto pb-4 md:pb-6 pt-2">
                 <BookList
                     searchQuery={searchQuery || undefined}
                     ageFilter={ageFilter || undefined}

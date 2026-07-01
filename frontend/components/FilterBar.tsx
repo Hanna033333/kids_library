@@ -1,13 +1,9 @@
-import { Share2 } from "lucide-react";
-
 interface FilterBarProps {
   selectedAge: string;
   onAgeChange: (age: string) => void;
   selectedCategory: string;
   onFilterClick: () => void;
   showFilterButton?: boolean;
-  onShareClick?: () => void;
-  showShareButton?: boolean;
 }
 
 const AGE_OPTIONS = [
@@ -19,9 +15,7 @@ const AGE_OPTIONS = [
 export default function FilterBar({
   selectedAge, onAgeChange,
   selectedCategory, onFilterClick,
-  showFilterButton = true,
-  onShareClick,
-  showShareButton = false
+  showFilterButton = true
 }: FilterBarProps) {
 
   const handleAgeToggle = (ageVal: string) => {
@@ -69,18 +63,6 @@ export default function FilterBar({
             </button>
           ))}
         </div>
-
-        {/* Right Side: Sticky, space-saving Share Button (Circular Action Button) */}
-        {showShareButton && onShareClick && (
-          <button
-            onClick={onShareClick}
-            className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 active:scale-[0.95] transition-transform cursor-pointer"
-            aria-label="공유하기"
-            title="공유하기"
-          >
-            <Share2 className="w-[18px] h-[18px] text-gray-500" />
-          </button>
-        )}
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import { createClient } from './supabase-server'
 import { Book } from './types'
 import { SupabaseClient } from '@supabase/supabase-js'
+import { AGE_MAP } from './constants/age-map'
+import { resolveDbCurationTag, isSpecialTag, buildCurationOrFilter, resolveDefaultSortField } from './utils/curation-filter'
 
 interface FetchBooksParams {
     page?: number;
@@ -34,18 +36,8 @@ export async function getBooksFromServer({
     // but .or syntax is safer to just apply always.
     query = query.or('is_hidden.is.null,is_hidden.eq.false');
 
-    // 필터 적용
     if (filters?.age) {
-        // 나이 필터 매핑: 프론트엔드 값 → DB 값 (supabase-client.ts와 정확히 동기화)
-        const ageMapping: Record<string, string[]> = {
-            '0-3': ['0세부터', '3세부터'],
-            '4-7': ['5세부터', '7세부터', '유아'],
-            '8-12': ['9세부터', '11세부터'],
-            'teen': ['13세부터', '16세부터'],
-            '13+': ['13세부터', '16세부터']
-        };
-
-        const dbAgeValues = ageMapping[filters.age];
+        const dbAgeValues = AGE_MAP[filters.age];
         if (dbAgeValues) {
             query = query.in('age', dbAgeValues);
         }
@@ -55,32 +47,16 @@ export async function getBooksFromServer({
     }
     // Curation 필터
     if (filters?.curation) {
-        // URL param 값을 DB tag 값으로 매핑
-        const curationMapping: Record<string, string> = {
-            '겨울방학': '겨울방학2026',
-            'winter-vacation': '겨울방학2026',
-            '어린이도서연구회': '어린이도서연구회',
-            'research-council': '어린이도서연구회'
-        };
-        const dbCurationTag = curationMapping[filters.curation] || filters.curation;
-        
-        const SPECIAL_TAGS = ['겨울방학2026', '어린이도서연구회', 'caldecott'];
-        if (SPECIAL_TAGS.includes(dbCurationTag)) {
+        const dbCurationTag = resolveDbCurationTag(filters.curation);
+        if (isSpecialTag(dbCurationTag)) {
             query = query.ilike('curation_tag', `%${dbCurationTag}%`);
         } else {
-            const orFilter = `curation_tag.eq."${dbCurationTag}",curation_tag.like."${dbCurationTag},%",curation_tag.eq."#${dbCurationTag}",curation_tag.like."#${dbCurationTag},%"`;
-            query = query.or(orFilter);
+            query = query.or(buildCurationOrFilter(dbCurationTag));
         }
     }
 
     // 정렬
-    let sortField = filters?.sort || 'pangyo_callno';
-    
-    // 칼데콧, 겨울방학, 어린이도서연구회 등 특별 큐레이션 또는 연령대 필터의 경우 기본 정렬을 제목(ㄱㄴㄷ 순)으로 변경하여 홈 노출 순서와 일치시킴
-    const isSpecialCuration = !!filters?.curation && ['caldecott', 'winter-vacation', '겨울방학', 'research-council', '어린이도서연구회'].includes(filters.curation);
-    if ((sortField === 'pangyo_callno' || !filters?.sort) && (isSpecialCuration || filters?.age)) {
-        sortField = 'title';
-    }
+    let sortField = resolveDefaultSortField(filters?.sort, filters?.curation, filters?.age);
 
     if (sortField === 'title') {
         query = query.order('title', { ascending: true });

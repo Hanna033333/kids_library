@@ -19,6 +19,8 @@ import UserAvatar from '@/components/UserAvatar'
 import Image from 'next/image'
 import { getOptimizedImageUrl } from '@/lib/utils/image'
 import { PageLoader } from '@/components/ui/PageLoader'
+import CurationSection from '@/components/home/CurationSection'
+import BookCard from '@/components/home/BookCard'
 
 interface DynamicCuration {
   subtitle: string;
@@ -241,7 +243,7 @@ export default function HomePageClient({
 
           {/* 책 그리드 - 좌우 스크롤 */}
           {loading ? (
-            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-6">
               <div className="flex gap-4 pb-2">
                 {[1, 2, 3, 4, 5, 6, 7].map((i, index, array) => (
                   <div key={i} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === array.length - 1 ? 'mr-4' : ''}`}>
@@ -261,7 +263,7 @@ export default function HomePageClient({
             </div>
           ) : ageBooks.length > 0 ? (
             <>
-              <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+              <div className="overflow-x-auto scrollbar-hide -mx-4 px-6">
                 <div className="flex gap-4 pb-2">
                   {ageBooks.map((book, index) => (
                     <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === ageBooks.length - 1 ? 'mr-4' : ''}`}>
@@ -424,129 +426,3 @@ export default function HomePageClient({
   )
 }
 
-// 재사용 가능한 큐레이션 섹션 컴포넌트
-function CurationSection({
-  subtitle,
-  title,
-  books,
-  href,
-  onViewMore,
-  bgColor = "bg-muted-bg",
-  minBooks = 7
-}: {
-  subtitle: string;
-  title: string;
-  books: Book[];
-  href: string;
-  onViewMore: () => void;
-  bgColor?: string;
-  minBooks?: number;
-}) {
-  // 지정된 권수 미만인 경우 섹션 자체를 노출하지 않음 (유저 경험 보장)
-  if (books.length < minBooks) return null;
-
-  return (
-    <section className={`py-8 px-4 ${bgColor}`}>
-      <div className="max-w-[1200px] mx-auto">
-        <div className="flex items-end justify-between mb-8 px-2">
-          <div className="flex flex-col gap-1">
-            <span className="text-[13px] font-semibold text-gray-500 tracking-tight">
-              {subtitle}
-            </span>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">
-              {title}
-            </h2>
-          </div>
-          <Link
-            href={href}
-            className="text-gray-900 p-1 mb-0.5"
-            onClick={onViewMore}
-          >
-            <ChevronRight className="w-6 h-6" />
-          </Link>
-        </div>
-
-        {books.length > 0 ? (
-          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-            <div className="flex gap-4 pb-4">
-              {books.map((book, index) => (
-                <div key={book.id} className={`flex-shrink-0 w-[165px] sm:w-[190px] ${index === books.length - 1 ? 'mr-4' : ''}`}>
-                  <BookCard book={book} />
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="h-[280px] flex items-center justify-center mx-2">
-            <PageLoader />
-          </div>
-        )}
-      </div>
-    </section>
-  )
-}
-
-// 책 카드 컴포넌트 - BookItem과 동일한 UI
-function BookCard({ book }: { book: Book }) {
-
-  const displayAge = getAgeDisplayLabel(book.age)
-
-  return (
-    <Link
-      href={`/book/${book.id}`}
-      onClick={() => sendGAEvent('click_book_item', { book_id: book.id, book_title: book.title })}
-      className="flex flex-col bg-white rounded-2xl shadow-sm overflow-hidden transition-all h-full group active:scale-[0.98]"
-    >
-      {/* 1. 이미지 영역 (상단) */}
-      <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
-        {book.image_url ? (
-          <Image
-            src={getOptimizedImageUrl(book.image_url, 'list')}
-            alt={book.title}
-            fill
-            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="w-full h-full object-cover transition-transform duration-300 group-active:scale-105"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center w-full h-full text-gray-300">
-            <BookOpen className="w-12 h-12 opacity-20" />
-          </div>
-        )}
-
-        {/* 태그 (이미지 위에 오버레이) */}
-        <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
-          {book.category && (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/90 text-gray-600 font-bold shadow-sm backdrop-blur-sm">
-              {book.category}
-            </span>
-          )}
-          {displayAge && (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-black/60 text-white font-medium shadow-sm backdrop-blur-sm">
-              {displayAge}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* 2. 정보 영역 (하단) */}
-      <div className="flex-1 p-4 flex flex-col items-start bg-white">
-        <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight">
-          {book.title}
-        </h3>
-
-        {/*
-        {book.national_loan_count ? (
-          <div className="flex items-center gap-1 text-[11px] text-gray-500 font-semibold mb-2 bg-gray-50 px-2.5 py-1 rounded">
-            <span>📊 전국 도서관 대출 {book.national_loan_count >= 1000 ? `${(book.national_loan_count / 1000).toFixed(1)}k` : book.national_loan_count.toLocaleString()}회</span>
-          </div>
-        ) : null}
-        */}
-
-        <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
-          <span className="text-gray-400 truncate max-w-[60%]">{book.publisher}</span>
-        </div>
-      </div>
-    </Link>
-  )
-}

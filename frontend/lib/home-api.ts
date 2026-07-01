@@ -1,6 +1,7 @@
 import { createClient } from './supabase'
 import { Book } from './types'
 import { SupabaseClient } from '@supabase/supabase-js'
+import { AGE_MAP } from './constants/age-map'
 
 /**
  * 연령별 책 추천 가져오기 (일주일마다 랜덤 변경)
@@ -8,16 +9,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 export async function getBooksByAge(ageGroup: string, limit: number = 5, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
 
-    // 연령 그룹 매핑 (supabase-client.ts 규격과 일치시킴)
-    const ageMap: Record<string, string[]> = {
-        '0-3': ['0세부터', '3세부터'],
-        '4-7': ['5세부터', '7세부터', '유아'],
-        '8-12': ['9세부터', '11세부터'],
-        'teen': ['13세부터', '16세부터'],
-        '13+': ['13세부터', '16세부터']
-    }
-
-    const ageValues = ageMap[ageGroup] || []
+    const ageValues = AGE_MAP[ageGroup] || []
     if (ageValues.length === 0) return []
 
     // 현재 주차 계산 (일주일마다 바뀜)
@@ -197,15 +189,7 @@ export async function getBooksByTag(tagName: string, limit: number = 7, client?:
 export async function getPopularBooksByAge(ageGroup: string, limit: number = 8, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
 
-    const ageMap: Record<string, string[]> = {
-        '0-3': ['0세부터', '3세부터'],
-        '4-7': ['5세부터', '7세부터', '유아'],
-        '8-12': ['9세부터', '11세부터'],
-        'teen': ['13세부터', '16세부터'],
-        '13+': ['13세부터', '16세부터']
-    }
-
-    const ageValues = ageMap[ageGroup] || []
+    const ageValues = AGE_MAP[ageGroup] || []
     if (ageValues.length === 0) return []
 
     const selectFields = includeLibraryInfo

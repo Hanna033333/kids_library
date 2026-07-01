@@ -1,4 +1,4 @@
-import HomeClient from "@/components/HomeClient";
+import BooksPageClient from "@/components/BooksPageClient";
 import { Metadata } from 'next'
 import { VALID_TAXONOMY, VALID_AI_TAGS } from '@/lib/constants/taxonomy'
 import { createClient } from '@/lib/supabase'
@@ -153,7 +153,7 @@ export default async function CurationPage({ params }: Props) {
 
             {/* useSearchParams() 사용에 따른 Next.js CSR Bailout 에러 차단을 위해 Suspense Boundary로 감싸기 */}
             <Suspense fallback={<PageLoader />}>
-                <HomeClient overrideCuration={curationTag} />
+                <BooksPageClient overrideCuration={curationTag} />
             </Suspense>
         </>
     );

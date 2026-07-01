@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Script from "next/script";
 import { Providers } from "./providers";
+import HistoryTracker from "@/components/HistoryTracker";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -120,7 +121,10 @@ export default function RootLayout({
             }
           `}
         </Script>
-        <Providers>{children}</Providers>
+        <Providers>
+          <HistoryTracker />
+          {children}
+        </Providers>
       </body>
     </html>
   );

@@ -1,4 +1,4 @@
-import HomeClient from "@/components/HomeClient";
+import BooksPageClient from "@/components/BooksPageClient";
 import { Metadata } from 'next'
 import { VALID_TAXONOMY, VALID_AI_TAGS } from '@/lib/constants/taxonomy'
 import { Suspense } from 'react'
@@ -147,7 +147,7 @@ export default async function BooksPage({ searchParams }: Props) {
                 />
             )}
             <Suspense fallback={<PageLoader />}>
-                <HomeClient />
+                <BooksPageClient />
             </Suspense>
         </>
     );
