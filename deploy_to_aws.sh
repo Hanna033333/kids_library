@@ -31,6 +31,7 @@ rsync -avz -e "ssh -i $SSH_KEY_PATH" \
     --exclude='__pycache__' \
     --exclude='.pytest_cache' \
     --exclude='*.pyc' \
+    --exclude='.env' \
     /Users/1004823/Desktop/kids_library/backend \
     ubuntu@$SERVER_IP:~/kids_library/
 
