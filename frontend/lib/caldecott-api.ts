@@ -18,6 +18,8 @@ export async function getCaldecottBooks(client?: SupabaseClient, includeLibraryI
         .select(selectFields)
         .ilike('curation_tag', '%caldecott%')
         .or('is_hidden.is.null,is_hidden.eq.false')
+        .not('image_url', 'is', null)
+        .neq('image_url', '')
         .order('title', { ascending: true })
 
     if (error) {
