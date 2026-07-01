@@ -22,18 +22,32 @@ export default function BackButton({ onClick, href, className = '' }: BackButton
             return
         }
 
-        // 브라우저 document.referrer를 활용하여 이전 페이지가 동일 서비스인지 확인
+        // 세션스토리지에 저장된 내부 경로 이동 기록을 활용하여 이전 페이지가 동일 서비스인지 확인
         if (typeof window !== 'undefined') {
-            const referrer = document.referrer
-            const isInternalReferrer = referrer && referrer.includes(window.location.host)
-            
-            if (isInternalReferrer) {
-                e.preventDefault()
-                router.back()
-            } else {
-                // 이전 페이지가 없거나 외부(네이버 등)인 경우 지정된 href 또는 홈으로 리다이렉트
-                e.preventDefault()
-                router.push(href || '/')
+            try {
+                const stored = sessionStorage.getItem('checkjari_history')
+                const historyStack: string[] = stored ? JSON.parse(stored) : []
+                
+                // historyStack의 길이가 1보다 크면 세션 내에서 내부 페이지 이동 히스토리가 존재함을 의미합니다.
+                if (historyStack.length > 1) {
+                    e.preventDefault()
+                    router.back()
+                } else {
+                    e.preventDefault()
+                    router.push(href || '/')
+                }
+            } catch (err) {
+                // sessionStorage 접근이 차단되거나 오류 발생 시 폴백 처리
+                const referrer = document.referrer
+                const isInternalReferrer = referrer && referrer.includes(window.location.host)
+                
+                if (isInternalReferrer) {
+                    e.preventDefault()
+                    router.back()
+                } else {
+                    e.preventDefault()
+                    router.push(href || '/')
+                }
             }
         } else {
             e.preventDefault()

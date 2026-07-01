@@ -70,8 +70,10 @@ trigger: always_on
     - **동일 큐레이션 추천 폴백**: 동일 큐레이션(첫 번째 태그) 기준 추천 도서가 7권 미만일 경우, 데이터 균형을 위해 연령별 인기 도서(`getPopularBooksByAge`)로 폴백하여 정확히 7권을 채워 리스트를 보장한다.
     - **연령 그룹 역맵핑**: DB 상의 도서 연령 포맷 문자열(예: `'5세부터'`)을 `AGE_MAP` 키(예: `'4-7'`)로 정밀 변환해주는 역맵퍼 `getAgeGroupKey` 헬퍼 함수를 적용하여 연령별 인기 도서가 올바르게 매핑되도록 처리한다.
 34. **지능형 뒤로가기(Smart Back Route) 구현 규격**:
-    - **내부 리퍼러 검사**: `BackButton` 컴포넌트는 `document.referrer` 조회를 수행하여 이전 페이지가 동일 서비스 도메인(`window.location.host`) 내의 페이지인 경우에만 `router.back()`을 수행한다.
-    - **외부 유입 폴백**: 이전 페이지 정보가 없거나 외부 사이체(네이버, 구글 등)로부터 링크를 직접 타고 들어온 경우, 클릭 시 지정된 `fallbackHref` (기본값: `/`)로 자동 리다이렉트한다.
+    - **세션 히스토리 추적 (`HistoryTracker`)**: SPA 클라이언트 사이드 라우팅 시 브라우저 `document.referrer`가 갱신되지 않는 문제를 해결하기 위해, `HistoryTracker` 컴포넌트가 `usePathname`을 감지하여 `sessionStorage`의 `checkjari_history` 스택에 내부 이동 경로를 누적/삭제 관리한다.
+    - **앱 최초 로딩 초기화**: 새로고침이나 외부 링크 유입 시(최초 마운트 시점) `isFirstLoad.current`를 통해 단 한 번만 `document.referrer`를 확인하고, 외부 유입인 경우 세션 히스토리 스택을 현재 경로 하나로 초기화한다.
+    - **지능형 뒤로가기 (`BackButton`)**: 세션 히스토리 스택의 크기가 1보다 크면 내부 라우팅 이력이 존재하는 것이므로 `router.back()`을 실행하고, 1 이하이면 첫 진입이므로 `fallbackHref` (기본값: `/`) 또는 홈(`/`)으로 강제 리다이렉트한다.
+    - **안전장치 폴백**: `sessionStorage` 접근 오류 발생 시, `document.referrer`와 `window.location.host`를 활용하는 클래식한 리퍼러 검사를 백업 안전장치로 자동 가동한다. (상세 구현 가이드: `.agent/skills/development/back_route/SKILL.md`를 참고할 것)
     - **헤더 좌측 단순화 동기화**: 상세 페이지(`BookDetailClient.tsx`)와 목록 페이지(`BooksPageClient.tsx`)의 `PageHeader` 좌측에는 주렁주렁 홈 버튼을 추가하는 대신, 스마트 백 버튼(`<BackButton href="/" />` 등)만 단독 배치하여 구조를 100% 동기화한다.
 
 
