@@ -27,6 +27,8 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
         .select('id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)')
         .in('age', ageValues)
         .or('is_hidden.is.null,is_hidden.eq.false')
+        .not('image_url', 'is', null)
+        .neq('image_url', '')
         .order('id')
         .range(start, start + limit - 1)
 
@@ -63,6 +65,8 @@ export async function getResearchCouncilBooks(limit: number = 5, client?: Supaba
         .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)')
         .eq('curation_tag', '어린이도서연구회')
         .or('is_hidden.is.null,is_hidden.eq.false')
+        .not('image_url', 'is', null)
+        .neq('image_url', '')
         .order('id') // 일관된 정렬
         .limit(POOL_SIZE)
 
@@ -104,6 +108,8 @@ export async function getWinterBooks(limit: number = 7, client?: SupabaseClient)
         .select('id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)')
         .eq('curation_tag', '겨울방학2026')
         .or('is_hidden.is.null,is_hidden.eq.false')
+        .not('image_url', 'is', null)
+        .neq('image_url', '')
         // PostgreSQL RANDOM() 함수로 랜덤 정렬 (시드 기반)
         .order('id', { ascending: true }) // 먼저 ID로 정렬하여 일관성 확보
         .limit(100) // 충분한 수 가져오기
@@ -152,6 +158,8 @@ export async function getBooksByTag(tagName: string, limit: number = 7, client?:
         `)
         .or(orFilter)
         .or('is_hidden.is.null,is_hidden.eq.false')
+        .not('image_url', 'is', null)
+        .neq('image_url', '')
         .order('confidence_score', { ascending: false }) // 신뢰도 높은 순 우선
         .limit(limit)
 
@@ -177,6 +185,8 @@ export async function getPopularBooksByAge(ageGroup: string, limit: number = 8, 
         .select('id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)')
         .in('age', ageValues)
         .or('is_hidden.is.null,is_hidden.eq.false')
+        .not('image_url', 'is', null)
+        .neq('image_url', '')
         .order('national_loan_count', { ascending: false })
         .limit(limit)
 
@@ -198,6 +208,8 @@ export async function getPopularBooksOverall(limit: number = 8, client?: Supabas
         .from('childbook_items')
         .select('id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)')
         .or('is_hidden.is.null,is_hidden.eq.false')
+        .not('image_url', 'is', null)
+        .neq('image_url', '')
         .order('national_loan_count', { ascending: false })
         .limit(limit)
 

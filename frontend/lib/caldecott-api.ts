@@ -14,6 +14,8 @@ export async function getCaldecottBooks(client?: SupabaseClient): Promise<Book[]
         .select('id, title, author, publisher, category, age, pangyo_callno, image_url, isbn, curation_tag, library_info:book_library_info(library_name, callno)')
         .ilike('curation_tag', '%caldecott%')
         .or('is_hidden.is.null,is_hidden.eq.false')
+        .not('image_url', 'is', null)
+        .neq('image_url', '')
         .order('title', { ascending: true })
 
     if (error) {
