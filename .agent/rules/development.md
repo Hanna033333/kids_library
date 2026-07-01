@@ -75,6 +75,10 @@ trigger: always_on
     - **지능형 뒤로가기 (`BackButton`)**: 세션 히스토리 스택의 크기가 1보다 크면 내부 라우팅 이력이 존재하는 것이므로 `router.back()`을 실행하고, 1 이하이면 첫 진입이므로 `fallbackHref` (기본값: `/`) 또는 홈(`/`)으로 강제 리다이렉트한다.
     - **안전장치 폴백**: `sessionStorage` 접근 오류 발생 시, `document.referrer`와 `window.location.host`를 활용하는 클래식한 리퍼러 검사를 백업 안전장치로 자동 가동한다. (상세 구현 가이드: `.agent/skills/development/back_route/SKILL.md`를 참고할 것)
     - **헤더 좌측 단순화 동기화**: 상세 페이지(`BookDetailClient.tsx`)와 목록 페이지(`BooksPageClient.tsx`)의 `PageHeader` 좌측에는 주렁주렁 홈 버튼을 추가하는 대신, 스마트 백 버튼(`<BackButton href="/" />` 등)만 단독 배치하여 구조를 100% 동기화한다.
+35. **네비게이션 헤더 및 타이틀 글자 수 규격**:
+    - 네비게이션 헤더 컴포넌트(`PageHeader.tsx`)는 좌측 및 우측 슬롯에 고정 너비인 `w-[80px]` (`flex-shrink-0`)를 적용하고, 중앙 영역은 `flex-1`을 지정하여 가용 폭을 최대로 활용하는 레이아웃을 사용한다.
+    - 헤더 폰트 크기는 반응형 크기 조정을 사용하지 않으며, 기존 `text-lg` (18px) 단일 크기를 유지한다.
+    - 모바일 환경에서 텍스트가 잘리는 현상을 미연에 방지하기 위해 모든 AI 큐레이션 및 추천 도서의 네비게이션 헤더 타이틀명은 **공백 포함 최대 11자 이내**로 매핑 및 정제하여 구현한다.
 
 
 ## 🔒 보안 가이드
