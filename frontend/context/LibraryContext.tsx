@@ -2,7 +2,15 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-const AVAILABLE_LIBRARIES = ['판교도서관', '송파어린이도서관'] as const
+const AVAILABLE_LIBRARIES = [
+    '광주광역시립무등도서관',
+    '서울특별시교육청서울시립어린이도서관',
+    '송파어린이도서관',
+    '수지도서관',
+    '울산도서관',
+    '판교도서관',
+    '한밭도서관'
+] as const
 export type LibraryName = typeof AVAILABLE_LIBRARIES[number]
 
 interface LibraryContextType {
@@ -11,7 +19,7 @@ interface LibraryContextType {
     availableLibraries: readonly string[]
 }
 
-const LibraryContext = createContext<LibraryContextType | undefined>(undefined)
+export const LibraryContext = createContext<LibraryContextType | undefined>(undefined)
 
 export function LibraryProvider({ children }: { children: ReactNode }) {
     // 기본값은 판교도서관

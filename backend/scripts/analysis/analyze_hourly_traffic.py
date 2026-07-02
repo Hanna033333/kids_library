@@ -19,8 +19,8 @@ from datetime import datetime
 # GA4 Property ID
 PROPERTY_ID = "518474196"
 
-# Service Account 키 파일 (절대 경로)
-KEY_FILE = r"c:\Users\skplanet\Desktop\kids library\ga4-key.json"
+script_dir = os.path.dirname(os.path.abspath(__file__))
+KEY_FILE = os.path.join(os.path.dirname(script_dir), "ga4-key.json")
 
 print("=" * 60)
 print("📊 오늘 시간대별 트래픽 분석")

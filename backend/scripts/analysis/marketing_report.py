@@ -16,8 +16,8 @@ except ImportError:
     from google.analytics.data_v1beta.types import RunReportRequest, DateRange, Dimension, Metric
     from google.analytics.admin import AnalyticsAdminServiceClient
 
-# 2. Configuration
-KEY_PATH = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", r"c:\Users\skplanet\Desktop\kids library\ga4-key.json")
+script_dir = os.path.dirname(os.path.abspath(__file__))
+KEY_PATH = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", os.path.join(os.path.dirname(script_dir), "ga4-key.json"))
 
 if os.path.exists(KEY_PATH):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = KEY_PATH

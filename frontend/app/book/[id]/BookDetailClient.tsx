@@ -445,7 +445,7 @@ export default function BookDetailClient({
                                         <LibrarySelector />
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <span className={`font-black text-2xl tracking-tight ${displayCallNo === '보유 정보 없음' ? 'text-gray-300' : 'text-gray-900'}`}>
+                                        <span className={`font-black text-2xl tracking-tight ${displayCallNo === '보유 정보 없음' ? 'text-gray-400' : 'text-gray-900'}`}>
                                             {displayCallNo}{book.vol ? `-${book.vol}` : ''}
                                         </span>
                                         {normalizedStatus && normalizedStatus.status !== "확인중" && (
@@ -455,7 +455,7 @@ export default function BookDetailClient({
                                                     ? "bg-red-100 text-red-700"
                                                     : normalizedStatus.status === "미소장"
                                                         ? "bg-gray-100 text-gray-700"
-                                                        : "bg-white text-gray-600 border border-gray-300"
+                                                            : "bg-white text-gray-600 border border-gray-300"
                                                 }`}>
                                                 {normalizedStatus.status}
                                             </span>

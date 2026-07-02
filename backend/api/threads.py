@@ -6,7 +6,7 @@ import urllib.parse
 import datetime
 import asyncio
 from typing import Optional, List
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 import httpx
@@ -24,6 +24,85 @@ router = APIRouter(prefix="/api/threads", tags=["threads"])
 
 # 관리자 인증 토큰 (보안 적용)
 THREADS_ADMIN_TOKEN = os.getenv("THREADS_ADMIN_TOKEN", "checkjari_threads_admin_2026")
+
+def is_scrap_bot(request: Request) -> bool:
+    """요청 헤더의 User-Agent를 파악하여 메신저 스크랩/크롤링 봇인지 여부를 반환합니다."""
+    ua = request.headers.get("user-agent", "").lower()
+    bot_keywords = [
+        "facebookexternalhit",  # 메타(스레드/페이스북/인스타)
+        "kakaotalk-scrap",      # 카카오톡
+        "twitterbot",           # 트위터
+        "slackbot",             # 슬랙
+        "telegrambot",          # 텔레그램
+        "whatsapp",             # 왓츠앱
+        "go-http-client"        # 기타 고랭 크롤러 등
+    ]
+    return any(k in ua for k in bot_keywords)
+
+def get_bot_bypass_html(title: str, status: str) -> str:
+    """스크랩 봇에 반환할 무해한 HTML 템플릿입니다. 비즈니스 로직(Side Effect) 없이 화면만 정상 렌더링합니다."""
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>책자리 관리자 - {title}</title>
+        <style>
+            body {{
+                font-family: 'SUIT', sans-serif;
+                background-color: #F5F5F8;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+            }}
+            .card {{
+                background-color: #FFFFFF;
+                padding: 40px;
+                border-radius: 20px;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+                text-align: center;
+                max-width: 480px;
+                width: 100%;
+            }}
+            .icon {{
+                font-size: 48px;
+                margin-bottom: 20px;
+            }}
+            h1 {{
+                color: #111827;
+                font-size: 24px;
+                margin-bottom: 12px;
+                font-weight: 700;
+            }}
+            p {{
+                color: #6B7280;
+                font-size: 15px;
+                line-height: 1.6;
+                margin-bottom: 30px;
+            }}
+            .status-btn {{
+                background-color: #FDE68A;
+                color: #F59E0B;
+                padding: 14px 24px;
+                border-radius: 12px;
+                font-weight: 700;
+                display: inline-block;
+                border: none;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="icon">🤖</div>
+            <h1>{title}</h1>
+            <p>봇 요청이 감지되어 화면만 미리 렌더링되었습니다.<br>실제 관리자 화면에서 버튼을 직접 클릭해야 최종 처리가 완료됩니다.</p>
+            <div class="status-btn">{status}</div>
+        </div>
+    </body>
+    </html>
+    """
 
 def get_slug_by_tag(tag: str) -> str:
     """한글 태그명에 매핑되는 영어 슬러그를 반환합니다. 매핑이 없으면 그대로 반환합니다."""
@@ -318,11 +397,21 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
 
 @router.get("/trigger-weekly")
 async def trigger_weekly_get(
+    request: Request,
+    admin_token: Optional[str] = Query(None, description="관리자 인증 토큰"),
     index: Optional[int] = Query(None, description="주간 큐레이션 인덱스 (0: 월, 1: 수, 2: 금)"),
     curation_tag: Optional[str] = Query(None, description="커스텀 큐레이션 태그"),
     curation_title: Optional[str] = Query(None, description="커스텀 큐레이션 타이틀")
 ):
     """수동으로 1단계 텍스트 시안 및 이미지 생성 요청을 텔레그램으로 보냅니다."""
+    # 1. 외부 스크랩 봇 감지 시 실행 우회 (Side Effect 방지)
+    if is_scrap_bot(request):
+        print("🤖 [Bot Filter] 스크랩 봇 요청 감지 (/api/threads/trigger-weekly) -> 실행 우회")
+        return {"status": "success", "message": "Bot request bypassed", "feed_id": None}
+
+    # 2. 관리자 인증 토큰 검증
+    if admin_token != THREADS_ADMIN_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin token")
     tz_kst = datetime.timezone(datetime.timedelta(hours=9))
     now_kst = datetime.datetime.now(tz_kst)
     
@@ -373,8 +462,13 @@ async def trigger_weekly_post(req: WeeklyTriggerRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/approve-text", response_class=HTMLResponse)
-async def approve_text(feed_id: int):
+async def approve_text(request: Request, feed_id: int):
     """1단계 승인 처리: 실제 카드뉴스 이미지를 렌더링하고 업로드하여 2단계 검수 요청을 텔레그램으로 발송합니다."""
+    # 1. 외부 스크랩 봇 감지 시 비즈니스 로직(Side Effect) 우회
+    if is_scrap_bot(request):
+        print("🤖 [Bot Filter] 스크랩 봇 요청 감지 (/api/threads/approve-text) -> 비즈니스 로직 우회")
+        return HTMLResponse(content=get_bot_bypass_html("카드뉴스 이미지 생성 완료", "텔레그램 2차 검수 확인 대기 중..."), status_code=200)
+
     feed_result = supabase.table("threads_feeds").select("*").eq("id", feed_id).execute()
     if not feed_result.data:
         raise HTTPException(status_code=404, detail="해당 피드 레코드를 찾을 수 없습니다.")
@@ -493,8 +587,13 @@ async def approve_text(feed_id: int):
     return HTMLResponse(content=html_content, status_code=200)
 
 @router.get("/approve", response_class=HTMLResponse)
-async def approve_threads_feed(feed_id: int):
+async def approve_threads_feed(request: Request, feed_id: int):
     """2단계 최종 승인 처리: 발행 예약 활성화 처리 및 텔레그램 완료 알림 발송"""
+    # 1. 외부 스크랩 봇 감지 시 비즈니스 로직(Side Effect) 우회
+    if is_scrap_bot(request):
+        print("🤖 [Bot Filter] 스크랩 봇 요청 감지 (/api/threads/approve) -> 비즈니스 로직 우회")
+        return HTMLResponse(content=get_bot_bypass_html("최종 발행 예약 완료", "발행 대기 중"), status_code=200)
+
     db_result = supabase.table("threads_feeds").update({
         "is_approved": True
     }).eq("id", feed_id).execute()

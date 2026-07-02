@@ -1,0 +1,21 @@
+==================================================
+📊 REPORTING FOR PROPERTY: 518474196 (Yesterday)
+==================================================
+
+[1] 🌍 Acquisition Source/Medium
+   - (data not available)           | Users:   2 | Sess:   2 | AvgTime: 9.0s
+   - (not set)                      | Users:   1 | Sess:   1 | AvgTime: 12.0s
+   - m.search.naver.com / referral  | Users:   1 | Sess:   1 | AvgTime: 3.0s
+
+[2] 📄 Top Content
+   - /                              | 책자리 - 상황별 정서 맞춤 우리 아이 그림책 큐레이션           | Views:   2 | Users:   1 | AvgTime: 16.0s
+   - /auth/signup                   | 책자리 - 우리 아이를 위한 맞춤 그림책 큐레이션              | Views:   1 | Users:   1 | AvgTime: 4.0s
+   - /book/8754                     | 말괄량이 기관차 치치 - 동화 | 책자리 도서 큐레이션 | 책자리     | Views:   1 | Users:   1 | AvgTime: 3.0s
+   - /book/9187                     | 비오는 날의 소풍 - 동화 | 책자리 도서 큐레이션 | 책자리       | Views:   1 | Users:   1 | AvgTime: 5.0s
+   - /book/9792                     | 안전 지도로 우리 동네를 바꿨어요! - 사회 | 책자리 도서 큐레이션 | | Views:   1 | Users:   1 | AvgTime: 3.0s
+   - /books                         | 7세 책 추천 리스트, 전집 대신 상황별 맞춤 단권으로! | 책자리 |  | Views:   1 | Users:   1 | AvgTime: 2.0s
+
+[3] 📍 Top Cities
+   - Asan-si                        | Users: 1
+   - Bucheon-si                     | Users: 1
+   - Busan                          | Users: 1

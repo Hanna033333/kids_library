@@ -140,10 +140,67 @@ def search_songpa_library(driver, title: str, author: str, publisher: str) -> Op
         return None
 
 
+def search_suji_library(driver, title: str, author: str, publisher: str) -> Optional[str]:
+    """
+    [수지도서관] 검색 및 청구기호 추출
+    URL: https://lib.yongin.go.kr/suji/menu/12326/program/30012/plusSearchSimple.do
+    """
+    try:
+        search_url = "https://lib.yongin.go.kr/suji/menu/12326/program/30012/plusSearchSimple.do"
+        driver.get(search_url)
+        
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "searchKeyword"))
+        )
+        
+        driver.find_element(By.ID, "searchKeyword").send_keys(title)
+        driver.find_element(By.ID, "searchBtn").click()
+        
+        time.sleep(3) # 결과 로딩 대기
+        
+        # 결과 아이템 영역 확인
+        results = driver.find_elements(By.CSS_SELECTOR, "div.bookArea")
+        if not results:
+            return None
+            
+        # 수지도서관 소장 여부 확인 및 청구기호 추출
+        for item in results:
+            try:
+                # 1. 소장도서관 확인 (info03 영역 내에 '수지' 텍스트 포함 확인)
+                lib_name_el = item.find_elements(By.CSS_SELECTOR, "div.bookData > div.book_dataInner > div.book_info.barList.info03 p")
+                if not lib_name_el:
+                    continue
+                
+                lib_text = "".join([el.text for el in lib_name_el])
+                if "수지" not in lib_text:
+                    continue
+                
+                # 2. 청구기호 추출 (info02 영역 내의 마지막 p 태그)
+                info_p_tags = item.find_elements(By.CSS_SELECTOR, "div.bookData > div.book_dataInner > div.book_info.barList.info02 p")
+                if info_p_tags:
+                    callno_text = info_p_tags[-1].text
+                    
+                    # 숫자로 시작하는 정규식 패턴을 발췌하여 수집
+                    # 예: '유아 808.9-봄44ㅇ-27' -> '808.9-봄44ㅇ-27'
+                    match = re.search(r'([0-9].*)', callno_text)
+                    if match:
+                        return match.group(1).strip()
+                    return callno_text.strip()
+            except Exception:
+                continue
+        
+        return None
+            
+    except Exception as e:
+        print(f"      [수지] 검색 오류: {e}")
+        return None
+
+
 # 도서관별 검색 함수 매핑
 LIBRARY_SEARCH_FUNCS: Dict[str, Callable] = {
     "판교도서관": search_pangyo_library,
-    "송파어린이도서관": search_songpa_library
+    "송파어린이도서관": search_songpa_library,
+    "수지도서관": search_suji_library
 }
 
 

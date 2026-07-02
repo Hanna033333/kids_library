@@ -11,9 +11,10 @@ from google.analytics.data_v1beta.types import (
     Filter
 )
 
-# Force UTF-8
 sys.stdout.reconfigure(encoding='utf-8')
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r"c:\Users\skplanet\Desktop\kids library\ga4-key.json"
+script_dir = os.path.dirname(os.path.abspath(__file__))
+key_path = os.path.join(os.path.dirname(script_dir), "ga4-key.json")
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = key_path
 
 PROPERTY_ID = "518474196"
 

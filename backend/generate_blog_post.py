@@ -65,6 +65,30 @@ def select_curation_books(curation_tag: str) -> List[dict]:
             
     return books[:5]
 
+def get_books_from_latest_threads_feed(curation_tag: str) -> List[dict]:
+    """threads_feeds 테이블에서 해당 태그의 가장 최근 피드에 등록된 도서 목록을 순서대로 가져옵니다."""
+    try:
+        tag_clean = curation_tag.lstrip("#")
+        result = supabase.table("threads_feeds").select("book_ids")\
+            .or_(f'curation_tag.eq."{tag_clean}",curation_tag.eq."#{tag_clean}"')\
+            .order("id", desc=True).limit(1).execute()
+        
+        if result.data and result.data[0].get("book_ids"):
+            book_ids = result.data[0]["book_ids"]
+            print(f"💾 [Threads 연동] 최근 스레드 피드에서 도서 ID 목록을 가져왔습니다: {book_ids}")
+            
+            books_res = supabase.table("childbook_items").select("*").in_("id", book_ids).execute()
+            if books_res.data:
+                id_map = {b["id"]: b for b in books_res.data}
+                books = []
+                for bid in book_ids:
+                    if bid in id_map:
+                        books.append(id_map[bid])
+                return books
+    except Exception as e:
+        print(f"⚠️ threads_feeds 조회 중 오류 발생: {e}")
+    return []
+
 # 2. 블로그용 원고 생성
 def generate_blog_content(tag: str, books: List[dict]) -> str:
     """Gemini API를 사용하여 네이버 블로그에 최적화된 마크다운 포맷의 글을 생성합니다."""
@@ -200,19 +224,24 @@ def main():
 
     print(f"🔍 [네이버 블로그 원고 생성] 큐레이션 태그 '{tag}' 검색 중...")
     
-    # 1. 책 데이터 로드
-    books = select_curation_books(tag)
+    # 1. 책 데이터 로드 (최신 스레드 피드 연동 시도 후, 없을 시 select_curation_books 폴백)
+    books = get_books_from_latest_threads_feed(tag)
+    if not books:
+        print(f"ℹ️ 최근 스레드 피드가 없거나 도서 조회가 실패하여 DB 쿼리 폴백을 사용합니다.")
+        books = select_curation_books(tag)
+        
     if not books:
         print(f"❌ '{tag}' 태그에 해당하는 도서 데이터를 Supabase에서 찾을 수 없습니다.")
         sys.exit(1)
         
-    print(f"📚 해당 태그 도서 {len(books)}권을 찾았습니다. 원고 생성을 진행합니다.")
+    print(f"📚 최종 도서 {len(books)}권을 매핑했습니다. 원고 생성을 진행합니다.")
 
     # 2. 원고 생성
     blog_content = generate_blog_content(tag, books)
 
     # 3. 아티팩트 경로에 저장
     possible_dirs = [
+        Path("/Users/1004823/.gemini/antigravity-ide/brain/8d48d87a-4925-4b77-a8f7-098803abdb13"),
         Path("/Users/1004823/.gemini/antigravity-ide/brain/000a513c-46a2-49bf-9432-925415ba6911"),
         Path("/Users/1004823/.gemini/antigravity-ide/brain/000a513c-46a2-49bf-9432-925415ba6911/scratch"),
         Path("/Users/1004823/.gemini/antigravity-ide/brain/7e72f194-cca6-498b-ac99-a2519ed4e13b"),
