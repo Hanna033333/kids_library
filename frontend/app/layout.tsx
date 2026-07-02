@@ -13,19 +13,19 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://checkjari.com"),
   title: {
-    default: "책자리 - 우리 아이를 위한 맞춤 그림책 큐레이션",
+    default: "주변 도서관 그림책 대출 + 연령별 큐레이션 | 책자리",
     template: "%s | 책자리"
   },
-  description: "아이의 발달 상황과 육아 고민에 딱 맞는 그림책을 추천해 드립니다. 잠자리, 사회성, 감정조절 등 14가지 주제별 AI 추천 그림책을 만나보세요.",
-  keywords: ["그림책 큐레이션", "그림책 추천", "어린이 도서", "잠자리 동화", "사회성 그림책", "감정조절 그림책", "책자리", "육아도서"],
+  description: "우리 동네 도서관에 이 책이 있을까? 전국 도서관 대출 상태와 청구기호를 실시간으로 확인하고, 연령/정서별 엄선된 그림책 큐레이션을 만나보세요!",
+  keywords: ["그림책 큐레이션", "그림책 추천", "어린이 도서", "잠자리 동화", "사회성 그림책", "감정조절 그림책", "책자리", "육아도서", "주변 도서관 책 검색", "도서관 대출"],
   authors: [{ name: "책자리" }],
   icons: {
     icon: '/logo.png',
     apple: '/logo.png',
   },
   openGraph: {
-    title: "책자리 - 우리 아이를 위한 맞춤 그림책 큐레이션",
-    description: "아이의 발달 상황과 육아 고민에 딱 맞는 그림책을 추천해 드립니다. 잠자리, 사회성, 감정조절 등 14가지 주제별 AI 추천 그림책을 만나보세요.",
+    title: "주변 도서관 그림책 대출 + 연령별 큐레이션 | 책자리",
+    description: "우리 동네 도서관에 이 책이 있을까? 전국 도서관 대출 상태와 청구기호를 실시간으로 확인하고, 연령/정서별 엄선된 그림책 큐레이션을 만나보세요!",
     url: "https://checkjari.com",
     siteName: "책자리",
     images: [
