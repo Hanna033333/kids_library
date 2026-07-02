@@ -93,6 +93,7 @@ trigger: always_on
 36. **도서관 추가 및 확장 규격**:
     - 새로운 도서관을 서비스에 추가할 때는 임의의 명칭을 사용하지 않고 정보나루 API(Data4Library)에서 실시간 조회가 가능한 공공도서관 목록을 바탕으로 정식 명칭과 6자리 도서관 코드를 등록해야 한다.
     - 도서관 추가 절차는 정보나루 코드 확보 ➡️ 백엔드 매핑(`loan_status.py`) ➡️ 프론트엔드 UI 바인딩(`LibraryContext.tsx`) ➡️ Selenium 웹 스크래핑 검색 파서 작성 ➡️ 스크래핑 배치 데이터 적재 순으로 진행하며, 상세 규격은 `.agent/skills/development/library_expansion/SKILL.md`를 철저히 준수하여 개발한다.
+    - 새로운 도서관을 정보나루 API 배치에 탑재하기 전, 해당 서버 IP가 정보나루 API 허용 IP 목록에 등록되어 있는지 필히 확인하며, asyncio 비동기 세마포어의 지연 로딩 패턴(different loop 방지)을 설계 시 엄격히 준수한다.
 
 
 ## 🔒 보안 가이드
