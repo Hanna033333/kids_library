@@ -156,9 +156,11 @@ def search_books_service(
     # 정렬
     if sort == "title":
         query = query.order("title")
+    elif sort == "confidence_score_desc":
+        query = query.order("confidence_score", desc=True)
     else:  # 기본값: pangyo_callno
         query = query.order("pangyo_callno")
-    
+
     # 페이지네이션
     offset = (page - 1) * limit
     query = query.range(offset, offset + limit - 1)

@@ -60,6 +60,8 @@ export async function getBooksFromServer({
 
     if (sortField === 'title') {
         query = query.order('title', { ascending: true });
+    } else if (sortField === 'confidence_score_desc') {
+        query = query.order('confidence_score', { ascending: false });
     } else {
         query = query.order(sortField);
     }

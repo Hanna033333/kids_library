@@ -89,7 +89,7 @@ async def fetch_loan_status_single(
     }
     
     try:
-        async with session.get(url, params=params, timeout=5, allow_redirects=False) as response:
+        async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=5), allow_redirects=False) as response:
             # 302 리다이렉트 = 정보나루 API 점검/한도초과 상태
             if response.status in (301, 302, 303, 307, 308):
                 result = {

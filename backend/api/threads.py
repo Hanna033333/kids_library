@@ -6,7 +6,7 @@ import urllib.parse
 import datetime
 import asyncio
 from typing import Optional, List
-from fastapi import APIRouter, Query, HTTPException, Request
+from fastapi import APIRouter, Query, HTTPException, Request, Header
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 import httpx
@@ -22,8 +22,42 @@ from services.ai_content import generate_ai_threads_content, apply_feedback_with
 
 router = APIRouter(prefix="/api/threads", tags=["threads"])
 
-# 관리자 인증 토큰 (보안 적용)
-THREADS_ADMIN_TOKEN = os.getenv("THREADS_ADMIN_TOKEN", "checkjari_threads_admin_2026")
+# 관리자 인증 토큰
+THREADS_ADMIN_TOKEN = os.getenv("THREADS_ADMIN_TOKEN")
+
+
+def ensure_threads_admin_token() -> str:
+    """운영용 관리자 토큰이 반드시 설정되어 있어야 합니다."""
+    if not THREADS_ADMIN_TOKEN:
+        raise RuntimeError("THREADS_ADMIN_TOKEN is required for Threads admin routes")
+    return THREADS_ADMIN_TOKEN
+
+
+def _build_admin_url(base_url: str, path: str, feed_id: object, token: str) -> str:
+    """텔레그램 버튼에 사용할 관리자 승인 URL을 생성합니다."""
+    parsed = urllib.parse.urlsplit(f"{base_url}{path}")
+    query = dict(urllib.parse.parse_qsl(parsed.query, keep_blank_values=True))
+    query["feed_id"] = str(feed_id)
+    query["admin_token"] = token
+    return urllib.parse.urlunsplit((
+        parsed.scheme,
+        parsed.netloc,
+        parsed.path,
+        urllib.parse.urlencode(query),
+        parsed.fragment,
+    ))
+
+
+def _require_admin_token(
+    query_token: Optional[str] = None,
+    header_token: Optional[str] = None,
+) -> str:
+    """쿼리 또는 헤더에서 관리자 토큰을 검증합니다."""
+    expected = ensure_threads_admin_token()
+    token = query_token or header_token
+    if token != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin token")
+    return expected
 
 def is_scrap_bot(request: Request) -> bool:
     """요청 헤더의 User-Agent를 파악하여 메신저 스크랩/크롤링 봇인지 여부를 반환합니다."""
@@ -244,7 +278,7 @@ async def process_telegram_feedback(feedback_text: str):
     if "localhost" in backend_url or "127.0.0.1" in backend_url:
         backend_url = backend_url.replace("localhost", "lvh.me").replace("127.0.0.1", "lvh.me")
         
-    confirm_url = f"{backend_url}/api/threads/approve-text?feed_id={feed_id}"
+    confirm_url = _build_admin_url(backend_url, "/api/threads/approve-text", feed_id, ensure_threads_admin_token())
     
     books_list = []
     for idx, b in enumerate(books):
@@ -376,7 +410,7 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
     if "localhost" in backend_url or "127.0.0.1" in backend_url:
         backend_url = backend_url.replace("localhost", "lvh.me").replace("127.0.0.1", "lvh.me")
         
-    confirm_url = f"{backend_url}/api/threads/approve-text?feed_id={feed_id}"
+    confirm_url = _build_admin_url(backend_url, "/api/threads/approve-text", feed_id, ensure_threads_admin_token())
     
     books_list = []
     for idx, b in enumerate(books):
@@ -399,6 +433,7 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
 async def trigger_weekly_get(
     request: Request,
     admin_token: Optional[str] = Query(None, description="관리자 인증 토큰"),
+    x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
     index: Optional[int] = Query(None, description="주간 큐레이션 인덱스 (0: 월, 1: 수, 2: 금)"),
     curation_tag: Optional[str] = Query(None, description="커스텀 큐레이션 태그"),
     curation_title: Optional[str] = Query(None, description="커스텀 큐레이션 타이틀")
@@ -410,8 +445,7 @@ async def trigger_weekly_get(
         return {"status": "success", "message": "Bot request bypassed", "feed_id": None}
 
     # 2. 관리자 인증 토큰 검증
-    if admin_token != THREADS_ADMIN_TOKEN:
-        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin token")
+    _require_admin_token(admin_token, x_admin_token)
     tz_kst = datetime.timezone(datetime.timedelta(hours=9))
     now_kst = datetime.datetime.now(tz_kst)
     
@@ -438,8 +472,13 @@ async def trigger_weekly_get(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/trigger-weekly")
-async def trigger_weekly_post(req: WeeklyTriggerRequest):
+async def trigger_weekly_post(
+    req: WeeklyTriggerRequest,
+    admin_token: Optional[str] = Query(None, description="관리자 인증 토큰"),
+    x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+):
     """수동으로 1단계 텍스트 시안 및 이미지 생성 요청을 텔레그램으로 보냅니다. (POST 호출 대응)"""
+    _require_admin_token(admin_token, x_admin_token)
     tz_kst = datetime.timezone(datetime.timedelta(hours=9))
     now_kst = datetime.datetime.now(tz_kst)
     
@@ -468,6 +507,10 @@ async def approve_text(request: Request, feed_id: int):
     if is_scrap_bot(request):
         print("🤖 [Bot Filter] 스크랩 봇 요청 감지 (/api/threads/approve-text) -> 비즈니스 로직 우회")
         return HTMLResponse(content=get_bot_bypass_html("카드뉴스 이미지 생성 완료", "텔레그램 2차 검수 확인 대기 중..."), status_code=200)
+
+    query_token = request.query_params.get("admin_token")
+    header_token = request.headers.get("x-admin-token")
+    _require_admin_token(query_token, header_token)
 
     feed_result = supabase.table("threads_feeds").select("*").eq("id", feed_id).execute()
     if not feed_result.data:
@@ -514,7 +557,7 @@ async def approve_text(request: Request, feed_id: int):
     if "localhost" in backend_url or "127.0.0.1" in backend_url:
         backend_url = backend_url.replace("localhost", "lvh.me").replace("127.0.0.1", "lvh.me")
         
-    confirm_url = f"{backend_url}/api/threads/approve?feed_id={feed_id}"
+    confirm_url = _build_admin_url(backend_url, "/api/threads/approve", feed_id, ensure_threads_admin_token())
     
     await send_threads_preview(
         caption=caption,
@@ -593,6 +636,10 @@ async def approve_threads_feed(request: Request, feed_id: int):
     if is_scrap_bot(request):
         print("🤖 [Bot Filter] 스크랩 봇 요청 감지 (/api/threads/approve) -> 비즈니스 로직 우회")
         return HTMLResponse(content=get_bot_bypass_html("최종 발행 예약 완료", "발행 대기 중"), status_code=200)
+
+    query_token = request.query_params.get("admin_token")
+    header_token = request.headers.get("x-admin-token")
+    _require_admin_token(query_token, header_token)
 
     db_result = supabase.table("threads_feeds").update({
         "is_approved": True
@@ -761,9 +808,14 @@ async def weekly_threads_scheduler():
 
 
 @router.get("/debug-telegram")
-async def debug_telegram():
+async def debug_telegram(
+    request: Request,
+    admin_token: Optional[str] = Query(None, description="관리자 인증 토큰"),
+    x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+):
     import os
     import httpx
+    _require_admin_token(admin_token or request.query_params.get("admin_token"), x_admin_token or request.headers.get("x-admin-token"))
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
     backend_url = os.getenv("BACKEND_URL")
@@ -799,7 +851,12 @@ async def debug_telegram():
             msg_data = msg_res.json()
             
             # 3. 인라인 키보드 버튼을 포함한 메시지 발송 테스트 (URL 정책 확인용)
-            confirm_url = f"{backend_url or 'http://lvh.me:8000'}/api/threads/approve-text?feed_id=test"
+            confirm_url = _build_admin_url(
+                backend_url or "http://lvh.me:8000",
+                "/api/threads/approve-text",
+                "test",
+                ensure_threads_admin_token(),
+            )
             btn_res = await client.post(
                 f"{api_base}/sendMessage",
                 json={
@@ -825,11 +882,16 @@ async def debug_telegram():
 
 
 @router.post("/republish/{feed_id}")
-async def republish_feed(feed_id: int):
+async def republish_feed(
+    feed_id: int,
+    admin_token: Optional[str] = Query(None, description="관리자 인증 토큰"),
+    x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+):
     """
     특정 feed_id의 피드를 수동으로 즉시 재발행합니다.
     스케줄러 오류 등으로 인해 발행되지 못한 피드를 복구할 때 사용합니다.
     """
+    _require_admin_token(admin_token, x_admin_token)
     import datetime
     tz_kst = datetime.timezone(datetime.timedelta(hours=9))
 

@@ -165,8 +165,8 @@ async def get_book_detail(book_id: int):
     book_data = supabase.table("childbook_items").select("*").eq("id", book_id).execute()
 
     if not book_data.data:
-        # FastAPI에서 404 처리를 위해 HTTPException을 쓸 수도 있지만 심플하게 구현
-        return None
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Book not found")
 
     book = book_data.data[0]
 

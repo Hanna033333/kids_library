@@ -64,7 +64,8 @@ app.include_router(threads_router)
 @app.on_event("startup")
 async def startup_event():
     import asyncio
-    from api.threads import weekly_threads_scheduler, telegram_feedback_listener
+    from api.threads import ensure_threads_admin_token, weekly_threads_scheduler, telegram_feedback_listener
+    ensure_threads_admin_token()
     asyncio.create_task(weekly_threads_scheduler())
     asyncio.create_task(telegram_feedback_listener())
 
@@ -78,5 +79,4 @@ def read_root():
         "version": "1.0.0",
         "docs": "/docs"
     }
-
 
