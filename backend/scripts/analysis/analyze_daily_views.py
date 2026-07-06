@@ -1,3 +1,4 @@
+from ga_helper import get_ga_key_path
 
 import os
 import sys
@@ -13,7 +14,7 @@ from google.analytics.data_v1beta.types import (
 
 sys.stdout.reconfigure(encoding='utf-8')
 script_dir = os.path.dirname(os.path.abspath(__file__))
-key_path = os.path.join(os.path.dirname(script_dir), "ga4-key.json")
+key_path = get_ga_key_path()
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = key_path
 
 PROPERTY_ID = "518474196"

@@ -25,20 +25,32 @@ router = APIRouter(prefix="/api/threads", tags=["threads"])
 # 관리자 인증 토큰
 THREADS_ADMIN_TOKEN = os.getenv("THREADS_ADMIN_TOKEN")
 
-
 def ensure_threads_admin_token() -> str:
     """운영용 관리자 토큰이 반드시 설정되어 있어야 합니다."""
     if not THREADS_ADMIN_TOKEN:
         raise RuntimeError("THREADS_ADMIN_TOKEN is required for Threads admin routes")
     return THREADS_ADMIN_TOKEN
 
+def sign_action(action: str, feed_id: int) -> str:
+    """액션과 feed_id를 결합하여 보안 승인에 사용할 HMAC 서명을 생성합니다."""
+    key = ensure_threads_admin_token().encode("utf-8")
+    message = f"{action}:{feed_id}".encode("utf-8")
+    import hmac
+    import hashlib
+    return hmac.new(key, message, hashlib.sha256).hexdigest()
 
-def _build_admin_url(base_url: str, path: str, feed_id: object, token: str) -> str:
+def verify_action_signature(action: str, feed_id: int, signature: str) -> bool:
+    """전달된 HMAC 서명을 검증합니다. (비교 시 타이밍 공격 방지를 위해 compare_digest 사용)"""
+    import hmac
+    expected = sign_action(action, feed_id)
+    return hmac.compare_digest(expected, signature)
+
+def _build_admin_url(base_url: str, path: str, feed_id: int, signature: str) -> str:
     """텔레그램 버튼에 사용할 관리자 승인 URL을 생성합니다."""
     parsed = urllib.parse.urlsplit(f"{base_url}{path}")
     query = dict(urllib.parse.parse_qsl(parsed.query, keep_blank_values=True))
     query["feed_id"] = str(feed_id)
-    query["admin_token"] = token
+    query["signature"] = signature
     return urllib.parse.urlunsplit((
         parsed.scheme,
         parsed.netloc,
@@ -47,15 +59,12 @@ def _build_admin_url(base_url: str, path: str, feed_id: object, token: str) -> s
         parsed.fragment,
     ))
 
-
 def _require_admin_token(
-    query_token: Optional[str] = None,
     header_token: Optional[str] = None,
 ) -> str:
-    """쿼리 또는 헤더에서 관리자 토큰을 검증합니다."""
+    """X-Admin-Token 헤더에서 관리자 토큰을 검증합니다."""
     expected = ensure_threads_admin_token()
-    token = query_token or header_token
-    if token != expected:
+    if header_token != expected:
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin token")
     return expected
 
@@ -278,7 +287,7 @@ async def process_telegram_feedback(feedback_text: str):
     if "localhost" in backend_url or "127.0.0.1" in backend_url:
         backend_url = backend_url.replace("localhost", "lvh.me").replace("127.0.0.1", "lvh.me")
         
-    confirm_url = _build_admin_url(backend_url, "/api/threads/approve-text", feed_id, ensure_threads_admin_token())
+    confirm_url = _build_admin_url(backend_url, "/api/threads/approve-text", feed_id, sign_action("approve-text", feed_id))
     
     books_list = []
     for idx, b in enumerate(books):
@@ -410,7 +419,7 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
     if "localhost" in backend_url or "127.0.0.1" in backend_url:
         backend_url = backend_url.replace("localhost", "lvh.me").replace("127.0.0.1", "lvh.me")
         
-    confirm_url = _build_admin_url(backend_url, "/api/threads/approve-text", feed_id, ensure_threads_admin_token())
+    confirm_url = _build_admin_url(backend_url, "/api/threads/approve-text", feed_id, sign_action("approve-text", feed_id))
     
     books_list = []
     for idx, b in enumerate(books):
@@ -429,10 +438,19 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
     print(f"✅ [스레드 발행 파이프라인] 1단계 텍스트 시안 텔레그램 전송 완료. Feed ID: {feed_id}")
     return feed_id
 
+def validate_curation_tag(tag: Optional[str]):
+    if not tag:
+        return
+    SPECIAL_TAGS = ['winter-vacation', 'research-council', 'caldecott', '겨울방학2026', '어린이도서연구회']
+    valid_tags = {item["tag"] for item in ALL_TAXONOMY}
+    valid_tags.update(SPECIAL_TAGS)
+    clean_tag = tag.lstrip("#")
+    if clean_tag not in valid_tags and tag not in valid_tags:
+        raise HTTPException(status_code=400, detail="유효하지 않은 큐레이션 태그입니다.")
+
 @router.get("/trigger-weekly")
 async def trigger_weekly_get(
     request: Request,
-    admin_token: Optional[str] = Query(None, description="관리자 인증 토큰"),
     x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
     index: Optional[int] = Query(None, description="주간 큐레이션 인덱스 (0: 월, 1: 수, 2: 금)"),
     curation_tag: Optional[str] = Query(None, description="커스텀 큐레이션 태그"),
@@ -445,7 +463,9 @@ async def trigger_weekly_get(
         return {"status": "success", "message": "Bot request bypassed", "feed_id": None}
 
     # 2. 관리자 인증 토큰 검증
-    _require_admin_token(admin_token, x_admin_token)
+    _require_admin_token(x_admin_token)
+    validate_curation_tag(curation_tag)
+    
     tz_kst = datetime.timezone(datetime.timedelta(hours=9))
     now_kst = datetime.datetime.now(tz_kst)
     
@@ -474,11 +494,10 @@ async def trigger_weekly_get(
 @router.post("/trigger-weekly")
 async def trigger_weekly_post(
     req: WeeklyTriggerRequest,
-    admin_token: Optional[str] = Query(None, description="관리자 인증 토큰"),
     x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
 ):
     """수동으로 1단계 텍스트 시안 및 이미지 생성 요청을 텔레그램으로 보냅니다. (POST 호출 대응)"""
-    _require_admin_token(admin_token, x_admin_token)
+    _require_admin_token(x_admin_token)
     tz_kst = datetime.timezone(datetime.timedelta(hours=9))
     now_kst = datetime.datetime.now(tz_kst)
     
@@ -500,18 +519,158 @@ async def trigger_weekly_post(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class ApproveSubmitRequest(BaseModel):
+    feed_id: int
+    signature: str
+
+async def publish_approved_feed(feed_id: int):
+    """최종 승인된 피드를 즉시 Threads 채널에 발행합니다. (늦은 승인 대응)"""
+    tz_kst = datetime.timezone(datetime.timedelta(hours=9))
+    from services.threads_publisher import publish_carousel_to_threads, publish_reply_to_threads
+    
+    feed_result = supabase.table("threads_feeds").select("*").eq("id", feed_id).execute()
+    if not feed_result.data:
+        print(f"❌ [즉시 배포] 피드 {feed_id}가 존재하지 않습니다.")
+        return
+
+    feed = feed_result.data[0]
+    caption = feed["content"]
+    image_urls = feed["image_urls"]
+    
+    if not image_urls:
+        print(f"❌ [즉시 배포] 피드 {feed_id}에 이미지 URL이 없습니다.")
+        return
+        
+    # 원자적 선점(Atomic Claim)
+    now_str = datetime.datetime.now(tz_kst).isoformat()
+    claim_result = supabase.table("threads_feeds").update({
+        "published_at": now_str
+    }).eq("id", feed_id).is_("published_at", "null").execute()
+    
+    if not claim_result.data:
+        print(f"⚠️ [즉시 배포] 피드 {feed_id}가 이미 발행 중이거나 선점됨")
+        return
+        
+    print(f"📣 [즉시 배포] 피드 {feed_id} 즉시 발행 개시")
+    await send_telegram_message(f"📢 <b>[즉시 배포]</b> 늦은 승인이 감지되었습니다. 피드 ID: {feed_id}의 Threads 최종 배포를 즉시 시작합니다...")
+    try:
+        post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
+    except Exception as publish_err:
+        try:
+            supabase.table("threads_feeds").update({
+                "published_at": None
+            }).eq("id", feed_id).execute()
+        except Exception as rollback_err:
+            print(f"❌ [즉시 배포] 피드({feed_id}) 선점 롤백 실패: {rollback_err}")
+        print(f"❌ [즉시 배포] 피드({feed_id}) Threads 발행 실패: {publish_err}")
+        await send_telegram_message(f"❌ <b>[즉시 배포 오류]</b> 피드({feed_id}) 발행 실패: {publish_err}")
+        return
+        
+    # 첫 댓글 연동
+    curation_tag = feed.get("curation_tag") or "추천"
+    try:
+        tag_clean = curation_tag.lstrip("#")
+        slug = get_slug_by_tag(tag_clean)
+        reply_text = f"🔗 https://checkjari.com/c/{slug}"
+        await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
+    except Exception as reply_err:
+        print(f"❌ [즉시 배포] 첫 댓글 등록 실패: {reply_err}")
+        await send_telegram_message(f"⚠️ [즉시 배포 경고] 피드 발행 성공, 첫 댓글 실패: {reply_err}")
+        
+    await send_telegram_message(f"🎉 <b>[즉시 배포 완료]</b> Threads에 최종 배포 성공. 포스트 ID: <code>{post_id}</code>")
+
 @router.get("/approve-text", response_class=HTMLResponse)
-async def approve_text(request: Request, feed_id: int):
+async def approve_text_view(request: Request, feed_id: int, signature: str):
+    """1단계 승인 확인 화면을 렌더링합니다. (봇 링크 크롤링에 무해함)"""
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>책자리 관리자 - 1단계 텍스트 승인</title>
+        <style>
+            body {{
+                font-family: 'SUIT', sans-serif;
+                background-color: #F5F5F8;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+            }}
+            .card {{
+                background-color: #FFFFFF;
+                padding: 40px;
+                border-radius: 20px;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+                text-align: center;
+                max-width: 480px;
+                width: 100%;
+            }}
+            .icon {{ font-size: 48px; margin-bottom: 20px; }}
+            h1 {{ color: #111827; font-size: 24px; margin-bottom: 12px; font-weight: 700; }}
+            p {{ color: #6B7280; font-size: 15px; line-height: 1.6; margin-bottom: 30px; }}
+            .btn {{
+                background-color: #F59E0B;
+                color: #FFFFFF;
+                padding: 14px 24px;
+                border-radius: 12px;
+                font-weight: 700;
+                display: inline-block;
+                border: none;
+                cursor: pointer;
+                font-size: 16px;
+                width: 100%;
+            }}
+            .btn:disabled {{ background-color: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }}
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="icon">📝</div>
+            <h1>1단계 텍스트 승인</h1>
+            <p>작성된 큐레이션 카드뉴스 텍스트 시안을 승인하시겠습니까?<br>승인 시 최종 카드뉴스 이미지 5장이 생성되어 2차 검수 알림이 발송됩니다.</p>
+            <button id="submit-btn" class="btn" onclick="submitApprove()">승인하고 이미지 생성하기</button>
+        </div>
+        <script>
+            async function submitApprove() {{
+                const btn = document.getElementById("submit-btn");
+                btn.disabled = true;
+                btn.innerText = "처리 중...";
+                try {{
+                    const res = await fetch("/api/threads/approve-text/submit", {{
+                        method: "POST",
+                        headers: {{ "Content-Type": "application/json" }},
+                        body: JSON.stringify({{ feed_id: {feed_id}, signature: "{signature}" }})
+                    }});
+                    const data = await res.json();
+                    if (res.ok) {{
+                        alert("승인이 완료되었습니다. 이미지 생성이 완료되면 텔레그램으로 2차 시안이 발송됩니다.");
+                        window.close();
+                    }} else {{
+                        alert("오류 발생: " + (data.detail || "인증 실패"));
+                        btn.disabled = false;
+                        btn.innerText = "승인하고 이미지 생성하기";
+                    }}
+                }} catch (e) {{
+                    alert("네트워크 오류 발생");
+                    btn.disabled = false;
+                    btn.innerText = "승인하고 이미지 생성하기";
+                }}
+            }}
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content, status_code=200)
+
+@router.post("/approve-text/submit")
+async def approve_text_submit(req: ApproveSubmitRequest):
     """1단계 승인 처리: 실제 카드뉴스 이미지를 렌더링하고 업로드하여 2단계 검수 요청을 텔레그램으로 발송합니다."""
-    # 1. 외부 스크랩 봇 감지 시 비즈니스 로직(Side Effect) 우회
-    if is_scrap_bot(request):
-        print("🤖 [Bot Filter] 스크랩 봇 요청 감지 (/api/threads/approve-text) -> 비즈니스 로직 우회")
-        return HTMLResponse(content=get_bot_bypass_html("카드뉴스 이미지 생성 완료", "텔레그램 2차 검수 확인 대기 중..."), status_code=200)
-
-    query_token = request.query_params.get("admin_token")
-    header_token = request.headers.get("x-admin-token")
-    _require_admin_token(query_token, header_token)
-
+    if not verify_action_signature("approve-text", req.feed_id, req.signature):
+        raise HTTPException(status_code=401, detail="유효하지 않은 관리자 서명입니다.")
+        
+    feed_id = req.feed_id
     feed_result = supabase.table("threads_feeds").select("*").eq("id", feed_id).execute()
     if not feed_result.data:
         raise HTTPException(status_code=404, detail="해당 피드 레코드를 찾을 수 없습니다.")
@@ -519,7 +678,6 @@ async def approve_text(request: Request, feed_id: int):
     feed = feed_result.data[0]
     book_ids = feed["book_ids"]
     curation_title = feed["title"]
-    curation_tag = feed["curation_tag"]
     caption = feed["content"]
     card_descriptions = feed.get("card_descriptions", []) or []
     
@@ -535,7 +693,6 @@ async def approve_text(request: Request, feed_id: int):
     
     for idx, b in enumerate(books):
         desc = card_descriptions[idx] if idx < len(card_descriptions) else ""
-        # UI-KIT 가이드에 맞춰 저자(author) 정보를 생략한 출판사 단독 노출 렌더링 진행
         card_img = generate_card_news(
             title=b.get("title", "제목"),
             author="",
@@ -557,22 +714,26 @@ async def approve_text(request: Request, feed_id: int):
     if "localhost" in backend_url or "127.0.0.1" in backend_url:
         backend_url = backend_url.replace("localhost", "lvh.me").replace("127.0.0.1", "lvh.me")
         
-    confirm_url = _build_admin_url(backend_url, "/api/threads/approve", feed_id, ensure_threads_admin_token())
+    confirm_url = _build_admin_url(backend_url, "/api/threads/approve", feed_id, sign_action("approve", feed_id))
     
     await send_threads_preview(
         caption=caption,
         image_urls=image_urls,
         confirm_url=confirm_url
     )
-    
-    html_content = """
+    return {"status": "success", "message": "카드뉴스 이미지 생성 및 2차 전송 완료"}
+
+@router.get("/approve", response_class=HTMLResponse)
+async def approve_feed_view(request: Request, feed_id: int, signature: str):
+    """2단계 최종 승인 확인 화면을 렌더링합니다."""
+    html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="utf-8">
-        <title>책자리 관리자 - 카드뉴스 이미지 생성 완료</title>
+        <title>책자리 관리자 - 최종 발행 승인</title>
         <style>
-            body {
+            body {{
                 font-family: 'SUIT', sans-serif;
                 background-color: #F5F5F8;
                 display: flex;
@@ -580,8 +741,8 @@ async def approve_text(request: Request, feed_id: int):
                 justify-content: center;
                 height: 100vh;
                 margin: 0;
-            }
-            .card {
+            }}
+            .card {{
                 background-color: #FFFFFF;
                 padding: 40px;
                 border-radius: 20px;
@@ -589,58 +750,71 @@ async def approve_text(request: Request, feed_id: int):
                 text-align: center;
                 max-width: 480px;
                 width: 100%;
-            }
-            .icon {
-                font-size: 48px;
-                margin-bottom: 20px;
-            }
-            h1 {
-                color: #111827;
-                font-size: 24px;
-                margin-bottom: 12px;
-                font-weight: 700;
-            }
-            p {
-                color: #6B7280;
-                font-size: 15px;
-                line-height: 1.6;
-                margin-bottom: 30px;
-            }
-            .status-btn {
-                background-color: #FDE68A;
-                color: #F59E0B;
+            }}
+            .icon {{ font-size: 48px; margin-bottom: 20px; }}
+            h1 {{ color: #111827; font-size: 24px; margin-bottom: 12px; font-weight: 700; }}
+            p {{ color: #6B7280; font-size: 15px; line-height: 1.6; margin-bottom: 30px; }}
+            .btn {{
+                background-color: #F59E0B;
+                color: #FFFFFF;
                 padding: 14px 24px;
                 border-radius: 12px;
                 font-weight: 700;
                 display: inline-block;
                 border: none;
-            }
+                cursor: pointer;
+                font-size: 16px;
+                width: 100%;
+            }}
+            .btn:disabled {{ background-color: #E5E7EB; color: #9CA3AF; cursor: not-allowed; }}
         </style>
     </head>
     <body>
         <div class="card">
-            <div class="icon">🎨</div>
-            <h1>카드뉴스 이미지 생성 완료</h1>
-            <p>선택하신 도서들의 카드뉴스 비주얼 이미지 5장이 성공적으로 생성 및 업로드되었습니다.<br>텔레그램 방에 전송된 최종 이미지 시안을 확인하신 후, 발행 예약을 확정해 주세요!</p>
-            <div class="status-btn">텔레그램 2차 검수 확인 대기 중...</div>
+            <div class="icon">🚀</div>
+            <h1>최종 발행 승인</h1>
+            <p>2차 이미지 검수 완료 후 최종 발행 예약을 확정하시겠습니까?<br>승인 시 정규 시각(저녁 8시)에 자동 발행되며, 20시를 경과했다면 즉시 발행됩니다.</p>
+            <button id="submit-btn" class="btn" onclick="submitApprove()">최종 승인 및 발행 예약</button>
         </div>
+        <script>
+            async function submitApprove() {{
+                const btn = document.getElementById("submit-btn");
+                btn.disabled = true;
+                btn.innerText = "처리 중...";
+                try {{
+                    const res = await fetch("/api/threads/approve/submit", {{
+                        method: "POST",
+                        headers: {{ "Content-Type": "application/json" }},
+                        body: JSON.stringify({{ feed_id: {feed_id}, signature: "{signature}" }})
+                    }});
+                    const data = await res.json();
+                    if (res.ok) {{
+                        alert("최종 발행 승인이 확정되었습니다.");
+                        window.close();
+                    }} else {{
+                        alert("오류 발생: " + (data.detail || "인증 실패"));
+                        btn.disabled = false;
+                        btn.innerText = "최종 승인 및 발행 예약";
+                    }}
+                }} catch (e) {{
+                    alert("네트워크 오류 발생");
+                    btn.disabled = false;
+                    btn.innerText = "최종 승인 및 발행 예약";
+                }}
+            }}
+        </script>
     </body>
     </html>
     """
     return HTMLResponse(content=html_content, status_code=200)
 
-@router.get("/approve", response_class=HTMLResponse)
-async def approve_threads_feed(request: Request, feed_id: int):
-    """2단계 최종 승인 처리: 발행 예약 활성화 처리 및 텔레그램 완료 알림 발송"""
-    # 1. 외부 스크랩 봇 감지 시 비즈니스 로직(Side Effect) 우회
-    if is_scrap_bot(request):
-        print("🤖 [Bot Filter] 스크랩 봇 요청 감지 (/api/threads/approve) -> 비즈니스 로직 우회")
-        return HTMLResponse(content=get_bot_bypass_html("최종 발행 예약 완료", "발행 대기 중"), status_code=200)
-
-    query_token = request.query_params.get("admin_token")
-    header_token = request.headers.get("x-admin-token")
-    _require_admin_token(query_token, header_token)
-
+@router.post("/approve/submit")
+async def approve_feed_submit(req: ApproveSubmitRequest):
+    """2단계 최종 승인 처리: 발행 예약 처리 또는 늦은 승인 시 즉시 발행 트리거"""
+    if not verify_action_signature("approve", req.feed_id, req.signature):
+        raise HTTPException(status_code=401, detail="유효하지 않은 관리자 서명입니다.")
+        
+    feed_id = req.feed_id
     db_result = supabase.table("threads_feeds").update({
         "is_approved": True
     }).eq("id", feed_id).execute()
@@ -648,71 +822,17 @@ async def approve_threads_feed(request: Request, feed_id: int):
     if not db_result.data:
         raise HTTPException(status_code=404, detail="해당 피드 레코드를 찾을 수 없습니다.")
         
-    await send_telegram_message("🚀 <b>주간 큐레이션 발행 승인이 최종 완료되었습니다!</b> 오늘 저녁 8시 정규 스케줄에 자동으로 Threads로 최종 발행됩니다.")
+    # KST 시간 확인 및 즉시 발행 분기 적용
+    tz_kst = datetime.timezone(datetime.timedelta(hours=9))
+    now_kst = datetime.datetime.now(tz_kst)
     
-    html_content = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>책자리 관리자 - 발행 예약 완료</title>
-        <style>
-            body {
-                font-family: 'SUIT', sans-serif;
-                background-color: #F5F5F8;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                height: 100vh;
-                margin: 0;
-            }
-            .card {
-                background-color: #FFFFFF;
-                padding: 40px;
-                border-radius: 20px;
-                box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-                text-align: center;
-                max-width: 480px;
-                width: 100%;
-            }
-            .icon {
-                font-size: 48px;
-                margin-bottom: 20px;
-            }
-            h1 {
-                color: #111827;
-                font-size: 24px;
-                margin-bottom: 12px;
-                font-weight: 700;
-            }
-            p {
-                color: #6B7280;
-                font-size: 15px;
-                line-height: 1.6;
-                margin-bottom: 30px;
-            }
-            .btn {
-                background-color: #F59E0B;
-                color: #FFFFFF;
-                padding: 14px 24px;
-                border-radius: 12px;
-                text-decoration: none;
-                font-weight: 700;
-                display: inline-block;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <div class="icon">🚀</div>
-            <h1>최종 발행 예약 완료</h1>
-            <p>주간 큐레이션의 Threads 최종 발행 예약이 완료되었습니다.<br>지정된 정규 스케줄 시각(저녁 8시)에 스레드로 자동 발행됩니다.</p>
-            <div class="btn">발행 대기 중</div>
-        </div>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content, status_code=200)
+    if now_kst.hour >= 20:
+        # 저녁 8시 이후 늦은 승인이므로 즉시 발행을 수행 (백그라운드 차단 방지 위해 비동기로 실행 호출)
+        asyncio.create_task(publish_approved_feed(feed_id))
+        return {"status": "success", "message": "늦은 승인이 감지되어 Threads 채널로 즉시 배포를 시작합니다."}
+        
+    await send_telegram_message("🚀 <b>주간 큐레이션 발행 승인이 최종 완료되었습니다!</b> 오늘 저녁 8시 정규 스케줄에 자동으로 Threads로 최종 발행됩니다.")
+    return {"status": "success", "message": "발행 예약 확정 완료"}
 
 async def weekly_threads_scheduler():
     """매분마다 시간을 감지하여 월/수/금 저녁 6시에는 텍스트 시안을 자동 빌드하고, 저녁 8시에는 최종 승인된 피드를 발행합니다."""
@@ -731,8 +851,10 @@ async def weekly_threads_scheduler():
             weekday = now_kst.weekday()  # 0: 월, 2: 수, 4: 금
             
             # 1. 월/수/금요일 저녁 6시 (18:00) -> 1단계 텍스트 시안 생성 및 텔레그램 발송
-            if weekday in (0, 2, 4) and now_kst.hour == 18 and now_kst.minute == 0:
+            # minute==0 정확 일치는 루프 드리프트(sleep 60초 + 처리 시간)로 트리거를 통째로 놓칠 수 있어 hour 단위로 판정
+            if weekday in (0, 2, 4) and now_kst.hour == 18:
                 if last_trigger_date_6pm != today_date:
+                    last_trigger_date_6pm = today_date  # 실패 여부와 무관하게 1일 1회만 시도 (매분 재시도 스팸 방지)
                     print(f"📡 [스케줄러] 저녁 6시 감지. 요일: {weekday}, 날짜: {today_date} -> 1단계 텍스트 시안 생성 시작")
                     target_idx = 0 if weekday == 0 else (1 if weekday == 2 else 2)
                     try:
@@ -743,14 +865,15 @@ async def weekly_threads_scheduler():
                             .limit(1).execute()
                         if not dup.data:
                             await execute_weekly_threads_generation(index=target_idx)
-                        last_trigger_date_6pm = today_date
                     except Exception as e:
                         print(f"❌ [스케줄러] 6시 1단계 생성 중 에러: {e}")
                         await send_telegram_message(f"❌ [스케줄러 경고] 저녁 6시 1단계 시안 생성 실패: {e}")
                         
             # 2. 월/수/금요일 저녁 8시 (20:00) -> 승인된 카드뉴스 최종 배포
-            if weekday in (0, 2, 4) and now_kst.hour == 20 and now_kst.minute == 0:
+            # minute==0 정확 일치는 루프 드리프트로 트리거를 놓칠 수 있어 hour 단위로 판정
+            if weekday in (0, 2, 4) and now_kst.hour == 20:
                 if last_trigger_date_8pm != today_date:
+                    last_trigger_date_8pm = today_date  # 실패 여부와 무관하게 1일 1회만 시도 (매분 재시도 스팸 방지)
                     print(f"📡 [스케줄러] 저녁 8시 감지. 요일: {weekday}, 날짜: {today_date} -> 최종 배포 스캔")
                     try:
                         today_str = today_date.strftime("%Y-%m-%d")
@@ -766,12 +889,38 @@ async def weekly_threads_scheduler():
                             feed_id = feed["id"]
                             caption = feed["content"]
                             image_urls = feed["image_urls"]
-                            
+
                             if image_urls:
+                                # 원자적 선점(Atomic Claim): published_at을 먼저 설정하여 다른 프로세스의 중복 발행을 차단
+                                # published_at IS NULL인 경우에만 업데이트가 성공하므로, 이미 선점된 경우 data가 비어 반환됨
+                                now_str = datetime.datetime.now(tz_kst).isoformat()
+                                claim_result = supabase.table("threads_feeds").update({
+                                    "published_at": now_str
+                                }).eq("id", feed_id).is_("published_at", "null").execute()
+
+                                if not claim_result.data:
+                                    print(f"⚠️ [스케줄러] 피드({feed_id})가 이미 다른 프로세스에 의해 선점됨 → 중복 발행 차단")
+                                    continue
+
                                 print(f"📣 [스케줄러] 최종 승인된 피드({feed_id}) 배포 진행")
                                 await send_telegram_message("📢 <b>[스케줄러] 최종 승인된 카드뉴스의 Threads 최종 배포를 진행합니다...</b>")
-                                post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
-                                
+                                try:
+                                    post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
+                                except Exception as publish_err:
+                                    # 발행 실패 시 선점 롤백: published_at을 되돌려 피드 유실을 막고 수동 재발행(/republish)이 가능하도록 복구
+                                    try:
+                                        supabase.table("threads_feeds").update({
+                                            "published_at": None
+                                        }).eq("id", feed_id).execute()
+                                    except Exception as rollback_err:
+                                        print(f"❌ [스케줄러] 피드({feed_id}) 선점 롤백 실패: {rollback_err}")
+                                    print(f"❌ [스케줄러] 피드({feed_id}) Threads 발행 실패: {publish_err}")
+                                    await send_telegram_message(
+                                        f"❌ <b>[스케줄러 오류]</b> 피드({feed_id}) Threads 발행에 실패했습니다: {publish_err}\n\n"
+                                        f"선점이 해제되었으므로 <code>POST /api/threads/republish/{feed_id}</code>로 수동 재발행할 수 있습니다."
+                                    )
+                                    continue
+
                                 # 첫 댓글로 자동 링크 연동 (옵션 B)
                                 curation_tag = feed.get("curation_tag") or "추천"
                                 try:
@@ -783,11 +932,7 @@ async def weekly_threads_scheduler():
                                 except Exception as reply_err:
                                     print(f"❌ [스케줄러] 첫 댓글 등록 실패: {reply_err}")
                                     await send_telegram_message(f"⚠️ [스케줄러 경고] 피드({feed_id}) 발행에는 성공했으나, 첫 댓글 등록 중 오류 발생: {reply_err}")
-                                
-                                supabase.table("threads_feeds").update({
-                                    "published_at": datetime.datetime.now(tz_kst).isoformat()
-                                }).eq("id", feed_id).execute()
-                                
+
                                 await send_telegram_message(f"🎉 <b>[실시간 배포 완료]</b> Threads에 최종 배포되었습니다. 포스트 ID: <code>{post_id}</code>")
                             else:
                                 print(f"⚠️ [스케줄러] 피드({feed_id})가 승인되었으나 이미지 URL이 존재하지 않아 배포를 생략합니다.")
@@ -795,8 +940,6 @@ async def weekly_threads_scheduler():
                         else:
                             print("ℹ️ [스케줄러] 오늘 승인된 예약 발행용 피드가 발견되지 않았습니다. 발행을 건너뜁니다.")
                             await send_telegram_message("ℹ️ <b>[스케줄러 알림]</b> 오늘 저녁 8시 발행 예약 건 중 승인 완료된(Okay) 피드가 없어 발행이 생략되었습니다.")
-                            
-                        last_trigger_date_8pm = today_date
                     except Exception as e:
                         print(f"❌ [스케줄러] 저녁 8시 최종 배포 에러: {e}")
                         await send_telegram_message(f"❌ [스케줄러 오류] 저녁 8시 최종 발행 중 에러 발생: {e}")
@@ -810,12 +953,11 @@ async def weekly_threads_scheduler():
 @router.get("/debug-telegram")
 async def debug_telegram(
     request: Request,
-    admin_token: Optional[str] = Query(None, description="관리자 인증 토큰"),
     x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
 ):
     import os
     import httpx
-    _require_admin_token(admin_token or request.query_params.get("admin_token"), x_admin_token or request.headers.get("x-admin-token"))
+    _require_admin_token(x_admin_token)
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
     backend_url = os.getenv("BACKEND_URL")
@@ -854,8 +996,8 @@ async def debug_telegram(
             confirm_url = _build_admin_url(
                 backend_url or "http://lvh.me:8000",
                 "/api/threads/approve-text",
-                "test",
-                ensure_threads_admin_token(),
+                0,
+                sign_action("approve-text", 0),
             )
             btn_res = await client.post(
                 f"{api_base}/sendMessage",
@@ -884,14 +1026,13 @@ async def debug_telegram(
 @router.post("/republish/{feed_id}")
 async def republish_feed(
     feed_id: int,
-    admin_token: Optional[str] = Query(None, description="관리자 인증 토큰"),
     x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
 ):
     """
     특정 feed_id의 피드를 수동으로 즉시 재발행합니다.
     스케줄러 오류 등으로 인해 발행되지 못한 피드를 복구할 때 사용합니다.
     """
-    _require_admin_token(admin_token, x_admin_token)
+    _require_admin_token(x_admin_token)
     import datetime
     tz_kst = datetime.timezone(datetime.timedelta(hours=9))
 

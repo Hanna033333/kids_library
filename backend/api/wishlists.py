@@ -7,17 +7,12 @@ from pydantic import BaseModel
 from typing import List, Dict
 from datetime import datetime
 import os
-from supabase import create_client, Client
+import logging
+from core.database import supabase
 
 router = APIRouter(prefix="/api/wishlists", tags=["wishlists"])
 security = HTTPBearer()
-
-# Supabase 클라이언트
-supabase: Client = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_SERVICE_KEY")
-)
-
+logger = logging.getLogger(__name__)
 
 # ============================================
 # Pydantic 모델
@@ -60,11 +55,11 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     """JWT 토큰에서 현재 사용자 정보 추출"""
     token = credentials.credentials
     
-    # QA 전용 테스터 토큰 처리
-    is_qa_allowed = os.getenv("ENV") != "production" or os.getenv("ALLOW_QA_MOCK") == "true"
+    # QA 전용 테스터 토큰 처리 (development 모드이거나 모의 환경이 명시적으로 켜졌을 때만 활성화)
+    is_qa_allowed = os.getenv("ENV") == "development" or os.getenv("ALLOW_QA_MOCK") == "true"
     if token == "TEST_QA_TOKEN" and is_qa_allowed:
         from types import SimpleNamespace
-        print("[DEBUG] QA Tester Token detected in Wishlists")
+        logger.info("QA Tester Token detected in Wishlists")
         return SimpleNamespace(
             id="00000000-0000-0000-0000-000000000000",
             email="qa-tester@checkjari.com",
@@ -75,15 +70,17 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     try:
         user = supabase.auth.get_user(token)
         if not user:
+            logger.warning("get_user returned None in Wishlists")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token"
+                detail="사용자 인증에 실패했습니다."
             )
         return user.user
     except Exception as e:
+        logger.error(f"Wishlists auth failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Authentication failed: {str(e)}"
+            detail="사용자 인증에 실패했습니다."
         )
 
 
@@ -126,9 +123,10 @@ async def get_wishlists(
             "limit": limit
         }
     except Exception as e:
+        logger.error(f"Failed to fetch wishlists: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch wishlists: {str(e)}"
+            detail="찜 목록을 가져오는 데 실패했습니다."
         )
 
 
@@ -154,11 +152,12 @@ async def add_wishlist(
         if "duplicate" in str(e).lower() or "unique" in str(e).lower():
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Book already in wishlist"
+                detail="이미 찜한 도서입니다."
             )
+        logger.error(f"Failed to add wishlist: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to add wishlist: {str(e)}"
+            detail="찜 목록에 추가하는 데 실패했습니다."
         )
 
 
@@ -179,16 +178,17 @@ async def remove_wishlist(
         if not response.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Wishlist item not found"
+                detail="찜 목록에서 해당 도서를 찾을 수 없습니다."
             )
         
         return {"message": "Wishlist item removed"}
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Failed to remove wishlist: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to remove wishlist: {str(e)}"
+            detail="찜 제거에 실패했습니다."
         )
 
 
@@ -209,7 +209,8 @@ async def check_wishlists(
         
         return {str(book_id): book_id in wishlisted_book_ids for book_id in request.book_ids}
     except Exception as e:
+        logger.error(f"Failed to check wishlists: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to check wishlists: {str(e)}"
+            detail="찜 여부 확인에 실패했습니다."
         )

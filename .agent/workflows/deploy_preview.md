@@ -45,7 +45,7 @@ Vercel Preview 환경이 배포될 때마다 도메인이 유동적으로 생성
 
 * **기준 코드 (`backend/main.py`)**:
   ```python
-  allow_origin_regex=r"https://.*kids-library.*\.vercel\.app"
+  allow_origin_regex=r"^(https://kids-library-git-[a-z0-9]+-hannas-projects-[a-z0-9]+\.vercel\.app|https://(www\.)?checkjari\.com)$"
   ```
   * 위 정규식 구조가 백엔드 `CORSMiddleware`에 올바르게 적용되어 있는지 검사합니다.
 
@@ -59,10 +59,10 @@ Vercel Preview 환경이 배포될 때마다 도메인이 유동적으로 생성
 # 변경 사항 확인 및 브랜치 체크
 git status
 
-# 커밋 및 원격 리포지토리 preview 브랜치로 푸시 (현재 로컬 브랜치를 정확히 지정)
+# 커밋 및 원격 리포지토리 dev 브랜치로 푸시 (현재 로컬 브랜치를 정확히 지정)
 git add .
 git commit -m "feat: 프리뷰 검증 완료 및 배포 트리거"
-git push origin HEAD:preview
+git push origin HEAD:dev
 ```
 
 > [!TIP]

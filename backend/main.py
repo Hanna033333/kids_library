@@ -1,5 +1,6 @@
 import sys
 import os
+from contextlib import asynccontextmanager
 
 # Add current directory (backend) to sys.path to ensure 'services', 'api', etc. are found
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -15,13 +16,34 @@ from api.threads import router as threads_router
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: 백그라운드 태스크 실행 및 토큰 보장
+    import asyncio
+    from api.threads import ensure_threads_admin_token, weekly_threads_scheduler, telegram_feedback_listener
+    
+    ensure_threads_admin_token()
+    scheduler_task = asyncio.create_task(weekly_threads_scheduler())
+    listener_task = asyncio.create_task(telegram_feedback_listener())
+    
+    yield
+    
+    # Shutdown: 백그라운드 태스크 취소 및 리소스 정리
+    scheduler_task.cancel()
+    listener_task.cancel()
+    try:
+        await asyncio.gather(scheduler_task, listener_task, return_exceptions=True)
+    except Exception as e:
+        print(f"Error during background task cancellation: {e}")
+
 app = FastAPI(
     title="Kids Library API",
     description="어린이 도서 추천 및 검색 API",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
-# CORS 설정 (보안 강화: 특정 도메인만 허용)
+# CORS 설정 (보안 강화: 특정 도메인만 허용 및 엄격한 정규식 매칭)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -32,7 +54,8 @@ app.add_middleware(
         "http://localhost:3001",
         "http://127.0.0.1:3001",
     ],
-    allow_origin_regex=r"https://.*kids-library.*\.vercel\.app",  # Vercel Preview 허용
+    # Starlette의 CORSMiddleware가 부분 일치(re.match)로 체크할 경우를 대비하여 명확히 ^과 $ 앵커를 사용하여 앞뒤 제한
+    allow_origin_regex=r"^(https://kids-library-git-[a-z0-9]+-hannas-projects-[a-z0-9]+\.vercel\.app|https://(www\.)?checkjari\.com)$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -60,15 +83,6 @@ app.include_router(auth_router)
 app.include_router(wishlists_router)
 app.include_router(threads_router)
 
-
-@app.on_event("startup")
-async def startup_event():
-    import asyncio
-    from api.threads import ensure_threads_admin_token, weekly_threads_scheduler, telegram_feedback_listener
-    ensure_threads_admin_token()
-    asyncio.create_task(weekly_threads_scheduler())
-    asyncio.create_task(telegram_feedback_listener())
-
 @app.get("/")
 def read_root():
     """
@@ -79,4 +93,3 @@ def read_root():
         "version": "1.0.0",
         "docs": "/docs"
     }
-

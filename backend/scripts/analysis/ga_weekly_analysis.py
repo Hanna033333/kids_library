@@ -1,3 +1,4 @@
+from ga_helper import get_ga_key_path
 import os
 import sys
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
@@ -15,7 +16,7 @@ from google.analytics.data_v1beta.types import (
 # Set credentials
 script_dir = os.path.dirname(os.path.abspath(__file__))
 # Assumes key is in the parent directory of backend, similar to existing scripts
-key_path = os.path.join(os.path.dirname(script_dir), "ga4-key.json")
+key_path = get_ga_key_path()
 if not os.path.exists(key_path):
     print(f"Error: Key file not found at {key_path}")
     sys.exit(1)

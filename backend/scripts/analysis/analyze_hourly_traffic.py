@@ -1,3 +1,4 @@
+from ga_helper import get_ga_key_path
 """
 오늘 시간대별 트래픽 분석
 """
@@ -20,7 +21,7 @@ from datetime import datetime
 PROPERTY_ID = "518474196"
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-KEY_FILE = os.path.join(os.path.dirname(script_dir), "ga4-key.json")
+KEY_FILE = get_ga_key_path()
 
 print("=" * 60)
 print("📊 오늘 시간대별 트래픽 분석")

@@ -3,9 +3,11 @@ import asyncio
 import aiohttp
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
+import logging
 from core.config import DATA4LIBRARY_KEY
 from services.telegram_notifier import send_telegram_message
 
+logger = logging.getLogger(__name__)
 
 # 쿨다운 방지를 위한 마지막 경고 전송 시각
 LAST_WARNING_SENT_AT: Optional[datetime] = None
@@ -21,6 +23,7 @@ def get_warning_lock() -> asyncio.Lock:
 # 인메모리 캐시 (30분 TTL)
 LOAN_CACHE: Dict[str, tuple[Dict, datetime]] = {}
 CACHE_TTL = timedelta(minutes=30)
+LAST_GC_RUN_AT: datetime = datetime.now()
 
 # 도서관 코드 매핑 (전국 대표 7개 도서관 - ㄱㄴㄷ 순)
 LIBRARY_CODE_MAP = {
@@ -47,6 +50,26 @@ def get_semaphore() -> asyncio.Semaphore:
         GLOBAL_SEMAPHORE = asyncio.Semaphore(5)
     return GLOBAL_SEMAPHORE
 
+
+def clean_expired_cache():
+    """만료된 (30분 초과) 대출 캐시 항목을 메모리에서 제거합니다. (가비지 컬렉션)"""
+    global LAST_GC_RUN_AT
+    now = datetime.now()
+    # GC 실행은 5분에 한 번씩만 수행하여 오버헤드 최소화
+    if now - LAST_GC_RUN_AT < timedelta(minutes=5):
+        return
+        
+    LAST_GC_RUN_AT = now
+    expired_keys = [
+        key for key, (_, timestamp) in LOAN_CACHE.items()
+        if now - timestamp >= CACHE_TTL
+    ]
+    
+    for key in expired_keys:
+        LOAN_CACHE.pop(key, None)
+        
+    if expired_keys:
+        logger.info(f"🧹 Cleaned {len(expired_keys)} expired items from LOAN_CACHE")
 
 
 def get_cached_loan(lib_code: str, isbn: str) -> Optional[Dict]:
@@ -164,6 +187,9 @@ async def fetch_loan_status_batch(books: List[Dict], library_name: Optional[str]
     Returns:
         {book_id: loan_info} 형태의 딕셔너리
     """
+    # 주기적인 캐시 GC 실행
+    clean_expired_cache()
+    
     if not DATA4LIBRARY_KEY:
         # API 키가 없으면 빈 결과 반환
         return {}
@@ -231,12 +257,11 @@ async def fetch_loan_status_batch(books: List[Dict], library_name: Optional[str]
             for book in books_with_isbn
         )
         if all_failed:
-            global LAST_WARNING_SENT_AT
             async def maybe_send_warning():
+                global LAST_WARNING_SENT_AT
                 async with get_warning_lock():
                     now = datetime.now()
                     if LAST_WARNING_SENT_AT is None or (now - LAST_WARNING_SENT_AT) > timedelta(hours=1):
-                        global LAST_WARNING_SENT_AT
                         LAST_WARNING_SENT_AT = now
                         warning_text = (
                             f"🚨 <b>[책자리 API 경고] 도서관 정보나루 연동 장애 감지</b>\n\n"
@@ -248,7 +273,3 @@ async def fetch_loan_status_batch(books: List[Dict], library_name: Optional[str]
             asyncio.create_task(maybe_send_warning())
     
     return loan_info
-
-
-
-

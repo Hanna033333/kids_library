@@ -1,5 +1,8 @@
 import type { Book, BooksResponse, LoanStatus } from "./types";
 
+if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_API_URL) {
+  throw new Error("FAIL-FAST: NEXT_PUBLIC_API_URL 환경 변수가 설정되지 않았습니다. 빌드 또는 배포 설정을 확인하세요.");
+}
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export async function searchBooks(

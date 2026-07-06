@@ -3,21 +3,16 @@
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 import os
-from supabase import create_client, Client
+import logging
+from core.database import supabase
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 security = HTTPBearer()
-
-# Supabase 클라이언트
-supabase: Client = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_SERVICE_KEY")  # 서버사이드에서는 service key 사용
-)
-
+logger = logging.getLogger(__name__)
 
 # ============================================
 # Pydantic 모델
@@ -54,13 +49,12 @@ class AgreementsRequest(BaseModel):
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """JWT 토큰에서 현재 사용자 정보 추출"""
     token = credentials.credentials
-    # print(f"[DEBUG] Validating token: {token[:10]}...") # Too noisy?
     
-    # QA 전용 테스터 토큰 처리
-    is_qa_allowed = os.getenv("ENV") != "production" or os.getenv("ALLOW_QA_MOCK") == "true"
+    # QA 전용 테스터 토큰 처리 (development 모드이거나 모의 환경이 명시적으로 켜졌을 때만 활성화)
+    is_qa_allowed = os.getenv("ENV") == "development" or os.getenv("ALLOW_QA_MOCK") == "true"
     if token == "TEST_QA_TOKEN" and is_qa_allowed:
         from types import SimpleNamespace
-        print("[DEBUG] QA Tester Token detected")
+        logger.info("QA Tester Token detected")
         return SimpleNamespace(
             id="00000000-0000-0000-0000-000000000000",
             email="qa-tester@checkjari.com",
@@ -73,18 +67,17 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         user = supabase.auth.get_user(token)
         
         if not user:
-            print("[DEBUG] get_user returned None")
+            logger.warning("get_user returned None or User not found")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token"
+                detail="사용자 인증에 실패했습니다."
             )
-        # print(f"[DEBUG] User authenticated: {user.user.id}")
         return user.user
     except Exception as e:
-        print(f"[DEBUG] Auth failed: {str(e)}")
+        logger.error(f"Auth failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Authentication failed: {str(e)}"
+            detail="사용자 인증에 실패했습니다."
         )
 
 
@@ -113,9 +106,10 @@ async def get_my_profile(current_user = Depends(get_current_user)):
         response = supabase.table("members").select("*").eq("id", current_user.id).single().execute()
         return response.data
     except Exception as e:
+        logger.error(f"User profile fetch failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User not found: {str(e)}"
+            detail="사용자 정보를 찾을 수 없습니다."
         )
 
 
@@ -133,14 +127,17 @@ async def update_my_profile(
         if not response.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
+                detail="사용자를 찾을 수 없습니다."
             )
         
         return response.data[0]
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Failed to update profile: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update profile: {str(e)}"
+            detail="프로필 수정에 실패했습니다."
         )
 
 
@@ -170,9 +167,6 @@ async def update_agreements(
             "updated_at": "now()"
         }
         
-        print(f"[DEBUG] Attempting upsert for user {current_user.id}")
-        print(f"[DEBUG] Validated User Data: {data}")
-        
         # members 테이블에 upsert (없으면 생성, 있으면 업데이트)
         # QA 전용 테스터는 실제 DB 저장을 스킵하여 외래키 제약조건 위반 방지
         if current_user.id == "00000000-0000-0000-0000-000000000000":
@@ -180,25 +174,21 @@ async def update_agreements(
 
         response = supabase.table("members").upsert(data).execute()
         
-        print(f"[DEBUG] Upsert Response: {response}")
-        
         if not response.data:
-            print("[DEBUG] Response data is empty!")
-            # Try to fetch the user to see if it exists
-            check_user = supabase.table("members").select("*").eq("id", current_user.id).execute()
-            print(f"[DEBUG] Check User: {check_user}")
-            
-            # If still failing, it might be due to RLS even with service key? (Unlikely)
+            logger.error("Response data is empty after upsert!")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to update/create user record. Response: {response}"
+                detail="약관 동의 업데이트에 실패했습니다."
             )
         
         return {"message": "Agreements updated successfully"}
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Failed to update agreements: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update agreements: {str(e)}"
+            detail="약관 동의 업데이트에 실패했습니다."
         )
 
 
@@ -217,7 +207,8 @@ async def delete_my_account(current_user = Depends(get_current_user)):
         
         return {"message": "Account deleted successfully"}
     except Exception as e:
+        logger.error(f"Failed to delete account: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete account: {str(e)}"
+            detail="회원 탈퇴 처리에 실패했습니다."
         )

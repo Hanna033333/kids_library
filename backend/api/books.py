@@ -1,13 +1,14 @@
 """책 검색 및 조회 API 라우터"""
-from fastapi import APIRouter, Query, Body
+from fastapi import APIRouter, Query, Body, HTTPException, status, BackgroundTasks
 from typing import Optional, List, Union
 from datetime import datetime
+import logging
 from services.search import search_books_service
 from services.loan_status import fetch_loan_status_batch
 from core.database import supabase
 
 router = APIRouter(prefix="/api/books", tags=["books"])
-
+logger = logging.getLogger(__name__)
 
 @router.get("/search")
 def search_books(
@@ -41,18 +42,6 @@ def get_books_list(
     return search_books_service(age=age, category=category, sort=sort, page=page, limit=limit, include_library_info=include_library_info)
 
 
-@router.get("")
-def get_books():
-    """
-    전체 목록 조회 (기존 API - 호환성 유지)
-    """
-    data = supabase.table("childbook_items").select("*").order("title").execute()
-    return data.data
-
-
-
-
-
 from pydantic import BaseModel
 
 class LoanStatusRequest(BaseModel):
@@ -71,13 +60,18 @@ async def get_loan_status(req: Union[LoanStatusRequest, List[int]] = Body(..., d
     Returns:
         {book_id: loan_info} 형태의 딕셔너리
     """
-    # 구버전(단순 숫자 리스트) 및 신버전(JSON Object) 요청 포맷 유연하게 대응
     if isinstance(req, list):
         book_ids = req
         library_name = "판교도서관"
     else:
         book_ids = req.book_ids
         library_name = req.library_name or "판교도서관"
+
+    if len(book_ids) > 50:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="한 번에 최대 50개의 도서 ID만 요청할 수 있습니다."
+        )
 
     # DB에서 책 정보 및 판교 청구기호 조회
     books_data = supabase.table("childbook_items").select("id, isbn, pangyo_callno").in_("id", book_ids).execute()
@@ -143,9 +137,14 @@ async def get_books_by_ids(book_ids: List[int] = Body(..., description="책 ID �
     """
     여러 책의 상세 정보를 ID로 조회
     """
-    print(f"DEBUG: get_books_by_ids called with: {book_ids}")
     if not book_ids:
         return []
+
+    if len(book_ids) > 50:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="한 번에 최대 50개의 도서 ID만 요청할 수 있습니다."
+        )
 
     data = supabase.table("childbook_items").select("*").in_("id", book_ids).execute()
 
@@ -156,17 +155,24 @@ async def get_books_by_ids(book_ids: List[int] = Body(..., description="책 ID �
     return ordered_data
 
 
+def update_description_bg(book_id: int, description: str):
+    """백그라운드에서 알라딘 도서 설명을 DB에 업데이트합니다."""
+    try:
+        supabase.table("childbook_items").update({"description": description}).eq("id", book_id).execute()
+    except Exception as e:
+        logger.error(f"Failed to update Aladin description in background for book {book_id}: {e}")
+
+
 @router.get("/{book_id}")
-async def get_book_detail(book_id: int):
+def get_book_detail(book_id: int, background_tasks: BackgroundTasks):
     """
-    책 상세 정보 및 찜 횟수 조회
+    책 상세 정보 및 찜 횟수 조회 (FastAPI 스레드풀에서 실행하여 동기 API 호출 블로킹 방지)
     """
     # 1. 책 정보 조회
     book_data = supabase.table("childbook_items").select("*").eq("id", book_id).execute()
 
     if not book_data.data:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=404, detail="Book not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="도서를 찾을 수 없습니다.")
 
     book = book_data.data[0]
 
@@ -197,27 +203,22 @@ async def get_book_detail(book_id: int):
                     if items:
                         description = items[0].get("description")
                         if description:
-                            # DB 업데이트 (백그라운드 처리 대신 즉시 업데이트로 단순화)
-                            supabase.table("childbook_items").update({"description": description}).eq("id", book_id).execute()
+                            # DB 업데이트를 백그라운드 태스크로 넘겨 즉각적인 API 반환 보장
+                            background_tasks.add_task(update_description_bg, book_id, description)
                             book["description"] = description
             except Exception as e:
-                print(f"Error fetching Aladin description: {e}")
+                logger.error(f"Error fetching Aladin description for book {book_id}: {e}")
 
-    # 3. 찜 횟수 조회 (Count - wishlists 테이블 기반 정상 버그 픽스)
+    # 3. 찜 횟수 조회 (Count)
     count_data = supabase.table("wishlists").select("id", count="exact").eq("book_id", book_id).execute()
     book["save_count"] = count_data.count if count_data.count is not None else 0
 
-    # 4. 도서관 청구기호 조회 (Multi-Library Support)
+    # 4. 도서관 청구기호 조회
     try:
         lib_data = supabase.table("book_library_info").select("library_name, callno").eq("book_id", book_id).execute()
         book["library_info"] = lib_data.data if lib_data.data else []
     except Exception as e:
-        print(f"Error fetching library info: {e}")
+        logger.error(f"Error fetching library info for book {book_id}: {e}")
         book["library_info"] = []
 
     return book
-
-
-
-
-

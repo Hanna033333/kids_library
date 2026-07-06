@@ -1,3 +1,4 @@
+from ga_helper import get_ga_key_path
 
 import os
 import sys
@@ -17,7 +18,7 @@ except ImportError:
     from google.analytics.admin import AnalyticsAdminServiceClient
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-KEY_PATH = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", os.path.join(os.path.dirname(script_dir), "ga4-key.json"))
+KEY_PATH = get_ga_key_path()
 
 if os.path.exists(KEY_PATH):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = KEY_PATH

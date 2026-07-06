@@ -16,5 +16,6 @@ DROP POLICY IF EXISTS "Allow service role fully" ON public.threads_feeds;
 
 -- service_role은 전체 CRUD 권한 부여 (백엔드 제어용)
 CREATE POLICY "Allow service role fully" ON public.threads_feeds
+    TO service_role
     USING (true)
     WITH CHECK (true);
