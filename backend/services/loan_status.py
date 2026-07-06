@@ -9,6 +9,13 @@ from services.telegram_notifier import send_telegram_message
 
 # 쿨다운 방지를 위한 마지막 경고 전송 시각
 LAST_WARNING_SENT_AT: Optional[datetime] = None
+WARNING_LOCK: Optional[asyncio.Lock] = None
+
+def get_warning_lock() -> asyncio.Lock:
+    global WARNING_LOCK
+    if WARNING_LOCK is None:
+        WARNING_LOCK = asyncio.Lock()
+    return WARNING_LOCK
 
 
 # 인메모리 캐시 (30분 TTL)
@@ -225,18 +232,20 @@ async def fetch_loan_status_batch(books: List[Dict], library_name: Optional[str]
         )
         if all_failed:
             global LAST_WARNING_SENT_AT
-            now = datetime.now()
-            # 1시간 쿨다운 체크
-            if LAST_WARNING_SENT_AT is None or (now - LAST_WARNING_SENT_AT) > timedelta(hours=1):
-                LAST_WARNING_SENT_AT = now
-                warning_text = (
-                    f"🚨 <b>[책자리 API 경고] 도서관 정보나루 연동 장애 감지</b>\n\n"
-                    f"조회 대상 도서 전체가 '확인중' 상태로 반환되었습니다. IP 차단이나 정보나루 API 서버 장애 가능성이 높습니다.\n"
-                    f"- 조회 도서 수: {len(books_with_isbn)}권\n"
-                    f"- 감지 시간: {now.strftime('%Y-%m-%d %H:%M:%S')} (KST)"
-                )
-                # 비차단(Non-blocking)을 위해 백그라운드 태스크로 전송
-                asyncio.create_task(send_telegram_message(warning_text))
+            async def maybe_send_warning():
+                async with get_warning_lock():
+                    now = datetime.now()
+                    if LAST_WARNING_SENT_AT is None or (now - LAST_WARNING_SENT_AT) > timedelta(hours=1):
+                        global LAST_WARNING_SENT_AT
+                        LAST_WARNING_SENT_AT = now
+                        warning_text = (
+                            f"🚨 <b>[책자리 API 경고] 도서관 정보나루 연동 장애 감지</b>\n\n"
+                            f"조회 대상 도서 전체가 '확인중' 상태로 반환되었습니다. IP 차단이나 정보나루 API 서버 장애 가능성이 높습니다.\n"
+                            f"- 조회 도서 수: {len(books_with_isbn)}권\n"
+                            f"- 감지 시간: {now.strftime('%Y-%m-%d %H:%M:%S')} (KST)"
+                        )
+                        await send_telegram_message(warning_text)
+            asyncio.create_task(maybe_send_warning())
     
     return loan_info
 
