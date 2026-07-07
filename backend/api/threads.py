@@ -192,7 +192,8 @@ def select_five_books(curation_tag: str) -> List[dict]:
         if books:
             book_ids = [b["id"] for b in books]
             fallback_query = fallback_query.not_.in_("id", book_ids)
-        fallback_query = fallback_query.order("title").limit(needed)
+        # 단순히 제목 오름차순 대신 전국 대출수(national_loan_count desc) 기준 우수 도서를 엄선하여 폴백 보충
+        fallback_query = fallback_query.order("national_loan_count", desc=True).limit(needed)
         fallback_result = fallback_query.execute()
         if fallback_result.data:
             books.extend(fallback_result.data)
@@ -858,9 +859,14 @@ async def weekly_threads_scheduler():
                     print(f"📡 [스케줄러] 저녁 6시 감지. 요일: {weekday}, 날짜: {today_date} -> 1단계 텍스트 시안 생성 시작")
                     target_idx = 0 if weekday == 0 else (1 if weekday == 2 else 2)
                     try:
-                        # 이미 오늘 생성된 피드가 있는지 재검증
+                        # 이미 오늘 동일 큐레이션 태그로 생성된 피드가 있는지 재검증
                         today_str = today_date.strftime("%Y-%m-%d")
+                        target_idx = 0 if weekday == 0 else (1 if weekday == 2 else 2)
+                        curations = get_weekly_curations(today_date)
+                        c_tag = curations[target_idx]["tag"].lstrip("#") if target_idx < len(curations) else ""
+                        
                         dup = supabase.table("threads_feeds").select("id")\
+                            .eq("curation_tag", c_tag)\
                             .gte("created_at", f"{today_str}T00:00:00+09:00")\
                             .limit(1).execute()
                         if not dup.data:

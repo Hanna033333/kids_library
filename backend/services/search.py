@@ -43,18 +43,21 @@ def search_books_service(
             db_curation_tag = curation_mapping.get(curation, curation)
             special_tags = ['겨울방학2026', '어린이도서연구회', 'caldecott']
             
+            # curation 파라미터 내의 쉼표/큰따옴표/백슬래시 이스케이프 및 인용 처리 적용
+            safe_curation = db_curation_tag.replace('\\', '\\\\').replace('"', '\\"').replace(',', '\\,')
+            
             if db_curation_tag in special_tags:
-                query = query.ilike('curation_tag', f'%{db_curation_tag}%')
+                query = query.ilike('curation_tag', f'%{safe_curation}%')
             else:
-                or_filter = f'curation_tag.eq."{db_curation_tag}",curation_tag.like."{db_curation_tag},%",curation_tag.eq."#{db_curation_tag}",curation_tag.like."#{db_curation_tag},%"'
+                or_filter = f'curation_tag.eq."{safe_curation}",curation_tag.like."{safe_curation},%",curation_tag.eq."#{safe_curation}",curation_tag.like."#{safe_curation},%"'
                 query = query.or_(or_filter)
     
     # 검색어 필터링 (제목 또는 저자에 검색어 포함)
-    # PostgREST ParserError 방지를 위해 검색어 q 내의 쉼표(,) 및 큰따옴표(") 이스케이프 및 인용 처리 적용
+    # PostgREST ParserError 방지를 위해 검색어 q 내의 백슬래시(\), 쉼표(,) 및 큰따옴표(") 이스케이프 및 인용 처리 적용
     if q:
         q = q.strip()
         if q:
-            safe_q = q.replace('"', '\\"').replace(',', '\\,')
+            safe_q = q.replace('\\', '\\\\').replace('"', '\\"').replace(',', '\\,')
             query = query.or_(f'title.ilike."%{safe_q}%",author.ilike."%{safe_q}%"')
     
     # 연령 필터링 - 괄호로 감싸서 AND 조건으로 결합

@@ -45,7 +45,7 @@ Vercel Preview 환경이 배포될 때마다 도메인이 유동적으로 생성
 
 * **기준 코드 (`backend/main.py`)**:
   ```python
-  allow_origin_regex=r"^(https://kids-library-git-[a-z0-9]+-hannas-projects-[a-z0-9]+\.vercel\.app|https://(www\.)?checkjari\.com)$"
+  allow_origin_regex=r"^(https://kids-library-git-[a-z0-9-]+-hannas-projects-[a-z0-9]+\.vercel\.app|https://(www\.)?checkjari\.com)$"
   ```
   * 위 정규식 구조가 백엔드 `CORSMiddleware`에 올바르게 적용되어 있는지 검사합니다.
 

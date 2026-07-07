@@ -41,11 +41,11 @@
 @.agent/skills/marketing/ga4_integration/SKILL.md
 @.agent/skills/marketing/threads_publishing/SKILL.md
 @.agent/skills/marketing/blog_publishing/SKILL.md
-# @.agent/skills/marketing/winter_campaign/SKILL.md
-# @.agent/skills/marketing/winter_strategy/SKILL.md
+# `@.agent/skills/marketing/winter_campaign/SKILL.md`
+# `@.agent/skills/marketing/winter_strategy/SKILL.md`
 
 ### Planning
-# @.agent/skills/planning/winter_books_policy/SKILL.md
+# `@.agent/skills/planning/winter_books_policy/SKILL.md`
 
 ### QA
 @.agent/skills/qa/SKILL.md

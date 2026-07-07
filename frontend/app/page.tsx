@@ -61,15 +61,10 @@ export default async function HomePage() {
       return (lcgState >>> 0) / 0x100000000
     }
 
-    // VALID_TAXONOMY 배열 셔플 (Fisher-Yates)
-    const shuffledTags = [...VALID_TAXONOMY]
-    for (let i = shuffledTags.length - 1; i > 0; i--) {
-      const j = Math.floor(seededRandom() * (i + 1))
-      ;[shuffledTags[i], shuffledTags[j]] = [shuffledTags[j], shuffledTags[i]]
-    }
-
-    // 상위 3개 태그 선택
-    selectedTags = shuffledTags.slice(0, 3) as any[]
+    // 이미 검증된 weeklySchedule 세트 중 하나를 대칭적으로 선택 (FE/BE 100% 정합성 및 가용성 보장)
+    const targetIdx = Math.floor(seededRandom() * weeklySchedule.length)
+    const safeIdx = Math.max(0, Math.min(targetIdx, weeklySchedule.length - 1))
+    selectedTags = weeklySchedule[safeIdx].curations as any[]
   }
 
   // 서버 사이드 병렬 데이터 페칭 (홈 화면에서는 도서관 소장 정보 조인을 생략하여 TTFB 단축)

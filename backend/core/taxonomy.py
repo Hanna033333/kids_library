@@ -147,34 +147,18 @@ def get_weekly_curations(now_date: datetime.date = None) -> list:
         if item["start"] <= now_str <= item["end"]:
             return item["curations"]
 
-    # 2. fallback LCG (결정론적 셔플)
-    # FE의 Date.getTime()과 일치하도록 UTC Unix timestamp 기반 일수 계산
+    # 2. fallback LCG (결정론적 셔플 대신 이미 검증 완료된 weekly_schedule 내의 특정 주간 큐레이션을 대칭 매핑)
+    if not schedule_table:
+        # 파일 로드 실패 등을 대비한 최소한의 안전 폴백
+        return VALID_TAXONOMY[:3]
+        
     now_ts = time.time()
     days_since_epoch = int(now_ts // 86400)
     seed = days_since_epoch // 7
     lcg_state = (seed * 1664525 + 1013904223) & 0xffffffff
     
-    shuffled = list(VALID_TAXONOMY)
-    for i in range(len(shuffled) - 1, 0, -1):
-        lcg_state = (lcg_state * 1664525 + 1013904223) & 0xffffffff
-        j = int(lcg_state / 0x100000000 * (i + 1))
-        shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+    # 0 ~ len(schedule_table)-1 범위의 인덱스를 결정적으로 산출
+    target_schedule_idx = int(lcg_state / 0x100000000 * len(schedule_table))
+    target_schedule_idx = max(0, min(target_schedule_idx, len(schedule_table) - 1))
     
-    # 3. 7-Book Rule 유효성 검증 루프
-    selected_curations = []
-    for item in shuffled:
-        tag = item["tag"]
-        if check_7_books_exist(tag):
-            selected_curations.append(item)
-            if len(selected_curations) == 3:
-                break
-                
-    # 7-Book Rule을 통과한 태그가 부족할 경우, 기존 shuffled에서 보충하여 최소 3개 리턴 보장
-    if len(selected_curations) < 3:
-        for item in shuffled:
-            if item not in selected_curations:
-                selected_curations.append(item)
-                if len(selected_curations) == 3:
-                    break
-                    
-    return selected_curations[:3]
+    return schedule_table[target_schedule_idx]["curations"]
