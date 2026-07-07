@@ -174,10 +174,60 @@ async def publish_carousel_to_threads(text: str, image_urls: list) -> str:
     return post_id
 
 
+async def smoke_test_short_url(reply_text: str) -> None:
+    """
+    댓글 본문에 포함된 단축 URL(🔗 https://checkjari.com/c/{slug})을 검증합니다.
+    로컬 환경 호환성을 위해 FRONTEND_URL 환경 변수가 지정되어 있다면 해당 호스트로 치환하여 테스트합니다.
+    """
+    import os
+    import re
+    
+    # checkjari.com/c/{slug} 주소 패턴 찾기 (한글 태그 또는 영어 슬러그 대응)
+    match = re.search(r"https://checkjari\.com/c/([a-zA-Z0-9%\-]+)", reply_text)
+    if not match:
+        print("ℹ️ [Smoke Test] 본문에 검증할 책자리 단축 URL이 포함되어 있지 않습니다.")
+        return
+
+    slug = match.group(1)
+    frontend_url = os.getenv("FRONTEND_URL", "https://checkjari.com").rstrip("/")
+    test_url = f"{frontend_url}/c/{slug}"
+    
+    print(f"🔍 [Smoke Test] 발행 전 단축 링크 검증 시작: {test_url} (원래 링크: {match.group(0)})")
+    
+    headers = {
+        "User-Agent": "CheckjariSmokeTester/1.0 (Mobile-First Smoke Test)"
+    }
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            # 리다이렉션을 따라가서 최종 페이지가 200 OK를 반환하는지 체크
+            response = await client.get(test_url, headers=headers, follow_redirects=True, timeout=12.0)
+            
+            if response.status_code != 200:
+                raise RuntimeError(
+                    f"서버가 비정상적인 상태 코드를 반환했습니다: {response.status_code}"
+                )
+                
+            # Next.js 404 에러 텍스트가 본문에 포함되어 있는지 검출
+            content_lower = response.text.lower()
+            if "page_not_found" in content_lower or "could not be found" in content_lower or "<title>404" in response.text:
+                raise RuntimeError("페이지 콘텐츠 내부에 404 에러 패턴(Not Found)이 감지되었습니다.")
+                
+            print(f"✅ [Smoke Test] 단축 링크 검증 통과 (최종 응답 코드: {response.status_code})")
+            
+    except Exception as e:
+        error_msg = f"❌ [Smoke Test 실패] '{test_url}' 페이지를 로드할 수 없거나 존재하지 않는 경로입니다. 발행이 차단되었습니다. (원인: {e})"
+        print(error_msg)
+        raise RuntimeError(error_msg)
+
+
 async def publish_reply_to_threads(parent_post_id: str, reply_text: str) -> str:
     """
     부모 스레드 포스트 ID(parent_post_id)를 받아서 첫 번째 댓글(reply_text)을 자동으로 등록합니다.
     """
+    # 발행 전 단축 URL 스모크 테스트 실행 (실패 시 RuntimeError 발생하여 이후 등록 중단)
+    await smoke_test_short_url(reply_text)
+
     if not THREADS_ACCESS_TOKEN or not THREADS_USER_ID:
         raise ValueError("❌ 환경 변수에 THREADS_ACCESS_TOKEN 또는 THREADS_USER_ID가 설정되어 있지 않습니다.")
         

@@ -552,8 +552,29 @@ async def publish_approved_feed(feed_id: int):
         print(f"⚠️ [즉시 배포] 피드 {feed_id}가 이미 발행 중이거나 선점됨")
         return
         
+    # 404 리다이렉트 스모크 테스트 선행 수행 (부모 캐러셀 발행 전 차단)
+    curation_tag = feed.get("curation_tag") or "추천"
+    tag_clean = curation_tag.lstrip("#")
+    slug = get_slug_by_tag(tag_clean)
+    reply_text = f"🔗 https://checkjari.com/c/{slug}"
+
     print(f"📣 [즉시 배포] 피드 {feed_id} 즉시 발행 개시")
     await send_telegram_message(f"📢 <b>[즉시 배포]</b> 늦은 승인이 감지되었습니다. 피드 ID: {feed_id}의 Threads 최종 배포를 즉시 시작합니다...")
+    
+    try:
+        from services.threads_publisher import smoke_test_short_url
+        await smoke_test_short_url(reply_text)
+    except Exception as smoke_err:
+        print(f"❌ [즉시 배포] 스모크 테스트 실패: {smoke_err}")
+        await send_telegram_message(f"🚨 <b>[발행 차단]</b> 리다이렉트 링크가 404 상태입니다. 배포를 중단했습니다.\n원인: {smoke_err}")
+        try:
+            supabase.table("threads_feeds").update({
+                "published_at": None
+            }).eq("id", feed_id).execute()
+        except Exception as rollback_err:
+            print(f"❌ [즉시 배포] 피드({feed_id}) 선점 롤백 실패: {rollback_err}")
+        return
+
     try:
         post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
     except Exception as publish_err:
@@ -568,11 +589,7 @@ async def publish_approved_feed(feed_id: int):
         return
         
     # 첫 댓글 연동
-    curation_tag = feed.get("curation_tag") or "추천"
     try:
-        tag_clean = curation_tag.lstrip("#")
-        slug = get_slug_by_tag(tag_clean)
-        reply_text = f"🔗 https://checkjari.com/c/{slug}"
         await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
     except Exception as reply_err:
         print(f"❌ [즉시 배포] 첫 댓글 등록 실패: {reply_err}")
@@ -908,8 +925,28 @@ async def weekly_threads_scheduler():
                                     print(f"⚠️ [스케줄러] 피드({feed_id})가 이미 다른 프로세스에 의해 선점됨 → 중복 발행 차단")
                                     continue
 
+                                curation_tag = feed.get("curation_tag") or "추천"
+                                tag_clean = curation_tag.lstrip("#")
+                                slug = get_slug_by_tag(tag_clean)
+                                reply_text = f"🔗 https://checkjari.com/c/{slug}"
+
                                 print(f"📣 [스케줄러] 최종 승인된 피드({feed_id}) 배포 진행")
                                 await send_telegram_message("📢 <b>[스케줄러] 최종 승인된 카드뉴스의 Threads 최종 배포를 진행합니다...</b>")
+                                
+                                try:
+                                    from services.threads_publisher import smoke_test_short_url
+                                    await smoke_test_short_url(reply_text)
+                                except Exception as smoke_err:
+                                    print(f"❌ [스케줄러] 스모크 테스트 실패: {smoke_err}")
+                                    await send_telegram_message(f"🚨 <b>[발행 차단]</b> 리다이렉트 링크가 404 상태입니다. 배포를 중단했습니다.\n원인: {smoke_err}")
+                                    try:
+                                        supabase.table("threads_feeds").update({
+                                            "published_at": None
+                                        }).eq("id", feed_id).execute()
+                                    except Exception as rollback_err:
+                                        print(f"❌ [스케줄러] 피드({feed_id}) 선점 롤백 실패: {rollback_err}")
+                                    continue
+
                                 try:
                                     post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
                                 except Exception as publish_err:
@@ -928,11 +965,7 @@ async def weekly_threads_scheduler():
                                     continue
 
                                 # 첫 댓글로 자동 링크 연동 (옵션 B)
-                                curation_tag = feed.get("curation_tag") or "추천"
                                 try:
-                                    tag_clean = curation_tag.lstrip("#")
-                                    slug = get_slug_by_tag(tag_clean)
-                                    reply_text = f"🔗 https://checkjari.com/c/{slug}"
                                     await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
                                     print(f"✅ [스케줄러] 첫 댓글 등록 성공 (태그: {curation_tag} -> 슬러그: {slug})")
                                 except Exception as reply_err:
@@ -1060,16 +1093,26 @@ async def republish_feed(
 
     caption = feed.get("content", "")
 
+    curation_tag = feed.get("curation_tag") or "추천"
+    tag_clean = curation_tag.lstrip("#")
+    slug = get_slug_by_tag(tag_clean)
+    reply_text = f"🔗 https://checkjari.com/c/{slug}"
+
     try:
         await send_telegram_message(f"🔄 <b>[수동 재발행]</b> 피드 ID {feed_id} 재발행을 시작합니다...")
+        
+        from services.threads_publisher import smoke_test_short_url
+        await smoke_test_short_url(reply_text)
+    except Exception as smoke_err:
+        print(f"❌ [수동 재발행] 스모크 테스트 실패: {smoke_err}")
+        await send_telegram_message(f"🚨 <b>[수동 재발행 차단]</b> 리다이렉트 링크가 404 상태입니다. 배포를 중단했습니다.\n원인: {smoke_err}")
+        raise HTTPException(status_code=500, detail=f"스모크 테스트 실패: {smoke_err}")
+
+    try:
         post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
         
         # 첫 댓글로 자동 링크 연동 (옵션 B)
-        curation_tag = feed.get("curation_tag") or "추천"
         try:
-            tag_clean = curation_tag.lstrip("#")
-            slug = get_slug_by_tag(tag_clean)
-            reply_text = f"🔗 https://checkjari.com/c/{slug}"
             await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
             print(f"✅ [수동 재발행] 첫 댓글 등록 성공 (태그: {curation_tag} -> 슬러그: {slug})")
         except Exception as reply_err:

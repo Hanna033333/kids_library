@@ -4,6 +4,7 @@ import { VALID_TAXONOMY, VALID_AI_TAGS } from '@/lib/constants/taxonomy'
 import { createClient } from '@/lib/supabase'
 import { Suspense } from 'react'
 import { PageLoader } from '@/components/ui/PageLoader'
+import { notFound } from 'next/navigation'
 
 interface Props {
     params: Promise<{ tag: string }>
@@ -53,18 +54,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         keywords = `${matchedTaxonomy.tag}, ${matchedTaxonomy.title}, 그림책 큐레이션, 그림책 추천, 어린이 도서, 책자리, 부모 필독서, 정서 발달`
     }
 
+    const targetSlug = matchedTaxonomy ? matchedTaxonomy.slug : curation;
+
     return {
         title,
         description,
         keywords,
         alternates: {
-            canonical: `/collections/curation/${encodeURIComponent(curation)}`
+            canonical: `/collections/curation/${encodeURIComponent(targetSlug)}`
         },
         openGraph: {
             title,
             description,
             type: 'website',
-            url: `https://checkjari.com/collections/curation/${encodeURIComponent(curation)}`
+            url: `https://checkjari.com/collections/curation/${encodeURIComponent(targetSlug)}`
         },
         twitter: {
             card: 'summary_large_image',
@@ -87,6 +90,10 @@ export default async function CurationPage({ params }: Props) {
     // Supabase 직접 조회를 통해 구조화된 데이터(JSON-LD ItemList) 생성 -> 봇 수집 극대화
     const isKnownCuration = ['winter-vacation', 'research-council', 'caldecott'].includes(curationTag) || 
                             VALID_AI_TAGS.includes(curationTag);
+                            
+    if (!isKnownCuration) {
+        notFound();
+    }
     if (curationTag && isKnownCuration) {
         const supabase = createClient()
         let query = supabase

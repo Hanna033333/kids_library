@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase'
-import { VALID_AI_TAGS } from '@/lib/constants/taxonomy'
+import { VALID_TAXONOMY } from '@/lib/constants/taxonomy'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const supabase = createClient()
@@ -26,16 +26,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ]
 
     // AI curation tags (New semantic path parameter style)
-    VALID_AI_TAGS.forEach((tag) => {
+    VALID_TAXONOMY.forEach((item) => {
         routes.push({
-            url: `${baseUrl}/collections/curation/${encodeURIComponent(tag)}`,
+            url: `${baseUrl}/collections/curation/${encodeURIComponent(item.slug)}`,
             lastModified: new Date(),
             changeFrequency: 'weekly',
             priority: 0.9,
         })
         // Fallback backward compatibility
         routes.push({
-            url: `${baseUrl}/books?curation=${encodeURIComponent(tag)}`,
+            url: `${baseUrl}/books?curation=${encodeURIComponent(item.slug)}`,
             lastModified: new Date(),
             changeFrequency: 'weekly',
             priority: 0.8,
