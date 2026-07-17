@@ -162,8 +162,8 @@ class ThreadsTriggerRequest(BaseModel):
 class WeeklyTriggerRequest(BaseModel):
     index: Optional[int] = None
 
-def select_five_books(curation_tag: str) -> List[dict]:
-    """도서 데이터베이스에서 조건에 맞는 책 5권을 엄선합니다. (ㄱㄴㄷ 정렬 적용)"""
+def select_three_books(curation_tag: str) -> List[dict]:
+    """도서 데이터베이스에서 조건에 맞는 책 3권을 엄선합니다. (ㄱㄴㄷ 정렬 적용)"""
     query = supabase.table("childbook_items").select("*")
     query = query.or_("is_hidden.is.null,is_hidden.eq.false")
     query = query.not_.is_("image_url", "null")
@@ -182,9 +182,9 @@ def select_five_books(curation_tag: str) -> List[dict]:
     result = query.execute()
     books = result.data if result.data else []
     
-    # 만약 해당 태그를 가진 도서가 5권보다 부족한 경우, 전체 도서 중에서 보충
-    if len(books) < 5:
-        needed = 5 - len(books)
+    # 만약 해당 태그를 가진 도서가 3권보다 부족한 경우, 전체 도서 중에서 보충
+    if len(books) < 3:
+        needed = 3 - len(books)
         fallback_query = supabase.table("childbook_items").select("*")
         fallback_query = fallback_query.or_("is_hidden.is.null,is_hidden.eq.false")
         fallback_query = fallback_query.not_.is_("image_url", "null")
@@ -198,7 +198,7 @@ def select_five_books(curation_tag: str) -> List[dict]:
         if fallback_result.data:
             books.extend(fallback_result.data)
             
-    return books[:5]
+    return books[:3]
 
 _TRIM_FILLER = " 아이의 호기심과 상상력을 풍부하게 키워주고 부모와 함께 읽으며 따뜻한 감동과 소중한 교훈을 배울 수 있는 그림책입니다."
 
@@ -396,9 +396,9 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
     
     print(f"📚 [스레드 발행 파이프라인] 테마: '{c_title}' (태그: '{c_tag}') 작업 시작")
     
-    books = select_five_books(c_tag)
-    if len(books) < 5:
-        raise ValueError(f"큐레이션 도서가 부족합니다. 최소 5권의 도서가 필요합니다.")
+    books = select_three_books(c_tag)
+    if len(books) < 3:
+        raise ValueError(f"큐레이션 도서가 부족합니다. 최소 3권의 도서가 필요합니다.")
         
     ai_content = generate_ai_threads_content(c_title, c_tag, books)
     
@@ -561,19 +561,20 @@ async def publish_approved_feed(feed_id: int):
     print(f"📣 [즉시 배포] 피드 {feed_id} 즉시 발행 개시")
     await send_telegram_message(f"📢 <b>[즉시 배포]</b> 늦은 승인이 감지되었습니다. 피드 ID: {feed_id}의 Threads 최종 배포를 즉시 시작합니다...")
     
-    try:
-        from services.threads_publisher import smoke_test_short_url
-        await smoke_test_short_url(reply_text)
-    except Exception as smoke_err:
-        print(f"❌ [즉시 배포] 스모크 테스트 실패: {smoke_err}")
-        await send_telegram_message(f"🚨 <b>[발행 차단]</b> 리다이렉트 링크가 404 상태입니다. 배포를 중단했습니다.\n원인: {smoke_err}")
-        try:
-            supabase.table("threads_feeds").update({
-                "published_at": None
-            }).eq("id", feed_id).execute()
-        except Exception as rollback_err:
-            print(f"❌ [즉시 배포] 피드({feed_id}) 선점 롤백 실패: {rollback_err}")
-        return
+    # [마케팅 전략 변경] 첫 댓글 등록을 하지 않으므로 단축 URL 스모크 테스트 생략
+    # try:
+    #     from services.threads_publisher import smoke_test_short_url
+    #     await smoke_test_short_url(reply_text)
+    # except Exception as smoke_err:
+    #     print(f"❌ [즉시 배포] 스모크 테스트 실패: {smoke_err}")
+    #     await send_telegram_message(f"🚨 <b>[발행 차단]</b> 리다이렉트 링크가 404 상태입니다. 배포를 중단했습니다.\n원인: {smoke_err}")
+    #     try:
+    #         supabase.table("threads_feeds").update({
+    #             "published_at": None
+    #         }).eq("id", feed_id).execute()
+    #     except Exception as rollback_err:
+    #         print(f"❌ [즉시 배포] 피드({feed_id}) 선점 롤백 실패: {rollback_err}")
+    #     return
 
     try:
         post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
@@ -588,12 +589,12 @@ async def publish_approved_feed(feed_id: int):
         await send_telegram_message(f"❌ <b>[즉시 배포 오류]</b> 피드({feed_id}) 발행 실패: {publish_err}")
         return
         
-    # 첫 댓글 연동
-    try:
-        await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
-    except Exception as reply_err:
-        print(f"❌ [즉시 배포] 첫 댓글 등록 실패: {reply_err}")
-        await send_telegram_message(f"⚠️ [즉시 배포 경고] 피드 발행 성공, 첫 댓글 실패: {reply_err}")
+    # [마케팅 전략 변경] 첫 댓글 연동 생략 ('스하리' 유도로 전환)
+    # try:
+    #     await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
+    # except Exception as reply_err:
+    #     print(f"❌ [즉시 배포] 첫 댓글 등록 실패: {reply_err}")
+    #     await send_telegram_message(f"⚠️ [즉시 배포 경고] 피드 발행 성공, 첫 댓글 실패: {reply_err}")
         
     await send_telegram_message(f"🎉 <b>[즉시 배포 완료]</b> Threads에 최종 배포 성공. 포스트 ID: <code>{post_id}</code>")
 
@@ -933,19 +934,20 @@ async def weekly_threads_scheduler():
                                 print(f"📣 [스케줄러] 최종 승인된 피드({feed_id}) 배포 진행")
                                 await send_telegram_message("📢 <b>[스케줄러] 최종 승인된 카드뉴스의 Threads 최종 배포를 진행합니다...</b>")
                                 
-                                try:
-                                    from services.threads_publisher import smoke_test_short_url
-                                    await smoke_test_short_url(reply_text)
-                                except Exception as smoke_err:
-                                    print(f"❌ [스케줄러] 스모크 테스트 실패: {smoke_err}")
-                                    await send_telegram_message(f"🚨 <b>[발행 차단]</b> 리다이렉트 링크가 404 상태입니다. 배포를 중단했습니다.\n원인: {smoke_err}")
-                                    try:
-                                        supabase.table("threads_feeds").update({
-                                            "published_at": None
-                                        }).eq("id", feed_id).execute()
-                                    except Exception as rollback_err:
-                                        print(f"❌ [스케줄러] 피드({feed_id}) 선점 롤백 실패: {rollback_err}")
-                                    continue
+                                # [마케팅 전략 변경] 첫 댓글 등록을 하지 않으므로 단축 URL 스모크 테스트 생략
+                                # try:
+                                #     from services.threads_publisher import smoke_test_short_url
+                                #     await smoke_test_short_url(reply_text)
+                                # except Exception as smoke_err:
+                                #     print(f"❌ [스케줄러] 스모크 테스트 실패: {smoke_err}")
+                                #     await send_telegram_message(f"🚨 <b>[발행 차단]</b> 리다이렉트 링크가 404 상태입니다. 배포를 중단했습니다.\n원인: {smoke_err}")
+                                #     try:
+                                #         supabase.table("threads_feeds").update({
+                                #             "published_at": None
+                                #         }).eq("id", feed_id).execute()
+                                #     except Exception as rollback_err:
+                                #         print(f"❌ [스케줄러] 피드({feed_id}) 선점 롤백 실패: {rollback_err}")
+                                #     continue
 
                                 try:
                                     post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
@@ -964,13 +966,13 @@ async def weekly_threads_scheduler():
                                     )
                                     continue
 
-                                # 첫 댓글로 자동 링크 연동 (옵션 B)
-                                try:
-                                    await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
-                                    print(f"✅ [스케줄러] 첫 댓글 등록 성공 (태그: {curation_tag} -> 슬러그: {slug})")
-                                except Exception as reply_err:
-                                    print(f"❌ [스케줄러] 첫 댓글 등록 실패: {reply_err}")
-                                    await send_telegram_message(f"⚠️ [스케줄러 경고] 피드({feed_id}) 발행에는 성공했으나, 첫 댓글 등록 중 오류 발생: {reply_err}")
+                                # [마케팅 전략 변경] 첫 댓글 자동 연동 생략 ('스하리' 유도로 전환)
+                                # try:
+                                #     await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
+                                #     print(f"✅ [스케줄러] 첫 댓글 등록 성공 (태그: {curation_tag} -> 슬러그: {slug})")
+                                # except Exception as reply_err:
+                                #     print(f"❌ [스케줄러] 첫 댓글 등록 실패: {reply_err}")
+                                #     await send_telegram_message(f"⚠️ [스케줄러 경고] 피드({feed_id}) 발행에는 성공했으나, 첫 댓글 등록 중 오류 발생: {reply_err}")
 
                                 await send_telegram_message(f"🎉 <b>[실시간 배포 완료]</b> Threads에 최종 배포되었습니다. 포스트 ID: <code>{post_id}</code>")
                             else:
@@ -1101,9 +1103,11 @@ async def republish_feed(
     try:
         await send_telegram_message(f"🔄 <b>[수동 재발행]</b> 피드 ID {feed_id} 재발행을 시작합니다...")
         
-        from services.threads_publisher import smoke_test_short_url
-        await smoke_test_short_url(reply_text)
+        # [마케팅 전략 변경] 첫 댓글 등록을 하지 않으므로 단축 URL 스모크 테스트 생략
+        # from services.threads_publisher import smoke_test_short_url
+        # await smoke_test_short_url(reply_text)
     except Exception as smoke_err:
+        pass
         print(f"❌ [수동 재발행] 스모크 테스트 실패: {smoke_err}")
         await send_telegram_message(f"🚨 <b>[수동 재발행 차단]</b> 리다이렉트 링크가 404 상태입니다. 배포를 중단했습니다.\n원인: {smoke_err}")
         raise HTTPException(status_code=500, detail=f"스모크 테스트 실패: {smoke_err}")
@@ -1111,13 +1115,13 @@ async def republish_feed(
     try:
         post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
         
-        # 첫 댓글로 자동 링크 연동 (옵션 B)
-        try:
-            await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
-            print(f"✅ [수동 재발행] 첫 댓글 등록 성공 (태그: {curation_tag} -> 슬러그: {slug})")
-        except Exception as reply_err:
-            print(f"❌ [수동 재발행] 첫 댓글 등록 실패: {reply_err}")
-            await send_telegram_message(f"⚠️ [재발행 경고] 피드({feed_id}) 발행에는 성공했으나, 첫 댓글 등록 중 오류 발생: {reply_err}")
+        # [마케팅 전략 변경] 첫 댓글 자동 연동 생략 ('스하리' 유도로 전환)
+        # try:
+        #     await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
+        #     print(f"✅ [수동 재발행] 첫 댓글 등록 성공 (태그: {curation_tag} -> 슬러그: {slug})")
+        # except Exception as reply_err:
+        #     print(f"❌ [수동 재발행] 첫 댓글 등록 실패: {reply_err}")
+        #     await send_telegram_message(f"⚠️ [재발행 경고] 피드({feed_id}) 발행에는 성공했으나, 첫 댓글 등록 중 오류 발생: {reply_err}")
 
         supabase.table("threads_feeds").update(
             {"published_at": datetime.datetime.now(tz_kst).isoformat()}

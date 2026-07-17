@@ -56,15 +56,15 @@ def generate_fallback_content(
 ) -> dict:
     """Gemini API 호출이 불가할 때 로컬 DB의 도서 소개 및 요약 정보를 정제하여 스마트 폴백 텍스트를 구성합니다."""
     caption = (
+        f"안녕하세요, 책자리 입니다. 📚\n\n"
         f"오늘의 추천 큐레이션은 <{curation_title}> 입니다.\n\n"
         f"우리 아이에게 꼭 맞는 책들을 엄선하여 소개해 드려요. "
         f"함께 소중한 독서 시간을 가져보는 건 어떨까요?\n\n"
-        f"자세한 도서 목록과 정보는 아래 링크에서 확인해 보세요!\n"
-        f"🔗 https://checkjari.com/c/{urllib.parse.quote(curation_tag)}"
+        f"👉 더 많은 독서 목록을 보시려면 '스하리' 해주세요!"
     )
 
     card_descriptions = []
-    for b in books:
+    for b in books[:3]:
         raw_desc = b.get("description") or b.get("curation_note") or f"{b.get('title')} 도서입니다."
         card_descriptions.append(trim_text_fallback(raw_desc))
 
@@ -77,7 +77,7 @@ def generate_fallback_content(
 def generate_ai_threads_content(
     curation_title: str, curation_tag: str, books: List[dict]
 ) -> dict:
-    """Gemini API를 사용하여 스레드용 캡션 및 5권 도서의 3줄 요약 설명(각 65자 내외)을 생성합니다."""
+    """Gemini API를 사용하여 스레드용 캡션 및 3권 도서의 3줄 요약 설명(각 65자 내외)을 생성합니다."""
     if not GEMINI_API_KEY:
         print("⚠️ GEMINI_API_KEY가 존재하지 않아 스마트 폴백 메커니즘을 작동합니다.")
         return generate_fallback_content(curation_title, curation_tag, books)
@@ -94,7 +94,7 @@ def generate_ai_threads_content(
             "publisher": b.get("publisher"),
             "description": b.get("description") or b.get("curation_note") or "",
         }
-        for idx, b in enumerate(books)
+        for idx, b in enumerate(books[:3])
     ]
 
     prompt = f"""
@@ -119,9 +119,10 @@ def generate_ai_threads_content(
      (빈 줄)
      [단락 2: 해당 고민을 함께 나누고 덜어줄 이번 주 큐레이션 테마의 기획 의도 및 엄선된 추천 도서들 소개 (3~4문장)]
      (빈 줄)
-     👉 더 많은 도서 목록은 첫 댓글의 링크를 확인해 보세요!
+     👉 더 많은 독서 목록을 보시려면 '스하리' 해주세요!
      --- (레이아웃 순서 끝) ---
    - **경고 (태그 및 링크 노출 금지)**: 본문 캡션 내에 직접적인 URL 링크(예: http://..., checkjari.com/...) 및 해시태그(예: #책자리 등)는 **절대로 포함해서는 안 됩니다**. (링크와 태그는 제외하고 캡션을 생성해 주세요)
+   - **경고 (도서명 직접 노출 금지)**: 캡션 본문 글에는 책 제목이나 출판사명을 직접 적지 마세요. 도서 정보는 이미지 렌더링 카드뉴스를 통해서 유도하게 되고, 캡션은 양육자의 감정적 공감 에피소드와 큐레이션 의도에 집중해야 합니다.
    - 맞춤법, 띄어쓰기, 문장 완성도에 오타가 전혀 없도록 철저히 검수하세요.
 
 2. 카드뉴스 도서 요약(card_descriptions) 작성 지침 (비주얼 가이드):
@@ -139,9 +140,7 @@ def generate_ai_threads_content(
   "card_descriptions": [
     "1번 책의 3줄 줄거리 요약 (60~70자)",
     "2번 책의 3줄 줄거리 요약 (60~70자)",
-    "3번 책의 3줄 줄거리 요약 (60~70자)",
-    "4번 책의 3줄 줄거리 요약 (60~70자)",
-    "5번 책의 3줄 줄거리 요약 (60~70자)"
+    "3번 책의 3줄 줄거리 요약 (60~70자)"
   ]
 }}
 """
@@ -149,7 +148,7 @@ def generate_ai_threads_content(
     try:
         response = model.generate_content(prompt)
         res_data = json.loads(response.text)
-        if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 5:
+        if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 3:
             raise ValueError("Invalid response structure")
             
         caption = res_data["caption"].strip()
@@ -189,7 +188,7 @@ async def apply_feedback_with_gemini(
             "publisher": b.get("publisher"),
             "old_description": old_descriptions[idx] if idx < len(old_descriptions) else "",
         }
-        for idx, b in enumerate(books)
+        for idx, b in enumerate(books[:3])
     ]
 
     prompt = f"""
@@ -217,9 +216,10 @@ async def apply_feedback_with_gemini(
      (빈 줄)
      [단락 2: 피드백이 반영된 이번 주 큐레이션 테마 기획 의도 및 도서 안내]
      (빈 줄)
-     👉 더 많은 도서 목록은 첫 댓글의 링크를 확인해 보세요!
+     👉 더 많은 독서 목록을 보시려면 '스하리' 해주세요!
      --- (레이아웃 순서 끝) ---
    - **경고 (태그 및 링크 노출 금지)**: 본문 캡션 내에 직접적인 URL 링크(예: http://..., checkjari.com/...) 및 해시태그(예: #책자리 등)는 **절대로 포함해서는 안 됩니다**.
+   - **경고 (도서명 직접 노출 금지)**: 캡션 본문 글에는 책 제목이나 출판사명을 직접 적지 마세요. 도서 정보는 이미지 렌더링 카드뉴스를 통해서 유도하게 되고, 캡션은 양육자의 감정적 공감 에피소드와 큐레이션 의도에 집중해야 합니다.
    - 맞춤법 및 오타가 절대 없도록 철저히 다시 보정해 주세요.
 
 2. 카드뉴스 도서 요약(card_descriptions) 작성 지침:
@@ -237,9 +237,7 @@ async def apply_feedback_with_gemini(
   "card_descriptions": [
     "수정 반영된 1번 책의 3줄 요약 (60~70자)",
     "수정 반영된 2번 책의 3줄 요약 (60~70자)",
-    "수정 반영된 3번 책의 3줄 요약 (60~70자)",
-    "수정 반영된 4번 책의 3줄 요약 (60~70자)",
-    "수정 반영된 5번 책의 3줄 요약 (60~70자)"
+    "수정 반영된 3번 책의 3줄 요약 (60~70자)"
   ]
 }}
 """
@@ -247,7 +245,7 @@ async def apply_feedback_with_gemini(
     try:
         response = model.generate_content(prompt)
         res_data = json.loads(response.text)
-        if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 5:
+        if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 3:
             raise ValueError("Invalid response structure")
             
         caption = res_data["caption"].strip()

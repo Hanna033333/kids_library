@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import HomePageClient from '@/components/HomePageClient'
-import { getResearchCouncilBooks, getBooksByAge, getBooksByTag } from '@/lib/home-api'
+import { getResearchCouncilBooks, getBooksByAge, getBooksByTag, getSummerBooks } from '@/lib/home-api'
 import { getCaldecottBooks } from '@/lib/caldecott-api'
 import { createClient } from '@/lib/supabase'
 import { VALID_TAXONOMY, CurationTag } from '@/lib/constants/taxonomy'
@@ -68,10 +68,11 @@ export default async function HomePage() {
   }
 
   // 서버 사이드 병렬 데이터 페칭 (홈 화면에서는 도서관 소장 정보 조인을 생략하여 TTFB 단축)
-  const [researchBooks, ageBooks, caldecottBooks, ...dynamicBooks] = await Promise.all([
+  const [researchBooks, ageBooks, caldecottBooks, summerBooks, ...dynamicBooks] = await Promise.all([
     getResearchCouncilBooks(7, supabase, false),
     getBooksByAge(defaultAge, 7, supabase, false),
     getCaldecottBooks(supabase, false),
+    getSummerBooks(7, supabase, false),
     ...selectedTags.map(t => getBooksByTag(t.tag, 7, supabase, false))
   ])
 
@@ -87,6 +88,7 @@ export default async function HomePage() {
     initialCaldecottBooks={caldecottBooks.slice(0, 7)}
     initialResearchBooks={researchBooks}
     initialAgeBooks={ageBooks}
+    initialSummerBooks={summerBooks}
     initialSelectedAge={defaultAge}
     dynamicCurations={dynamicCurations}
   />

@@ -155,6 +155,58 @@ export async function getWinterBooks(limit: number = 7, client?: SupabaseClient,
 }
 
 /**
+ * 여름방학 추천 도서 가져오기 (매일 랜덤 7권 선정)
+ * 정책: 항상 정확히 7권 노출 보장 (랜덤 선택)
+ */
+export async function getSummerBooks(limit: number = 7, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
+    const supabase = client || createClient()
+
+    // 날짜 기반 시드로 하루 동안 일관된 랜덤 순서 유지
+    const now = new Date()
+    const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / (24 * 60 * 60 * 1000))
+    const seed = dayOfYear * 0.001 // 0~1 사이 값으로 변환
+
+    const selectFields = includeLibraryInfo
+        ? 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)'
+        : 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count';
+
+    const { data, error } = await supabase
+        .from('childbook_items')
+        .select(selectFields)
+        .ilike('curation_tag', '%여름방학2026%')
+        .or('is_hidden.is.null,is_hidden.eq.false')
+        .not('image_url', 'is', null)
+        .neq('image_url', '')
+        .order('id', { ascending: true }) // 먼저 ID로 정렬하여 일관성 확보
+        .limit(100) // 충분한 수 가져오기
+
+    if (error) {
+        console.error('Error fetching summer books:', error)
+        return []
+    }
+
+    if (!data || data.length === 0) {
+        return []
+    }
+
+    // 클라이언트 사이드에서 시드 기반 랜덤 선택
+    const seededRandom = (index: number) => {
+        const x = Math.sin(seed + index) * 10000
+        return x - Math.floor(x)
+    }
+
+    // Fisher-Yates shuffle with seeded random
+    const shuffled = [...data]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(seededRandom(i) * (i + 1))
+            ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+
+    // 정확히 limit 개수만 반환 (기본 7권)
+    return shuffled.slice(0, Math.min(limit, shuffled.length)) as any
+}
+
+/**
  * 특정 큐레이션 태그가 포함된 책 가져오기 (매칭 방식: 콤마 구분자 포함 여부)
  */
 export async function getBooksByTag(tagName: string, limit: number = 7, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {

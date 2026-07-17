@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 import { Search, Bookmark, LogOut, ChevronRight, Bell, Snowflake, BookOpen, User } from 'lucide-react'
-import { getBooksByAge, getResearchCouncilBooks, getWinterBooks } from '@/lib/home-api'
+import { getBooksByAge, getResearchCouncilBooks, getWinterBooks, getSummerBooks } from '@/lib/home-api'
 import { type Book } from '@/lib/types'
 import { useAuth } from '@/context/AuthContext'
 import LibrarySelector from '@/components/LibrarySelector'
@@ -33,6 +33,7 @@ interface HomePageClientProps {
   initialCaldecottBooks?: Book[];
   initialResearchBooks?: Book[];
   initialAgeBooks?: Book[];
+  initialSummerBooks?: Book[];
   initialSelectedAge?: string;
   dynamicCurations?: DynamicCuration[];
 }
@@ -41,6 +42,7 @@ export default function HomePageClient({
   initialCaldecottBooks = [],
   initialResearchBooks = [],
   initialAgeBooks = [],
+  initialSummerBooks = [],
   initialSelectedAge = '4-7',
   dynamicCurations = []
 }: HomePageClientProps) {
@@ -63,6 +65,7 @@ export default function HomePageClient({
   const [ageBooks, setAgeBooks] = useState<Book[]>(initialAgeBooks)
   const [researchBooks, setResearchBooks] = useState<Book[]>(initialResearchBooks)
   const [caldecottBooks] = useState<Book[]>(initialCaldecottBooks)
+  const [summerBooks, setSummerBooks] = useState<Book[]>(initialSummerBooks)
 
 
   // 초기 데이터가 있으면 로딩 상태 false
@@ -122,6 +125,13 @@ export default function HomePageClient({
       getResearchCouncilBooks(7).then(setResearchBooks)
     }
   }, []) // researchBooks 의존성 제거
+
+  // 여름방학 추천 도서 로드 (초기 데이터 없으면 로드)
+  useEffect(() => {
+    if (summerBooks.length === 0) {
+      getSummerBooks(7).then(setSummerBooks)
+    }
+  }, [])
 
   // 겨울방학 추천 도서 로드 (초기 데이터 없으면 로드)
   /* 
@@ -197,8 +207,47 @@ export default function HomePageClient({
       {/* 검색 바 제거 (큐레이션 집중을 위함) */}
 
 
-      {/* 1. 우리 아이 나이에 딱! (연령별 추천 섹션) */}
-      <section className="py-8 px-4 bg-muted-bg">
+      {/* 2026 여름방학 추천도서 섹션 (최상단 첫 번째 배치) */}
+      {summerBooks.length > 0 && (
+        <CurationSection
+          subtitle="교육청이 엄선한 학년별 필독서"
+          title="☀️ 여름방학 추천도서"
+          books={summerBooks}
+          href="/books?curation=summer-vacation"
+          onViewMore={() => sendGAEvent('click_view_more', { section: 'summer_vacation' })}
+          bgColor="bg-white"
+        />
+      )}
+
+
+
+
+
+      {/* 2. AI 큐레이션 섹션 (3일마다 랜덤 교체) */}
+      {dynamicCurations.map((curation, index) => (
+        <CurationSection
+          key={curation.tag}
+          subtitle={curation.subtitle}
+          title={curation.title}
+          books={curation.books}
+          href={`/books?curation=${encodeURIComponent(curation.tag)}`}
+          onViewMore={() => sendGAEvent('click_view_more', { section: curation.tag })}
+          bgColor={index % 2 === 0 ? 'bg-white' : 'bg-muted-bg'}
+        />
+      ))}
+
+      {/* 3. 칼데콧 수상작 섹션 */}
+      <CurationSection
+        subtitle="미국 도서관 최고의 영예"
+        title="칼데콧 수상작"
+        books={caldecottBooks}
+        href="/books?curation=caldecott"
+        onViewMore={() => sendGAEvent('click_view_more', { section: 'caldecott' })}
+        bgColor="bg-muted-bg"
+      />
+
+      {/* 우리 아이 나이에 딱! (연령별 추천 섹션) - 어린이도서연구회 추천 위로 이동 */}
+      <section className="py-8 px-4 bg-white">
         <div className="max-w-[1200px] mx-auto">
           <div className="flex items-end justify-between mb-6 px-2">
             <div className="flex flex-col gap-1">
@@ -233,7 +282,7 @@ export default function HomePageClient({
                 }}
                 className={`flex-shrink-0 whitespace-nowrap px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedAge === age.key
                   ? 'bg-brand-primary text-white'
-                  : 'bg-white text-gray-700 active:bg-gray-50 border border-gray-200'
+                  : 'bg-gray-100 text-gray-700 active:bg-gray-200 border border-gray-200'
                   }`}
               >
                 {age.label}
@@ -281,31 +330,6 @@ export default function HomePageClient({
         </div>
       </section>
 
-
-
-      {/* 2. AI 큐레이션 섹션 (3일마다 랜덤 교체) */}
-      {dynamicCurations.map((curation, index) => (
-        <CurationSection
-          key={curation.tag}
-          subtitle={curation.subtitle}
-          title={curation.title}
-          books={curation.books}
-          href={`/books?curation=${encodeURIComponent(curation.tag)}`}
-          onViewMore={() => sendGAEvent('click_view_more', { section: curation.tag })}
-          bgColor={index % 2 === 0 ? 'bg-white' : 'bg-muted-bg'}
-        />
-      ))}
-
-      {/* 3. 칼데콧 수상작 섹션 */}
-      <CurationSection
-        subtitle="미국 도서관 최고의 영예"
-        title="칼데콧 수상작"
-        books={caldecottBooks}
-        href="/books?curation=caldecott"
-        onViewMore={() => sendGAEvent('click_view_more', { section: 'caldecott' })}
-        bgColor="bg-muted-bg"
-      />
-
       {/* 4. 도서 연구회 추천 섹션 */}
       <CurationSection
         subtitle="전문가가 엄선한 필독서"
@@ -313,7 +337,7 @@ export default function HomePageClient({
         books={researchBooks}
         href="/books?curation=research-council"
         onViewMore={() => sendGAEvent('click_view_more', { section: 'research_council' })}
-        bgColor="bg-white"
+        bgColor="bg-muted-bg"
       />
 
       {/* 겨울방학 추천 섹션 (주석 처리) */}

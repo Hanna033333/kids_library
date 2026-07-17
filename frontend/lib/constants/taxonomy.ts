@@ -84,7 +84,8 @@ export const ALL_TAXONOMY: CurationTag[] = [
   { id: 75, subtitle: "스스로 닦고 씻는 건강한 생활 태도", title: "🧼 깨끗하고 올바른 습관", tag: "생활습관", slug: "habit" },
   { id: 76, subtitle: "다양한 나라와 기후, 지형 탐험", title: "🗺️ 세계 지도로 떠나는 여행", tag: "인문지리", slug: "geography" },
   { id: 77, subtitle: "포유류부터 조류까지 다양한 동물의 특징", title: "🦁 생생한 동물 도감", tag: "동물도감", slug: "animal-encyclopedia" },
-  { id: 78, subtitle: "상상 속 외계인과 UFO", title: "🛸 상상 속 외계인과 UFO", tag: "미래상상", slug: "future-imagination" }
+  { id: 78, subtitle: "상상 속 외계인과 UFO", title: "🛸 상상 속 외계인과 UFO", tag: "미래상상", slug: "future-imagination" },
+  { id: 79, subtitle: "교육청이 엄선한 학년별 필독서", title: "☀️ 여름방학 추천도서", tag: "여름방학2026", slug: "summer-vacation" }
 ];
 
 export const VALID_AI_TAGS = [
@@ -95,7 +96,8 @@ export const VALID_AI_TAGS = [
   "끈기", "의사소통", "코딩", "위로", "평화", "인공지능", "행복", "장애", "수학", "용서",
   "양성평등", "발명", "음악", "이웃", "연극", "세계역사", "미디어", "명화", "건축", "유머",
   "명절", "전통놀이", "추리", "한글", "글쓰기", "상상력", "하늘", "요리", "패션", "탈것",
-  "스포츠", "괴물", "미래도시", "신체활동", "자연재해", "생활습관", "인문지리", "동물도감", "미래상상"
+  "스포츠", "괴물", "미래도시", "신체활동", "자연재해", "생활습관", "인문지리", "동물도감", "미래상상",
+  "여름방학2026"
 ];
 
 // 노출 가능한 태그들의 전체 객체 추출
