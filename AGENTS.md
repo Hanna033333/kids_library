@@ -59,3 +59,7 @@
 @.agent/workflows/deploy_prod.md
 @.agent/workflows/update.md
 @.agent/workflows/secure_db.md
+@.agent/workflows/add_books.md
+@.agent/workflows/add_library.md
+@.agent/workflows/blog_naver.md
+
