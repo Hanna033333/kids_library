@@ -43,7 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
 
     // Additional specific curations
-    const specialCurations = ['winter-vacation', 'research-council', 'caldecott']
+    const specialCurations = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott']
     specialCurations.forEach((curation) => {
         routes.push({
             url: `${baseUrl}/collections/curation/${curation}`,
