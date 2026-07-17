@@ -8,7 +8,7 @@ description: 신규 추천 도서 추가 및 메타데이터/테마 태그 보�
 
 ---
 
-## 📋 신규 도서 추가 5단계 프로세스
+## 📋 신규 도서 추가 6단계 프로세스
 
 ### Step 1. 도서명 및 연령대(Age) 기본 매핑
 1. **목록 확보**: 기획안이나 블로그 링크 등에서 도서 리스트를 추출합니다.
@@ -47,3 +47,13 @@ description: 신규 추천 도서 추가 및 메타데이터/테마 태그 보�
      ```
 2. **개발 서버 재기동 및 검증**:
    - Next.js 개발 서버(`npm run dev`)를 재부팅하여 홈 화면 카드 위와 책 상세 화면에 카테고리 뱃지 및 샵(#) 테마 태그 뱃지가 100% 정상 노출되는지 최종 검수합니다.
+
+### Step 6. 검색 엔진 최적화 (SEO) 및 사이트맵 갱신
+1. **정적 빌드 라우팅 설정 (`generateStaticParams`)**:
+   - 새로 추가된 큐레이션 슬러그가 빌드 시 정적 HTML(SSG)로 사전 생성되도록 `frontend/app/collections/curation/[tag]/page.tsx` 내 `generateStaticParams()` 의 `specialCurations` 배열에 추가합니다.
+2. **맞춤 메타데이터 설정 (`generateMetadata`)**:
+   - 해당 큐레이션 슬러그 진입 시, 전용 메타 타이틀(Title), 설명(Description), 키워드(Keywords)가 적용되도록 `generateMetadata()` 내 분기 처리를 작성합니다.
+3. **라우팅 유효성 검사 등록**:
+   - 큐레이션 접속 시 404 에러로 튕겨 나가는 것을 막기 위해, `CurationPage` 컴포넌트의 `isKnownCuration` 조건 및 `SPECIAL_TAGS` 쿼리 필터 목록에 해당 슬러그를 반드시 등록합니다.
+4. **구글 사이트맵 (`sitemap.xml`) 등록**:
+   - 검색 로봇의 지속적인 색인(Indexing) 수집을 보장하기 위해 `frontend/app/sitemap.ts` 내 `specialCurations` 목록에 신규 큐레이션 슬러그를 추가합니다.
