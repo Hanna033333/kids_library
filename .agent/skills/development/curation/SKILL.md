@@ -29,10 +29,15 @@ description: A guide for adding and managing curated book sections (e.g., Caldec
   - **해결책**: **원서 제목(English Title)**과 **저자명**을 조합하여 검색한 뒤, 국내 번역본의 ISBN을 매칭하는 방식을 사용합니다.
   - *Note: 이 방식은 칼데콧이나 뉴베리 등 해외 수상작 컬렉션 구축 시 특히 유효합니다.*
 
+### 연령대(Age) 매핑 표준 (Elementary Age Mapping)
+- **초등 연령 매핑 규격**:
+  - 초등학교 1~6학년 대상 도서들을 프론트엔드 연령별 추천 필터 탭 중 **'8~12세'**에 정확하게 표시하기 위해서는, DB `childbook_items.age` 컬럼의 값을 **`'9세부터'`**로 일치시켜 적재해야 합니다.
+  - 기획서상의 초등 학년군(예: 초등 1-2학년, 초등 3-4학년 등)은 DB에 삽입할 때 이 규칙에 따라 일괄 `'9세부터'`로 표준화하여 탭 노출 오작동을 원천 예방합니다.
+
 ### 카테고리화 (Categorization)
-- **SQL 기반 분류**:
-  - 수집된 도서 데이터는 `childbook_items` 테이블 등에 저장된 후, SQL 쿼리를 통해 적절한 `category` 태그를 부여해야 합니다.
-  - 예: `UPDATE childbook_items SET category = '칼데콧' WHERE ...`
+- **SQL 및 파이썬 기반 분류**:
+  - 수집된 도서 데이터는 `childbook_items` 테이블에 저장될 때, 분류 속성에 따라 알맞은 `category` 태그(예: `동화`, `그림책`, `과학`, `사회`, `전통` 등)를 부여해야 합니다.
+  - 알라딘 API 장르 코드를 기본 매핑하되, 정합성이 떨어지는 책은 `manual_mappings` 등으로 직접 보정합니다.
 
 ## 3. 디자인 및 UI 구현 (Design & Implementation)
 
