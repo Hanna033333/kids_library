@@ -23,6 +23,10 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         title = '스마트폰만 보는 아이, 방학 때 뭐 읽힐까요?'
         description = '사서가 직접 뽑았다! 실패 없는 겨울방학 추천도서 리스트를 도서관에서 바로 대출하세요. 초등학생 필독서부터 인기 베스트까지 한눈에 확인하세요.'
         keywords = '겨울방학 독서 숙제, 초등 겨울방학 추천도서, 문해력 향상 도서, 독서록 쓰기 좋은 책, 학년별 추천 도서, 사서 추천'
+    } else if (curation === 'summer-vacation' || curation === '여름방학') {
+        title = '2026 여름방학 사서 추천도서 목록 & 도서관 대출 | 책자리'
+        description = '여름방학 독서 걱정 끝! 교육청과 현직 사서가 엄선한 초등/유아 학년별 여름방학 필수 도서 목록을 확인하고, 내 주변 도서관에서 바로 대출하거나 소장 상태를 조회해 보세요.'
+        keywords = '여름방학 추천도서, 초등 여름방학 필독서, 사서 추천 도서 목록, 방학 독서록 쓰기 좋은 책, 학년별 권장 도서, 책자리'
     } else if (curation === 'research-council' || curation === '어린이도서연구회') {
         title = "전문가가 보증하는 '찐' 필독서 모음 | 어린이도서연구회 추천도서"
         description = '엄마표 독서 고민 끝! 어린이 도서 연구회가 엄선한 필독서를 도서관에서 바로 대출하세요. 전문가 추천 베스트 어린이 책 리스트를 지금 확인하세요.'
@@ -96,7 +100,7 @@ export default async function BooksPage({ searchParams }: Props) {
     let jsonLd = null;
 
     // curation 값이 있고, 알려진 큐레이션 태그인 경우 서버 사이드에서 데이터를 가져와 구조화된 데이터 생성
-    const isKnownCuration = ['winter-vacation', 'research-council', 'caldecott'].includes(curation || '') || 
+    const isKnownCuration = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott'].includes(curation || '') || 
                             (curation && VALID_AI_TAGS.includes(curation));
     if (curation && isKnownCuration) {
         const supabase = createClient()
@@ -105,9 +109,15 @@ export default async function BooksPage({ searchParams }: Props) {
             .select('id, title, author, isbn, image_url')
             .or('is_hidden.is.null,is_hidden.eq.false')
 
-        const SPECIAL_TAGS = ['winter-vacation', 'research-council', 'caldecott', '겨울방학2026', '어린이도서연구회'];
+        const SPECIAL_TAGS = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '겨울방학2026', '여름방학2026', '어린이도서연구회'];
         if (SPECIAL_TAGS.includes(curation)) {
-            query = query.ilike('curation_tag', `%${curation}%`);
+            let tagValue = curation;
+            if (curation === 'summer-vacation') {
+                tagValue = '여름방학2026';
+            } else if (curation === 'winter-vacation') {
+                tagValue = '겨울방학2026';
+            }
+            query = query.ilike('curation_tag', `%${tagValue}%`);
         } else {
             const orFilter = `curation_tag.eq."${curation}",curation_tag.like."${curation},%",curation_tag.eq."#${curation}",curation_tag.like."#${curation},%"`;
             query = query.or(orFilter);
