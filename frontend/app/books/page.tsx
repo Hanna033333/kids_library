@@ -13,9 +13,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     const curation = rawCuration ? decodeURIComponent(rawCuration) : undefined
     const age = rawAge ? decodeURIComponent(rawAge) : undefined
 
-    let title = '책자리 - 우리 아이 상황별 맞춤 도서 큐레이션'
-    let description = '어떤 책을 읽혀야 할지 고민되는 부모님을 위해! 아이의 연령과 정서적 상황(잠자리, 사회성, 감정 발달 등)에 딱 맞는 전문가 엄선 도서 큐레이션 목록과 전국 도서관 소장 정보 및 바로 구매를 확인해 보세요.'
-    let keywords = '어린이 도서 추천, 아동 도서 검색, 도서 큐레이션, 어린이 정서 발달, 상황별 그림책, 도서 대출 확인'
+    let title = '내 주변 도서관 책 검색 및 상황별 맞춤 도서 큐레이션 | 책자리'
+    let description = '아이 발달 맞춤형 그림책 큐레이션과 내 주변 도서관 실시간 책 검색을 한 번에! 도서관 대출 가능 여부와 청구기호 조회를 3초 만에 확인해 보세요.'
+    let keywords = '주변 도서관 책 검색, 어린이 도서 추천, 아동 도서 검색, 도서 큐레이션, 어린이 정서 발달, 상황별 그림책, 도서 대출 확인'
 
     const matchedTaxonomy = VALID_TAXONOMY.find(item => item.tag === curation);
 
@@ -23,7 +23,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         title = '스마트폰만 보는 아이, 방학 때 뭐 읽힐까요?'
         description = '사서가 직접 뽑았다! 실패 없는 겨울방학 추천도서 리스트를 도서관에서 바로 대출하세요. 초등학생 필독서부터 인기 베스트까지 한눈에 확인하세요.'
         keywords = '겨울방학 독서 숙제, 초등 겨울방학 추천도서, 문해력 향상 도서, 독서록 쓰기 좋은 책, 학년별 추천 도서, 사서 추천'
-    } else if (curation === 'summer-vacation' || curation === '여름방학') {
+    } else if (curation === 'summer-vacation' || curation === '여름방학' || curation === '여름방학2026') {
         title = '2026 여름방학 사서 추천도서 목록 & 도서관 대출 | 책자리'
         description = '여름방학 독서 걱정 끝! 교육청과 현직 사서가 엄선한 초등/유아 학년별 여름방학 필수 도서 목록을 확인하고, 내 주변 도서관에서 바로 대출하거나 소장 상태를 조회해 보세요.'
         keywords = '여름방학 추천도서, 초등 여름방학 필독서, 사서 추천 도서 목록, 방학 독서록 쓰기 좋은 책, 학년별 권장 도서, 책자리'
@@ -60,9 +60,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
             keywords = `${age} 추천 도서, 어린이 책 추천, 학년별 권장도서, 책자리`
         }
     } else if (q) {
-        title = `"${q}" 검색 결과 - 우리 아이 맞춤 도서 추천 | 책자리`
-        description = `도서관 가기 전 헛걸음 방지! "${q}" 도서의 전국 도서관 대출 가능 여부, 소장 상태 및 교보문고 바로 구매 링크를 빠르게 확인하세요.`
-        keywords = `${q}, 도서 검색, 어린이 도서 큐레이션, 도서 대출 확인, 책자리`
+        title = `"${q}" 내 주변 도서관 책 검색 및 실시간 대출 조회 | 책자리`
+        description = `도서관 가기 전 헛걸음 방지! "${q}" 도서의 내 주변 도서관 책 검색, 실시간 대출 상태와 청구기호를 3초 만에 바로 확인하세요.`
+        keywords = `${q}, 주변 도서관 책 검색, 도서 검색, 어린이 도서 큐레이션, 도서 대출 확인, 책자리`
     }
 
     // Generate canonical URL with query parameters
@@ -112,11 +112,8 @@ export default async function BooksPage({ searchParams }: Props) {
         const SPECIAL_TAGS = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '겨울방학2026', '여름방학2026', '어린이도서연구회'];
         if (SPECIAL_TAGS.includes(curation)) {
             let tagValue = curation;
-            if (curation === 'summer-vacation') {
-                tagValue = '여름방학2026';
-            } else if (curation === 'winter-vacation') {
-                tagValue = '겨울방학2026';
-            }
+            if (curation === 'summer-vacation' || curation === '여름방학') tagValue = '여름방학2026';
+            if (curation === 'winter-vacation' || curation === '겨울방학') tagValue = '겨울방학2026';
             query = query.ilike('curation_tag', `%${tagValue}%`);
         } else {
             const orFilter = `curation_tag.eq."${curation}",curation_tag.like."${curation},%",curation_tag.eq."#${curation}",curation_tag.like."#${curation},%"`;

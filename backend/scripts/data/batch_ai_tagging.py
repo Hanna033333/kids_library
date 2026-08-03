@@ -1,7 +1,8 @@
 import os
 import json
 import time
-from typing import List, Dict, Any
+import requests
+from typing import List, Dict, Any, Optional, Set
 import google.generativeai as genai
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -11,10 +12,13 @@ load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+ALADIN_KEY = os.getenv("ALADIN_TTB_KEY", "ttbrkdgkssk011716001")
 
 # 상수 정의
 MODEL_NAME = "gemini-3-flash-preview"
 BATCH_SIZE = 10
+MIN_DESC_LEN = 100  # description 품질 최소 기준 (100자 미만이면 알라딘 보강 시도)
+ALADIN_API = "http://www.aladin.co.kr/ttb/api/ItemLookUp.aspx"
 
 # 20개 표준 카테고리 정의
 TAXONOMY = [
@@ -48,13 +52,40 @@ class CurationBatcher:
 
     def fetch_target_books(self, limit: int = 10):
         """태깅이 필요한 도서를 가져옵니다."""
-        # confidence_score가 0이거나 미달인 도서 우선 처리
+        # confidence_score가 0이거나 미달인 도서 우선 처리 (isbn 포함 — 알라딘 보강용)
         res = self.supabase.table("childbook_items")\
-            .select("id, title, author, description")\
+            .select("id, title, author, description, isbn")\
             .filter("confidence_score", "eq", 0)\
             .not_.is_("description", "null")\
             .limit(limit).execute()
         return res.data
+
+    def enrich_description_from_aladin(self, isbn13: str) -> Optional[str]:
+        """알라딘 API로 description을 보강합니다. 실패 시 None 반환."""
+        if not isbn13:
+            return None
+        params = {
+            "ttbkey": ALADIN_KEY,
+            "itemIdType": "ISBN13",
+            "ItemId": isbn13,
+            "output": "js",
+            "Version": "20131101",
+        }
+        try:
+            resp = requests.get(ALADIN_API, params=params, timeout=8)
+            resp.raise_for_status()
+            text = resp.text.strip()
+            # JSONP 형식 처리
+            if "(" in text and text.endswith(")"):
+                text = text[text.index("(") + 1: text.rindex(")")]
+            data = json.loads(text)
+            items = data.get("item", [])
+            if not items:
+                return None
+            desc = items[0].get("description", "").strip()
+            return desc if len(desc) >= MIN_DESC_LEN else None
+        except Exception:
+            return None
 
     def build_prompt(self, books: List[Dict]):
         """Gemini를 위한 프리미엄 큐레이션 분석 프롬프트를 생성합니다."""
@@ -106,20 +137,40 @@ class CurationBatcher:
             return
 
         print(f"--- 🤖 AI 분석 시작 (총 {len(books)}권) ---")
-        
-        # BATCH_SIZE 단위로 쪼개서 처리
+
+        # Step 1: description 품질 체크 및 알라딘 보강
+        # 100자 미만 도서는 알라딘 API로 보강 시도, 실패 시 confidence_score 상한을 70으로 제한
+        poor_desc_ids: Set[int] = set()  # 보강 실패 도서 ID 추적
+        for book in books:
+            desc = book.get("description") or ""
+            if len(desc) < MIN_DESC_LEN:
+                isbn13 = book.get("isbn") or ""
+                enriched = self.enrich_description_from_aladin(isbn13)
+                if enriched:
+                    book["description"] = enriched
+                    # 보강된 description을 DB에도 저장
+                    self.supabase.table("childbook_items")\
+                        .update({"description": enriched})\
+                        .eq("id", book["id"]).execute()
+                    print(f"  📚 description 보강: [{book['id']}] {book['title'][:25]} ({len(enriched)}자)")
+                    time.sleep(0.3)
+                else:
+                    poor_desc_ids.add(book["id"])
+                    print(f"  ⚠️  description 보강 실패: [{book['id']}] {book['title'][:25]} → confidence 상한 70")
+
+        # Step 2: BATCH_SIZE 단위로 Gemini 태깅 처리
         for i in range(0, len(books), BATCH_SIZE):
             chunk = books[i:i + BATCH_SIZE]
             print(f"\n[Batch {i//BATCH_SIZE + 1}] {len(chunk)}권 처리 중...")
             prompt = self.build_prompt(chunk)
-            
+
             try:
                 # Add delay to avoid rate limits
                 if i > 0:
                     time.sleep(2)
-                    
+
                 response = self.model.generate_content(prompt)
-                
+
                 text = response.text.strip()
                 # Handle possible markdown wrapping
                 if "```json" in text:
@@ -128,21 +179,27 @@ class CurationBatcher:
                     text = text[start_idx:end_idx].strip()
                 elif text.startswith("```"):
                     text = text[3:-3].strip()
-                
+
                 results = json.loads(text)
-                
+
                 # DB 업데이트
                 for res in results:
                     tag_str = ",".join(res.get('tags', []))
-                    
+                    score = res.get('confidence_score', 0)
+
+                    # description 보강 실패 도서는 AI 점수가 아무리 높아도 70으로 상한 처리
+                    if res['id'] in poor_desc_ids:
+                        score = min(score, 70)
+
                     self.supabase.table("childbook_items").update({
                         "curation_tag": tag_str,
                         "curation_note": res.get('curation_note', ''),
-                        "confidence_score": res.get('confidence_score', 0)
+                        "confidence_score": score
                     }).eq("id", res['id']).execute()
-                    
-                    print(f"✅ 완료: {res['id']} | 태그: {tag_str} | 점수: {res.get('confidence_score')}")
-                    
+
+                    cap_note = " (상한 70 적용)" if res['id'] in poor_desc_ids else ""
+                    print(f"✅ 완료: {res['id']} | 태그: {tag_str} | 점수: {score}{cap_note}")
+
             except Exception as e:
                 print(f"❌ 에러 발생 (Batch {i//BATCH_SIZE + 1}): {e}")
                 if 'response' in locals():

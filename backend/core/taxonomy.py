@@ -96,7 +96,7 @@ VALID_TAXONOMY = [item for item in ALL_TAXONOMY if item["tag"] in VALID_AI_TAGS]
 
 def check_7_books_exist(tag: str) -> bool:
     """도서관 소장 및 이미지 유무 조건 하에서 해당 큐레이션 도서가 7권 이상 존재하는지 확인합니다."""
-    SPECIAL_TAGS = ['winter-vacation', 'research-council', 'caldecott', '겨울방학2026', '어린이도서연구회']
+    SPECIAL_TAGS = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '겨울방학2026', '여름방학2026', '어린이도서연구회']
     query = supabase.table("childbook_items").select("id")
     query = query.or_("is_hidden.is.null,is_hidden.eq.false")
     query = query.not_.is_("image_url", "null")
@@ -125,6 +125,10 @@ def get_weekly_curations(now_date: datetime.date = None) -> list:
     # 1. 파일에서 SCHEDULE_TABLE 로드
     base_dir = os.path.dirname(os.path.abspath(__file__))
     schedule_path = os.path.abspath(os.path.join(base_dir, "../../frontend/shared/weekly_schedule.json"))
+    
+    # 배포 환경에서 frontend 폴더가 없을 경우 backend/core/weekly_schedule.json을 fallback으로 참조
+    if not os.path.exists(schedule_path):
+        schedule_path = os.path.abspath(os.path.join(base_dir, "weekly_schedule.json"))
     
     schedule_table = []
     if os.path.exists(schedule_path):
