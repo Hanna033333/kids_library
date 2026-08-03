@@ -82,15 +82,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
         const isCaldecott = book.curation_tag?.split(',').includes('caldecott') || book.curation_tag === 'caldecott'
         const title = isCaldecott 
-            ? `${book.title} - 칼데콧 메달 수상작 및 주변 도서관 책 검색 | 책자리`
-            : `${book.title} - 주변 도서관 책 검색 및 대출 가능 여부 | 책자리`
+            ? `${book.title} | 칼데콧 메달 수상작 & 주변 도서관 책 검색 - 책자리`
+            : `${book.title} | 내 주변 도서관 책 검색 & 실시간 대출 상태 - 책자리`
         
         const description = isCaldecott
-            ? `[칼데콧 메달 수상작] 세계가 인정한 그림책, ${book.title}. 우리 아이의 마음과 정서에 꼭 맞는 그림책을 발견하고, 주변 도서관 실시간 대출 가능 여부를 책자리에서 3초 만에 확인하세요. ${book.author ? `글/그림: ${book.author}.` : ''}`
-            : `[주변 도서관 책 검색] ${book.title}${book.age ? ` (${book.age} 추천)` : ''}. 우리 아이 맞춤형 도서 추천부터 내 근처 도서관 실시간 대출 가능 여부와 청구기호 확인까지 책자리에서 3초 만에 완료하세요. ${book.author ? `저자: ${book.author}.` : ''}`
+            ? `[도서관 헛걸음 방지] 세계가 인정한 칼데콧 수상작, "${book.title}". 우리 아이 마음 발달에 꼭 맞는 그림책을 발견하고, 내 주변 도서관 실시간 대출 가능 상태와 청구기호를 3초 만에 확인하세요.`
+            : `[도서관 헛걸음 방지] "${book.title}"${book.age ? ` (${book.age} 추천)` : ''} 도서의 내 주변 도서관 책 검색, 실시간 대출 가능 상태와 청구기호 확인까지 책자리에서 3초 만에 조회하세요.`
         
         const caldecottKeywords = isCaldecott ? '칼데콧 수상작, Caldecott Medal, 그림책 노벨상, ' : ''
-        const keywords = `${caldecottKeywords}${book.title}, ${book.author}, 어린이 도서 추천, ${book.category || '그림책'}, ${book.age || ''} 추천도서, 책자리, 도서관 대출 확인, 어린이 도서관`
+        const keywords = `주변 도서관 책 검색, ${caldecottKeywords}${book.title}, ${book.author}, 어린이 도서 추천, ${book.category || '그림책'}, ${book.age || ''} 추천도서, 책자리, 도서관 대출 확인, 어린이 도서관`
 
         return {
             title,

@@ -163,21 +163,21 @@ class WeeklyTriggerRequest(BaseModel):
     index: Optional[int] = None
 
 def select_three_books(curation_tag: str) -> List[dict]:
-    """도서 데이터베이스에서 조건에 맞는 책 3권을 엄선합니다. (ㄱㄴㄷ 정렬 적용)"""
+    """도서 데이터베이스에서 조건에 맞는 책 3권을 엄선합니다. (confidence_score 내림차순)"""
     query = supabase.table("childbook_items").select("*")
     query = query.or_("is_hidden.is.null,is_hidden.eq.false")
     query = query.not_.is_("image_url", "null")
     query = query.neq("image_url", "")
-    
+
     SPECIAL_TAGS = ['winter-vacation', 'research-council', 'caldecott', '겨울방학2026', '어린이도서연구회']
     if curation_tag in SPECIAL_TAGS:
         query = query.ilike("curation_tag", f"%{curation_tag}%")
     else:
         or_filter = f'curation_tag.eq."{curation_tag}",curation_tag.like."{curation_tag},%",curation_tag.eq."#{curation_tag}",curation_tag.like."#{curation_tag},%"'
         query = query.or_(or_filter)
-    
-    # 큐레이션 기본 정렬 기준 (ㄱㄴㄷ 오름차순) 적용
-    query = query.order("title")
+
+    # AI 태깅 신뢰도 높은 순으로 정렬 (ㄱㄴㄷ 정렬 버그 수정 — 특정 초성 도서가 고정 노출되는 현상 방지)
+    query = query.order("confidence_score", desc=True)
     
     result = query.execute()
     books = result.data if result.data else []

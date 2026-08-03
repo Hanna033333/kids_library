@@ -126,6 +126,10 @@ def get_weekly_curations(now_date: datetime.date = None) -> list:
     base_dir = os.path.dirname(os.path.abspath(__file__))
     schedule_path = os.path.abspath(os.path.join(base_dir, "../../frontend/shared/weekly_schedule.json"))
     
+    # 배포 환경에서 frontend 폴더가 없을 경우 backend/core/weekly_schedule.json을 fallback으로 참조
+    if not os.path.exists(schedule_path):
+        schedule_path = os.path.abspath(os.path.join(base_dir, "weekly_schedule.json"))
+    
     schedule_table = []
     if os.path.exists(schedule_path):
         try:

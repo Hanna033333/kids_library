@@ -13,9 +13,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     const curation = rawCuration ? decodeURIComponent(rawCuration) : undefined
     const age = rawAge ? decodeURIComponent(rawAge) : undefined
 
-    let title = '책자리 - 우리 아이 상황별 맞춤 도서 큐레이션'
-    let description = '어떤 책을 읽혀야 할지 고민되는 부모님을 위해! 아이의 연령과 정서적 상황(잠자리, 사회성, 감정 발달 등)에 딱 맞는 전문가 엄선 도서 큐레이션 목록과 전국 도서관 소장 정보 및 바로 구매를 확인해 보세요.'
-    let keywords = '어린이 도서 추천, 아동 도서 검색, 도서 큐레이션, 어린이 정서 발달, 상황별 그림책, 도서 대출 확인'
+    let title = '내 주변 도서관 책 검색 및 상황별 맞춤 도서 큐레이션 | 책자리'
+    let description = '아이 발달 맞춤형 그림책 큐레이션과 내 주변 도서관 실시간 책 검색을 한 번에! 도서관 대출 가능 여부와 청구기호 조회를 3초 만에 확인해 보세요.'
+    let keywords = '주변 도서관 책 검색, 어린이 도서 추천, 아동 도서 검색, 도서 큐레이션, 어린이 정서 발달, 상황별 그림책, 도서 대출 확인'
 
     const matchedTaxonomy = VALID_TAXONOMY.find(item => item.tag === curation);
 
@@ -56,9 +56,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
             keywords = `${age} 추천 도서, 어린이 책 추천, 학년별 권장도서, 책자리`
         }
     } else if (q) {
-        title = `"${q}" 검색 결과 - 우리 아이 맞춤 도서 추천 | 책자리`
-        description = `도서관 가기 전 헛걸음 방지! "${q}" 도서의 전국 도서관 대출 가능 여부, 소장 상태 및 교보문고 바로 구매 링크를 빠르게 확인하세요.`
-        keywords = `${q}, 도서 검색, 어린이 도서 큐레이션, 도서 대출 확인, 책자리`
+        title = `"${q}" 내 주변 도서관 책 검색 및 실시간 대출 조회 | 책자리`
+        description = `도서관 가기 전 헛걸음 방지! "${q}" 도서의 내 주변 도서관 책 검색, 실시간 대출 상태와 청구기호를 3초 만에 바로 확인하세요.`
+        keywords = `${q}, 주변 도서관 책 검색, 도서 검색, 어린이 도서 큐레이션, 도서 대출 확인, 책자리`
     }
 
     // Generate canonical URL with query parameters
