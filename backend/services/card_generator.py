@@ -9,7 +9,7 @@ FONT_REGULAR = os.path.join(ASSETS_DIR, "SUIT-Regular.ttf")
 FONT_BOLD = os.path.join(ASSETS_DIR, "SUIT-Bold.ttf")
 
 # 로고 파일 경로
-LOGO_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "frontend", "public", "logo.png")
+LOGO_PATH = os.path.join(ASSETS_DIR, "logo.png")
 
 # 색상 토큰 (책자리 프리미엄 UI-KIT 가이드 준수)
 COLOR_PRIMARY = (245, 158, 11)        # 책자리 메인 브랜드 컬러 (#F59E0B)
