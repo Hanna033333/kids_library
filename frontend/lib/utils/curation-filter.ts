@@ -19,7 +19,7 @@ export const SPECIAL_CURATION_TAGS = ['겨울방학2026', '여름방학2026', '�
 
 /** 특별 큐레이션으로 분류되는 URL 파라미터 값 목록 (정렬 기본값 결정 시 사용) */
 export const SPECIAL_CURATION_PARAMS = [
-  'caldecott', 'winter-vacation', '겨울방학', 'summer-vacation', 'research-council', '어린이도서연구회'
+  'caldecott', 'winter-vacation', '겨울방학', 'summer-vacation', '여름방학', '여름방학2026', 'research-council', '어린이도서연구회'
 ] as const
 
 /**

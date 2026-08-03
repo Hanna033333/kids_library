@@ -169,7 +169,7 @@ def select_three_books(curation_tag: str) -> List[dict]:
     query = query.not_.is_("image_url", "null")
     query = query.neq("image_url", "")
 
-    SPECIAL_TAGS = ['winter-vacation', 'research-council', 'caldecott', '겨울방학2026', '어린이도서연구회']
+    SPECIAL_TAGS = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '겨울방학2026', '여름방학2026', '어린이도서연구회']
     if curation_tag in SPECIAL_TAGS:
         query = query.ilike("curation_tag", f"%{curation_tag}%")
     else:
@@ -442,7 +442,7 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
 def validate_curation_tag(tag: Optional[str]):
     if not tag:
         return
-    SPECIAL_TAGS = ['winter-vacation', 'research-council', 'caldecott', '겨울방학2026', '어린이도서연구회']
+    SPECIAL_TAGS = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '겨울방학2026', '여름방학2026', '어린이도서연구회']
     valid_tags = {item["tag"] for item in ALL_TAXONOMY}
     valid_tags.update(SPECIAL_TAGS)
     clean_tag = tag.lstrip("#")

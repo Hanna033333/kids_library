@@ -37,11 +37,13 @@ def search_books_service(
             curation_mapping = {
                 '겨울방학': '겨울방학2026',
                 'winter-vacation': '겨울방학2026',
-                '어린이도서연구회': '어린이도서연구회',
+                '여름방학': '여름방학2026',
+                'summer-vacation': '여름방학2026',
+                '어린이도서연구회': '어린이도서연구회',  # Backward compatibility
                 'research-council': '어린이도서연구회'
             }
             db_curation_tag = curation_mapping.get(curation, curation)
-            special_tags = ['겨울방학2026', '어린이도서연구회', 'caldecott']
+            special_tags = ['겨울방학2026', '여름방학2026', '어린이도서연구회', 'caldecott']
             
             # curation 파라미터 내의 쉼표/큰따옴표/백슬래시 이스케이프 및 인용 처리 적용
             safe_curation = db_curation_tag.replace('\\', '\\\\').replace('"', '\\"').replace(',', '\\,')

@@ -41,7 +41,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
         if (urlSort) return urlSort;
         
         const curation = searchParams.get('curation');
-        if (curation && !['겨울방학', 'winter-vacation', '어린이도서연구회', 'research-council', 'caldecott'].includes(curation)) {
+        if (curation && !['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott'].includes(curation)) {
             return 'confidence_score_desc'; // confidence_score_desc 라는 가상의 sort key 사용
         }
         return 'pangyo_callno';
@@ -52,7 +52,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
     const [toastMessage, setToastMessage] = useState("");
 
     // AI 큐레이션 태그 여부 (알려진 non-AI 큐레이션 제외)
-    const NON_AI_CURATIONS = ['겨울방학', 'winter-vacation', '어린이도서연구회', 'research-council', 'caldecott'];
+    const NON_AI_CURATIONS = ['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott'];
     const isAiCuration = !!curationFilter && !NON_AI_CURATIONS.includes(curationFilter);
 
     // URL 업데이트 함수
@@ -77,7 +77,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
         const age = normalizeAge(overrideAge || searchParams.get('age') || "");
         const category = searchParams.get('category') || "전체";
         const curation = overrideCuration || searchParams.get('curation') || "";
-        const sort = searchParams.get('sort') || (curation && !['겨울방학', 'winter-vacation', '어린이도서연구회', 'research-council', 'caldecott'].includes(curation) ? 'confidence_score_desc' : 'pangyo_callno');
+        const sort = searchParams.get('sort') || (curation && !['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott'].includes(curation) ? 'confidence_score_desc' : 'pangyo_callno');
 
         setSearchQuery(q);
         setAgeFilter(age);
@@ -128,6 +128,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
     const getPageTitle = () => {
         if (curationFilter === 'research-council' || curationFilter === '어린이도서연구회') return '어린이도서연구회 추천';
         if (curationFilter === 'winter-vacation' || curationFilter === '겨울방학') return '겨울방학 추천도서';
+        if (curationFilter === 'summer-vacation' || curationFilter === '여름방학' || curationFilter === '여름방학2026') return '여름방학 추천도서';
         if (curationFilter === 'caldecott') return '칼데콧 수상작';
         
         // AI 큐레이션 타이틀 매핑

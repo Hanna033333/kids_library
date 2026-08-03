@@ -79,7 +79,7 @@ export default function BookList({
   // 연령별 및 주요 큐레이션 홈 코너 추천도서 (AI 큐레이션 순 제외, 일반 필터 상태에서만 사용)
   // useQuery로 캐시화 → 상세페이지 다녀와도 캐시에서 즉시 복원 → 정렬 깜빡임 제거
   const shouldFetchRecommended = !!(
-    (ageFilter || ['caldecott', '어린이도서연구회', 'research-council', '겨울방학', 'winter-vacation'].includes(curationFilter || "")) &&
+    (ageFilter || ['caldecott', '어린이도서연구회', 'research-council', '겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026'].includes(curationFilter || "")) &&
     !searchQuery &&
     sortFilter === "pangyo_callno" &&
     (!categoryFilter || categoryFilter === "전체")
@@ -104,6 +104,10 @@ export default function BookList({
       if (curationFilter === "겨울방학" || curationFilter === "winter-vacation") {
         const { getWinterBooks } = await import("@/lib/home-api");
         return getWinterBooks(7, undefined, !!user);
+      }
+      if (curationFilter === "여름방학" || curationFilter === "summer-vacation" || curationFilter === "여름방학2026") {
+        const { getSummerBooks } = await import("@/lib/home-api");
+        return getSummerBooks(7, undefined, !!user);
       }
       return [];
     },
