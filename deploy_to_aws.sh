@@ -35,8 +35,54 @@ rsync -avz -e "ssh -i $SSH_KEY_PATH" \
     /Users/1004823/Desktop/kids_library/backend \
     ubuntu@$SERVER_IP:~/kids_library/
 
-echo "=================================================="
-echo "🎉 1차 업로드 완료!"
+echo "==========================================================="
+echo "🎉 업로드 완료! 서버 파일 존재 여부 검증 중..."
+echo "==========================================================="
+
+# 4. 배포 후 핵심 파일 존재 검증 (Post-deploy Verification)
+SSH="ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no ubuntu@$SERVER_IP"
+
+CRITICAL_FILES=(
+    "~/kids_library/backend/core/weekly_schedule.json"
+    "~/kids_library/backend/core/taxonomy.py"
+    "~/kids_library/backend/main.py"
+)
+
+ALL_OK=true
+for FILE in "${CRITICAL_FILES[@]}"; do
+    if $SSH "test -f $FILE"; then
+        echo "  ✅ $FILE"
+    else
+        echo "  ❌ 누락: $FILE  ← 이 파일이 서버에 없습니다!"
+        ALL_OK=false
+    fi
+done
+
+if [ "$ALL_OK" = false ]; then
+    echo ""
+    echo "⚠️  누락된 파일이 있습니다. 배포를 다시 실행하거나 scp로 수동 전송 후"
+    echo "    sudo systemctl restart fastapi.service 를 실행해주세요."
+    exit 1
+fi
+
+# 5. 서비스 재시작
+echo ""
+echo "🔄 fastapi.service 재시작 중..."
+$SSH "sudo systemctl restart fastapi.service"
+sleep 3
+
+SERVICE_STATUS=$($SSH "sudo systemctl is-active fastapi.service")
+if [ "$SERVICE_STATUS" = "active" ]; then
+    echo "  ✅ fastapi.service 정상 실행 중"
+else
+    echo "  ❌ fastapi.service 재시작 실패! 서버 로그를 확인해주세요:"
+    echo "     sudo journalctl -u fastapi.service -n 30"
+    exit 1
+fi
+
+echo ""
+echo "=========================================================="
+echo "🎉 배포 및 검증 완료!"
 echo "   - 서버 IP: $SERVER_IP"
 echo "   - 대상 경로: ubuntu@$SERVER_IP:~/kids_library/backend"
-echo "=================================================="
+echo "=========================================================="
