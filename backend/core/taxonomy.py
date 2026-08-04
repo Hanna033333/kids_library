@@ -136,9 +136,13 @@ def get_weekly_curations(now_date: datetime.date = None) -> list:
             with open(schedule_path, "r", encoding="utf-8") as f:
                 schedule_table = json.load(f)
         except Exception as e:
-            print(f"❌ [get_weekly_curations] JSON 로드 에러: {e}")
+            raise RuntimeError(f"[get_weekly_curations] weekly_schedule.json 로드 실패: {e}\n경로: {schedule_path}")
     else:
-        print(f"⚠️ [get_weekly_curations] 스케줄 JSON 파일이 존재하지 않습니다: {schedule_path}")
+        raise RuntimeError(
+            f"[get_weekly_curations] weekly_schedule.json 파일이 서버에 없습니다!\n"
+            f"경로: {schedule_path}\n"
+            f"해결: scp로 backend/core/weekly_schedule.json 을 서버에 전송 후 서비스 재시작"
+        )
             
     if now_date is None:
         # KST 기준 현재 날짜 계산
@@ -151,18 +155,8 @@ def get_weekly_curations(now_date: datetime.date = None) -> list:
         if item["start"] <= now_str <= item["end"]:
             return item["curations"]
 
-    # 2. fallback LCG (결정론적 셔플 대신 이미 검증 완료된 weekly_schedule 내의 특정 주간 큐레이션을 대칭 매핑)
-    if not schedule_table:
-        # 파일 로드 실패 등을 대비한 최소한의 안전 폴백
-        return VALID_TAXONOMY[:3]
-        
-    now_ts = time.time()
-    days_since_epoch = int(now_ts // 86400)
-    seed = days_since_epoch // 7
-    lcg_state = (seed * 1664525 + 1013904223) & 0xffffffff
-    
-    # 0 ~ len(schedule_table)-1 범위의 인덱스를 결정적으로 산출
-    target_schedule_idx = int(lcg_state / 0x100000000 * len(schedule_table))
-    target_schedule_idx = max(0, min(target_schedule_idx, len(schedule_table) - 1))
-    
-    return schedule_table[target_schedule_idx]["curations"]
+    # 매칭되는 주간 일정이 없는 경우 (스케줄 공백 기간)
+    raise RuntimeError(
+        f"[get_weekly_curations] {now_str} 날짜에 해당하는 주간 스케줄이 없습니다.\n"
+        f"weekly_schedule.json에 해당 날짜 범위를 추가해주세요."
+    )
