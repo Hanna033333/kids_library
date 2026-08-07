@@ -8,7 +8,6 @@ export interface CurationTag {
 
 export const ALL_TAXONOMY: CurationTag[] = [
   { id: 1, subtitle: "밤마다 안 자려는 우리 아이에게", title: "💤 스르륵 꿀잠 그림책", tag: "잠자리", slug: "sleep" },
-  { id: 2, subtitle: "감정 표현이 서툰 아이를 위한", title: "❤️ 마음 처방전 그림책", tag: "감정조절", slug: "emotion" },
   { id: 3, subtitle: "기 죽지 않고 단단하게 자라도록", title: "✨ 단단한 자존감 그림책", tag: "자존감", slug: "self-esteem" },
   { id: 4, subtitle: "함께 나누면 행복이 두 배가 돼요", title: "🎁 다정한 배려 그림책", tag: "배려", slug: "care" },
   { id: 5, subtitle: "작고 소중한 생명의 온기를 배워요", title: "🐶 사랑스러운 동물 친구들", tag: "생명존중", slug: "animal" },
@@ -28,7 +27,6 @@ export const ALL_TAXONOMY: CurationTag[] = [
   { id: 19, subtitle: "소소한 일상에서 찾는 감사의 기쁨", title: "🍀 매일 매일 행복 그림책", tag: "행복", slug: "happiness" },
   { id: 20, subtitle: "갈등을 풀고 서로를 안아주는 마음", title: "🤝 미안해와 괜찮아", tag: "용서", slug: "forgiveness" },
   { id: 21, subtitle: "친구랑 더 재미있게 놀고 싶을 때", title: "🤝 다정한 첫 사회성", tag: "사회성", slug: "social" },
-  { id: 22, subtitle: "서로 다름을 인정하고 존중하는 아이", title: "🌍 열린 마음 다양성 학교", tag: "다양성", slug: "diversity" },
   { id: 23, subtitle: "함께 사는 사회의 바른 규칙", title: "🚦 약속을 지키는 그림책", tag: "규칙", slug: "rules" },
   { id: 24, subtitle: "지구촌 다양한 이웃들과 함께", title: "🌐 세계 시민 그림책", tag: "다문화", slug: "global" },
   { id: 25, subtitle: "내가 좋아하는 일과 다양한 직업", title: "💼 내 꿈을 찾는 그림책", tag: "진로", slug: "jobs" },
@@ -43,7 +41,6 @@ export const ALL_TAXONOMY: CurationTag[] = [
   { id: 34, subtitle: "신비한 숲속과 들판의 비밀", title: "🐜 호기심 자연 관찰", tag: "자연관찰", slug: "nature" },
   { id: 35, subtitle: "초록 지구와 함께 숨 쉬며 자라요", title: "🌱 초록 생태 환경 그림책", tag: "환경보호", slug: "eco" },
   { id: 36, subtitle: "세상의 원리를 깨우치는 재미", title: "🔍 호기심 가득 과학 원리", tag: "과학원리", slug: "science" },
-  { id: 37, subtitle: "사계절이 주는 대자연의 아름다움", title: "☀️ 사계절의 아름다움 그림책", tag: "계절", slug: "season" },
   { id: 38, subtitle: "작은 생명 곤충들의 위대한 한살이", title: "🦋 꿈틀꿈틀 곤충 나라", tag: "곤충", slug: "bugs" },
   { id: 39, subtitle: "광활한 우주와 반짝이는 별의 비밀", title: "🚀 별빛 가득 우주 여행", tag: "우주", slug: "space" },
   { id: 40, subtitle: "수억 년 전 지구를 지배한 주인공", title: "🦖 거대한 공룡의 세계", tag: "공룡", slug: "dinosaurs" },
