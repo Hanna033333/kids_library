@@ -27,6 +27,9 @@ export interface Book {
   curation_tag?: string | null;
   curation_note?: string | null;
   confidence_score?: number | null;
+  page_count?: number | null;
+  text_level?: string | null;
+  preview_urls?: string[] | null;
 }
 
 export interface LoanStatus {
@@ -46,8 +49,28 @@ export interface BooksResponse {
 export interface SearchParams {
   q?: string;
   age?: string;
+  author?: string;
   sort?: string;
   page?: number;
   limit?: number;
+}
+
+export interface ReviewData {
+  id: string;
+  book_id: number;
+  nickname: string;
+  child_age: string | null;
+  rating: number;
+  selected_badges: string[];
+  content: string | null;
+  is_ai_generated: boolean;
+  created_at: string;
+}
+
+export interface ReviewsResponse {
+  avg_rating: number | null;
+  review_count: number;
+  badge_counts: Record<string, number>;
+  reviews: ReviewData[];
 }
 

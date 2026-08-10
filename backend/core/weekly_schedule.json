@@ -75,7 +75,7 @@
     "start": "2026-08-10",
     "end": "2026-08-16",
     "curations": [
-      { "id": 7, "subtitle": "새로운 환경에서도 씩씩하고 즐겁게", "title": "🏫 유치원과 학교생활", "tag": "적응", "slug": "school" },
+      { "id": 61, "subtitle": "겁 많은 우리 아이도 용감하고 씩씩하게", "title": "🦁 씩씩한 모험 이야기", "tag": "모험", "slug": "adventure" },
       { "id": 12, "subtitle": "나눌수록 커지는 행복의 비밀", "title": "🎈 기쁨 두 배 나눔 그림책", "tag": "나눔", "slug": "sharing" },
       { "id": 39, "subtitle": "광활한 우주와 반짝이는 별의 비밀", "title": "🚀 별빛 가득 우주 여행", "tag": "우주", "slug": "space" }
     ]
@@ -93,7 +93,7 @@
     "start": "2026-08-24",
     "end": "2026-08-30",
     "curations": [
-      { "id": 14, "subtitle": "눈물 뒤에 찾아오는 마음의 평온", "title": "💧 슬픔을 다독이는 그림책", "tag": "슬픔", "slug": "sadness" },
+      { "id": 7, "subtitle": "새로운 환경에서도 씩씩하고 즐겁게", "title": "🏫 유치원과 학교생활", "tag": "적응", "slug": "school" },
       { "id": 24, "subtitle": "지구촌 다양한 이웃들과 함께", "title": "🌐 세계 시민 그림책", "tag": "다문화", "slug": "global" },
       { "id": 41, "subtitle": "신비하고 풍요로운 바닷속 세상", "title": "🐳 푸른 바다 탐험", "tag": "바다", "slug": "ocean" }
     ]

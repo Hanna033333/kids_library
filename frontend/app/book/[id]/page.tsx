@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import BookDetailClient from './BookDetailClient'
 import { getHighResImageUrl } from '@/lib/utils/image'
 import { createClient } from '@/lib/supabase'
-import { getBooksByTag, getPopularBooksByAge } from '@/lib/home-api'
+import { getBooksByTag, getPopularBooksByAge, getBooksByAuthor } from '@/lib/home-api'
 import { getAgeGroupKey } from '@/lib/utils/age'
 
 interface Props {
@@ -164,6 +164,11 @@ export default async function BookDetailPage({ params }: Props) {
             .filter((b: any) => b.id !== book.id)
             .slice(0, 7)
 
+        // 동일 저자의 다른 추천 도서 (최대 7권, 없으면 빈 배열)
+        const authorRecommended = book.author
+            ? await getBooksByAuthor(book.author, book.id, 7)
+            : []
+
         const isCaldecott = book.curation_tag?.split(',').includes('caldecott') || book.curation_tag === 'caldecott'
 
         // Schema.org 구조화 데이터 (JSON-LD)
@@ -238,6 +243,7 @@ export default async function BookDetailPage({ params }: Props) {
                     book={book} 
                     curationRecommended={curationRecommended} 
                     ageRecommended={ageRecommended} 
+                    authorRecommended={authorRecommended}
                 />
             </>
         )

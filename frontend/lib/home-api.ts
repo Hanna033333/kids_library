@@ -301,3 +301,46 @@ export async function getPopularBooksOverall(limit: number = 8, client?: Supabas
     return (data as any) || []
 }
 
+/**
+ * 저자 필드에서 주 저자명 정제 추출 헬퍼 (예: "백희나 글, 그림" -> "백희나")
+ */
+export function cleanAuthorName(authorStr?: string | null): string {
+    if (!authorStr) return ''
+    const firstPart = authorStr.split(/[,|/│]/)[0].trim()
+    const cleaned = firstPart.replace(/\s*(글|그림|지음|저|옮김|역|글·그림|글\/그림|원작).*$/g, '').trim()
+    return cleaned || firstPart
+}
+
+/**
+ * 동일 저자/그림작가의 다른 추천 도서 가져오기
+ */
+export async function getBooksByAuthor(authorName: string, excludeBookId?: number, limit: number = 7, client?: SupabaseClient): Promise<Book[]> {
+    const supabase = client || createClient()
+    const mainAuthor = cleanAuthorName(authorName)
+    if (!mainAuthor) return []
+
+    const selectFields = 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count';
+
+    let query = supabase
+        .from('childbook_items')
+        .select(selectFields)
+        .or('is_hidden.is.null,is_hidden.eq.false')
+        .ilike('author', `%${mainAuthor}%`)
+        .not('image_url', 'is', null)
+        .neq('image_url', '')
+
+    if (excludeBookId) {
+        query = query.neq('id', excludeBookId)
+    }
+
+    const { data, error } = await query.order('id', { ascending: false }).limit(limit)
+
+    if (error) {
+        console.error('Error fetching books by author:', error)
+        return []
+    }
+
+    return (data as any) || []
+}
+
+

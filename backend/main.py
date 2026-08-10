@@ -12,6 +12,7 @@ from api.sync import router as sync_router
 from api.auth import router as auth_router
 from api.wishlists import router as wishlists_router
 from api.threads import router as threads_router
+from api.reviews import router as reviews_router
 
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -82,6 +83,7 @@ app.include_router(sync_router)
 app.include_router(auth_router)
 app.include_router(wishlists_router)
 app.include_router(threads_router)
+app.include_router(reviews_router)
 
 @app.get("/")
 def read_root():

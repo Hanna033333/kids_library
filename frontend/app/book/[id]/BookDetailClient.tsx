@@ -31,18 +31,23 @@ import { Button } from '@/components/ui/Button'
 import PageHeader from '@/components/PageHeader'
 import { getAgeDisplayLabel } from '@/lib/utils/age'
 import Image from 'next/image'
+import BookReviewSection from '@/components/BookReviewSection'
 import { getOptimizedImageUrl } from '@/lib/utils/image'
 import UserAvatar from '@/components/UserAvatar'
+import BookPreviewModal from '@/components/BookPreviewModal'
+import { cleanAuthorName } from '@/lib/home-api'
 
 interface BookDetailClientProps {
     book: Book
     curationRecommended: Book[]
     ageRecommended: Book[]
+    authorRecommended?: Book[]
 }
 export default function BookDetailClient({ 
     book: initialBook,
     curationRecommended,
-    ageRecommended
+    ageRecommended,
+    authorRecommended = []
 }: BookDetailClientProps) {
     const router = useRouter()
     const hasTrackedView = useRef<string | null>(null)
@@ -52,6 +57,7 @@ export default function BookDetailClient({
     const [saveCount, setSaveCount] = useState(initialBook.save_count || 0)
     const [isToggling, setIsToggling] = useState(false)
     const [imageError, setImageError] = useState(false)
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
     const { selectedLibrary } = useLibrary()
 
     // Handle book navigation
@@ -81,6 +87,20 @@ export default function BookDetailClient({
                 type: 'age',
                 text: getAgeDisplayLabel(book.age),
                 className: 'bg-amber-50 text-amber-600 border-amber-100'
+            })
+        }
+        if (book.page_count) {
+            tags.push({
+                type: 'page_count',
+                text: `📖 ${book.page_count}p`,
+                className: 'bg-amber-50 text-amber-700 border-amber-200'
+            })
+        }
+        if (book.text_level) {
+            tags.push({
+                type: 'text_level',
+                text: book.text_level,
+                className: 'bg-emerald-50 text-emerald-700 border-emerald-200'
             })
         }
         if (book.curation_tag) {
@@ -405,6 +425,16 @@ export default function BookDetailClient({
                                 </div>
                             )}
                         </div>
+                        {/* Preview Trigger Button - 내지 이미지가 존재하는 경우에만 노출 */}
+                        {book.preview_urls && book.preview_urls.length > 0 && (
+                            <button
+                                onClick={() => setIsPreviewModalOpen(true)}
+                                className="mt-3 w-full py-3 px-4 bg-gray-50 active:bg-gray-100 active:scale-[0.98] border border-gray-200 rounded-xl text-sm font-bold text-gray-700 flex items-center justify-center gap-2 transition-all shadow-sm"
+                            >
+                                <BookOpen className="w-[18px] h-[18px] text-amber-500 shrink-0" />
+                                <span>미리보기</span>
+                            </button>
+                        )}
                     </div>
 
                     {/* Right: Info Area */}
@@ -561,7 +591,10 @@ export default function BookDetailClient({
 
             </div>
 
-            {/* Recommendations Section B: Age Group Popular (bg-muted-bg) */}
+            {/* Book Review & Badge Section */}
+            <BookReviewSection bookId={book.id} bookTitle={book.title} />
+
+            {/* Recommendations Section 1: Age Group Popular (bg-muted-bg) */}
             {ageRecommended && ageRecommended.length > 0 && (
                 <div className="bg-muted-bg pt-8 pb-10 mt-12 w-full px-6">
                     <div className="max-w-4xl mx-auto">
@@ -595,9 +628,36 @@ export default function BookDetailClient({
                 </div>
             )}
 
-            {/* Recommendations Section A: Same Curation Tag (bg-white) */}
+            {/* Recommendations Section 2: Same Author Books (bg-white, rendered ONLY when authorRecommended has items) */}
+            {authorRecommended && authorRecommended.length > 0 && (
+                <div className="bg-white pt-8 pb-10 w-full px-6">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="flex items-end justify-between mb-6 px-2">
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-[12px] font-bold text-gray-500 tracking-tight">
+                                    이 작가의 다른 그림책
+                                </span>
+                                <h3 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight leading-tight">
+                                    {cleanAuthorName(book.author)} 작가 추천 리스트
+                                </h3>
+                            </div>
+                        </div>
+                        <div className="overflow-x-auto scrollbar-hide -mx-6 px-6">
+                            <div className="flex gap-4 pb-2">
+                                {authorRecommended.map((b) => (
+                                    <div key={`author-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
+                                        <BookCard book={b} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Recommendations Section 3: Same Curation Tag (bg-muted-bg if author section exists, else bg-white) */}
             {curationRecommended && curationRecommended.length > 0 && (
-                <div className="bg-white pt-8 pb-2 w-full px-6">
+                <div className={`${authorRecommended && authorRecommended.length > 0 ? 'bg-muted-bg pb-10' : 'bg-white pb-2'} pt-8 w-full px-6`}>
                     <div className="max-w-4xl mx-auto">
                         <div className="flex items-end justify-between mb-6 px-2">
                             <div className="flex flex-col gap-0.5">
@@ -634,6 +694,14 @@ export default function BookDetailClient({
                 onClose={() => setIsLoginModalOpen(false)}
                 title={loginModalProps.title}
                 description={loginModalProps.description}
+            />
+
+            <BookPreviewModal
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
+                bookTitle={book.title}
+                coverUrl={book.image_url}
+                previewUrls={book.preview_urls}
             />
         </main >
     )
