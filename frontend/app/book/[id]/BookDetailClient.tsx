@@ -62,7 +62,11 @@ export default function BookDetailClient({
         setIsSaved(false)
     }, [initialBook])
 
-    // 태그 리스트 생성 (최대 4개 노출)
+    // 태그 리스트 생성 (카테고리+나이 2 + 큐레이션 최대 4 = 총 6개)
+    const HIDDEN_CURATION_TAGS = new Set([
+        '겨울방학2026', '여름방학2026', 'winter-vacation', 'summer-vacation',
+        '어린이도서연구회', 'research-council', 'caldecott',
+    ])
     const visibleTags = (() => {
         const tags = []
         if (book.category) {
@@ -81,17 +85,17 @@ export default function BookDetailClient({
         }
         if (book.curation_tag) {
             const curationTags = book.curation_tag.split(',')
-                .map((tag) => tag.trim())
-                .filter(Boolean)
+                .map((tag) => tag.trim().replace(/^#/, ''))
+                .filter((tag) => tag && !HIDDEN_CURATION_TAGS.has(tag))
             curationTags.forEach((tag) => {
                 tags.push({
                     type: 'curation',
-                    text: tag,
+                    text: `#${tag}`,
                     className: 'bg-brand-primary/5 text-brand-primary border-brand-primary/10'
                 })
             })
         }
-        return tags.slice(0, 5)
+        return tags.slice(0, 6)
     })()
 
     // const supabase = createClient()  <-- 제거됨
