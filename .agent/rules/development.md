@@ -136,6 +136,9 @@ trigger: always_on
 6. **로컬 빌드 및 프리뷰/상용 배포 통제 구분**:
    - 컴파일 오류 및 타입 검증을 위한 로컬 빌드 테스트(`npm run build` 등)는 사용자의 사전 동의 없이 수행할 수 있습니다.
    - 단, 외부 preview 서버나 production 상용 환경으로 배포(Vercel, AWS Lightsail 등 플랫폼 업로드 및 릴리즈 실행)를 트리거하는 모든 배포 행위는 반드시 사용자가 직접 "배포하라" 또는 배포 커맨드를 입력하여 직접 명시적으로 명령을 내렸을 때만 실행해야 합니다.
+7. **배포 슬래시 커맨드(/deploy_prod, /deploy_preview) 원스톱 자동 실행 예외**:
+   - 사용자가 `/deploy_prod` 또는 `/deploy_preview` 커맨드를 직접 입력하여 워크플로우를 호출한 경우, 이는 이미 원격 배포까지 명시적으로 지시한 것입니다.
+   - 로컬 검증(Build, Security, QA)이 100% Pass되면 추가 승인 질문을 재차 던지지 말고 `git push origin main` (또는 dev) 및 `./deploy_to_aws.sh` 백엔드 동기화 단계까지 즉시 원스톱으로 완수하십시오.
 
 ## 핵심
 1. Next.js와 FastAPI 구조를 숙지해. 특히 Data4Library API와 판교도서관 스크래핑 시 타임아웃과 캐싱(5분) 처리가 project_plan대로 구현되었는지 검토해.
