@@ -82,8 +82,11 @@ cd frontend && npm run build
 git checkout main
 git merge dev
 
-# 최종 상용 환경 원격 저장소로 배포 트리거
+# 최종 상용 환경 원격 저장소로 배포 트리거 (Vercel 프론트엔드 자동 배포)
 git push origin main
+
+# AWS Lightsail 백엔드 서버 동기화 및 서비스 재시작 (백엔드 코드 변경 시 필수)
+./deploy_to_aws.sh
 ```
 
 > [!CAUTION]

@@ -19,7 +19,7 @@ trigger: always_on
 15. 책 이미지 데이터 관련 작업 시에는 `.agent/skills/development/image_optimization/SKILL.md`의 화질 가이드를 준수해.
 16. **데이터 관리:** 데이터 추가 시 항상 중복(ISBN)을 확인하고, 기존 데이터는 덮어쓰기보다 확장(Upsert)하는 방향으로 처리해.
 17. **언어 정책:** 모든 문서(implementation plan, 기술 문서 등)는 **한글로 작성**해.
-18. **배포 트러블슈팅:** 배포 관련 이슈(Vercel, AWS Lightsail) 발생/수정 시에는 `.agent/skills/development/deployment/SKILL.md`를 반드시 참고하여 이전 사례를 검토해.
+18. **배포 트러블슈팅 및 AWS 백엔드 동기화:** 배포 관련 이슈(Vercel, AWS Lightsail) 발생/수정 시에는 `.agent/skills/development/deployment/SKILL.md`를 반드시 참고해. 특히 백엔드(`backend/`) 소스코드 또는 AI 프롬프트/서비스 수정 시 `git push origin main` 외에 반드시 `./deploy_to_aws.sh` 스크립트를 실행하여 AWS Lightsail 인스턴스에 파일 업로드 및 `fastapi.service` 재시작을 수행해야 해.
 19. **UI 구현:** 버튼 및 UI 요소 구현 시 `.agent/skills/design/color_system/SKILL.md`의 디자인 가이드를 준수해.
 20. **텍스트 구현:** UI 내의 모든 텍스트(알림, 버튼, 안내 문구) 구현 시 `.agent/skills/design/ux_writing/SKILL.md`의 톤앤매너와 규칙을 반드시 준수해.
 21. **큐레이션 목록 정렬 구현**: 큐레이션 목록 페이지(`/books?curation=xxx`) 구현 시, 홈 노출 도서 7권을 상단에 우선 고정하고, 칼데콧 등 특정 큐레이션은 제목 오름차순(ㄱㄴㄷ 순)으로 기본 정렬하는 규격(`.agent/skills/development/curation/SKILL.md`)을 철저히 준수해서 개발해.

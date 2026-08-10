@@ -21,6 +21,7 @@
 - **필수 실행**: `.agent/workflows/deploy_prod.md` 전 단계 완료 후 push
 - **push 대상**: `main` 브랜치
 - **추가 조건**: 반드시 사용자에게 승인을 받은 후에만 main에 push
+- **백엔드 배포 필수**: `backend/` 소스코드 수정이 포함된 경우, `git push` 후 반드시 `./deploy_to_aws.sh`를 실행하여 AWS Lightsail 백엔드를 동기화하고 `fastapi.service`를 재시작해야 함.
 
 ---
 
