@@ -1,4 +1,5 @@
 import datetime
+from core.database import supabase
 
 ALL_TAXONOMY = [
     { "id": 1, "subtitle": "밤마다 안 자려는 우리 아이에게", "title": "💤 스르륵 꿀잠 그림책", "tag": "잠자리", "slug": "sleep" },

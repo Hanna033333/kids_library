@@ -7,6 +7,7 @@ import { BADGES, findBadge } from '@/lib/badge_constants'
 import type { ReviewData } from '@/lib/types'
 import { Star, MessageCircle, ChevronDown, ChevronUp, X } from 'lucide-react'
 import { sendGAEvent } from '@/lib/analytics'
+import { useAuth } from '@/context/AuthContext'
 
 interface BookReviewSectionProps {
   bookId: number
@@ -77,6 +78,7 @@ function timeAgo(dateStr: string): string {
 // ─────────────────────────────────────────────────
 export default function BookReviewSection({ bookId, bookTitle }: BookReviewSectionProps) {
   const queryClient = useQueryClient()
+  const { user } = useAuth()
   const [showWriteForm, setShowWriteForm] = useState(false)
   const [showAllReviews, setShowAllReviews] = useState(false)
 
@@ -97,17 +99,37 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
     refetchOnWindowFocus: false,
   })
 
-  // 로컬스토리지에서 닉네임/아이 나이 복원
+  // 닉네임 / 아이 나이 초기화 (로그인 유저 정보 우선 -> 로컬스토리지 기억 복원)
   useEffect(() => {
+    // 1. 로그인 유저의 닉네임 추출 (meta 데이터 또는 구글/카카오 이름)
+    const userProfileName =
+      user?.user_metadata?.full_name ||
+      user?.user_metadata?.name ||
+      user?.user_metadata?.nickname ||
+      (user?.email ? user.email.split('@')[0] : '')
+
+    if (userProfileName) {
+      setNickname(userProfileName)
+    } else {
+      // 2. 비로그인 유저인 경우 이전 로컬스토리지 저장 닉네임 복원
+      try {
+        const saved = localStorage.getItem('checkjari_reviewer')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (parsed.nickname) setNickname(parsed.nickname)
+        }
+      } catch { /* ignore */ }
+    }
+
+    // 아이 나이 로컬스토리지 복원
     try {
       const saved = localStorage.getItem('checkjari_reviewer')
       if (saved) {
         const parsed = JSON.parse(saved)
-        if (parsed.nickname) setNickname(parsed.nickname)
         if (parsed.childAge) setChildAge(parsed.childAge)
       }
     } catch { /* ignore */ }
-  }, [])
+  }, [user])
 
   const handleBadgeToggle = (badgeFull: string) => {
     setSelectedBadges((prev) =>

@@ -40,6 +40,7 @@ class AgreementsRequest(BaseModel):
     agreed_to_terms: bool
     agreed_to_privacy: bool
     agreed_to_marketing: bool = False
+    nickname: Optional[str] = None
 
 
 # ============================================
@@ -146,7 +147,7 @@ async def update_agreements(
     agreements: AgreementsRequest,
     current_user = Depends(get_current_user)
 ):
-    """약관 동의 업데이트"""
+    """약관 동의 및 닉네임 업데이트"""
     try:
         # 사용자 메타데이터에서 provider 정보 추출
         app_metadata = current_user.app_metadata or {}
@@ -162,10 +163,12 @@ async def update_agreements(
             "provider": provider,
             "provider_id": provider_id,
             "agreed_to_terms": agreements.agreed_to_terms,
-            "agreed_to_privacy": agreements.agreed_to_privacy,
+            "agreed_to_privacy": agreements.privacyAgreed if hasattr(agreements, 'privacyAgreed') else agreements.agreed_to_privacy,
             "agreed_to_marketing": agreements.agreed_to_marketing,
             "updated_at": "now()"
         }
+        if agreements.nickname:
+            data["nickname"] = agreements.nickname
         
         # members 테이블에 upsert (없으면 생성, 있으면 업데이트)
         # QA 전용 테스터는 실제 DB 저장을 스킵하여 외래키 제약조건 위반 방지

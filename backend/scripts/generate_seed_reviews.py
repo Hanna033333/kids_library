@@ -33,10 +33,10 @@ BADGE_LIST = [
     "😆 깔깔 웃으며 무한 반복 요청해요",
     "📖 글밥이 적당해요",
     "🧠 호기심이 부쩍 늘었어요",
-    "⭐ 매일 밤 가져오는 최애 책이에요",
+    "⭐ 우리 아이 최애 책이에요",
     "💬 아이와 대화거리가 풍부해져요",
     "💡 새로운 상상력을 자극해요",
-    "📚 도서관에서 꼭 빌려볼 만해요",
+    "📚 꼭 읽어볼 만해요",
     "☀️ 아이 혼자서도 잘 펼쳐봐요",
     "👏 아이 집중력이 엄청 높아져요",
 ]
@@ -122,8 +122,9 @@ def generate_reviews_for_book(book: dict) -> Optional[List[dict]]:
 
 
 def insert_reviews(book_id: int, book_title: str, reviews: List[dict]):
-    """생성된 리뷰를 DB에 삽입"""
+    """생성된 리뷰를 DB에 삽입 — 성공한 삽입 수 반환"""
     used_nicknames = set()
+    inserted = 0
     
     for review in reviews:
         # 닉네임 중복 방지
@@ -144,9 +145,15 @@ def insert_reviews(book_id: int, book_title: str, reviews: List[dict]):
         }
         
         try:
-            supabase.table("book_reviews").insert(data).execute()
+            result = supabase.table("book_reviews").insert(data).execute()
+            if result.data:
+                inserted += 1
+            else:
+                logger.error(f"[{book_title}] 리뷰 삽입 실패 (빈 응답): {result}")
         except Exception as e:
             logger.error(f"[{book_title}] 리뷰 삽입 실패: {e}")
+    
+    return inserted
 
 
 def main():
@@ -185,6 +192,7 @@ def main():
     
     success_count = 0
     fail_count = 0
+    total_inserted = 0
     
     for i, book in enumerate(target_books, 1):
         book_id = book["id"]
@@ -201,17 +209,22 @@ def main():
             logger.info(f"  [DRY RUN] 생성된 리뷰 {len(reviews)}개:")
             for r in reviews:
                 logger.info(f"    ⭐{r.get('rating')} | {r.get('content', '')[:50]}...")
+            success_count += 1
         else:
-            insert_reviews(book_id, title, reviews)
-            logger.info(f"  ✅ {len(reviews)}개 리뷰 적재 완료")
-        
-        success_count += 1
+            inserted = insert_reviews(book_id, title, reviews)
+            if inserted > 0:
+                logger.info(f"  ✅ {inserted}/{len(reviews)}개 리뷰 적재 완료")
+                total_inserted += inserted
+                success_count += 1
+            else:
+                logger.error(f"  ❌ [{title}] 모든 리뷰 삽입 실패")
+                fail_count += 1
         
         # API Rate Limit 방지
         time.sleep(1.5)
     
     logger.info(f"\n===== 완료 =====")
-    logger.info(f"성공: {success_count}권 | 실패: {fail_count}권")
+    logger.info(f"성공: {success_count}권 | 실패: {fail_count}권 | 총 적재 리뷰: {total_inserted}개")
 
 
 if __name__ == "__main__":

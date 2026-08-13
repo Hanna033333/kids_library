@@ -21,6 +21,10 @@ CREATE INDEX IF NOT EXISTS idx_book_reviews_created_at ON book_reviews(created_a
 -- 3. RLS 활성화 및 정책 설정
 ALTER TABLE book_reviews ENABLE ROW LEVEL SECURITY;
 
+-- 기존 정책 제거 (멱등성 보장 — 재실행 시 충돌 방지)
+DROP POLICY IF EXISTS "book_reviews_select_all" ON book_reviews;
+DROP POLICY IF EXISTS "book_reviews_insert_all" ON book_reviews;
+
 -- 모든 사용자(비로그인 포함) 조회 허용
 CREATE POLICY "book_reviews_select_all" ON book_reviews
     FOR SELECT USING (true);

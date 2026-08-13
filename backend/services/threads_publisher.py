@@ -83,8 +83,9 @@ async def create_threads_item_container(image_url: str, access_token: str, user_
     async with httpx.AsyncClient() as client:
         response = await client.post(url, params=params, timeout=15)
         if response.status_code != 200:
-            print(f"❌ 캐러셀 아이템 컨테이너 생성 실패: {response.text}")
-            response.raise_for_status()
+            error_detail = response.text
+            print(f"❌ 캐러셀 아이템 컨테이너 생성 실패: {error_detail}")
+            raise RuntimeError(f"Threads API 에러 ({response.status_code}): {error_detail}")
         
         data = response.json()
         return data["id"]
@@ -108,8 +109,9 @@ async def create_threads_carousel_parent(container_ids: list, text: str, access_
     async with httpx.AsyncClient() as client:
         response = await client.post(url, params=params, timeout=15)
         if response.status_code != 200:
-            print(f"❌ 캐러셀 부모 컨테이너 생성 실패: {response.text}")
-            response.raise_for_status()
+            error_detail = response.text
+            print(f"❌ 캐러셀 부모 컨테이너 생성 실패: {error_detail}")
+            raise RuntimeError(f"Threads API 부모 컨테이너 에러 ({response.status_code}): {error_detail}")
             
         data = response.json()
         return data["id"]
@@ -127,8 +129,9 @@ async def publish_threads_container(creation_id: str, access_token: str, user_id
     async with httpx.AsyncClient() as client:
         response = await client.post(url, params=params, timeout=15)
         if response.status_code != 200:
-            print(f"❌ 최종 스레드 발행 실패: {response.text}")
-            response.raise_for_status()
+            error_detail = response.text
+            print(f"❌ 최종 스레드 발행 실패: {error_detail}")
+            raise RuntimeError(f"Threads API 최종 발행 에러 ({response.status_code}): {error_detail}")
             
         data = response.json()
         return data["id"]

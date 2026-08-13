@@ -396,6 +396,11 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
     
     print(f"📚 [스레드 발행 파이프라인] 테마: '{c_title}' (태그: '{c_tag}') 작업 시작")
     
+    # 7-Book Rule 가드레일: 첫 번째 태그 정밀 매칭 기준 7권 이상 확보되지 않은 큐레이션은 스레드 콘텐츠 발행 불가
+    from core.taxonomy import check_7_books_exist
+    if not check_7_books_exist(c_tag):
+        raise ValueError(f"큐레이션 태그 '{c_tag}'는 첫 번째 태그 정밀 매칭 기준 7권 이상 확보되지 않아 스레드 콘텐츠로 발행할 수 없습니다.")
+        
     books = select_three_books(c_tag)
     if len(books) < 3:
         raise ValueError(f"큐레이션 도서가 부족합니다. 최소 3권의 도서가 필요합니다.")

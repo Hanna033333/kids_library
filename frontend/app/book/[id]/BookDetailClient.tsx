@@ -89,6 +89,7 @@ export default function BookDetailClient({
                 className: 'bg-amber-50 text-amber-600 border-amber-100'
             })
         }
+        /* WIP 기능 (페이지 수 / 글밥) UI 임시 미노출
         if (book.page_count) {
             tags.push({
                 type: 'page_count',
@@ -103,6 +104,7 @@ export default function BookDetailClient({
                 className: 'bg-emerald-50 text-emerald-700 border-emerald-200'
             })
         }
+        */
         if (book.curation_tag) {
             const curationTags = book.curation_tag.split(',')
                 .map((tag) => tag.trim().replace(/^#/, ''))
@@ -425,8 +427,8 @@ export default function BookDetailClient({
                                 </div>
                             )}
                         </div>
-                        {/* Preview Trigger Button - 내지 이미지가 존재하는 경우에만 노출 */}
-                        {book.preview_urls && book.preview_urls.length > 0 && (
+                        {/* Preview Trigger Button - WIP 기능 (미노출 처리) */}
+                        {/* {book.preview_urls && book.preview_urls.length > 0 && (
                             <button
                                 onClick={() => setIsPreviewModalOpen(true)}
                                 className="mt-3 w-full py-3 px-4 bg-gray-50 active:bg-gray-100 active:scale-[0.98] border border-gray-200 rounded-xl text-sm font-bold text-gray-700 flex items-center justify-center gap-2 transition-all shadow-sm"
@@ -434,7 +436,7 @@ export default function BookDetailClient({
                                 <BookOpen className="w-[18px] h-[18px] text-amber-500 shrink-0" />
                                 <span>미리보기</span>
                             </button>
-                        )}
+                        )} */}
                     </div>
 
                     {/* Right: Info Area */}
@@ -591,8 +593,8 @@ export default function BookDetailClient({
 
             </div>
 
-            {/* Book Review & Badge Section */}
-            <BookReviewSection bookId={book.id} bookTitle={book.title} />
+            {/* Book Review & Badge Section - WIP 기능 (미노출 처리) */}
+            {/* <BookReviewSection bookId={book.id} bookTitle={book.title} /> */}
 
             {/* Recommendations Section 1: Age Group Popular (bg-muted-bg) */}
             {ageRecommended && ageRecommended.length > 0 && (
@@ -696,13 +698,14 @@ export default function BookDetailClient({
                 description={loginModalProps.description}
             />
 
-            <BookPreviewModal
+            {/* WIP 미리보기 모달 (미노출 처리) */}
+            {/* <BookPreviewModal
                 isOpen={isPreviewModalOpen}
                 onClose={() => setIsPreviewModalOpen(false)}
                 bookTitle={book.title}
                 coverUrl={book.image_url}
                 previewUrls={book.preview_urls}
-            />
+            /> */}
         </main >
     )
 }
