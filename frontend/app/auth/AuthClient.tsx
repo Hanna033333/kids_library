@@ -175,6 +175,10 @@ export default function AuthClient() {
                             onClick={() => {
                                 localStorage.setItem('supabase.auth.token', 'TEST_QA_TOKEN');
                                 sessionStorage.setItem('qa_mode', 'true');
+                                // 새 가입 시도 시 이전 상태가 남아있지 않도록 보장
+                                if (!sessionStorage.getItem('qa_member_state')) {
+                                    sessionStorage.removeItem('qa_member_state');
+                                }
                                 window.location.href = '/auth/callback?step=2';
                             }}
                             variant="outline"

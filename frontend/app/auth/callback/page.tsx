@@ -61,34 +61,46 @@ function AuthCallbackContent() {
                 sendGAEvent('login_success', { method: provider || 'unknown' })
 
                 // Check if user is already registered in members table
-                const { data: member, error: memberError } = await supabase
-                    .from('members')
-                    .select('agreed_to_terms')
-                    .eq('id', user.id)
-                    .single()
+                let member: { agreed_to_terms: boolean; nickname: string | null } | null = null
 
-                if (memberError && memberError.code !== 'PGRST116') { // PGRST116: no rows returned
-                    console.error('Error fetching member status:', memberError)
+                if (isQaMode) {
+                    const qaState = sessionStorage.getItem('qa_member_state')
+                    if (qaState === 'step4_done') {
+                        member = { agreed_to_terms: true, nickname: null }
+                    } else if (qaState === 'step5_done') {
+                        member = { agreed_to_terms: true, nickname: 'QA테스터' }
+                    } else {
+                        member = null
+                    }
+                } else {
+                    const { data, error: memberError } = await supabase
+                        .from('members')
+                        .select('agreed_to_terms, nickname')
+                        .eq('id', user.id)
+                        .single()
+
+                    if (memberError && memberError.code !== 'PGRST116') {
+                        console.error('Error fetching member status:', memberError)
+                    }
+                    member = data
                 }
 
-                // If user has already agreed to terms, they are an existing user
-                if (member?.agreed_to_terms) {
-                    const returnUrl = sessionStorage.getItem('returnUrl')
-                    sessionStorage.removeItem('returnUrl') // Clean up
-                    router.push(returnUrl || '/')
+                // 분기 1: 레코드 없음 or 약관 미동의 → 약관 동의 화면
+                if (!member || !member.agreed_to_terms) {
+                    window.location.href = '/auth/agreements'
                     return
                 }
 
-                // If user hasn't agreed to terms, they need to go to agreements page
-                if (!member?.agreed_to_terms) {
-                    router.push('/auth/agreements')
+                // 분기 2: 약관 동의 완료 + 닉네임 미설정 → Step 5 (4~5 이탈 후 재진입)
+                if (member.agreed_to_terms && !member.nickname) {
+                    window.location.href = '/auth/set-password'
                     return
                 }
 
-                // Existing user: go to returnUrl or home
+                // 분기 3: 완전 가입 완료 → 홈 or returnUrl
                 const returnUrl = sessionStorage.getItem('returnUrl')
                 sessionStorage.removeItem('returnUrl')
-                router.push(returnUrl || '/')
+                window.location.href = returnUrl || '/'
             } else {
                 router.push('/auth/signup')
             }

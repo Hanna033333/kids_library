@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Check, ChevronLeft } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
@@ -23,6 +24,8 @@ export default function AgreementsPage() {
         privacyAgreed: false,
         marketingAgreed: false
     })
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
 
     const handleAllAgree = (checked: boolean) => {
         setAgreements({
@@ -53,10 +56,58 @@ export default function AgreementsPage() {
         agreements.termsAgreed &&
         agreements.privacyAgreed
 
-    const handleNext = () => {
+    const handleNext = async () => {
         if (!isValid) return
-        sessionStorage.setItem('signup_agreements', JSON.stringify(agreements))
-        router.push('/auth/set-password')
+        setLoading(true)
+        setError('')
+
+        try {
+            let authToken = ''
+            const isQaMode = typeof window !== 'undefined' && localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN'
+
+            if (isQaMode) {
+                authToken = 'TEST_QA_TOKEN'
+            } else {
+                const { data: { session } } = await supabase.auth.getSession()
+                if (!session) throw new Error('로그인 세션이 없습니다.')
+                authToken = session.access_token
+            }
+
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            const API_BASE_URL = isLocal
+                ? 'http://127.0.0.1:8000'
+                : (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000')
+
+            const response = await fetch(`${API_BASE_URL}/api/auth/me/agreements`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({
+                    agreed_to_terms: agreements.termsAgreed,
+                    agreed_to_privacy: agreements.privacyAgreed,
+                    agreed_to_marketing: agreements.marketingAgreed,
+                    nickname: null
+                })
+            })
+
+            if (!response.ok) {
+                const errText = await response.text()
+                throw new Error(`약관 동의 저장 실패: ${errText}`)
+            }
+
+            // Step 5 GA 이벤트용으로 마케팅 동의 여부만 sessionStorage에 보존
+            sessionStorage.setItem('signup_agreements', JSON.stringify(agreements))
+            if (isQaMode) {
+                sessionStorage.setItem('qa_member_state', 'step4_done')
+            }
+            router.push('/auth/set-password')
+        } catch (e: any) {
+            setError(e.message || '오류가 발생했습니다. 다시 시도해주세요.')
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -202,19 +253,24 @@ export default function AgreementsPage() {
                     </div>
                 </div>
 
+                {/* 에러 메시지 */}
+                {error && (
+                    <p className="text-sm text-red-500 font-medium mb-3 text-center">{error}</p>
+                )}
+
                 {/* 다음 버튼 */}
                 <Button
                     onClick={handleNext}
-                    disabled={!isValid}
+                    disabled={!isValid || loading}
                     variant="primary"
                     size="lg"
                     className={`w-full rounded-lg h-[56px] text-lg font-bold transition-all
-                        ${isValid
+                        ${isValid && !loading
                             ? 'bg-[#F59E0B] text-white'
                             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         }`}
                 >
-                    다음
+                    {loading ? '저장 중...' : '다음'}
                 </Button>
             </div>
         </div>
