@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { PageLoader } from '@/components/ui/PageLoader'
 import { sendGAEvent } from '@/lib/analytics'
 import BackButton from '@/components/BackButton'
+import { useAuth } from '@/context/AuthContext'
 
 
 export default function AuthClient() {
@@ -17,8 +18,45 @@ export default function AuthClient() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const supabase = createClient()
+    const { user, isLoading: authLoading } = useAuth()
+    const hasTriggeredRef = useRef(false)
+
+    // BFCache (뒤로가기 페이지 복원) 대응: 스피너 상태 초기화 및 oauth_in_progress 정리
+    useEffect(() => {
+        const handlePageShow = (event: PageTransitionEvent) => {
+            setIsLoading(false)
+            if (sessionStorage.getItem('oauth_in_progress')) {
+                sessionStorage.removeItem('oauth_in_progress')
+            }
+        }
+        window.addEventListener('pageshow', handlePageShow)
+        return () => window.removeEventListener('pageshow', handlePageShow)
+    }, [])
 
     useEffect(() => {
+        if (authLoading) return
+
+        // 이미 로그인된 사용자가 가입/로그인 페이지로 들어왔거나 뒤로가기로 접근한 경우
+        if (user) {
+            const returnUrl = sessionStorage.getItem('returnUrl')
+            if (returnUrl) sessionStorage.removeItem('returnUrl')
+            if (sessionStorage.getItem('oauth_in_progress')) sessionStorage.removeItem('oauth_in_progress')
+            router.replace(returnUrl || '/')
+            return
+        }
+
+        // 외부 OAuth 로그인 페이지(카카오/구글)에서 'Back' 키를 눌러 취소하고 되돌아온 경우
+        if (sessionStorage.getItem('oauth_in_progress')) {
+            sessionStorage.removeItem('oauth_in_progress')
+            setIsLoading(false)
+            const returnUrl = sessionStorage.getItem('returnUrl')
+            if (returnUrl) {
+                sessionStorage.removeItem('returnUrl')
+                router.replace(returnUrl)
+                return
+            }
+        }
+
         // 로컬스토리지에서 마지막 로그인 수단 가져오기
         const savedProvider = localStorage.getItem('last_login_provider')
         if (savedProvider) {
@@ -33,16 +71,20 @@ export default function AuthClient() {
             setError('로그인 처리 중 오류가 발생했습니다. 다시 시도해 주세요.')
         }
 
-        // provider 파라미터가 있으면 즉시 로그인 실행
+        // provider 파라미터가 있고 아직 자동 실행하지 않았다면 1회만 실행
         const autoProvider = searchParams.get('provider')
-        if (autoProvider === 'kakao') {
-            handleKakaoLogin()
-        } else if (autoProvider === 'google') {
-            handleGoogleLogin()
+        if (autoProvider && !hasTriggeredRef.current) {
+            hasTriggeredRef.current = true
+            if (autoProvider === 'kakao') {
+                handleKakaoLogin()
+            } else if (autoProvider === 'google') {
+                handleGoogleLogin()
+            }
         }
-    }, [searchParams])
+    }, [user, authLoading, searchParams, router])
 
     const handleKakaoLogin = async () => {
+        sessionStorage.setItem('oauth_in_progress', 'true')
         setIsLoading(true)
         setError(null)
         sendGAEvent('login_attempt', { method: 'kakao' })
@@ -56,12 +98,14 @@ export default function AuthClient() {
             })
             if (error) throw error
         } catch (err: any) {
+            sessionStorage.removeItem('oauth_in_progress')
             setError('카카오 로그인 중 오류가 발생했습니다.')
             setIsLoading(false)
         }
     }
 
     const handleGoogleLogin = async () => {
+        sessionStorage.setItem('oauth_in_progress', 'true')
         setIsLoading(true)
         setError(null)
         sendGAEvent('login_attempt', { method: 'google' })
@@ -75,6 +119,7 @@ export default function AuthClient() {
             })
             if (error) throw error
         } catch (err: any) {
+            sessionStorage.removeItem('oauth_in_progress')
             setError('구글 로그인 중 오류가 발생했습니다.')
             setIsLoading(false)
         }

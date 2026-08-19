@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Modal from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { createClient } from '@/lib/supabase';
+import { sendGAEvent } from '@/lib/analytics';
 
 interface LoginPromptModalProps {
     isOpen: boolean;
@@ -18,6 +21,30 @@ export default function LoginPromptModal({
     description = '3초 간편 로그인으로 내 책장에 모아두고 언제든 꺼내 보세요.'
 }: LoginPromptModalProps) {
     const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
+    const supabase = createClient();
+
+    const handleSocialLogin = async (provider: 'kakao' | 'google') => {
+        setIsLoading(true);
+        if (typeof window !== 'undefined' && !sessionStorage.getItem('returnUrl')) {
+            sessionStorage.setItem('returnUrl', window.location.pathname);
+        }
+        sendGAEvent('login_attempt', { method: provider, source: 'login_prompt_modal' });
+        localStorage.setItem('last_login_provider', provider);
+
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider,
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback?step=2`,
+                },
+            });
+            if (error) throw error;
+        } catch (err) {
+            console.error(`${provider} login error:`, err);
+            setIsLoading(false);
+        }
+    };
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-[340px]">
@@ -36,9 +63,10 @@ export default function LoginPromptModal({
 
                 <div className="flex flex-col gap-2.5 w-full">
                     <Button
-                        onClick={() => router.push('/auth/signup?provider=kakao')}
+                        onClick={() => handleSocialLogin('kakao')}
                         variant="kakao"
                         size="md"
+                        disabled={isLoading}
                         className="w-full relative rounded-xl font-bold h-12 text-[14.5px] active:scale-[0.98] transition-transform"
                     >
                         <div className="absolute left-4 top-1/2 -translate-y-1/2">
@@ -49,9 +77,10 @@ export default function LoginPromptModal({
                         카카오로 3초 만에 시작하기
                     </Button>
                     <Button
-                        onClick={() => router.push('/auth/signup?provider=google')}
+                        onClick={() => handleSocialLogin('google')}
                         variant="google"
                         size="md"
+                        disabled={isLoading}
                         className="w-full relative rounded-xl font-bold h-12 text-[14px] active:scale-[0.98] transition-transform"
                     >
                         <div className="absolute left-4 top-1/2 -translate-y-1/2">

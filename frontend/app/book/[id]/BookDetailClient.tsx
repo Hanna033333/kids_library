@@ -383,7 +383,7 @@ export default function BookDetailClient({
             {/* Top Header */}
             <PageHeader 
                 title="도서 정보" 
-                backHref="/"
+                showHome={true}
                 rightSlot={
                     <div className="flex items-center">
                         {user ? (
@@ -517,6 +517,9 @@ export default function BookDetailClient({
                                     <button
                                         onClick={() => {
                                             sendGAEvent('click_library_cta_unauth', { book_id: book.id });
+                                            if (typeof window !== 'undefined') {
+                                                sessionStorage.setItem('returnUrl', window.location.pathname);
+                                            }
                                             setLoginModalProps({
                                                 title: "우리 동네 도서관에 이 책 지금 있는지 3초 만에 확인하기 🔍",
                                                 description: "자주 가는 도서관 1곳만 선택하면 실시간 대출 가능 여부와 청구기호를 바로 확인할 수 있어요."

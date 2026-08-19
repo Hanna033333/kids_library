@@ -87,20 +87,20 @@ function AuthCallbackContent() {
 
                 // 분기 1: 레코드 없음 or 약관 미동의 → 약관 동의 화면
                 if (!member || !member.agreed_to_terms) {
-                    window.location.href = '/auth/agreements'
+                    window.location.replace('/auth/agreements')
                     return
                 }
 
                 // 분기 2: 약관 동의 완료 + 닉네임 미설정 → Step 5 (4~5 이탈 후 재진입)
                 if (member.agreed_to_terms && !member.nickname) {
-                    window.location.href = '/auth/set-password'
+                    window.location.replace('/auth/set-password')
                     return
                 }
 
                 // 분기 3: 완전 가입 완료 → 홈 or returnUrl
                 const returnUrl = sessionStorage.getItem('returnUrl')
                 sessionStorage.removeItem('returnUrl')
-                window.location.href = returnUrl || '/'
+                window.location.replace(returnUrl || '/')
             } else {
                 router.push('/auth/signup')
             }
