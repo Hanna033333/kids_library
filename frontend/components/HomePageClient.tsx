@@ -21,6 +21,7 @@ import { getOptimizedImageUrl } from '@/lib/utils/image'
 import { PageLoader } from '@/components/ui/PageLoader'
 import CurationSection from '@/components/home/CurationSection'
 import BookCard from '@/components/home/BookCard'
+import { isSummerCurationActive } from '@/lib/utils/curation-filter'
 
 interface DynamicCuration {
   subtitle: string;
@@ -126,9 +127,9 @@ export default function HomePageClient({
     }
   }, []) // researchBooks 의존성 제거
 
-  // 여름방학 추천 도서 로드 (초기 데이터 없으면 로드)
+  // 여름방학 추천 도서 로드 (8/20까지만 활성화)
   useEffect(() => {
-    if (summerBooks.length === 0) {
+    if (isSummerCurationActive() && summerBooks.length === 0) {
       getSummerBooks(7).then(setSummerBooks)
     }
   }, [])
@@ -145,7 +146,8 @@ export default function HomePageClient({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      sendGAEvent('home_search', { keyword: searchQuery })
+      sendGAEvent('home_search', { search_term: searchQuery, keyword: searchQuery })
+      sendGAEvent('search', { search_term: searchQuery, keyword: searchQuery })
       router.push(`/books?q=${encodeURIComponent(searchQuery)}`)
     } else {
       router.push('/books')
@@ -207,8 +209,8 @@ export default function HomePageClient({
       {/* 검색 바 제거 (큐레이션 집중을 위함) */}
 
 
-      {/* 2026 여름방학 추천도서 섹션 (최상단 첫 번째 배치) */}
-      {summerBooks.length > 0 && (
+      {/* 2026 여름방학 추천도서 섹션 (8/20까지만 노출) */}
+      {isSummerCurationActive() && summerBooks.length > 0 && (
         <CurationSection
           subtitle="교육청이 엄선한 학년별 필독서"
           title="☀️ 여름방학 추천도서"
@@ -425,17 +427,20 @@ export default function HomePageClient({
       <ConfirmModal
         isOpen={isSignupCompleteOpen}
         onClose={() => setIsSignupCompleteOpen(false)}
-        onConfirm={() => setIsSignupCompleteOpen(false)}
-        title="회원 가입 완료"
+        onConfirm={() => {
+          setIsSignupCompleteOpen(false)
+          router.push('/my-page')
+        }}
+        title="회원 가입을 축하해요! 🎉"
         description={
           <div className="text-gray-600 leading-relaxed text-center break-keep">
-            책자리 회원 가입이 완료되었습니다.<br />
-            우리 아이에게 딱 맞는 책,<br />
-            지금 바로 찾아보세요.
+            책자리 가입이 완료되었습니다.<br />
+            <span className="font-bold text-amber-600">자주 가는 도서관 1곳</span>을 설정하시면,<br />
+            찜한 책의 대출 가능 여부를 바로 확인할 수 있어요!
           </div>
         }
-        confirmLabel="확인"
-        cancelLabel=""
+        confirmLabel="내 도서관 설정하기 📍"
+        cancelLabel="나중에 할게요"
         confirmVariant="primary"
         hideOverlay
       />

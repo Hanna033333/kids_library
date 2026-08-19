@@ -377,9 +377,11 @@ export default function MyPageClient() {
                                     <span className="font-semibold text-gray-900 text-[15px]">내 책장</span>
                                     <ChevronRight className="w-5 h-5 text-gray-400" />
                                 </button>
-                                <div className="w-full flex items-center justify-between px-5 py-4">
-                                    <span className="font-semibold text-gray-900 text-[15px]">내 도서관 설정</span>
-                                    <LibrarySelector />
+                                <div className="w-full flex items-center justify-between px-5 py-4 gap-3 min-w-0">
+                                    <span className="font-semibold text-gray-900 text-[15px] shrink-0 whitespace-nowrap">내 도서관</span>
+                                    <div className="min-w-0 shrink flex justify-end">
+                                        <LibrarySelector />
+                                    </div>
                                 </div>
                             </div>
 

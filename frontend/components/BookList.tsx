@@ -13,6 +13,7 @@ import { sendGAEvent } from "@/lib/analytics";
 import { useAuth } from "@/context/AuthContext";
 import LoginPromptModal from "@/components/ui/LoginPromptModal";
 import { useRouter } from "next/navigation";
+import { MapPin, ChevronRight } from "lucide-react";
 
 const ITEMS_PER_PAGE = 24;
 
@@ -231,10 +232,15 @@ export default function BookList({
               <LibrarySelector />
             ) : (
               <button
-                onClick={() => setIsLoginModalOpen(true)}
-                className="text-sm sm:text-base font-semibold text-gray-700 active:text-gray-900 transition-colors underline underline-offset-2 py-2 px-1"
+                onClick={() => {
+                  sendGAEvent('click_library_cta_unauth', { source: 'book_list' });
+                  setIsLoginModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 text-sm sm:text-base font-bold text-gray-800 active:text-gray-900 bg-gray-100/80 hover:bg-gray-200/80 border border-gray-200/80 rounded-xl py-2.5 px-3.5 transition-all shadow-2xs group"
               >
-                <span>내 도서관 대출 정보 확인</span>
+                <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>우리 동네 도서관 대출 가능 여부 3초 확인</span>
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 shrink-0 transition-colors" />
               </button>
             )}
           </div>
@@ -335,8 +341,8 @@ export default function BookList({
         <LoginPromptModal
           isOpen={isLoginModalOpen}
           onClose={() => setIsLoginModalOpen(false)}
-          title="좋은 책, 놓치지 않게!"
-          description="자주 가는 도서관을 등록하고 실시간 대출 상태와 청구기호를 바로 확인해보세요."
+          title="우리 동네 도서관에 이 책 지금 있는지 3초 만에 확인하기 🔍"
+          description="자주 가는 도서관 1곳만 선택하면 실시간 대출 가능 여부와 청구기호를 바로 확인할 수 있어요."
         />
       </div>
     </div>

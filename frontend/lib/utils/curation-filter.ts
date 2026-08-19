@@ -64,3 +64,19 @@ export function resolveDefaultSortField(
 export function buildCurationOrFilter(dbTag: string): string {
   return `curation_tag.eq."${dbTag}",curation_tag.like."${dbTag},%",curation_tag.eq."#${dbTag}",curation_tag.like."#${dbTag},%"`
 }
+
+/**
+ * 여름방학 추천도서 큐레이션 활성화 여부 확인 (8/20까지만 활성화)
+ * KST 기준 2026년 8월 20일 23:59:59 (YYYY-MM-DD <= '2026-08-20') 까지만 true 반환
+ */
+export function isSummerCurationActive(targetDate: Date = new Date()): boolean {
+  const utc = targetDate.getTime() + (targetDate.getTimezoneOffset() * 60 * 1000)
+  const kst = new Date(utc + (9 * 60 * 60 * 1000))
+  const yyyy = kst.getFullYear()
+  const mm = String(kst.getMonth() + 1).padStart(2, '0')
+  const dd = String(kst.getDate()).padStart(2, '0')
+  const dateStr = `${yyyy}-${mm}-${dd}`
+
+  return dateStr <= '2026-08-20'
+}
+

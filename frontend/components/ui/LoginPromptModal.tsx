@@ -14,29 +14,34 @@ interface LoginPromptModalProps {
 export default function LoginPromptModal({
     isOpen,
     onClose,
-    title = '좋은 책, 놓치지 않게!',
-    description = '전문가가 엄선한 추천작들을 책장에 담아두세요.'
+    title = '마음에 드는 책, 책장에 쏙! 📚',
+    description = '3초 간편 로그인으로 내 책장에 모아두고 언제든 꺼내 보세요.'
 }: LoginPromptModalProps) {
     const router = useRouter();
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} hideCloseButton maxWidth="max-w-[350px]">
-            <div className="p-6">
-                <h3 className="text-[18px] font-bold text-gray-900 leading-snug mb-2">
+        <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-[340px]">
+            <div className="p-6 text-center flex flex-col items-center">
+                {/* Visual Icon Badge */}
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 border border-amber-100/80 flex items-center justify-center mb-4 shadow-xs">
+                    <span className="text-2xl">🔖</span>
+                </div>
+
+                <h3 className="text-xl font-black text-gray-900 leading-snug mb-2 tracking-tight break-keep">
                     {title}
                 </h3>
-                <p className="text-gray-500 text-sm mb-6 leading-relaxed tracking-tight break-keep">
+                <p className="text-gray-500 text-[13.5px] mb-6 leading-relaxed tracking-tight break-keep max-w-[270px] mx-auto font-medium">
                     {description}
                 </p>
 
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2.5 w-full">
                     <Button
                         onClick={() => router.push('/auth/signup?provider=kakao')}
                         variant="kakao"
                         size="md"
-                        className="w-full relative rounded-lg font-bold"
+                        className="w-full relative rounded-xl font-bold h-12 text-[14.5px] active:scale-[0.98] transition-transform"
                     >
-                        <div className="absolute left-4">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 3C5.373 3 0 7.373 0 12.765c0 3.39 2.15 6.42 5.513 8.212l-1.092 4.098c-.12.45.33.84.72.63l4.62-2.31c.712.09 1.442.138 2.18.138 6.627 0 12-4.373 12-9.765C24 7.373 18.627 3 12 3z" />
                             </svg>
@@ -47,9 +52,9 @@ export default function LoginPromptModal({
                         onClick={() => router.push('/auth/signup?provider=google')}
                         variant="google"
                         size="md"
-                        className="w-full relative rounded-lg font-bold text-[14px]"
+                        className="w-full relative rounded-xl font-bold h-12 text-[14px] active:scale-[0.98] transition-transform"
                     >
-                        <div className="absolute left-4">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2">
                             <svg width="18" height="18" viewBox="0 0 24 24">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>

@@ -45,6 +45,15 @@ def verify_action_signature(action: str, feed_id: int, signature: str) -> bool:
     expected = sign_action(action, feed_id)
     return hmac.compare_digest(expected, signature)
 
+def get_backend_url() -> str:
+    """안전한 백엔드 URL을 반환합니다. 임시 터널 주소(loca.lt, loca.it 등)는 상용 주소로 자동 교체합니다."""
+    url = os.getenv("BACKEND_URL", "https://api.checkjari.com").strip().rstrip("/")
+    if not url or "loca.lt" in url or "loca.it" in url or "localtunnel" in url:
+        return "https://api.checkjari.com"
+    if "localhost" in url or "127.0.0.1" in url:
+        return url.replace("localhost", "lvh.me").replace("127.0.0.1", "lvh.me")
+    return url
+
 def _build_admin_url(base_url: str, path: str, feed_id: int, signature: str) -> str:
     """텔레그램 버튼에 사용할 관리자 승인 URL을 생성합니다."""
     parsed = urllib.parse.urlsplit(f"{base_url}{path}")
@@ -284,10 +293,7 @@ async def process_telegram_feedback(feedback_text: str):
         "card_descriptions": new_content["card_descriptions"]
     }).eq("id", feed_id).execute()
     
-    backend_url = os.getenv("BACKEND_URL", "http://lvh.me:8000")
-    if "localhost" in backend_url or "127.0.0.1" in backend_url:
-        backend_url = backend_url.replace("localhost", "lvh.me").replace("127.0.0.1", "lvh.me")
-        
+    backend_url = get_backend_url()
     confirm_url = _build_admin_url(backend_url, "/api/threads/approve-text", feed_id, sign_action("approve-text", feed_id))
     
     books_list = []
@@ -421,10 +427,7 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
         
     feed_id = db_result.data[0]["id"]
     
-    backend_url = os.getenv("BACKEND_URL", "http://lvh.me:8000")
-    if "localhost" in backend_url or "127.0.0.1" in backend_url:
-        backend_url = backend_url.replace("localhost", "lvh.me").replace("127.0.0.1", "lvh.me")
-        
+    backend_url = get_backend_url()
     confirm_url = _build_admin_url(backend_url, "/api/threads/approve-text", feed_id, sign_action("approve-text", feed_id))
     
     books_list = []
@@ -734,10 +737,7 @@ async def approve_text_submit(req: ApproveSubmitRequest):
         "image_urls": image_urls
     }).eq("id", feed_id).execute()
     
-    backend_url = os.getenv("BACKEND_URL", "http://lvh.me:8000")
-    if "localhost" in backend_url or "127.0.0.1" in backend_url:
-        backend_url = backend_url.replace("localhost", "lvh.me").replace("127.0.0.1", "lvh.me")
-        
+    backend_url = get_backend_url()
     confirm_url = _build_admin_url(backend_url, "/api/threads/approve", feed_id, sign_action("approve", feed_id))
     
     await send_threads_preview(
@@ -1040,7 +1040,7 @@ async def debug_telegram(
             
             # 3. 인라인 키보드 버튼을 포함한 메시지 발송 테스트 (URL 정책 확인용)
             confirm_url = _build_admin_url(
-                backend_url or "http://lvh.me:8000",
+                get_backend_url(),
                 "/api/threads/approve-text",
                 0,
                 sign_action("approve-text", 0),

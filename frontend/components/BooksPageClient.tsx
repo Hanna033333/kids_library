@@ -92,7 +92,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
-        sendGAEvent('search', { keyword: query });
+        sendGAEvent('search', { search_term: query, keyword: query });
         updateURL({ q: query, age: ageFilter, category: categoryFilter, sort: sortFilter });
     }, [ageFilter, categoryFilter, sortFilter, updateURL]);
 

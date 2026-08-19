@@ -238,9 +238,10 @@ export default function BookDetailClient({
         if (!user) {
             sessionStorage.setItem('returnUrl', window.location.pathname)
             sessionStorage.setItem('pendingAction', `like_book_${book.id}`)
+            sendGAEvent('click_bookmark_unauth', { book_id: book.id })
             setLoginModalProps({
-                title: "좋은 책, 놓치지 않게!",
-                description: "전문가가 엄선한 추천작들을 책장에 담아두세요."
+                title: "마음에 드는 책, 책장에 쏙! 📚",
+                description: "3초 간편 로그인으로 내 책장에 모아두고 언제든 꺼내 보세요."
             })
             setIsLoginModalOpen(true)
             return
@@ -475,67 +476,79 @@ export default function BookDetailClient({
                                 <span className="text-gray-400 text-sm">{book.publisher || '정보 없음'}</span>
                             </div>
 
-                            {user ? (
-                                <div className="mb-4">
-                                    <div className="mb-2 flex items-center">
-                                        <LibrarySelector />
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className={`font-black text-2xl tracking-tight ${displayCallNo === '보유 정보 없음' ? 'text-gray-400' : 'text-gray-900'}`}>
-                                            {displayCallNo}{book.vol ? `-${book.vol}` : ''}
-                                        </span>
-                                        {normalizedStatus && normalizedStatus.status !== "확인중" && (
-                                            <span className={`px-2 py-1 rounded-full text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
-                                                ? "bg-green-100 text-green-700"
-                                                : normalizedStatus.available === false
-                                                    ? "bg-red-100 text-red-700"
-                                                    : normalizedStatus.status === "미소장"
-                                                        ? "bg-gray-100 text-gray-700"
-                                                            : "bg-white text-gray-600 border border-gray-300"
-                                                }`}>
-                                                {normalizedStatus.status}
+                            {/* 🏛️ Library Info Section (Flat & Minimal Line) */}
+                            <div className="my-5 py-4 border-y border-gray-100">
+                                {user ? (
+                                    <div>
+                                        <div className="text-xs font-bold text-gray-500 tracking-tight mb-2 flex items-center gap-1.5">
+                                            <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                            <span>도서관 소장 및 대출 정보</span>
+                                        </div>
+                                        <div className="flex items-center gap-3 flex-wrap">
+                                            <LibrarySelector />
+                                            <span className={`font-black text-xl tracking-tight ${displayCallNo === '보유 정보 없음' ? 'text-gray-400' : 'text-gray-900'}`}>
+                                                {displayCallNo}{book.vol ? `-${book.vol}` : ''}
                                             </span>
-                                        )}
+                                            {normalizedStatus && normalizedStatus.status !== "확인중" && (
+                                                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
+                                                    ? "bg-green-100 text-green-700"
+                                                    : normalizedStatus.available === false
+                                                        ? "bg-red-100 text-red-700"
+                                                        : normalizedStatus.status === "미소장"
+                                                            ? "bg-gray-100 text-gray-700"
+                                                                : "bg-white text-gray-600 border border-gray-300"
+                                                    }`}>
+                                                    {normalizedStatus.status}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                sendGAEvent('click_report_error', { book_id: book.id });
+                                                window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
+                                            }}
+                                            className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 text-gray-400 hover:text-gray-600 border border-gray-200 rounded-md text-[11px] font-medium mt-2 transition-colors"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
+                                            정보가 다른가요? 제보하기
+                                        </button>
                                     </div>
+                                ) : (
                                     <button
                                         onClick={() => {
-                                            sendGAEvent('click_report_error', { book_id: book.id });
-                                            window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
-                                        }}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-400 active:bg-gray-50 active:text-gray-600 border border-gray-200 rounded-lg text-[11px] font-medium mt-3 transition-colors"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
-                                        정보가 다른가요? 제보하기
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="mt-2 mb-6 py-1">
-                                    <button
-                                        onClick={() => {
+                                            sendGAEvent('click_library_cta_unauth', { book_id: book.id });
                                             setLoginModalProps({
-                                                title: "좋은 책, 놓치지 않게!",
-                                                description: "자주 가는 도서관을 등록하고 실시간 대출 상태와 청구기호를 바로 확인해보세요."
+                                                title: "우리 동네 도서관에 이 책 지금 있는지 3초 만에 확인하기 🔍",
+                                                description: "자주 가는 도서관 1곳만 선택하면 실시간 대출 가능 여부와 청구기호를 바로 확인할 수 있어요."
                                             });
                                             setIsLoginModalOpen(true);
                                         }}
-                                        className="text-sm sm:text-base font-semibold text-gray-700 active:text-gray-900 transition-colors underline underline-offset-2 py-2 px-1"
+                                        className="w-full text-left flex items-center justify-between py-1.5 active:opacity-75 transition-opacity"
                                     >
-                                        내 도서관 대출 정보 확인
+                                        <div className="flex items-center gap-3.5">
+                                            <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                                <MapPin className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <div className="text-base sm:text-[17px] font-bold text-gray-900 leading-snug">
+                                                    이 책, 우리 동네 도서관에 지금 있을까?
+                                                </div>
+                                                <p className="text-xs sm:text-sm text-gray-500 font-medium leading-snug">
+                                                    자주 가는 도서관을 설정하고 대출 상태와 청구기호를 확인해 보세요
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="w-7 h-7 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 ml-3">
+                                            <ChevronRight className="w-4 h-4" />
+                                        </div>
                                     </button>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
 
                         {/* Save & Share Area */}
                         <div className="mt-2 pt-6 border-t border-gray-100 flex gap-3 items-end">
                             <div className="relative z-20">
-                                {!user?.id && (
-                                    <div className="absolute -top-12 left-0 z-50 whitespace-nowrap bg-gray-100 text-gray-700 text-[11px] font-bold px-2.5 py-1.5 rounded-lg pointer-events-none">
-                                        찜하고 나중에 확인!
-                                        {/* Tooltip Triangle - Pointing to the center of the W-14 button */}
-                                        <div className="absolute -bottom-1 left-7 -translate-x-1/2 w-2.5 h-2.5 bg-gray-100 rotate-45"></div>
-                                    </div>
-                                )}
                                 <button
                                     onClick={handleToggleSave}
                                     disabled={isToggling}
@@ -593,7 +606,7 @@ export default function BookDetailClient({
 
             </div>
 
-            {/* Book Review & Badge Section - WIP 기능 (미노출 처리) */}
+            {/* 리뷰/별점 기능 가림 (미완성) */}
             {/* <BookReviewSection bookId={book.id} bookTitle={book.title} /> */}
 
             {/* Recommendations Section 1: Age Group Popular (bg-muted-bg) */}

@@ -120,6 +120,12 @@ async def update_my_profile(
     current_user = Depends(get_current_user)
 ):
     """내 정보 수정"""
+    if profile.nickname and re.search(r'\s', profile.nickname):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="닉네임에 띄어쓰기를 포함할 수 없습니다."
+        )
+
     try:
         update_data = profile.dict(exclude_unset=True)
         

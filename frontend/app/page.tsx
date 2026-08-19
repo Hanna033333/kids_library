@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase'
 import { VALID_TAXONOMY, CurationTag } from '@/lib/constants/taxonomy'
 import weeklySchedule from '../shared/weekly_schedule.json'
 
+import { isSummerCurationActive } from '@/lib/utils/curation-filter'
+
 export const revalidate = 3600; // 1시간 주기 ISR 캐시 활성화
 
 export const metadata: Metadata = {
@@ -72,7 +74,7 @@ export default async function HomePage() {
     getResearchCouncilBooks(7, supabase, false),
     getBooksByAge(defaultAge, 7, supabase, false),
     getCaldecottBooks(supabase, false),
-    getSummerBooks(7, supabase, false),
+    isSummerCurationActive() ? getSummerBooks(7, supabase, false) : Promise.resolve([]),
     ...selectedTags.map(t => getBooksByTag(t.tag, 7, supabase, false))
   ])
 

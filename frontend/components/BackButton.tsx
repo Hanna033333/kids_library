@@ -22,6 +22,13 @@ export default function BackButton({ onClick, href, className = '' }: BackButton
             return
         }
 
+        // href가 명시적으로 지정되어 있거나, historyStack 길이가 1 이하이면 지정된 href(또는 /)로 이동
+        if (href) {
+            e.preventDefault()
+            router.push(href)
+            return
+        }
+
         // 세션스토리지에 저장된 내부 경로 이동 기록을 활용하여 이전 페이지가 동일 서비스인지 확인
         if (typeof window !== 'undefined') {
             try {

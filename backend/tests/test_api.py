@@ -101,3 +101,34 @@ def test_threads_approve_post_validation():
     )
     assert response.status_code == 401
     assert "유효하지 않은 관리자 서명입니다." in response.json()["detail"]
+
+# ============================================
+# 4. 닉네임 띄어쓰기 금지 정책 테스트
+# ============================================
+
+def test_nickname_no_space_validation_in_profile():
+    """닉네임 변경 시 띄어쓰기가 포함되면 400 Bad Request 에러를 반환하는지 테스트"""
+    os.environ["ENV"] = "development"
+    os.environ["ALLOW_QA_MOCK"] = "true"
+
+    response = client.patch(
+        "/api/auth/me",
+        headers={"Authorization": "Bearer TEST_QA_TOKEN"},
+        json={"nickname": "다복한 책탐험가"}
+    )
+    assert response.status_code == 400
+    assert "닉네임에 띄어쓰기를 포함할 수 없습니다." in response.json()["detail"]
+
+def test_review_nickname_no_space_validation():
+    """리뷰 작성 시 닉네임에 띄어쓰기가 포함되면 400 Bad Request 에러를 반환하는지 테스트"""
+    response = client.post(
+        "/api/books/1/reviews",
+        json={
+            "nickname": "서아 맘",
+            "rating": 5.0,
+            "selected_badges": ["☀️ 아이 혼자서도 잘 펼쳐봐요"]
+        }
+    )
+    assert response.status_code == 400
+    assert "닉네임에 띄어쓰기를 포함할 수 없습니다." in response.json()["detail"]
+

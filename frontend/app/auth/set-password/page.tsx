@@ -9,14 +9,14 @@ import { useAuth } from '@/context/AuthContext'
 import PageHeader from '@/components/PageHeader'
 import { sendGAEvent } from '@/lib/analytics'
 
-// 책/육아 관련 한글 형용사 + 명사 랜덤 닉네임 생성기
+// 책/육아 관련 한글 형용사 + 명사 랜덤 닉네임 생성기 (띄어쓰기 없음)
 const ADJECTIVES = ['지혜로운', '따스한', '포근한', '정겨운', '행복한', '다정한', '꿈꾸는', '다독이는', '슬기로운', '다복한', '마음넓은', '빛나는']
 const NOUNS = ['책벌레', '이야기꾼', '책부엉이', '파랑새', '독서가', '책요정', '글벗', '책탐험가', '책마을님']
 
 function generateRandomNickname() {
     const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
     const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
-    return `${adj} ${noun}`
+    return `${adj}${noun}`
 }
 
 export default function SetPasswordPage() {
@@ -29,12 +29,14 @@ export default function SetPasswordPage() {
 
     const { user: authUser } = useAuth()
 
-    // 닉네임 초기화 (OAuth 메타데이터 수집 시도 -> 없으면 랜덤 형용사+명사 생성)
+    // 닉네임 초기화 (OAuth 메타데이터 수집 시도 -> 없으면 랜덤 형용사+명사 생성, 띄어쓰기 제거)
     useEffect(() => {
-        const existingName =
+        const rawExistingName =
             authUser?.user_metadata?.full_name ||
             authUser?.user_metadata?.name ||
             authUser?.user_metadata?.nickname
+
+        const existingName = rawExistingName ? rawExistingName.replace(/\s+/g, '') : ''
 
         if (existingName && existingName.length >= 2 && existingName.length <= 10) {
             setNickname(existingName)
@@ -46,8 +48,12 @@ export default function SetPasswordPage() {
     // 실시간 유효성 검사 상태
     const validation = useMemo(() => {
         const trimmedNickname = nickname.trim()
+        const hasNoSpace = !/\s/.test(nickname)
+        const isNicknameLengthValid = trimmedNickname.length >= 2 && trimmedNickname.length <= 10
         return {
-            isNicknameValid: trimmedNickname.length >= 2 && trimmedNickname.length <= 10,
+            hasNoSpace,
+            isNicknameLengthValid,
+            isNicknameValid: isNicknameLengthValid && hasNoSpace,
             hasLetter: /[a-zA-Z]/.test(password),
             hasNumber: /[0-9]/.test(password),
             isLengthValid: password.length >= 8 && password.length <= 20,
@@ -118,23 +124,22 @@ export default function SetPasswordPage() {
                 authToken = sessionData.session?.access_token || ''
             }
 
-            const response = await fetch(`${API_BASE_URL}/api/auth/me/agreements`, {
-                method: 'POST',
+            // 약관 동의는 Step 4(/auth/agreements)에서 이미 저장됨
+            // 여기서는 닉네임만 PATCH로 업데이트
+            const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify({
-                    nickname: finalNickname,
-                    agreed_to_terms: agreements.termsAgreed || false,
-                    agreed_to_privacy: agreements.privacyAgreed || false,
-                    agreed_to_marketing: agreements.marketingAgreed || false
+                    nickname: finalNickname
                 })
             })
 
             if (!response.ok) {
                 const errorText = await response.text()
-                throw new Error(`Failed to save agreements (${response.status}): ${errorText}`)
+                throw new Error(`닉네임 저장 실패 (${response.status}): ${errorText}`)
             }
 
             // Track GA Sign-up event
@@ -170,7 +175,7 @@ export default function SetPasswordPage() {
             {/* 상단 헤더 */}
             <PageHeader
                 title=""
-                backHref="/auth/agreements"
+                backHref="/"
                 rightSlot={null}
             />
 
@@ -186,13 +191,13 @@ export default function SetPasswordPage() {
                         회원정보 및 비밀번호 설정
                     </h1>
                     <p className="text-gray-500 text-[14px] leading-relaxed">
-                        서비스에서 사용할 닉네임과<br />
+                        책자리에서 사용할 닉네임과<br />
                         비밀번호를 설정해 주세요
                     </p>
                 </div>
 
                 {/* 입력 카드 영역 */}
-                <div className="w-full bg-gray-50/50 rounded-[24px] p-6 mb-8 border border-gray-100/50 space-y-6">
+                <form onSubmit={(e) => e.preventDefault()} autoComplete="off" className="w-full bg-gray-50/50 rounded-[24px] p-6 mb-8 border border-gray-100/50 space-y-6">
                     {/* 닉네임 입력 */}
                     <div className="space-y-2">
                         <label className="block text-xs font-bold text-gray-500 px-1">
@@ -202,15 +207,24 @@ export default function SetPasswordPage() {
                             type="text"
                             placeholder="닉네임 입력 (2~10자)"
                             value={nickname}
-                            onChange={(e) => setNickname(e.target.value)}
+                            onChange={(e) => setNickname(e.target.value.replace(/\s+/g, ''))}
                             maxLength={10}
+                            autoComplete="off"
                             className="w-full h-[54px] px-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-primary focus:border-brand-primary transition-all text-[15px] font-medium text-gray-900"
                         />
-                        <div className="flex items-center gap-1 px-1">
-                            <span className={`text-[12px] ${validation.isNicknameValid ? 'text-green-600 font-medium' : 'text-gray-400'}`}>
-                                2~10자 이내
-                            </span>
-                            <Check className={`w-3.5 h-3.5 stroke-[2] ${validation.isNicknameValid ? 'text-green-500' : 'text-gray-200'}`} />
+                        <div className="flex flex-wrap gap-x-3 gap-y-1.5 px-1 pt-1">
+                            <div className="flex items-center gap-1">
+                                <span className={`text-[12px] ${validation.isNicknameLengthValid ? 'text-green-600 font-medium' : 'text-gray-400'}`}>
+                                    2~10자 이내
+                                </span>
+                                <Check className={`w-3.5 h-3.5 stroke-[2] ${validation.isNicknameLengthValid ? 'text-green-500' : 'text-gray-200'}`} />
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <span className={`text-[12px] ${validation.hasNoSpace ? 'text-green-600 font-medium' : 'text-gray-400'}`}>
+                                    띄어쓰기 불가
+                                </span>
+                                <Check className={`w-3.5 h-3.5 stroke-[2] ${validation.hasNoSpace ? 'text-green-500' : 'text-gray-200'}`} />
+                            </div>
                         </div>
                     </div>
 
@@ -226,6 +240,7 @@ export default function SetPasswordPage() {
                             placeholder="비밀번호 입력"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            autoComplete="new-password"
                             className="w-full h-[54px] px-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-primary focus:border-brand-primary transition-all text-[15px]"
                         />
                         <div className="flex flex-wrap gap-x-3 gap-y-1.5 px-1 pt-1">
@@ -251,6 +266,7 @@ export default function SetPasswordPage() {
                             placeholder="비밀번호 확인"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
+                            autoComplete="new-password"
                             className="w-full h-[54px] px-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-primary focus:border-brand-primary transition-all text-[15px]"
                         />
                         <div className="flex items-center gap-1 px-1">
@@ -262,7 +278,7 @@ export default function SetPasswordPage() {
                     {error && (
                         <p className="text-[13px] text-red-500 font-medium px-1">{error}</p>
                     )}
-                </div>
+                </form>
 
                 <div className="w-full mt-auto">
                     <Button
