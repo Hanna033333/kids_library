@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Modal from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -23,6 +23,23 @@ export default function LoginPromptModal({
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const supabase = createClient();
+
+    // 외부 OAuth(카카오/구글) 창 이동 후 Back 키로 되돌아왔을 때 dimmed(disabled) 상태 해제
+    useEffect(() => {
+        const handleRestore = () => {
+            setIsLoading(false);
+        };
+
+        window.addEventListener('pageshow', handleRestore);
+        window.addEventListener('focus', handleRestore);
+        document.addEventListener('visibilitychange', handleRestore);
+
+        return () => {
+            window.removeEventListener('pageshow', handleRestore);
+            window.removeEventListener('focus', handleRestore);
+            document.removeEventListener('visibilitychange', handleRestore);
+        };
+    }, []);
 
     const handleSocialLogin = async (provider: 'kakao' | 'google') => {
         setIsLoading(true);
