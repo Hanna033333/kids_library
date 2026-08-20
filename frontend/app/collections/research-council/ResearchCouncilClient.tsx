@@ -8,8 +8,7 @@ import PageHeader from '@/components/PageHeader'
 
 export default function ResearchCouncilClient() {
     const [searchQuery, setSearchQuery] = useState('')
-    const [selectedAge, setSelectedAge] = useState<string>('전체')
-    const [selectedCategory, setSelectedCategory] = useState<string>('전체')
+    const [selectedAge, setSelectedAge] = useState<string>('')
     const [sortBy, setSortBy] = useState<'pangyo_callno' | 'title'>('pangyo_callno')
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
 
@@ -27,19 +26,18 @@ export default function ResearchCouncilClient() {
 
     return (
         <div className="min-h-screen bg-[#F7F7F7]">
-            <PageHeader title="어린이도서연구회" backHref="/" />
+            <PageHeader title="어린이도서연구회" showHome={true} />
             <div className="container mx-auto px-4 py-8 max-w-7xl">
                 <div className="mb-4">
                     <SearchBar onSearch={setSearchQuery} />
                 </div>
-                <FilterBar selectedAge={selectedAge} selectedCategory={selectedCategory}
+                <FilterBar selectedAge={selectedAge}
                     onAgeChange={setSelectedAge} onFilterClick={() => setIsFilterModalOpen(true)} />
                 <IntegratedFilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)}
-                    mode="integrated" selectedAge={selectedAge} selectedCategory={selectedCategory}
-                    selectedSort={sortBy} onAgeChange={setSelectedAge} onCategoryChange={setSelectedCategory}
+                    selectedAge={selectedAge} selectedSort={sortBy} onAgeChange={setSelectedAge}
                     onSortChange={(sort: string) => setSortBy(sort as 'pangyo_callno' | 'title')} />
                 <BookList searchQuery={searchQuery} ageFilter={selectedAge}
-                    categoryFilter={selectedCategory} curationFilter="어린이도서연구회" sortFilter={sortBy} />
+                    curationFilter="어린이도서연구회" sortFilter={sortBy} />
             </div>
         </div>
     )

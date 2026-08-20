@@ -5,7 +5,7 @@ from typing import Optional
 def search_books_service(
     q: Optional[str] = None,
     age: Optional[str] = None,
-    category: Optional[str] = None,
+    category: Optional[str] = None,  # deprecated — 하위 호환용, 무시됨
     curation: Optional[str] = None,
     sort: str = "pangyo_callno",
     page: int = 1,
@@ -26,9 +26,7 @@ def search_books_service(
     query = query.neq("pangyo_callno", "없음")
     query = query.or_("is_hidden.is.null,is_hidden.eq.false")
     
-    # 카테고리 필터링
-    if category and category != "전체":
-        query = query.eq("category", category)
+    # category 필터링 제거됨 (큐레이션 태그 체계로 대체)
         
     # 큐레이션 필터링
     if curation:
@@ -62,25 +60,14 @@ def search_books_service(
             safe_q = q.replace('\\', '\\\\').replace('"', '\\"').replace(',', '\\,')
             query = query.or_(f'title.ilike."%{safe_q}%",author.ilike."%{safe_q}%"')
     
-    # 연령 필터링 - 괄호로 감싸서 AND 조건으로 결합
+    # 연령 필터링 — DB 표준화 후 단순 .eq() 쿼리
     if age:
         age = age.strip()
+        # 'teen'은 하위 호환 처리
+        if age == 'teen':
+            age = '13+'
         if age:
-            age_conditions = []
-            if age == "0-3":
-                age_conditions = ["age.eq.0세부터", "age.eq.1세부터", "age.eq.2세부터", "age.eq.3세부터", "age.eq.0-3"]
-            elif age == "4-7":
-                age_conditions = ["age.eq.4세부터", "age.eq.5세부터", "age.eq.6세부터", "age.eq.7세부터", "age.eq.4-7", "age.ilike.%유아%"]
-            elif age == "8-12":
-                age_conditions = ["age.eq.8세부터", "age.eq.9세부터", "age.eq.10세부터", "age.eq.11세부터", "age.eq.12세부터", "age.eq.8-12"]
-            elif age == "13+" or age == "teen":
-                age_conditions = ["age.eq.13세부터", "age.eq.16세부터", "age.eq.13+", "age.eq.teen"]
-            else:
-                age_conditions = [f"age.ilike.%{age}%"]
-            
-            if age_conditions:
-                # OR 조건을 괄호로 감싸서 적용
-                query = query.or_(",".join(age_conditions))
+            query = query.eq("age", age)
     
     # 정렬
     if sort == "title":

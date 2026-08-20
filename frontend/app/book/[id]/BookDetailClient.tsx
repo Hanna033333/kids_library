@@ -36,6 +36,7 @@ import { getOptimizedImageUrl } from '@/lib/utils/image'
 import UserAvatar from '@/components/UserAvatar'
 import BookPreviewModal from '@/components/BookPreviewModal'
 import { cleanAuthorName } from '@/lib/home-api'
+import { parseCurationTags, getFirstCurationTag } from '@/lib/utils/curation-filter'
 
 interface BookDetailClientProps {
     book: Book
@@ -68,57 +69,19 @@ export default function BookDetailClient({
         setIsSaved(false)
     }, [initialBook])
 
-    // 태그 리스트 생성 (카테고리+나이 2 + 큐레이션 최대 4 = 총 6개)
-    const HIDDEN_CURATION_TAGS = new Set([
-        '겨울방학2026', '여름방학2026', 'winter-vacation', 'summer-vacation',
-        '어린이도서연구회', 'research-council', 'caldecott',
-    ])
-    const visibleTags = (() => {
-        const tags = []
-        if (book.category) {
-            tags.push({
-                type: 'category',
-                text: book.category,
-                className: 'bg-blue-50 text-blue-600 border-blue-100'
-            })
-        }
-        if (book.age) {
-            tags.push({
-                type: 'age',
-                text: getAgeDisplayLabel(book.age),
-                className: 'bg-amber-50 text-amber-600 border-amber-100'
-            })
-        }
-        /* WIP 기능 (페이지 수 / 글밥) UI 임시 미노출
-        if (book.page_count) {
-            tags.push({
-                type: 'page_count',
-                text: `📖 ${book.page_count}p`,
-                className: 'bg-amber-50 text-amber-700 border-amber-200'
-            })
-        }
-        if (book.text_level) {
-            tags.push({
-                type: 'text_level',
-                text: book.text_level,
-                className: 'bg-emerald-50 text-emerald-700 border-emerald-200'
-            })
-        }
-        */
-        if (book.curation_tag) {
-            const curationTags = book.curation_tag.split(',')
-                .map((tag) => tag.trim().replace(/^#/, ''))
-                .filter((tag) => tag && !HIDDEN_CURATION_TAGS.has(tag))
-            curationTags.forEach((tag) => {
-                tags.push({
-                    type: 'curation',
-                    text: `#${tag}`,
-                    className: 'bg-brand-primary/5 text-brand-primary border-brand-primary/10'
-                })
-            })
-        }
-        return tags.slice(0, 6)
-    })()
+    // 태그 리스트 생성 — SSOT: parseCurationTags 사용
+    const visibleTags = [
+        ...(book.age ? [{
+            type: 'age',
+            text: getAgeDisplayLabel(book.age).replace(/^#/, ''),
+            className: 'bg-white text-gray-600 border-gray-200'
+        }] : []),
+        ...parseCurationTags(book.curation_tag).map((tag) => ({
+            type: 'curation',
+            text: `#${tag}`,
+            className: 'bg-white text-gray-600 border-gray-200'
+        }))
+    ].slice(0, 6)
 
     // const supabase = createClient()  <-- 제거됨
 
@@ -448,7 +411,7 @@ export default function BookDetailClient({
                                 {visibleTags.map((tag, idx) => (
                                     <span 
                                         key={`${tag.type}-${tag.text}-${idx}`} 
-                                        className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold border ${tag.className}`}
+                                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${tag.className}`}
                                     >
                                         {tag.text}
                                     </span>
@@ -477,42 +440,43 @@ export default function BookDetailClient({
                             </div>
 
                             {/* 🏛️ Library Info Section (Flat & Minimal Line) */}
-                            <div className="my-5 py-4 border-y border-gray-100">
+                            <div className="my-5 py-4 border-y border-gray-100 flex flex-col gap-2.5">
                                 {user ? (
-                                    <div>
-                                        <div className="text-xs font-bold text-gray-500 tracking-tight mb-2 flex items-center gap-1.5">
-                                            <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                                            <span>도서관 소장 및 대출 정보</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 flex-wrap">
+                                    <>
+                                        {/* 1행: 설정한 도서관 선택기 & 제보 버튼 */}
+                                        <div className="flex items-center justify-between gap-2">
                                             <LibrarySelector />
-                                            <span className={`font-black text-xl tracking-tight ${displayCallNo === '보유 정보 없음' ? 'text-gray-400' : 'text-gray-900'}`}>
+                                            <button
+                                                onClick={() => {
+                                                    sendGAEvent('click_report_error', { book_id: book.id });
+                                                    window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
+                                                }}
+                                                className="flex items-center gap-1 text-gray-400 hover:text-gray-600 text-[11px] font-medium transition-colors shrink-0"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
+                                                정보가 다른가요? 제보하기
+                                            </button>
+                                        </div>
+
+                                        {/* 2행: 청구기호 & 대출 상태 뱃지 */}
+                                        <div className="flex items-center gap-3 flex-wrap pt-0.5">
+                                            <span className={`font-black text-xl md:text-2xl tracking-tight ${displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'text-gray-400' : 'text-gray-900'}`}>
                                                 {displayCallNo}{book.vol ? `-${book.vol}` : ''}
                                             </span>
                                             {normalizedStatus && normalizedStatus.status !== "확인중" && (
-                                                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
+                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
                                                     ? "bg-green-100 text-green-700"
                                                     : normalizedStatus.available === false
                                                         ? "bg-red-100 text-red-700"
                                                         : normalizedStatus.status === "미소장"
-                                                            ? "bg-gray-100 text-gray-700"
-                                                                : "bg-white text-gray-600 border border-gray-300"
+                                                            ? "bg-gray-100 text-gray-600"
+                                                            : "bg-white text-gray-600 border border-gray-300"
                                                     }`}>
                                                     {normalizedStatus.status}
                                                 </span>
                                             )}
                                         </div>
-                                        <button
-                                            onClick={() => {
-                                                sendGAEvent('click_report_error', { book_id: book.id });
-                                                window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
-                                            }}
-                                            className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 text-gray-400 hover:text-gray-600 border border-gray-200 rounded-md text-[11px] font-medium mt-2 transition-colors"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
-                                            정보가 다른가요? 제보하기
-                                        </button>
-                                    </div>
+                                    </>
                                 ) : (
                                     <button
                                         onClick={() => {
@@ -683,11 +647,11 @@ export default function BookDetailClient({
                                     이 책과 함께 읽으면 좋은
                                 </span>
                                 <h3 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight leading-tight">
-                                    {book.curation_tag?.split(',')[0]?.trim() || '추천'} 책 추천 리스트
+                                    {getFirstCurationTag(book.curation_tag) || '추천'} 책 추천 리스트
                                 </h3>
                             </div>
                             <Link 
-                                href={`/books?curation=${encodeURIComponent(book.curation_tag?.split(',')[0]?.trim() || '')}`} 
+                                href={`/books?curation=${encodeURIComponent(getFirstCurationTag(book.curation_tag))}`} 
                                 className="text-gray-950 p-1 mb-0.5"
                                 aria-label="더보기"
                             >

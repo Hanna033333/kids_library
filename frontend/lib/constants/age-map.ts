@@ -1,14 +1,19 @@
 /**
- * 연령 그룹 단일 진실 공급원 (SSOT - Single Source of Truth)
+ * 연령 그룹 표준 키 목록 (SSOT - Single Source of Truth)
  *
- * 프론트엔드 연령 키(ageGroup) → Supabase DB 연령 값 매핑.
- * home-api.ts, supabase-client.ts 양쪽에서 동일하게 사용합니다.
+ * DB age 컬럼은 프론트엔드 키와 동일한 값으로 표준화되었습니다.
+ * ('0-3', '4-7', '8-12', '13+')
+ * AGE_MAP은 하위 호환을 위해 유지되나 1:1 매핑으로 단순화되었습니다.
  */
 
 export const AGE_MAP: Record<string, string[]> = {
-  '0-3': ['0세부터', '3세부터'],
-  '4-7': ['5세부터', '7세부터', '유아'],
-  '8-12': ['9세부터', '11세부터'],
-  'teen': ['13세부터', '16세부터'],
-  '13+': ['13세부터', '16세부터'],
+  '0-3': ['0-3'],
+  '4-7': ['4-7'],
+  '8-12': ['8-12'],
+  '13+': ['13+'],
+  'teen': ['13+'], // 하위 호환
 } as const
+
+/** 연령 그룹 표준 키 */
+export const AGE_GROUPS = ['0-3', '4-7', '8-12', '13+'] as const
+export type AgeGroup = typeof AGE_GROUPS[number]

@@ -27,9 +27,7 @@ const ageDescriptions: Record<string, string> = {
 export default function AgeCollectionClient({ age, initialBooks }: AgeCollectionClientProps) {
     const router = useRouter()
     const [searchQuery, setSearchQuery] = useState('')
-    // URL이 source of truth — selectedAge는 현재 URL의 age로 초기화
     const [selectedAge, setSelectedAge] = useState<string>(age === 'teen' ? '13+' : age)
-    const [selectedCategory, setSelectedCategory] = useState<string>('전체')
     const [sortBy, setSortBy] = useState<'pangyo_callno' | 'title'>('pangyo_callno')
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
 
@@ -47,21 +45,19 @@ export default function AgeCollectionClient({ age, initialBooks }: AgeCollection
 
     return (
         <div className="min-h-screen bg-[#F7F7F7]">
-            <PageHeader title={`${ageDisplayNames[age]} 추천 도서`} backHref="/" />
+            <PageHeader title={`${ageDisplayNames[age]} 추천 도서`} showHome={true} />
             <div className="container mx-auto px-4 py-8 max-w-7xl">
                 <div className="mb-4">
                     <SearchBar onSearch={setSearchQuery} />
                 </div>
-                <FilterBar selectedAge={selectedAge} selectedCategory={selectedCategory}
+                <FilterBar selectedAge={selectedAge}
                     onAgeChange={handleAgeChange} onFilterClick={() => setIsFilterModalOpen(true)} />
                 <IntegratedFilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)}
-                    mode="integrated" selectedAge={selectedAge} selectedCategory={selectedCategory}
-                    selectedSort={sortBy} onAgeChange={setSelectedAge} onCategoryChange={setSelectedCategory}
+                    selectedAge={selectedAge} selectedSort={sortBy} onAgeChange={setSelectedAge}
                     onSortChange={(sort: string) => setSortBy(sort as 'pangyo_callno' | 'title')} />
                 <BookList
                     searchQuery={searchQuery}
                     ageFilter={selectedAge}
-                    categoryFilter={selectedCategory}
                     sortFilter={sortBy}
                     initialBooks={currentInitialBooks}
                 />

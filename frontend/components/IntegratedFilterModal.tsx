@@ -1,28 +1,17 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
-import { searchBooks, getBooks } from "@/lib/api";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 
 interface IntegratedFilterModalProps {
     isOpen: boolean;
     onClose: () => void;
-    mode: "integrated" | "category"; // New prop for mode
-    searchQuery?: string; // Needed for count
-
-    selectedCategory: string;
-    onCategoryChange: (cat: string) => void;
     selectedAge: string;
     onAgeChange: (age: string) => void;
     selectedSort: string;
     onSortChange: (sort: string) => void;
 }
-
-const CATEGORY_OPTIONS = [
-    "전체", "동화", "자연", "전통", "과학", "사회", "만화", "소설",
-    "역사", "인물", "시", "예술", "모음", "지리"
-];
 
 const AGE_OPTIONS = [
     { value: "0-3", label: "0~3세" },
@@ -36,59 +25,23 @@ const SORT_OPTIONS = [
 ];
 
 export default function IntegratedFilterModal({
-    isOpen, onClose, mode, searchQuery,
-    selectedCategory, onCategoryChange,
+    isOpen, onClose,
     selectedAge, onAgeChange,
     selectedSort, onSortChange
 }: IntegratedFilterModalProps) {
     const normalizeAge = (age: string) => age === "teen" ? "13+" : age;
-    const [localCategory, setLocalCategory] = useState(selectedCategory);
     const [localAge, setLocalAge] = useState(normalizeAge(selectedAge));
     const [localSort, setLocalSort] = useState(selectedSort);
-    const [predictedCount, setPredictedCount] = useState<number | null>(null);
-    const [loadingCount, setLoadingCount] = useState(false);
-
-    // Debounce timer
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Sync state when modal opens
     useEffect(() => {
         if (isOpen) {
-            setLocalCategory(selectedCategory);
             setLocalAge(normalizeAge(selectedAge));
             setLocalSort(selectedSort);
         }
-    }, [isOpen, selectedCategory, selectedAge, selectedSort]);
-
-    // Fetch count when filters change
-    useEffect(() => {
-        if (!isOpen) return;
-
-        setLoadingCount(true);
-        if (timerRef.current) clearTimeout(timerRef.current);
-
-        timerRef.current = setTimeout(async () => {
-            try {
-                // Use existing API to get count (limit=1 is enough)
-                const res = searchQuery
-                    ? await searchBooks(searchQuery, localAge || undefined, localCategory === "전체" ? undefined : localCategory, undefined, 1, 1)
-                    : await getBooks(localAge || undefined, localCategory === "전체" ? undefined : localCategory, undefined, 1, 1);
-                setPredictedCount(res.total);
-            } catch (err) {
-                console.error("Failed to fetch count", err);
-                setPredictedCount(null);
-            } finally {
-                setLoadingCount(false);
-            }
-        }, 300); // 300ms debounce
-
-        return () => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-        };
-    }, [isOpen, localCategory, localAge, searchQuery]);
+    }, [isOpen, selectedAge, selectedSort]);
 
     const handleApply = () => {
-        onCategoryChange(localCategory);
         onAgeChange(localAge);
         onSortChange(localSort);
         onClose();
@@ -107,9 +60,7 @@ export default function IntegratedFilterModal({
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                    <h2 className="text-lg font-bold text-gray-900">
-                        {mode === "category" ? "카테고리 선택" : "검색 필터"}
-                    </h2>
+                    <h2 className="text-lg font-bold text-gray-900">검색 필터</h2>
                     <button onClick={onClose} className="p-2 -mr-2 text-gray-400 rounded-lg transition-colors">
                         <X className="w-5 h-5" />
                     </button>
@@ -118,72 +69,46 @@ export default function IntegratedFilterModal({
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-8">
 
-                    {/* 카테고리 (Always visible or primary in category mode) */}
+                    {/* 연령 */}
                     <section>
-                        <h3 className="text-sm font-bold text-gray-900 mb-3">카테고리</h3>
+                        <h3 className="text-sm font-bold text-gray-900 mb-3">연령</h3>
                         <div className="flex flex-wrap gap-2">
-                            {CATEGORY_OPTIONS.map((cat) => (
+                            {AGE_OPTIONS.map((option) => (
                                 <button
-                                    key={cat}
-                                    onClick={() => setLocalCategory(cat)}
-                                    className={`px-5 py-2.5 rounded-lg text-[15px] font-medium transition-all duration-200 border ${localCategory === cat
-                                        ? "bg-gray-900 text-white border-gray-900 shadow-md shadow-gray-200 transform scale-[1.02]"
+                                    key={option.value}
+                                    onClick={() => handleAgeToggle(option.value)}
+                                    className={`px-4 py-2 rounded-lg text-[15px] font-medium transition-all duration-200 border ${localAge === option.value
+                                        ? "bg-brand-primary text-white border-brand-primary shadow-md shadow-gray-200 transform scale-[1.02]"
                                         : "bg-white text-gray-600 border-gray-200"
                                         }`}
                                 >
-                                    {cat}
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2 ml-1">선택하지 않으면 전체 연령이 조회됩니다.</p>
+                    </section>
+
+                    <hr className="border-gray-100" />
+
+                    {/* 정렬 */}
+                    <section>
+                        <h3 className="text-sm font-bold text-gray-900 mb-3">정렬 기준</h3>
+                        <div className="flex gap-3">
+                            {SORT_OPTIONS.map((option) => (
+                                <button
+                                    key={option.value}
+                                    onClick={() => setLocalSort(option.value)}
+                                    className={`flex-1 flex items-center justify-center py-3 px-4 rounded-lg border font-medium transition-all duration-200 ${localSort === option.value
+                                        ? "bg-brand-primary border-brand-primary text-white shadow-md shadow-gray-200"
+                                        : "bg-white border-gray-200 text-gray-600"
+                                        }`}
+                                >
+                                    {option.label}
                                 </button>
                             ))}
                         </div>
                     </section>
-
-                    {/* Integrated Mode Only Sections */}
-                    {mode === "integrated" && (
-                        <>
-                            <hr className="border-gray-100" />
-
-                            {/* 연령 */}
-                            <section>
-                                <h3 className="text-sm font-bold text-gray-900 mb-3">연령</h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {AGE_OPTIONS.map((option) => (
-                                        <button
-                                            key={option.value}
-                                            onClick={() => handleAgeToggle(option.value)}
-                                            className={`px-4 py-2 rounded-lg text-[15px] font-medium transition-all duration-200 border ${localAge === option.value
-                                                ? "bg-brand-primary text-white border-brand-primary shadow-md shadow-gray-200 transform scale-[1.02]"
-                                                : "bg-white text-gray-600 border-gray-200"
-                                                }`}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                                <p className="text-xs text-gray-400 mt-2 ml-1">선택하지 않으면 전체 연령이 조회됩니다.</p>
-                            </section>
-
-                            <hr className="border-gray-100" />
-
-                            {/* 정렬 (Updated UI: Chips instead of Radio) */}
-                            <section>
-                                <h3 className="text-sm font-bold text-gray-900 mb-3">정렬 기준</h3>
-                                <div className="flex gap-3">
-                                    {SORT_OPTIONS.map((option) => (
-                                        <button
-                                            key={option.value}
-                                            onClick={() => setLocalSort(option.value)}
-                                            className={`flex-1 flex items-center justify-center py-3 px-4 rounded-lg border font-medium transition-all duration-200 ${localSort === option.value
-                                                ? "bg-brand-primary border-brand-primary text-white shadow-md shadow-gray-200"
-                                                : "bg-white border-gray-200 text-gray-600"
-                                                }`}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </section>
-                        </>
-                    )}
                 </div>
 
                 {/* Footer */}
@@ -191,7 +116,6 @@ export default function IntegratedFilterModal({
                     <div className="flex gap-3">
                         <Button
                             onClick={() => {
-                                setLocalCategory("전체");
                                 setLocalAge("");
                                 setLocalSort("pangyo_callno");
                             }}
@@ -203,13 +127,11 @@ export default function IntegratedFilterModal({
                         </Button>
                         <Button
                             onClick={handleApply}
-                            disabled={loadingCount}
-                            isLoading={loadingCount}
                             variant="primary"
                             size="lg"
                             className="flex-1"
                         >
-                            {predictedCount !== null ? `${predictedCount.toLocaleString()}권의 책 보기` : "필터 적용하기"}
+                            필터 적용하기
                         </Button>
                     </div>
                 </div>
@@ -217,3 +139,4 @@ export default function IntegratedFilterModal({
         </div>
     );
 }
+

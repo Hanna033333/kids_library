@@ -36,14 +36,14 @@ export default function LibrarySelector({ whiteMode = false }: { whiteMode?: boo
             {/* Trigger Button */}
             <button
                 onClick={() => setIsOpen(true)}
-                className={`flex items-center gap-1.5 text-sm font-bold border-b-2 py-1.5 px-0.5 transition-colors shrink-0 max-w-full ${whiteMode
-                    ? 'text-white border-white/40 hover:border-white'
-                    : 'text-gray-900 border-gray-900/10 hover:border-gray-900'
+                className={`flex items-center gap-1.5 text-sm sm:text-base font-black py-1 px-0.5 transition-colors shrink-0 max-w-full ${whiteMode
+                    ? 'text-white hover:text-white/80'
+                    : 'text-gray-900 hover:text-gray-700'
                     }`}
             >
-                <MapPin className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">{displayLibraryName}</span>
-                <ChevronDown className="w-3.5 h-3.5 opacity-50 shrink-0" />
+                <MapPin className={`w-4 h-4 shrink-0 ${whiteMode ? 'text-white' : 'text-amber-500'}`} />
+                <span className="truncate underline decoration-gray-300 underline-offset-4">{displayLibraryName}</span>
+                <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
             </button>
 
             {/* Bottom Sheet Portal */}

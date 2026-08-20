@@ -1,7 +1,6 @@
 import { createClient } from './supabase'
 import { Book } from './types'
 import { SupabaseClient } from '@supabase/supabase-js'
-import { AGE_MAP } from './constants/age-map'
 
 /**
  * 연령별 책 추천 가져오기 (일주일마다 랜덤 변경)
@@ -9,8 +8,9 @@ import { AGE_MAP } from './constants/age-map'
 export async function getBooksByAge(ageGroup: string, limit: number = 5, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
 
-    const ageValues = AGE_MAP[ageGroup] || []
-    if (ageValues.length === 0) return []
+    // 'teen' 하위 호환 처리
+    const normalizedAge = ageGroup === 'teen' ? '13+' : ageGroup
+    if (!normalizedAge) return []
 
     // 현재 주차 계산 (일주일마다 바뀜)
     const now = new Date()
@@ -23,20 +23,18 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
     const offset = (weekNumber * limit) % estimatedTotal
 
     const selectFields = includeLibraryInfo
-        ? 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)'
-        : 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count';
+        ? 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)'
+        : 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count';
 
-    const fetchBooks = async (start: number) => supabase
+    let { data, error } = await supabase
         .from('childbook_items')
         .select(selectFields)
-        .in('age', ageValues)
+        .eq('age', normalizedAge)
         .or('is_hidden.is.null,is_hidden.eq.false')
         .not('image_url', 'is', null)
         .neq('image_url', '')
         .order('id')
-        .range(start, start + limit - 1)
-
-    let { data, error } = await fetchBooks(offset)
+        .range(offset, offset + limit - 1)
 
     if (error) {
         console.error('Error fetching books by age:', error)
@@ -45,7 +43,15 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
 
     // offset이 실제 데이터 범위를 초과한 경우 처음부터 재시도
     if (!data || data.length === 0) {
-        const fallback = await fetchBooks(0)
+        const fallback = await supabase
+            .from('childbook_items')
+            .select(selectFields)
+            .eq('age', normalizedAge)
+            .or('is_hidden.is.null,is_hidden.eq.false')
+            .not('image_url', 'is', null)
+            .neq('image_url', '')
+            .order('id')
+            .range(0, limit - 1)
         if (fallback.error) return []
         data = fallback.data
     }
@@ -249,17 +255,18 @@ export async function getBooksByTag(tagName: string, limit: number = 7, client?:
 export async function getPopularBooksByAge(ageGroup: string, limit: number = 8, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
 
-    const ageValues = AGE_MAP[ageGroup] || []
-    if (ageValues.length === 0) return []
+    // 'teen' 하위 호환 처리
+    const normalizedAge = ageGroup === 'teen' ? '13+' : ageGroup
+    if (!normalizedAge) return []
 
     const selectFields = includeLibraryInfo
-        ? 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)'
-        : 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count';
+        ? 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)'
+        : 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count';
 
     const { data, error } = await supabase
         .from('childbook_items')
         .select(selectFields)
-        .in('age', ageValues)
+        .eq('age', normalizedAge)
         .or('is_hidden.is.null,is_hidden.eq.false')
         .not('image_url', 'is', null)
         .neq('image_url', '')
@@ -281,8 +288,8 @@ export async function getPopularBooksOverall(limit: number = 8, client?: Supabas
     const supabase = client || createClient()
 
     const selectFields = includeLibraryInfo
-        ? 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count, library_info:book_library_info(library_name, callno)'
-        : 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count';
+        ? 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count, library_info:book_library_info(library_name, callno)'
+        : 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count';
 
     const { data, error } = await supabase
         .from('childbook_items')
@@ -319,7 +326,7 @@ export async function getBooksByAuthor(authorName: string, excludeBookId?: numbe
     const mainAuthor = cleanAuthorName(authorName)
     if (!mainAuthor) return []
 
-    const selectFields = 'id, title, author, publisher, category, age, pangyo_callno, image_url, national_loan_count';
+    const selectFields = 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count';
 
     let query = supabase
         .from('childbook_items')

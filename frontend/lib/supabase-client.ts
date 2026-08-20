@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { AGE_MAP } from './constants/age-map';
 import { resolveDbCurationTag, isSpecialTag, buildCurationOrFilter, resolveDefaultSortField } from './utils/curation-filter';
 
 export const supabase = createClient(
@@ -12,7 +11,6 @@ export async function getBooksFromSupabase(
     limit = 24,
     filters?: {
         age?: string;
-        category?: string;
         sort?: string;
         curation?: string;
     },
@@ -33,16 +31,12 @@ export async function getBooksFromSupabase(
         // is_hidden 컬럼이 없으면 무시
     }
 
-    // 필터 적용
+    // 연령 필터 — DB 표준화 후 단순 .eq() 쿼리
     if (filters?.age) {
-        const dbAgeValues = AGE_MAP[filters.age];
-        if (dbAgeValues) {
-            query = query.in('age', dbAgeValues);
-        }
+        const ageKey = filters.age === 'teen' ? '13+' : filters.age;
+        query = query.eq('age', ageKey);
     }
-    if (filters?.category && filters.category !== '전체') {
-        query = query.eq('category', filters.category);
-    }
+    // category는 제거됨 (큐레이션 태그 체계로 대체)
     // Curation 필터
     if (filters?.curation) {
         const dbCurationTag = resolveDbCurationTag(filters.curation);

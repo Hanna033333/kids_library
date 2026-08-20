@@ -10,7 +10,6 @@ import { searchBooks } from "@/lib/api";
 interface UseBooksParams {
   searchQuery?: string;
   ageFilter?: string;
-  categoryFilter?: string;
   curationFilter?: string;
   sortFilter?: string;
   limit?: number;
@@ -22,7 +21,6 @@ interface UseBooksParams {
 export function useBooks({
   searchQuery,
   ageFilter,
-  categoryFilter,
   curationFilter,
   sortFilter = "pangyo_callno",
   limit = 24,
@@ -38,7 +36,7 @@ export function useBooks({
     isLoading,
     error,
   } = useInfiniteQuery({
-    queryKey: ["books-infinite", searchQuery, ageFilter, categoryFilter, curationFilter, sortFilter, includeLibraryInfo],
+    queryKey: ["books-infinite", searchQuery, ageFilter, curationFilter, sortFilter, includeLibraryInfo],
     enabled,
     queryFn: async ({ pageParam }): Promise<BooksResponse> => {
       const page = pageParam as number;
@@ -47,7 +45,7 @@ export function useBooks({
         return await searchBooks(
           searchQuery,
           ageFilter || undefined,
-          categoryFilter || undefined,
+          undefined,
           sortFilter,
           page,
           limit,
@@ -59,7 +57,6 @@ export function useBooks({
       const { getBooksFromSupabase } = await import("@/lib/supabase-client");
       return await getBooksFromSupabase(page, limit, {
         age: ageFilter,
-        category: categoryFilter,
         curation: curationFilter,
         sort: sortFilter,
       }, includeLibraryInfo);

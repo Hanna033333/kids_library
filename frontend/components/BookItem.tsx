@@ -1,70 +1,75 @@
 import { Book, LoanStatus } from "@/lib/types";
-import { ImageOff, Tags, BookOpen } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { getAgeDisplayLabel } from "@/lib/utils/age";
 import { useLibrary } from "@/context/LibraryContext";
+import { sendGAEvent } from "@/lib/analytics";
+import { getOptimizedImageUrl } from "@/lib/utils/image";
+import { useAuth } from "@/context/AuthContext";
+import { parseCurationTags } from "@/lib/utils/curation-filter";
 
 interface BookItemProps {
   book: Book;
   loanStatus?: LoanStatus;
+  /** true이면 청구기호·대출 상태를 표시 (목록/검색 페이지), false면 깔끔 모드 (홈/추천 카드) */
+  showLibraryInfo?: boolean;
 }
 
-import { sendGAEvent } from "@/lib/analytics";
-import { getOptimizedImageUrl } from "@/lib/utils/image";
-import { useAuth } from "@/context/AuthContext";
-
-export default function BookItem({ book, loanStatus }: BookItemProps) {
+export default function BookItem({ book, loanStatus, showLibraryInfo = false }: BookItemProps) {
   const { user } = useAuth();
   const { selectedLibrary } = useLibrary();
   const displayAge = getAgeDisplayLabel(book.age);
 
-  // 청구기호 결정 로직
+  // 청구기호 결정 로직 (showLibraryInfo일 때만 연산)
   let displayCallNo = '청구기호 없음';
-  if (selectedLibrary === '판교도서관') {
-    if (book.pangyo_callno && book.pangyo_callno !== '없음') {
-      displayCallNo = book.pangyo_callno;
+  if (showLibraryInfo) {
+    if (selectedLibrary === '판교도서관') {
+      if (book.pangyo_callno && book.pangyo_callno !== '없음') {
+        displayCallNo = book.pangyo_callno;
+      } else {
+        const info = book.library_info?.find(l => l.library_name.includes('판교'));
+        if (info) displayCallNo = info.callno;
+      }
     } else {
-      const info = book.library_info?.find(l => l.library_name.includes('판교'));
-      if (info) displayCallNo = info.callno;
-    }
-  } else {
-    const info = book.library_info?.find(l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary));
-    if (info) {
-      displayCallNo = info.callno;
-    } else {
-      displayCallNo = '보유 정보 없음';
+      const info = book.library_info?.find(l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary));
+      if (info) {
+        displayCallNo = info.callno;
+      } else {
+        displayCallNo = '보유 정보 없음';
+      }
     }
   }
 
-  // Normalize loan status to show 3 states: 대출가능, 대출중, 미소장, 확인중
+  // Normalize loan status (showLibraryInfo일 때만 사용)
   const normalizedStatus = (() => {
-    // 1. 청구기호가 없거나 보유 정보가 없는 경우 무조건 '미소장' 처리 (상세페이지 정책과 일치)
+    if (!showLibraryInfo) return null;
+
     if (!displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음') {
       return { status: "미소장", available: null };
     }
 
     if (loanStatus) {
       const status = loanStatus.status;
-      // Map "시간초과" or "확인불가" to "확인중" (오렌지 배지)
       if (status === "시간초과" || status === "확인불가" || status === "확인중") {
         return { ...loanStatus, status: "확인중", available: null };
       }
-      // Map "정보없음" or "미소장" to "미소장" (규격 일치)
       if (status === "정보없음" || status === "미소장") {
         return { ...loanStatus, status: "미소장", available: null };
       }
       return loanStatus;
     }
-    // 데이터 로딩 중이거나 데이터 누락 시 "확인중"을 기본 노출하여 배지가 뚫려 보이지 않게 함
     return { status: "확인중", available: null };
   })();
+
+  // curation_tag 추출 (최대 2개) — SSOT: parseCurationTags 사용
+  const tags = parseCurationTags(book.curation_tag, 2);
 
   return (
     <Link
       href={`/book/${book.id}`}
       prefetch={true}
-      className="flex flex-col bg-white rounded-lg border border-gray-100 overflow-hidden transition-all h-full group"
+      className="flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all h-full group active:scale-[0.98]"
       onClick={() => sendGAEvent('click_book_item', { book_id: book.id, book_title: book.title })}
     >
       {/* 1. 이미지 영역 (상단) */}
@@ -75,25 +80,19 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
             alt={book.title}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-cover transition-transform duration-300 group-active:scale-105"
             loading="lazy"
           />
-        ) : null}
+        ) : (
+          <div className="flex flex-col items-center justify-center w-full h-full text-gray-300">
+            <BookOpen className="w-12 h-12 opacity-20" />
+          </div>
+        )}
 
-        {/* Fallback for No Image */}
-        <div className={`flex flex-col items-center justify-center w-full h-full text-gray-300 ${book.image_url ? 'hidden' : ''}`}>
-          <BookOpen className="w-12 h-12 opacity-20" />
-        </div>
-
-        {/* 태그 (이미지 위에 오버레이) */}
+        {/* 태그 (이미지 위에 오버레이 — 연령 단독 노출) */}
         <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
-          {book.category && (
-            <span className="text-[11px] px-3 py-1.5 rounded-full bg-white/90 text-gray-600 font-bold shadow-sm backdrop-blur-sm flex items-center gap-1">
-              {book.category}
-            </span>
-          )}
           {displayAge && (
-            <span className="text-[11px] px-3 py-1.5 rounded-full bg-black/60 text-white font-medium shadow-sm backdrop-blur-sm">
+            <span className="text-[11px] px-2.5 py-1 rounded-full bg-black/60 text-white font-medium shadow-sm backdrop-blur-sm">
               {displayAge}
             </span>
           )}
@@ -101,41 +100,45 @@ export default function BookItem({ book, loanStatus }: BookItemProps) {
       </div>
 
       {/* 2. 정보 영역 (하단) */}
-      <div className="flex-1 p-4 flex flex-col items-start bg-white">
-        <h3 className="text-base font-bold text-gray-900 leading-[1.35] mb-1.5 line-clamp-2 tracking-tight">
+      <div className="flex-1 p-4 flex flex-col justify-between bg-white">
+        <h3 className="text-base font-bold text-gray-900 leading-[1.4] line-clamp-2 tracking-tight">
           {book.title}
         </h3>
 
-        {user && (
-          <p className="text-[15px] font-extrabold text-[#F59E0B] tracking-tight mb-3 line-clamp-2 break-all">
-            {displayCallNo}
-            {book.vol && `-${book.vol}`}
-          </p>
-        )}
-
-        {/*
-        {book.national_loan_count ? (
-          <div className="flex items-center gap-1 text-[11px] text-gray-500 font-semibold mb-2 bg-gray-50 px-2.5 py-1 rounded">
-            <span>📊 전국 도서관 대출 {book.national_loan_count >= 1000 ? `${(book.national_loan_count / 1000).toFixed(1)}k` : book.national_loan_count.toLocaleString()}회</span>
-          </div>
-        ) : null}
-        */}
-
-        <div className="mt-auto pt-3 border-t border-gray-50 w-full flex items-center justify-between text-xs font-medium">
-          <span className={`text-gray-400 truncate ${user && normalizedStatus && normalizedStatus.status !== "확인중" ? 'max-w-[50%]' : 'max-w-full'}`}>{book.publisher}</span>
-          {user && normalizedStatus && normalizedStatus.status !== "확인중" && (
-            <span className={`px-2 py-1 rounded-full text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
-              ? "bg-green-100 text-green-700"
-              : normalizedStatus.available === false
-                ? "bg-red-100 text-red-700"
-                : normalizedStatus.status === "미소장"
-                  ? "bg-gray-100 text-gray-700"
-                  : "bg-white text-gray-600 border border-gray-300"
-              }`}>
-              {normalizedStatus.status}
-            </span>
+        {/* 바닥 영역 (여유 있는 mt-auto pt-3) */}
+        <div className="mt-auto pt-3 flex flex-col gap-2.5 w-full">
+          {/* 태그 (박스 테두리 제거로 깔끔하고 여유로운 텍스트 톤) */}
+          {tags.length > 0 && (
+            <div className="flex items-center gap-2 text-[12px] font-medium text-gray-500 flex-wrap">
+              {tags.map((tag, idx) => (
+                <span key={idx} className="text-gray-500">
+                  #{tag}
+                </span>
+              ))}
+            </div>
           )}
 
+          {/* 청구기호 & 대출 가능 상태 배지 (구분선 없이 한 라인 정렬) */}
+          {showLibraryInfo && user && (
+            <div className="flex items-center justify-between gap-2 pt-0.5">
+              <p className="text-[14px] font-extrabold text-[#F59E0B] tracking-tight truncate flex-1 min-w-0">
+                {displayCallNo}
+                {book.vol && `-${book.vol}`}
+              </p>
+              {normalizedStatus && normalizedStatus.status !== "확인중" && (
+                <span className={`shrink-0 px-2 py-0.5 rounded-md text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
+                  ? "bg-green-100 text-green-700"
+                  : normalizedStatus.available === false
+                    ? "bg-red-100 text-red-700"
+                    : normalizedStatus.status === "미소장"
+                      ? "bg-gray-100 text-gray-700"
+                      : "bg-white text-gray-600 border border-gray-300"
+                  }`}>
+                  {normalizedStatus.status}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </Link>

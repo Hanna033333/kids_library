@@ -20,7 +20,6 @@ const ITEMS_PER_PAGE = 24;
 interface BookListProps {
   searchQuery?: string;
   ageFilter?: string;
-  categoryFilter?: string;
   curationFilter?: string;
   sortFilter?: string;
   initialBooks?: Book[];
@@ -29,7 +28,6 @@ interface BookListProps {
 export default function BookList({
   searchQuery,
   ageFilter,
-  categoryFilter,
   curationFilter,
   sortFilter = "pangyo_callno",
   initialBooks,
@@ -51,13 +49,12 @@ export default function BookList({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const isSearchWaitingState = !searchQuery && !ageFilter && (!categoryFilter || categoryFilter === "전체") && !curationFilter;
+  const isSearchWaitingState = !searchQuery && !ageFilter && !curationFilter;
 
   // Fetch data with infinite scroll
   const { books, loading, error, total, hasNextPage, isFetchingNextPage, fetchNextPage } = useBooks({
     searchQuery,
     ageFilter,
-    categoryFilter,
     curationFilter,
     sortFilter,
     limit: ITEMS_PER_PAGE,
@@ -82,8 +79,7 @@ export default function BookList({
   const shouldFetchRecommended = !!(
     (ageFilter || ['caldecott', '어린이도서연구회', 'research-council', '겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026'].includes(curationFilter || "")) &&
     !searchQuery &&
-    sortFilter === "pangyo_callno" &&
-    (!categoryFilter || categoryFilter === "전체")
+    sortFilter === "pangyo_callno"
   );
 
   const { data: recommendedBooks = [], isLoading: isRecommendedLoading } = useQuery<Book[]>({
@@ -202,15 +198,14 @@ export default function BookList({
 
   // Track no results
   useEffect(() => {
-    if (!isListLoading && books.length === 0 && (searchQuery || ageFilter || categoryFilter || curationFilter)) {
+    if (!isListLoading && books.length === 0 && (searchQuery || ageFilter || curationFilter)) {
       sendGAEvent('search_no_results', { 
         keyword: searchQuery,
         age: ageFilter,
-        category: categoryFilter,
         curation: curationFilter
       });
     }
-  }, [isListLoading, books.length, searchQuery, ageFilter, categoryFilter, curationFilter]);
+  }, [isListLoading, books.length, searchQuery, ageFilter, curationFilter]);
 
   if (error) {
     return (
@@ -278,7 +273,7 @@ export default function BookList({
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
                   {searchWaitingRecommendedBooks.map((book) => (
                     <div key={book.id}>
-                      <BookItem book={book} loanStatus={loanStatuses?.[book.id]} />
+                      <BookItem book={book} loanStatus={loanStatuses?.[book.id]} showLibraryInfo />
                     </div>
                   ))}
                 </div>
@@ -310,7 +305,7 @@ export default function BookList({
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
                   {fallbackBooks.map((book) => (
                     <div key={book.id}>
-                      <BookItem book={book} loanStatus={loanStatuses?.[book.id]} />
+                      <BookItem book={book} loanStatus={loanStatuses?.[book.id]} showLibraryInfo />
                     </div>
                   ))}
                 </div>
@@ -323,7 +318,7 @@ export default function BookList({
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
               {displayBooks.map((book) => (
                 <div key={book.id}>
-                  <BookItem book={book} loanStatus={loanStatuses?.[book.id]} />
+                  <BookItem book={book} loanStatus={loanStatuses?.[book.id]} showLibraryInfo />
                 </div>
               ))}
             </div>

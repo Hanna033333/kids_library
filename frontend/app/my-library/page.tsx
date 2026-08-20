@@ -74,7 +74,7 @@ export default function MyLibraryPage() {
     return (
         <main className="min-h-screen bg-[#F7F7F7]">
             {/* Header */}
-            <PageHeader title="내 책장" backHref="/" rightSlot={<ProfileDropdown />} />
+            <PageHeader title="내 책장" showHome={true} rightSlot={<ProfileDropdown />} />
 
             <div className="max-w-7xl mx-auto px-6 py-10">
                 <div className="mb-8 flex items-center justify-between border-b border-gray-100 pb-4">

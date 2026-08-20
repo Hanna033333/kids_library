@@ -5,6 +5,7 @@ import { getHighResImageUrl } from '@/lib/utils/image'
 import { createClient } from '@/lib/supabase'
 import { getBooksByTag, getPopularBooksByAge, getBooksByAuthor } from '@/lib/home-api'
 import { getAgeGroupKey } from '@/lib/utils/age'
+import { getFirstCurationTag } from '@/lib/utils/curation-filter'
 
 interface Props {
     params: Promise<{ id: string }>
@@ -134,11 +135,8 @@ export default async function BookDetailPage({ params }: Props) {
 
         const ageGroupKey = getAgeGroupKey(book.age)
 
-        // 동일 큐레이션 추천 도서 (7권)
-        const tags = book.curation_tag
-            ? book.curation_tag.split(',').map((t: string) => t.trim()).filter(Boolean)
-            : []
-        const primaryTag = tags[0]
+        // 동일 큐레이션 추천 도서 (7권) — SSOT: getFirstCurationTag 사용
+        const primaryTag = getFirstCurationTag(book.curation_tag)
 
         let curationRecommended: any[] = []
         if (primaryTag) {

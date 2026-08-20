@@ -80,3 +80,46 @@ export function isSummerCurationActive(targetDate: Date = new Date()): boolean {
   return dateStr <= '2026-08-20'
 }
 
+/**
+ * 도서 카드/상세에서 UI에 노출하지 않는 특수 태그 목록 (SSOT)
+ * BookItem, BookDetailClient 등 모든 UI 컴포넌트가 이 목록을 공유합니다.
+ */
+export const HIDDEN_UI_TAGS = new Set([
+  'caldecott',
+  '어린이도서연구회',
+  'research-council',
+  '겨울방학2026',
+  '여름방학2026',
+  'winter-vacation',
+  'summer-vacation',
+])
+
+/**
+ * book.curation_tag 문자열을 파싱하여 UI에 표시할 태그 배열을 반환합니다. (SSOT)
+ *
+ * - `#` 접두사 제거
+ * - HIDDEN_UI_TAGS에 속하는 특수 태그 제외
+ * - limit 개수만큼만 반환 (기본 전체)
+ *
+ * @example
+ * parseCurationTags('잠자리, caldecott, 가족사랑', 2) → ['잠자리', '가족사랑']
+ */
+export function parseCurationTags(raw: string | null | undefined, limit?: number): string[] {
+  if (!raw) return []
+  const tags = raw
+    .split(/[,/]/)
+    .map((t) => t.trim().replace(/^#/, ''))
+    .filter((t) => t && !HIDDEN_UI_TAGS.has(t))
+  return limit !== undefined ? tags.slice(0, limit) : tags
+}
+
+/**
+ * book.curation_tag의 첫 번째 유효 태그를 반환합니다.
+ * 큐레이션 목록 링크 등 단일 태그가 필요한 곳에서 사용합니다.
+ *
+ * @example
+ * getFirstCurationTag('caldecott, 가족사랑') → '가족사랑'
+ */
+export function getFirstCurationTag(raw: string | null | undefined): string {
+  return parseCurationTags(raw, 1)[0] ?? ''
+}

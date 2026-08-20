@@ -137,10 +137,10 @@ trigger: always_on
 5. **단계적 수동 컨펌 준수**: 로컬 컴파일 및 빌드 테스트(`npm run build`)가 오류 없이 100% 통과하더라도, 사용자에게 프리뷰 QA 리포트를 통한 피드백을 전달하고 상용 릴리즈 승인을 명시적으로 획득하기 전에는 절차를 절대 생략하지 마십시오.
 6. **로컬 빌드 및 프리뷰/상용 배포 통제 구분**:
    - 컴파일 오류 및 타입 검증을 위한 로컬 빌드 테스트(`npm run build` 등)는 사용자의 사전 동의 없이 수행할 수 있습니다.
-   - 단, 외부 preview 서버나 production 상용 환경으로 배포(Vercel, AWS Lightsail 등 플랫폼 업로드 및 릴리즈 실행)를 트리거하는 모든 배포 행위는 반드시 사용자가 직접 "배포하라" 또는 배포 커맨드를 입력하여 직접 명시적으로 명령을 내렸을 때만 실행해야 합니다.
-7. **배포 슬래시 커맨드(/deploy_prod, /deploy_preview) 원스톱 자동 실행 예외**:
-   - 사용자가 `/deploy_prod` 또는 `/deploy_preview` 커맨드를 직접 입력하여 워크플로우를 호출한 경우, 이는 이미 원격 배포까지 명시적으로 지시한 것입니다.
-   - 로컬 검증(Build, Security, QA)이 100% Pass되면 추가 승인 질문을 재차 던지지 말고 `git push origin main` (또는 dev) 및 `./deploy_to_aws.sh` 백엔드 동기화 단계까지 즉시 원스톱으로 완수하십시오.
+   - 단, 외부 preview 서버나 production 상용 환경으로 배포(Vercel, AWS Lightsail 등 플랫폼 업로드 및 릴리즈 실행)를 트리거하는 모든 배포 행위는 사용자가 직접 "배포하라" 명령을 내리거나 `/deploy_prod` 등의 배포 요청 시 진행합니다.
+7. **백엔드 파일(backend/ 및 weekly_schedule.json) 변경 시 AWS 동기화 필수 연동 규정 (최중요)**:
+   - `backend/` 소스코드 또는 `weekly_schedule.json` 등 백엔드 동작에 직접적인 영향을 주는 파일이 수정된 경우, 푸시/배포 단계에서 `./deploy_to_aws.sh` 실행을 누락하는 것은 금지됩니다.
+   - 백엔드 파일 변경이 포함된 배포 요청 시, 무조건 `./deploy_to_aws.sh`를 세트로 동시 실행하여 AWS Lightsail 인스턴스 업로드 및 `fastapi.service` 재시작까지 한 번에 완료해야 합니다.
 
 ## 핵심
 1. Next.js와 FastAPI 구조를 숙지해. 특히 Data4Library API와 판교도서관 스크래핑 시 타임아웃과 캐싱(5분) 처리가 project_plan대로 구현되었는지 검토해.

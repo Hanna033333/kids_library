@@ -29,7 +29,6 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
     const normalizeAge = (age: string) => age === "teen" ? "13+" : age;
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
     const [ageFilter, setAgeFilter] = useState(normalizeAge(overrideAge || searchParams.get('age') || ""));
-    const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || "전체");
     const [curationFilter, setCurationFilter] = useState(overrideCuration || searchParams.get('curation') || "");
     const [isSearchVisible, setIsSearchVisible] = useState(() => {
         return !!searchQuery || (!overrideCuration && !searchParams.get('curation') && !searchParams.get('age'));
@@ -42,12 +41,11 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
         
         const curation = searchParams.get('curation');
         if (curation && !['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott'].includes(curation)) {
-            return 'confidence_score_desc'; // confidence_score_desc 라는 가상의 sort key 사용
+            return 'confidence_score_desc';
         }
         return 'pangyo_callno';
     });
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-    const [filterModalMode, setFilterModalMode] = useState<"integrated" | "category">("integrated");
     const { user, signOut } = useAuth();
     const [toastMessage, setToastMessage] = useState("");
 
@@ -75,13 +73,11 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
     useEffect(() => {
         const q = searchParams.get('q') || "";
         const age = normalizeAge(overrideAge || searchParams.get('age') || "");
-        const category = searchParams.get('category') || "전체";
         const curation = overrideCuration || searchParams.get('curation') || "";
         const sort = searchParams.get('sort') || (curation && !['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott'].includes(curation) ? 'confidence_score_desc' : 'pangyo_callno');
 
         setSearchQuery(q);
         setAgeFilter(age);
-        setCategoryFilter(category);
         setCurationFilter(curation);
         setSortFilter(sort);
 
@@ -93,36 +89,25 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
         sendGAEvent('search', { search_term: query, keyword: query });
-        updateURL({ q: query, age: ageFilter, category: categoryFilter, sort: sortFilter });
-    }, [ageFilter, categoryFilter, sortFilter, updateURL]);
+        updateURL({ q: query, age: ageFilter, sort: sortFilter });
+    }, [ageFilter, sortFilter, updateURL]);
 
     const handleAgeChange = useCallback((age: string) => {
         setAgeFilter(age);
         sendGAEvent('filter_change', { type: 'age', value: age });
-        updateURL({ q: searchQuery, age, category: categoryFilter, sort: sortFilter });
-    }, [searchQuery, categoryFilter, sortFilter, updateURL]);
-
-    const handleCategoryChange = useCallback((category: string) => {
-        setCategoryFilter(category);
-        sendGAEvent('filter_change', { type: 'category', value: category });
-        updateURL({ q: searchQuery, age: ageFilter, category, sort: sortFilter });
-    }, [searchQuery, ageFilter, sortFilter, updateURL]);
+        updateURL({ q: searchQuery, age, sort: sortFilter });
+    }, [searchQuery, sortFilter, updateURL]);
 
     const handleSortChange = useCallback((sort: string) => {
         setSortFilter(sort);
         sendGAEvent('filter_change', { type: 'sort', value: sort });
-        updateURL({ q: searchQuery, age: ageFilter, category: categoryFilter, sort });
-    }, [searchQuery, ageFilter, categoryFilter, updateURL]);
+        updateURL({ q: searchQuery, age: ageFilter, sort });
+    }, [searchQuery, ageFilter, updateURL]);
 
     const openIntegratedFilter = () => {
-        setFilterModalMode("integrated");
         setIsFilterModalOpen(true);
     };
 
-    const openCategoryFilter = () => {
-        setFilterModalMode("category");
-        setIsFilterModalOpen(true);
-    };
 
     // URL 파라미터에 따라 동적 타이틀 결정
     const getPageTitle = () => {
@@ -268,7 +253,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
             {/* Header */}
             <PageHeader
                 title={getPageTitle()}
-                backHref="/"
+                showHome={true}
                 rightSlot={
                     <div className="flex items-center gap-3">
                         <button
@@ -312,7 +297,6 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
             <FilterBar
                 selectedAge={ageFilter}
                 onAgeChange={handleAgeChange}
-                selectedCategory={categoryFilter}
                 onFilterClick={openIntegratedFilter}
                 showFilterButton={!!searchQuery}
             />
@@ -321,10 +305,6 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
             <IntegratedFilterModal
                 isOpen={isFilterModalOpen}
                 onClose={() => setIsFilterModalOpen(false)}
-                mode={filterModalMode}
-                searchQuery={searchQuery}
-                selectedCategory={categoryFilter}
-                onCategoryChange={handleCategoryChange}
                 selectedAge={ageFilter}
                 onAgeChange={handleAgeChange}
                 selectedSort={sortFilter}
@@ -336,7 +316,6 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
                 <BookList
                     searchQuery={searchQuery || undefined}
                     ageFilter={ageFilter || undefined}
-                    categoryFilter={categoryFilter === "전체" ? undefined : categoryFilter}
                     curationFilter={curationFilter || undefined}
                     sortFilter={sortFilter}
                 />
