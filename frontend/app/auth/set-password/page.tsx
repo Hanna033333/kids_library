@@ -47,22 +47,15 @@ export default function SetPasswordPage() {
 
     // 실시간 유효성 검사 상태
     const validation = useMemo(() => {
-        const trimmedNickname = nickname.trim()
-        const hasNoSpace = !/\s/.test(nickname)
-        const isNicknameLengthValid = trimmedNickname.length >= 2 && trimmedNickname.length <= 10
         return {
-            hasNoSpace,
-            isNicknameLengthValid,
-            isNicknameValid: isNicknameLengthValid && hasNoSpace,
             hasLetter: /[a-zA-Z]/.test(password),
             hasNumber: /[0-9]/.test(password),
             isLengthValid: password.length >= 8 && password.length <= 20,
             isMatch: password !== '' && password === confirmPassword
         }
-    }, [nickname, password, confirmPassword])
+    }, [password, confirmPassword])
 
     const isValid =
-        validation.isNicknameValid &&
         validation.hasLetter &&
         validation.hasNumber &&
         validation.isLengthValid &&
@@ -82,7 +75,7 @@ export default function SetPasswordPage() {
             }
 
             const isQaMode = typeof window !== 'undefined' && localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN'
-            const finalNickname = nickname.trim()
+            const finalNickname = nickname.trim() || generateRandomNickname()
 
             if (!isQaMode) {
                 // 비밀번호 및 유저 메타데이터(닉네임) 업데이트
@@ -188,48 +181,15 @@ export default function SetPasswordPage() {
                         className="w-14 h-auto mb-5"
                     />
                     <h1 className="text-[24px] font-bold text-gray-900 leading-tight mb-2 tracking-tight">
-                        회원정보 및 비밀번호 설정
+                        비밀번호 설정
                     </h1>
                     <p className="text-gray-500 text-[14px] leading-relaxed">
-                        책자리에서 사용할 닉네임과<br />
-                        비밀번호를 설정해 주세요
+                        책자리에서 사용할 비밀번호를 설정해 주세요
                     </p>
                 </div>
 
                 {/* 입력 카드 영역 */}
                 <form onSubmit={(e) => e.preventDefault()} autoComplete="off" className="w-full bg-gray-50/50 rounded-[24px] p-6 mb-8 border border-gray-100/50 space-y-6">
-                    {/* 닉네임 입력 */}
-                    <div className="space-y-2">
-                        <label className="block text-xs font-bold text-gray-500 px-1">
-                            닉네임
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="닉네임 입력 (2~10자)"
-                            value={nickname}
-                            onChange={(e) => setNickname(e.target.value.replace(/\s+/g, ''))}
-                            maxLength={10}
-                            autoComplete="off"
-                            className="w-full h-[54px] px-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-primary focus:border-brand-primary transition-all text-[15px] font-medium text-gray-900"
-                        />
-                        <div className="flex flex-wrap gap-x-3 gap-y-1.5 px-1 pt-1">
-                            <div className="flex items-center gap-1">
-                                <span className={`text-[12px] ${validation.isNicknameLengthValid ? 'text-green-600 font-medium' : 'text-gray-400'}`}>
-                                    2~10자 이내
-                                </span>
-                                <Check className={`w-3.5 h-3.5 stroke-[2] ${validation.isNicknameLengthValid ? 'text-green-500' : 'text-gray-200'}`} />
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className={`text-[12px] ${validation.hasNoSpace ? 'text-green-600 font-medium' : 'text-gray-400'}`}>
-                                    띄어쓰기 불가
-                                </span>
-                                <Check className={`w-3.5 h-3.5 stroke-[2] ${validation.hasNoSpace ? 'text-green-500' : 'text-gray-200'}`} />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="h-px bg-gray-200/60 w-full" />
-
                     {/* 비밀번호 입력 */}
                     <div className="space-y-2">
                         <label className="block text-xs font-bold text-gray-500 px-1">
