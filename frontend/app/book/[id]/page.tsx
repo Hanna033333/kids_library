@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import BookDetailClient from './BookDetailClient'
@@ -37,11 +38,12 @@ export async function generateStaticParams() {
     }
 }
 
-// DB 직접 조회를 통한 도서 상세 데이터 획득 함수 (백엔드 타임아웃/오프라인 에러 방지)
-async function getBookDetailServer(id: number) {
+// React cache()로 래핑하여 generateMetadata와 페이지 컴포넌트 간 중복 DB 쿼리 제거
+// (동일 렌더링 요청 내에서 같은 인자로 호출 시 결과를 공유)
+const getBookDetailServer = cache(async (id: number) => {
     const supabase = createClient()
     
-    // 1. 책 기본 정보
+    // 1. 책 기본 정보 (이후 쿼리의 선행 조건)
     const { data: book, error } = await supabase
         .from('childbook_items')
         .select('*')
@@ -50,24 +52,24 @@ async function getBookDetailServer(id: number) {
 
     if (error || !book) return null
 
-    // 2. 찜 횟수 (wishlists 테이블 연동)
-    const { count } = await supabase
-        .from('wishlists')
-        .select('id', { count: 'exact', head: true })
-        .eq('book_id', id)
-
-    // 3. 다중 도서관 소장 및 청구기호 정보
-    const { data: libInfo } = await supabase
-        .from('book_library_info')
-        .select('library_name, callno')
-        .eq('book_id', id)
+    // 2+3. 찜 횟수 & 도서관 소장 정보를 Promise.all로 병렬 조회 (직렬 3회 → 병렬 2회로 단축)
+    const [{ count }, { data: libInfo }] = await Promise.all([
+        supabase
+            .from('wishlists')
+            .select('id', { count: 'exact', head: true })
+            .eq('book_id', id),
+        supabase
+            .from('book_library_info')
+            .select('library_name, callno')
+            .eq('book_id', id)
+    ])
 
     return {
         ...book,
         save_count: count || 0,
         library_info: libInfo || []
     }
-}
+})
 
 // 동적 메타데이터 생성
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -135,37 +137,35 @@ export default async function BookDetailPage({ params }: Props) {
 
         const ageGroupKey = getAgeGroupKey(book.age)
 
-        // 동일 큐레이션 추천 도서 (7권) — SSOT: getFirstCurationTag 사용
+        // 동일 큐레이션 추천 도서의 첫 번째 태그 — SSOT: getFirstCurationTag 사용
         const primaryTag = getFirstCurationTag(book.curation_tag)
 
-        let curationRecommended: any[] = []
-        if (primaryTag) {
-            const rawCurationBooks = await getBooksByTag(primaryTag, 8)
-            curationRecommended = rawCurationBooks
-                .filter((b: any) => b.id !== book.id)
-                .slice(0, 7)
-        }
+        // 추천 도서 3종을 Promise.all로 병렬 조회 (직렬 4~5회 → 병렬 3회로 단축)
+        // getPopularBooksByAge를 12권으로 1회만 호출하여 폴백+연령 추천에 공용 사용
+        const [rawCurationBooks, rawAgeBooks, authorRecommended] = await Promise.all([
+            primaryTag ? getBooksByTag(primaryTag, 8) : Promise.resolve([]),
+            getPopularBooksByAge(ageGroupKey, 12),
+            book.author ? getBooksByAuthor(book.author, book.id, 7) : Promise.resolve([])
+        ])
 
-        // 폴백: 동일 큐레이션 추천 도서가 7권 미만인 경우 연령별 인기 도서로 채움
+        // 동일 큐레이션 추천 도서 구성 (7권)
+        let curationRecommended = rawCurationBooks
+            .filter((b: any) => b.id !== book.id)
+            .slice(0, 7)
+
+        // 폴백: 동일 큐레이션 추천 도서가 7권 미만인 경우 연령별 인기 도서(rawAgeBooks)로 채움
         if (curationRecommended.length < 7) {
             const needCount = 7 - curationRecommended.length
-            const fallbackBooks = await getPopularBooksByAge(ageGroupKey, 12)
-            const filteredFallback = fallbackBooks.filter(
-                (b: any) => b.id !== book.id && !curationRecommended.some((cr) => cr.id === b.id)
+            const filteredFallback = rawAgeBooks.filter(
+                (b: any) => b.id !== book.id && !curationRecommended.some((cr: any) => cr.id === b.id)
             )
             curationRecommended = [...curationRecommended, ...filteredFallback.slice(0, needCount)]
         }
 
-        // 연령별 인기 추천 도서 (7권)
-        const rawAgeBooks = await getPopularBooksByAge(ageGroupKey, 8)
+        // 연령별 인기 추천 도서 (7권) — rawAgeBooks 재활용 (추가 쿼리 없음)
         const ageRecommended = rawAgeBooks
             .filter((b: any) => b.id !== book.id)
             .slice(0, 7)
-
-        // 동일 저자의 다른 추천 도서 (최대 7권, 없으면 빈 배열)
-        const authorRecommended = book.author
-            ? await getBooksByAuthor(book.author, book.id, 7)
-            : []
 
         const isCaldecott = book.curation_tag?.split(',').includes('caldecott') || book.curation_tag === 'caldecott'
 

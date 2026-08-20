@@ -50,27 +50,39 @@ export default function HomePageClient({
   const router = useRouter()
   const { user, signOut } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedAge, setSelectedAge] = useState(initialSelectedAge)
+
+  // useState lazy initializer: 렌더링 전에 localStorage에서 연령을 복원하여
+  // useEffect에서의 상태 업데이트 → 재렌더링 → 재조회 race condition을 원천 차단
+  const [selectedAge, setSelectedAge] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('lastSelectedAge') || initialSelectedAge
+    }
+    return initialSelectedAge
+  })
   const isInitialRender = useRef(true)
 
-  // 클라이언트 마운트 시 localStorage에서 마지막 선택 연령 복원 (수화 오류 방지)
-  useEffect(() => {
+  // ageBooks & loading도 lazy initializer로 동기화:
+  // localStorage 복원된 나이와 SSR 데이터 나이가 다르면 초기 데이터를 비워서 정상 조회 유도
+  const [ageBooks, setAgeBooks] = useState<Book[]>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('lastSelectedAge')
-      if (saved && saved !== initialSelectedAge) {
-        setSelectedAge(saved)
-      }
+      const storedAge = localStorage.getItem('lastSelectedAge') || initialSelectedAge
+      return storedAge === initialSelectedAge ? initialAgeBooks : []
     }
-  }, [initialSelectedAge])
-
-  const [ageBooks, setAgeBooks] = useState<Book[]>(initialAgeBooks)
+    return initialAgeBooks
+  })
   const [researchBooks, setResearchBooks] = useState<Book[]>(initialResearchBooks)
   const [caldecottBooks] = useState<Book[]>(initialCaldecottBooks)
   const [summerBooks, setSummerBooks] = useState<Book[]>(initialSummerBooks)
 
 
   // 초기 데이터가 있으면 로딩 상태 false
-  const [loading, setLoading] = useState(initialAgeBooks.length === 0)
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const storedAge = localStorage.getItem('lastSelectedAge') || initialSelectedAge
+      return storedAge !== initialSelectedAge || initialAgeBooks.length === 0
+    }
+    return initialAgeBooks.length === 0
+  })
 
   // 회원 탈퇴 팝업 상태
   const [isWithdrawnPopupOpen, setIsWithdrawnPopupOpen] = useState(false)
@@ -218,6 +230,7 @@ export default function HomePageClient({
           href="/books?curation=summer-vacation"
           onViewMore={() => sendGAEvent('click_view_more', { section: 'summer_vacation' })}
           bgColor="bg-white"
+          priorityImages
         />
       )}
 
@@ -235,6 +248,7 @@ export default function HomePageClient({
           href={`/books?curation=${encodeURIComponent(curation.tag)}`}
           onViewMore={() => sendGAEvent('click_view_more', { section: curation.tag })}
           bgColor={index % 2 === 0 ? 'bg-white' : 'bg-muted-bg'}
+          priorityImages={index === 0 && !isSummerCurationActive()}
         />
       ))}
 

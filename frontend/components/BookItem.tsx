@@ -14,9 +14,11 @@ interface BookItemProps {
   loanStatus?: LoanStatus;
   /** true이면 청구기호·대출 상태를 표시 (목록/검색 페이지), false면 깔끔 모드 (홈/추천 카드) */
   showLibraryInfo?: boolean;
+  /** true이면 next/image priority 활성화 (첫 뷰포트 LCP 최적화용) */
+  priority?: boolean;
 }
 
-export default function BookItem({ book, loanStatus, showLibraryInfo = false }: BookItemProps) {
+export default function BookItem({ book, loanStatus, showLibraryInfo = false, priority = false }: BookItemProps) {
   const { user } = useAuth();
   const { selectedLibrary } = useLibrary();
   const displayAge = getAgeDisplayLabel(book.age);
@@ -81,7 +83,8 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false }: 
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover transition-transform duration-300 group-active:scale-105"
-            loading="lazy"
+            loading={priority ? 'eager' : 'lazy'}
+            priority={priority}
           />
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full text-gray-300">

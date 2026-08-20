@@ -14,6 +14,8 @@ interface CurationSectionProps {
   onViewMore: () => void
   bgColor?: string
   minBooks?: number
+  /** true이면 상위 3개 도서 이미지에 priority 적용 (LCP 최적화) */
+  priorityImages?: boolean
 }
 
 /**
@@ -30,6 +32,7 @@ export default function CurationSection({
   onViewMore,
   bgColor = 'bg-muted-bg',
   minBooks = 7,
+  priorityImages = false,
 }: CurationSectionProps) {
   // 지정된 권수 미만인 경우 섹션 자체를 노출하지 않음 (유저 경험 보장)
   if (books.length < minBooks) return null
@@ -60,7 +63,7 @@ export default function CurationSection({
             <div className="flex gap-4 pb-4">
               {books.map((book, index) => (
                 <div key={book.id} className={`flex-shrink-0 w-[165px] sm:w-[190px] ${index === books.length - 1 ? 'mr-4' : ''}`}>
-                  <BookCard book={book} />
+                  <BookCard book={book} priority={priorityImages && index < 3} />
                 </div>
               ))}
             </div>
