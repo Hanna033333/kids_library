@@ -206,10 +206,8 @@ export default function MyPageClient() {
             }
             if (!token) throw new Error('세션을 찾을 수 없습니다.')
 
-            if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_API_URL) {
-                throw new Error("FAIL-FAST: NEXT_PUBLIC_API_URL 환경 변수가 설정되지 않았습니다. 빌드 또는 배포 설정을 확인하세요.");
-            }
-            const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
+            const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://127.0.0.1:8000' : 'https://api.checkjari.com')
             const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` },

@@ -15,11 +15,26 @@ export default function AuthClient() {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [lastProvider, setLastProvider] = useState<string | null>(null)
+    const [showQaBtn, setShowQaBtn] = useState(false)
     const router = useRouter()
     const searchParams = useSearchParams()
     const supabase = createClient()
     const { user, isLoading: authLoading } = useAuth()
     const hasTriggeredRef = useRef(false)
+
+    // Preview 및 개발 환경에서 QA 버튼 노출 여부 체크
+    useEffect(() => {
+        const isDev = process.env.NODE_ENV === 'development'
+        const isQaAllowed = process.env.NEXT_PUBLIC_ALLOW_QA_MOCK === 'true'
+        const isVercelPreview = process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview' || process.env.VERCEL_ENV === 'preview'
+        const isNonProdDomain = typeof window !== 'undefined' &&
+            !window.location.hostname.includes('checkjari.com') &&
+            window.location.hostname !== 'www.checkjari.com'
+
+        if (isDev || isQaAllowed || isVercelPreview || isNonProdDomain) {
+            setShowQaBtn(true)
+        }
+    }, [])
 
     // BFCache (뒤로가기 페이지 복원) 대응: 스피너 상태 초기화 및 oauth_in_progress 정리
     useEffect(() => {
@@ -214,8 +229,8 @@ export default function AuthClient() {
                         </Button>
                     </div>
 
-                    {/* QA 테스터 로그인 (개발 환경 전용) */}
-                    {(process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_ALLOW_QA_MOCK === 'true') && (
+                    {/* QA 테스터 로그인 (개발 및 Preview 환경 전용) */}
+                    {showQaBtn && (
                         <Button
                             onClick={() => {
                                 localStorage.setItem('supabase.auth.token', 'TEST_QA_TOKEN');

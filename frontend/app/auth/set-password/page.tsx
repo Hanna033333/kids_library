@@ -104,10 +104,7 @@ export default function SetPasswordPage() {
             const agreements = agreementsStr ? JSON.parse(agreementsStr) : {}
 
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            if (!isLocal && process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_API_URL) {
-                throw new Error("FAIL-FAST: NEXT_PUBLIC_API_URL 환경 변수가 설정되지 않았습니다. 빌드 또는 배포 설정을 확인하세요.")
-            }
-            const API_BASE_URL = isLocal ? "http://127.0.0.1:8000" : (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000")
+            const API_BASE_URL = isLocal ? "http://127.0.0.1:8000" : (process.env.NEXT_PUBLIC_API_URL || "https://api.checkjari.com")
 
             let authToken = ''
             if (isQaMode) {

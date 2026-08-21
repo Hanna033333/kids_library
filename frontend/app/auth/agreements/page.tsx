@@ -76,7 +76,7 @@ export default function AgreementsPage() {
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             const API_BASE_URL = isLocal
                 ? 'http://127.0.0.1:8000'
-                : (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000')
+                : (process.env.NEXT_PUBLIC_API_URL || 'https://api.checkjari.com')
 
             const response = await fetch(`${API_BASE_URL}/api/auth/me/agreements`, {
                 method: 'POST',

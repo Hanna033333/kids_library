@@ -46,8 +46,8 @@ def get_semaphore() -> asyncio.Semaphore:
     """전역 세마포어 반환 (없으면 생성)"""
     global GLOBAL_SEMAPHORE
     if GLOBAL_SEMAPHORE is None:
-        # 동시 요청 수를 5로 제한 (안정성 최우선)
-        GLOBAL_SEMAPHORE = asyncio.Semaphore(5)
+        # 동시 요청 수를 10으로 제한 (처리 속도 개선)
+        GLOBAL_SEMAPHORE = asyncio.Semaphore(10)
     return GLOBAL_SEMAPHORE
 
 
@@ -119,7 +119,7 @@ async def fetch_loan_status_single(
     }
     
     try:
-        async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=5), allow_redirects=False) as response:
+        async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=3), allow_redirects=False) as response:
             # 302 리다이렉트 = 정보나루 API 점검/한도초과 상태
             if response.status in (301, 302, 303, 307, 308):
                 result = {
