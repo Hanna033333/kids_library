@@ -797,7 +797,7 @@ async def approve_feed_view(request: Request, feed_id: int, signature: str):
         <div class="card">
             <div class="icon">🚀</div>
             <h1>최종 발행 승인</h1>
-            <p>2차 이미지 검수 완료 후 최종 발행 예약을 확정하시겠습니까?<br>승인 시 정규 시각(저녁 8시)에 자동 발행되며, 20시를 경과했다면 즉시 발행됩니다.</p>
+            <p>2차 이미지 검수 완료 후 최종 발행 예약을 확정하시겠습니까?<br>승인 시 정규 시각(밤 9시 30분)에 자동 발행되며, 21시 30분을 경과했다면 즉시 발행됩니다.</p>
             <button id="submit-btn" class="btn" onclick="submitApprove()">최종 승인 및 발행 예약</button>
         </div>
         <script>
@@ -859,13 +859,13 @@ async def approve_feed_submit(req: ApproveSubmitRequest):
     return {"status": "success", "message": "발행 예약 확정 완료"}
 
 async def weekly_threads_scheduler():
-    """매분마다 시간을 감지하여 월/수/금 저녁 8시에는 텍스트 시안을 자동 빌드하고, 밤 9시 30분(육퇴 골든타임)에는 최종 승인된 피드를 발행합니다."""
+    """매분마다 시간을 감지하여 월/수/금 오후 1시(13:00)에는 텍스트 시안을 자동 빌드하고, 밤 9시 30분(육퇴 골든타임)에는 최종 승인된 피드를 발행합니다."""
     print("⏰ [Weekly Threads Scheduler] 스케줄러 태스크 가동 시작...")
     
     tz_kst = datetime.timezone(datetime.timedelta(hours=9))
     
     # 중복 실행 방지용 메모리 락 (당일 한 번만 실행)
-    last_trigger_date_8pm = None
+    last_trigger_date_1pm = None
     last_trigger_date_930pm = None
     
     while True:
@@ -874,12 +874,12 @@ async def weekly_threads_scheduler():
             today_date = now_kst.date()
             weekday = now_kst.weekday()  # 0: 월, 2: 수, 4: 금
             
-            # 1. 월/수/금요일 저녁 8시 (20:00) -> 1단계 텍스트 시안 생성 및 텔레그램 발송
+            # 1. 월/수/금요일 오후 1시 (13:00) -> 1단계 텍스트 시안 생성 및 텔레그램 발송
             # minute==0 정확 일치는 루프 드리프트(sleep 60초 + 처리 시간)로 트리거를 통째로 놓칠 수 있어 hour 단위로 판정
-            if weekday in (0, 2, 4) and now_kst.hour == 20:
-                if last_trigger_date_8pm != today_date:
-                    last_trigger_date_8pm = today_date  # 실패 여부와 무관하게 1일 1회만 시도 (매분 재시도 스팸 방지)
-                    print(f"📡 [스케줄러] 저녁 8시 감지. 요일: {weekday}, 날짜: {today_date} -> 1단계 텍스트 시안 생성 시작")
+            if weekday in (0, 2, 4) and now_kst.hour == 13:
+                if last_trigger_date_1pm != today_date:
+                    last_trigger_date_1pm = today_date  # 실패 여부와 무관하게 1일 1회만 시도 (매분 재시도 스팸 방지)
+                    print(f"📡 [스케줄러] 오후 1시 감지. 요일: {weekday}, 날짜: {today_date} -> 1단계 텍스트 시안 생성 시작")
                     target_idx = 0 if weekday == 0 else (1 if weekday == 2 else 2)
                     try:
                         # 이미 오늘 동일 큐레이션 태그로 생성된 피드가 있는지 재검증
@@ -895,8 +895,8 @@ async def weekly_threads_scheduler():
                         if not dup.data:
                             await execute_weekly_threads_generation(index=target_idx)
                     except Exception as e:
-                        print(f"❌ [스케줄러] 8시 1단계 생성 중 에러: {e}")
-                        await send_telegram_message(f"❌ [스케줄러 경고] 저녁 8시 1단계 시안 생성 실패: {e}")
+                        print(f"❌ [스케줄러] 1시 1단계 생성 중 에러: {e}")
+                        await send_telegram_message(f"❌ [스케줄러 경고] 오후 1시 1단계 시안 생성 실패: {e}")
                         
             # 2. 월/수/금요일 밤 9시 30분 (21:30~21:59) -> 승인된 카드뉴스 최종 배포 (육퇴 골든타임)
             if weekday in (0, 2, 4) and now_kst.hour == 21 and now_kst.minute >= 30:
@@ -984,10 +984,10 @@ async def weekly_threads_scheduler():
                                 await send_telegram_message(f"⚠️ [스케줄러 경고] 피드({feed_id})가 승인되었으나 이미지 URL이 없어 배포되지 못했습니다.")
                         else:
                             print("ℹ️ [스케줄러] 오늘 승인된 예약 발행용 피드가 발견되지 않았습니다. 발행을 건너뜁니다.")
-                            await send_telegram_message("ℹ️ <b>[스케줄러 알림]</b> 오늘 저녁 8시 발행 예약 건 중 승인 완료된(Okay) 피드가 없어 발행이 생략되었습니다.")
+                            await send_telegram_message("ℹ️ <b>[스케줄러 알림]</b> 오늘 정규 발행 예약 건 중 승인 완료된(Okay) 피드가 없어 발행이 생략되었습니다.")
                     except Exception as e:
-                        print(f"❌ [스케줄러] 저녁 8시 최종 배포 에러: {e}")
-                        await send_telegram_message(f"❌ [스케줄러 오류] 저녁 8시 최종 발행 중 에러 발생: {e}")
+                        print(f"❌ [스케줄러] 밤 9시 30분 최종 배포 에러: {e}")
+                        await send_telegram_message(f"❌ [스케줄러 오류] 밤 9시 30분 최종 발행 중 에러 발생: {e}")
                         
         except Exception as e:
             print(f"❌ [Weekly Threads Scheduler Loop Error]: {e}")

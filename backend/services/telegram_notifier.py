@@ -45,7 +45,7 @@ async def send_threads_preview(caption: str, image_urls: List[str], confirm_url:
             msg_text = (
                 f"{caption}\n\n"
                 f"━━━━━━━━━━━━━━━━━━━\n"
-                f"📢 위 시안은 매주 월/수/금 저녁 8시 발행용 주간 큐레이션입니다.\n"
+                f"📢 위 시안은 매주 월/수/금 오후 1시에 생성된 주간 큐레이션입니다.\n"
                 f"시안을 확인하시고, 정규 스케줄 시각에 자동으로 Threads로 최종 배포하려면 아래 버튼을 클릭하여 승인해 주세요!"
             )
             

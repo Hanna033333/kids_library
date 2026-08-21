@@ -78,7 +78,7 @@ export async function getResearchCouncilBooks(limit: number = 5, client?: Supaba
     const { data, error } = await supabase
         .from('childbook_items')
         .select(selectFields)
-        .eq('curation_tag', '어린이도서연구회')
+        .ilike('curation_tag', '%어린이도서연구회%')
         .or('is_hidden.is.null,is_hidden.eq.false')
         .not('image_url', 'is', null)
         .neq('image_url', '')
