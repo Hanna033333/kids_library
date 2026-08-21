@@ -55,8 +55,8 @@ app.add_middleware(
         "http://localhost:3001",
         "http://127.0.0.1:3001",
     ],
-    # Starlette의 CORSMiddleware가 부분 일치(re.match)로 체크할 경우를 대비하여 명확히 ^과 $ 앵커를 사용하여 앞뒤 제한
-    allow_origin_regex=r"^(https://kids-library-git-[a-z0-9-]+-hannas-projects-[a-z0-9]+\.vercel\.app|https://(www\.)?checkjari\.com)$",
+    # Starlette CORSMiddleware regex: 모든 Vercel Preview 및 상용 도메인 허용
+    allow_origin_regex=r"^(https://kids-library-.*\.vercel\.app|https://.*-hannas-projects.*\.vercel\.app|https://(www\.)?checkjari\.com)$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
