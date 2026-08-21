@@ -20,9 +20,9 @@ def get_warning_lock() -> asyncio.Lock:
     return WARNING_LOCK
 
 
-# 인메모리 캐시 (30분 TTL)
+# 인메모리 캐시 (3분 TTL)
 LOAN_CACHE: Dict[str, tuple[Dict, datetime]] = {}
-CACHE_TTL = timedelta(minutes=30)
+CACHE_TTL = timedelta(minutes=3)
 LAST_GC_RUN_AT: datetime = datetime.now()
 
 # 도서관 코드 매핑 (전국 대표 7개 도서관 - ㄱㄴㄷ 순)
@@ -55,8 +55,8 @@ def clean_expired_cache():
     """만료된 (30분 초과) 대출 캐시 항목을 메모리에서 제거합니다. (가비지 컬렉션)"""
     global LAST_GC_RUN_AT
     now = datetime.now()
-    # GC 실행은 5분에 한 번씩만 수행하여 오버헤드 최소화
-    if now - LAST_GC_RUN_AT < timedelta(minutes=5):
+    # GC 실행은 3분에 한 번씩만 수행하여 오버헤드 최소화
+    if now - LAST_GC_RUN_AT < timedelta(minutes=3):
         return
         
     LAST_GC_RUN_AT = now

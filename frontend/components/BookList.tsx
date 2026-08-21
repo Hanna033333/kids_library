@@ -170,7 +170,7 @@ export default function BookList({
       }
     },
     enabled: visibleBooksForLoan.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
+    staleTime: 3 * 60 * 1000, // 3 minutes cache
     retry: 1,
     placeholderData: keepPreviousData,
   });
