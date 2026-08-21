@@ -9,15 +9,23 @@ description: 책자리 프로젝트의 버튼 컬러 시스템 및 디자인 가
 
 ## 2. 컬러 팔레트 (Tailwind Config)
 
-모든 컬러는 `tailwind.config.ts`의 `theme.extend.colors.brand`에 정의되어 있습니다.
+모든 컬러는 `tailwind.config.ts`의 `theme.extend.colors`에 체계적으로 정의되어 있습니다.
 
+### Brand Color (단일 브랜드 + 소셜)
 | 컬러 이름 | Tailwind Class | Hex Code | 용도 |
 |---|---|---|---|
-| **Primary** | `bg-brand-primary` | `#F59E0B` | 메인 액션 (검색, 필터 적용, 완료) |
-| **Primary Hover** | `bg-brand-primary-hover` | `#D97706` | Primary 버튼 호버 상태 |
-| **Accent** | `bg-brand-accent` | `#FF4D00` | 강조 액션 (로그인 유도 등) |
+| **Primary (Brand)** | `bg-brand-primary` / `active:bg-brand-primary-dark` | `#F59E0B` | 메인 CTA, 검색, 필터, 청구기호 (*터치 시 `#D97706` 자동 피드백) |
 | **Kakao** | `bg-brand-kakao` | `#FEE500` | 카카오 로그인 전용 |
-| **Intro** | `bg-brand-intro` | `#FFB300` | 인트로 페이지 전용 |
+
+### Neutral & Surfaces (슬림화 규격)
+| 컬러 이름 | CSS 토큰 | Hex Code | 용도 |
+|---|---|---|---|
+| **Muted BG** | `--muted-bg` | `#F5F5F8` | 앱 전체 배경 (Body) |
+| **Card BG** | `--card-bg` | `#FFFFFF` | 카드, 모달, 바텀시트 |
+| **Surface Sub** | `--surface-sub` | `#F3F4F6` | 회색 버튼, 미소장 뱃지 배경 |
+| **Border** | `--border` | `#E5E7EB` | 구분선 및 인풋 테두리 |
+| **Text Main** | `--text-main` | `#111827` | 제목 및 본문 기본 텍스트 |
+| **Text Sub** | `--text-sub` | `#6B7280` | 보조 설명, 메타 텍스트 |
 
 ## 3. Button 컴포넌트 사용법
 
@@ -31,11 +39,10 @@ import { Button } from "@/components/ui/Button"
 ### Variants
 | Variant | 설명 | 사용 예시 |
 |---|---|---|
-| `primary` | **(기본값)** 메인 액션 버튼 | `<Button>검색</Button>` |
-| `secondary` | 회색 보조 버튼 (취소, 초기화) | `<Button variant="secondary">취소</Button>` |
+| `primary` | **(기본값)** 메인 액션 버튼 (56px CTA 등) | `<Button>도서관 확인하기</Button>` |
+| `gray` | 회색 보조 버튼 (Surface Sub 배경) | `<Button variant="gray">닫기</Button>` |
 | `kakao` | 카카오 로그인 전용 | `<Button variant="kakao">카카오 로그인</Button>` |
-| `accent` | 붉은 계열 강조 버튼 | `<Button variant="accent">로그인</Button>` |
-| `intro` | 인트로 페이지 전용 스타일 | `<Button variant="intro">시작하기</Button>` |
+| `outline` | 테두리 버튼 (흰색 배경 + Primary 테두리) | `<Button variant="outline">공유하기</Button>` |
 | `ghost` | 배경 없는 투명 버튼 | `<Button variant="ghost"><Icon /></Button>` |
 
 ### Sizes

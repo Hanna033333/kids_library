@@ -146,11 +146,10 @@ export default function BookDetailClient({
 
     // 맥락적 CTA 분기 구조 설계
     const getPurchaseButtonProps = () => {
-        // 대출 상태와 관계없이 항상 동일한 문구와 스타일을 반환하여 시각적 깜빡임을 해소합니다.
         return {
             subText: "도서관에 갈 시간이 없다면",
             mainText: "지금 바로 주문하세요",
-            variant: "primary" as "primary" | "secondary",
+            variant: "primary" as const,
             className: "flex-1 w-full h-14 flex-col gap-0.5 px-2"
         };
     };
@@ -201,7 +200,7 @@ export default function BookDetailClient({
 
     const handleToggleSave = async () => {
         if (!user) {
-            sessionStorage.setItem('returnUrl', window.location.pathname)
+            sessionStorage.setItem('returnUrl', window.location.pathname + window.location.search)
             sessionStorage.setItem('pendingAction', `like_book_${book.id}`)
             sendGAEvent('click_bookmark_unauth', { book_id: book.id })
             setLoginModalProps({
@@ -471,11 +470,11 @@ export default function BookDetailClient({
                                             </span>
                                             {selectedLibrary && normalizedStatus && normalizedStatus.status !== "확인중" && (
                                                 <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
-                                                    ? "bg-green-100 text-green-700"
+                                                    ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
                                                     : normalizedStatus.available === false
-                                                        ? "bg-red-100 text-red-700"
+                                                        ? "bg-red-50 text-red-600 border border-red-200"
                                                         : normalizedStatus.status === "미소장"
-                                                            ? "bg-gray-100 text-gray-600"
+                                                            ? "bg-[#F3F4F6] text-[#6B7280]"
                                                             : "bg-white text-gray-600 border border-gray-300"
                                                     }`}>
                                                     {normalizedStatus.status}

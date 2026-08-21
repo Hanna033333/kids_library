@@ -56,7 +56,7 @@ export default function IntegratedFilterModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="w-full md:max-w-md bg-white rounded-t-lg md:rounded-lg shadow-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom md:slide-in-from-bottom-10 duration-300">
+            <div className="w-full md:max-w-md bg-white rounded-t-[24px] md:rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom md:slide-in-from-bottom-10 duration-300">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
@@ -119,7 +119,7 @@ export default function IntegratedFilterModal({
                                 setLocalAge("");
                                 setLocalSort("pangyo_callno");
                             }}
-                            variant="secondary"
+                            variant="gray"
                             size="lg"
                             className="px-6"
                         >

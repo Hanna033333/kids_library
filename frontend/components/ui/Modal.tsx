@@ -25,7 +25,7 @@ export default function Modal({
     isOpen,
     onClose,
     position = 'center',
-    maxWidth = 'max-w-sm',
+    maxWidth = 'max-w-[344px]',
     hideCloseButton = false,
     disableOverlayClose = false,
     hideOverlay = false,
@@ -69,15 +69,15 @@ export default function Modal({
                     relative w-full ${maxWidth} bg-white overflow-hidden
                     ${hideOverlay ? 'shadow-2xl' : ''}
                     ${isBottom
-                        ? 'rounded-t-2xl md:rounded-2xl max-h-[90vh] flex flex-col animate-in slide-in-from-bottom md:slide-in-from-bottom-10 duration-300'
-                        : 'rounded-2xl animate-in zoom-in-95 duration-200'
+                        ? 'rounded-t-[24px] md:rounded-[16px] max-h-[90vh] flex flex-col animate-in slide-in-from-bottom md:slide-in-from-bottom-10 duration-300'
+                        : 'rounded-[16px] animate-in zoom-in-95 duration-200'
                     }
                 `}
             >
                 {!hideCloseButton && (
                     <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                        className="absolute top-6 right-6 z-10 w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
                         aria-label="닫기"
                     >
                         <X className="w-5 h-5" />

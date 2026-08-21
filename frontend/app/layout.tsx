@@ -3,6 +3,7 @@ import "./globals.css";
 import Script from "next/script";
 import { Providers } from "./providers";
 import HistoryTracker from "@/components/HistoryTracker";
+import SignupWelcomeModal from "@/components/SignupWelcomeModal";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -123,6 +124,7 @@ export default function RootLayout({
         </Script>
         <Providers>
           <HistoryTracker />
+          <SignupWelcomeModal />
           {children}
         </Providers>
       </body>

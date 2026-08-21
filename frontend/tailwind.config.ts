@@ -50,19 +50,13 @@ const config: Config = {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
-        // 책자리 브랜드 컬러 팔레트 (UI-KIT 기준)
+        // 책자리 브랜드 컬러 팔레트 (2종 핵심 + 소셜)
         brand: {
           primary: {
             DEFAULT: '#F59E0B',       // 메인 노랑 (Primary)
-            hover: '#D97706',         // 호버 상태
-            active: '#D97706',        // 클릭 상태
-            light: '#FEF3C7',         // Primary Light
-            200: '#FDE68A',           // Secondary BG
-            dim: 'rgba(245, 158, 11, 0.10)' // Primary Dim
-          },
-          accent: {
-            DEFAULT: '#FF4D00',       // 강조 레드-오렌지
-            hover: '#FF4D00',         
+            dark: '#D97706',          // Dark / Pressed / Active
+            hover: '#D97706',         
+            active: '#D97706',        
           },
           kakao: {
             DEFAULT: '#FEE500',       // 카카오 브랜드 컬러
@@ -70,12 +64,11 @@ const config: Config = {
             active: '#FCC419',
             text: '#191919',          // 카카오 텍스트 컬러
           },
-          intro: {
-            DEFAULT: '#FFB300',       // 인트로 페이지 전용
-            hover: '#FFB300',         
-          },
         },
-        'muted-bg': '#F5F5F8',        // Muted BG (UI-KIT)
+        'muted-bg': '#F5F5F8',        // Muted Canvas BG
+        'surface-sub': '#F3F4F6',     // Gray Surface Sub BG
+        'text-main': '#111827',       // Main Text
+        'text-sub': '#6B7280',        // Sub Text
       },
       borderRadius: {
         lg: "var(--radius)",

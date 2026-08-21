@@ -23,6 +23,8 @@ interface ConfirmModalProps {
     isLoading?: boolean;
     /** 배경 dimmed 오버레이 숨김 */
     hideOverlay?: boolean;
+    /** 우측 상단 닫기(X) 버튼 숨김 여부 (기본: true) */
+    hideCloseButton?: boolean;
 }
 
 /**
@@ -36,38 +38,39 @@ export default function ConfirmModal({
     description,
     confirmLabel = '확인',
     cancelLabel = '취소',
-    confirmVariant = 'destructive',
+    confirmVariant = 'primary',
     isLoading = false,
     hideOverlay = false,
+    hideCloseButton = true,
 }: ConfirmModalProps) {
     return (
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            hideCloseButton
+            hideCloseButton={hideCloseButton}
             disableOverlayClose={isLoading}
             hideOverlay={hideOverlay}
         >
             <div className="p-6">
                 {/* 타이틀 */}
-                <h3 className="text-[18px] font-bold text-gray-900 leading-snug mb-2">{title}</h3>
+                <h3 className="text-[20px] font-bold text-gray-900 leading-7 pr-8 mb-3 tracking-tight">{title}</h3>
 
                 {/* 설명 */}
                 {description && (
-                    <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                    <div className="text-gray-600 text-[14.5px] leading-[1.6] mb-6 break-keep">
                         {description}
-                    </p>
+                    </div>
                 )}
 
                 {/* 버튼 영역 */}
-                <div className={`flex gap-3 ${description ? '' : 'mt-4'}`}>
+                <div className={`flex gap-2.5 ${description ? '' : 'mt-5'}`}>
                     {cancelLabel && (
                         <Button
-                            variant="google"
+                            variant="gray"
                             size="md"
                             onClick={onClose}
                             disabled={isLoading}
-                            className="flex-1 rounded-lg font-bold"
+                            className="flex-1 h-12 rounded-xl font-bold text-[15px]"
                         >
                             {cancelLabel}
                         </Button>
@@ -78,7 +81,7 @@ export default function ConfirmModal({
                         onClick={onConfirm}
                         isLoading={isLoading}
                         disabled={isLoading}
-                        className="flex-1 rounded-lg font-bold"
+                        className="flex-1 h-12 rounded-xl font-bold text-[15px]"
                     >
                         {confirmLabel}
                     </Button>

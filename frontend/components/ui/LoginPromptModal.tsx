@@ -17,7 +17,7 @@ interface LoginPromptModalProps {
 export default function LoginPromptModal({
     isOpen,
     onClose,
-    title = '마음에 드는 책, 책장에 쏙! 📚',
+    title = '마음에 드는 책, 책장에 쏙!',
     description = '3초 간편 로그인으로 내 책장에 모아두고 언제든 꺼내 보세요.'
 }: LoginPromptModalProps) {
     const router = useRouter();
@@ -44,7 +44,7 @@ export default function LoginPromptModal({
     const handleSocialLogin = async (provider: 'kakao' | 'google') => {
         setIsLoading(true);
         if (typeof window !== 'undefined' && !sessionStorage.getItem('returnUrl')) {
-            sessionStorage.setItem('returnUrl', window.location.pathname);
+            sessionStorage.setItem('returnUrl', window.location.pathname + window.location.search);
         }
         sendGAEvent('login_attempt', { method: provider, source: 'login_prompt_modal' });
         localStorage.setItem('last_login_provider', provider);
@@ -64,17 +64,12 @@ export default function LoginPromptModal({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-[340px]">
-            <div className="p-6 text-center flex flex-col items-center">
-                {/* Visual Icon Badge */}
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 border border-amber-100/80 flex items-center justify-center mb-4 shadow-xs">
-                    <span className="text-2xl">🔖</span>
-                </div>
-
-                <h3 className="text-xl font-black text-gray-900 leading-snug mb-2 tracking-tight break-keep">
+        <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-[344px]">
+            <div className="p-6 text-left">
+                <h3 className="text-[19px] font-bold text-gray-900 leading-snug mb-2 pr-6 tracking-tight break-keep">
                     {title}
                 </h3>
-                <p className="text-gray-500 text-[13.5px] mb-6 leading-relaxed tracking-tight break-keep max-w-[270px] mx-auto font-medium">
+                <p className="text-gray-600 text-[14px] mb-6 leading-relaxed tracking-tight break-keep font-normal">
                     {description}
                 </p>
 

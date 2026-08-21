@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>책자리 (Checkjari) 디자인 시스템 가이드</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css">
+  <style>
+    body {
+      font-family: 'SUIT Variable', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      background-color: #F5F5F8;
+      color: #111827;
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
+</head>
+<body class="p-6 sm:p-12 max-w-6xl mx-auto space-y-14">
+
+  <!-- Header -->
+  <header class="border-b border-gray-200 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-[#F59E0B] flex items-center justify-center text-white font-bold text-lg shadow-sm">
+        📚
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 tracking-tight">책자리 (Checkjari) Design System</h1>
+        <p class="text-xs text-gray-500 mt-0.5">Essential UI-KIT & Single Brand Color System (v3.5)</p>
+      </div>
+    </div>
+    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 text-xs font-bold self-start sm:self-auto border border-amber-200">
+      ⚡ 단일 Primary 브랜드 컬러 & 공통 컴포넌트 통합 가이드
+    </div>
+  </header>
+
+  <!-- 1. Color Palette System -->
+  <section class="space-y-6">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">1. Color Palette System</h2>
+      <p class="text-xs text-gray-500 mt-0.5">군더더기 요소를 모두 제거한 핵심 컬러 규격입니다.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- 1) Brand Color -->
+      <div class="bg-white p-5 rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+          <h3 class="text-sm font-bold text-gray-800">Brand Color (단일)</h3>
+          <span class="text-[11px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded">Core</span>
+        </div>
+        <div class="space-y-3">
+          <div class="h-20 rounded-xl bg-[#F59E0B] shadow-inner flex items-end p-2.5 text-white font-bold text-xs">
+            Primary (#F59E0B)
+          </div>
+          <div>
+            <div class="text-sm font-bold text-gray-900">#F59E0B (Amber 500)</div>
+            <div class="text-xs text-gray-500 mt-0.5">메인 CTA · 활성 탭 · 청구기호 강조</div>
+            <div class="text-[11px] text-amber-700 mt-1 bg-amber-50/70 p-1.5 rounded">
+              * 터치 피드백(Active) 시에만 자동으로 #D97706 전환
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2) Neutrals & Surfaces -->
+      <div class="bg-white p-5 rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+          <h3 class="text-sm font-bold text-gray-800">Neutrals & Surfaces</h3>
+          <span class="text-[11px] text-gray-600 font-bold bg-gray-100 px-2 py-0.5 rounded">Structure</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="p-2.5 rounded-xl bg-[#F5F5F8] border border-gray-200 text-xs">
+            <div class="font-bold text-gray-900">#F5F5F8</div>
+            <div class="text-[11px] text-gray-500">배경 (Canvas)</div>
+          </div>
+          <div class="p-2.5 rounded-xl bg-white border border-gray-200 text-xs shadow-sm">
+            <div class="font-bold text-gray-900">#FFFFFF</div>
+            <div class="text-[11px] text-gray-500">카드/시트 (Surface)</div>
+          </div>
+          <div class="p-2.5 rounded-xl bg-[#111827] text-white text-xs">
+            <div class="font-bold">#111827</div>
+            <div class="text-[11px] text-gray-300">본문/제목 (Text Main)</div>
+          </div>
+          <div class="p-2.5 rounded-xl bg-[#6B7280] text-white text-xs">
+            <div class="font-bold">#6B7280</div>
+            <div class="text-[11px] text-gray-200">보조/메타 (Text Sub)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3) Functional & Social -->
+      <div class="bg-white p-5 rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+          <h3 class="text-sm font-bold text-gray-800">Functional & Social</h3>
+          <span class="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">Utility</span>
+        </div>
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between p-2 rounded-xl bg-[#ECFDF5] border border-emerald-200 text-xs">
+            <span class="font-bold text-[#059669]">대출가능 (Success)</span>
+            <span class="text-[11px] text-[#059669] font-mono">#059669 / #ECFDF5</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-xl bg-[#FEE500] text-xs">
+            <span class="font-bold text-[#191919]">카카오 로그인 (Social)</span>
+            <span class="text-[11px] text-gray-800 font-mono">#FEE500</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-xl bg-[#F3F4F6] text-xs">
+            <span class="font-bold text-[#6B7280]">미소장 (Neutral)</span>
+            <span class="text-[11px] text-gray-500 font-mono">#6B7280 / #F3F4F6</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Typography System -->
+  <section class="space-y-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">2. Typography System</h2>
+      <p class="text-xs text-gray-500 mt-0.5">SUIT Variable 기반의 텍스트 위계 구조입니다.</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)] divide-y divide-gray-100">
+      <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+        <div>
+          <span class="text-[10px] font-mono text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Display</span>
+          <div class="text-3xl font-bold text-[#111827] tracking-tight mt-0.5">책자리와 함께하는 책육아</div>
+        </div>
+        <div class="text-xs text-gray-400 font-mono">36px / Bold</div>
+      </div>
+
+      <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+        <div>
+          <span class="text-[10px] font-mono text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Title 1</span>
+          <div class="text-2xl font-bold text-[#111827] tracking-tight mt-0.5">우리 아이 맞춤 도서 찾기</div>
+        </div>
+        <div class="text-xs text-gray-400 font-mono">28px / Bold</div>
+      </div>
+
+      <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+        <div>
+          <span class="text-[10px] font-mono text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Title 2 (Section Title)</span>
+          <div class="text-xl font-bold text-[#111827] tracking-tight mt-0.5">이번 주 추천 그림책 📚</div>
+        </div>
+        <div class="text-xs text-gray-400 font-mono">20~24px / Bold (1줄 최적화)</div>
+      </div>
+
+      <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+        <div>
+          <span class="text-[10px] font-mono text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Title 3 (Book Title)</span>
+          <div class="text-base font-bold text-[#111827] tracking-tight mt-0.5">구름빵 (백희나)</div>
+        </div>
+        <div class="text-xs text-gray-400 font-mono">18px / Bold</div>
+      </div>
+
+      <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+        <div>
+          <span class="text-[10px] font-mono text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Body (Main)</span>
+          <div class="text-[15px] text-[#111827] leading-relaxed mt-0.5">비 오는 날 아침, 나뭇가지에 걸린 구름으로 빵을 만들어 먹어요.</div>
+        </div>
+        <div class="text-xs text-gray-400 font-mono">15px / Regular</div>
+      </div>
+
+      <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+        <div>
+          <span class="text-[10px] font-mono text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Caption (Meta)</span>
+          <div class="text-[13px] text-[#6B7280] mt-0.5">송파어린이도서관 · 유아자료실 813.8-백98ㄱ</div>
+        </div>
+        <div class="text-xs text-gray-400 font-mono">13px / Text Sub (#6B7280)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Buttons & Action Bars -->
+  <section class="space-y-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">3. Buttons & Action Bars</h2>
+      <p class="text-xs text-gray-500 mt-0.5">단일 표준 높이(48px) 중심의 역할별(Primary vs Secondary) 버튼 체계입니다.</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-5">
+      <!-- 1) Standard 48px Buttons -->
+      <div class="space-y-2">
+        <div class="text-xs font-bold text-gray-700">기본 표준 버튼 (Standard 48px / h-12) — 앱 전체 공통 (팝업, 폼, 모달)</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
+          <!-- Primary -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] text-gray-400 font-mono">Primary (핵심 액션 · #F59E0B)</div>
+            <button class="w-full h-12 bg-[#F59E0B] active:bg-[#D97706] active:scale-[0.98] text-white font-bold text-[15px] rounded-xl shadow-xs flex items-center justify-center transition-all">
+              확인 / 저장하기
+            </button>
+          </div>
+
+          <!-- Secondary -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] text-gray-400 font-mono">Secondary (취소/닫기 · #F3F4F6)</div>
+            <button class="w-full h-12 bg-[#F3F4F6] active:bg-gray-200 active:scale-[0.98] text-[#4B5563] font-bold text-[15px] rounded-xl flex items-center justify-center transition-all">
+              취소 / 닫기
+            </button>
+          </div>
+
+          <!-- Outline -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] text-gray-400 font-mono">Outline (3차 보조 액션)</div>
+            <button class="w-full h-12 bg-white border border-[#F59E0B] text-[#F59E0B] active:bg-amber-50 active:scale-[0.98] font-bold text-[15px] rounded-xl flex items-center justify-center transition-all">
+              링크 복사하기
+            </button>
+          </div>
+
+          <!-- Kakao -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] text-gray-400 font-mono">Kakao (간편 로그인)</div>
+            <button class="w-full h-12 bg-[#FEE500] active:bg-[#FADA0A] active:scale-[0.98] text-[#191919] font-bold text-[14.5px] rounded-xl flex items-center justify-center gap-2 transition-all">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 3C5.373 3 0 7.373 0 12.765c0 3.39 2.15 6.42 5.513 8.212l-1.092 4.098c-.12.45.33.84.72.63l4.62-2.31c.712.09 1.442.138 2.18.138 6.627 0 12-4.373 12-9.765C24 7.373 18.627 3 12 3z"/>
+              </svg>
+              카카오 로그인
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2) Full Bottom CTA (56px) -->
+      <div class="space-y-2 pt-2 border-t border-gray-100">
+        <div class="text-xs font-bold text-gray-700">모바일 바텀 고정 CTA (56px / h-14) — 화면 최하단 전폭 바 전용</div>
+        <div class="max-w-md">
+          <button class="w-full h-14 bg-[#F59E0B] active:bg-[#D97706] active:scale-[0.98] text-white font-bold text-[16px] rounded-xl shadow-sm flex items-center justify-center transition-all">
+            대출 현황 확인하기
+          </button>
+        </div>
+        <p class="text-[11px] text-gray-400">* 한 손 조작 터치성(Thumb Zone) 보장을 위해 바텀 고정 플로팅 바에만 56px을 적용합니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Modals & Dialogs (중앙 팝업) -->
+  <section class="space-y-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">4. Modals & Dialogs (중앙 팝업)</h2>
+      <p class="text-xs text-gray-500 mt-0.5">좌측 정렬(text-left) 및 군더더기 장식 없는 표준 팝업 규격입니다.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- 1) Center Confirm Modal Sample -->
+      <div class="bg-white rounded-2xl p-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-4 border border-gray-100">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+          <div class="text-sm font-bold text-gray-800">중앙 컨펌 팝업 (ConfirmModal)</div>
+          <span class="text-[11px] text-amber-700 font-mono bg-amber-50 px-2 py-0.5 rounded">max-w-[344px] · 16px radius</span>
+        </div>
+
+        <!-- Inline Preview Box -->
+        <div class="bg-black/40 p-4 rounded-xl flex items-center justify-center">
+          <div class="w-full max-w-[320px] bg-white rounded-[16px] p-6 shadow-2xl relative">
+            <button class="absolute top-5 right-5 text-gray-400 hover:text-gray-600 text-sm font-bold">✕</button>
+            <h3 class="text-[18px] font-bold text-gray-900 leading-snug mb-2 pr-6">도서관을 변경하시겠습니까?</h3>
+            <p class="text-gray-600 text-[13.5px] leading-relaxed mb-5">
+              선호 도서관을 변경하면 해당 도서관의 실시간 대출 현황으로 업데이트됩니다.
+            </p>
+            <div class="flex gap-2">
+              <button class="flex-1 h-11 bg-[#F3F4F6] active:bg-gray-200 text-[#4B5563] font-bold text-[14px] rounded-xl transition-all">취소</button>
+              <button class="flex-1 h-11 bg-[#F59E0B] active:bg-[#D97706] text-white font-bold text-[14px] rounded-xl shadow-xs transition-all">확인</button>
+            </div>
+          </div>
+        </div>
+        <p class="text-[11px] text-gray-500">* 확인/취소 2버튼 시 [확인]은 Primary(#F59E0B), [취소]는 Secondary(#F3F4F6)를 사용합니다.</p>
+      </div>
+
+      <!-- 2) Login Prompt Modal Sample -->
+      <div class="bg-white rounded-2xl p-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-4 border border-gray-100">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+          <div class="text-sm font-bold text-gray-800">로그인 유도 팝업 (LoginPromptModal)</div>
+          <span class="text-[11px] text-amber-700 font-mono bg-amber-50 px-2 py-0.5 rounded">max-w-[344px] · 16px radius</span>
+        </div>
+
+        <!-- Inline Preview Box -->
+        <div class="bg-black/40 p-4 rounded-xl flex items-center justify-center">
+          <div class="w-full max-w-[320px] bg-white rounded-[16px] p-6 shadow-2xl relative text-left">
+            <button class="absolute top-5 right-5 text-gray-400 hover:text-gray-600 text-sm font-bold">✕</button>
+            <h3 class="text-[18px] font-bold text-gray-900 leading-snug mb-2 pr-6">마음에 드는 책, 책장에 쏙!</h3>
+            <p class="text-gray-600 text-[13.5px] leading-relaxed mb-5">
+              3초 간편 로그인으로 내 책장에 모아두고 언제든 꺼내 보세요.
+            </p>
+            <button class="w-full h-11 bg-[#FEE500] active:bg-[#FADA0A] text-[#191919] font-bold text-[13.5px] rounded-xl flex items-center justify-center gap-2 transition-all">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 3C5.373 3 0 7.373 0 12.765c0 3.39 2.15 6.42 5.513 8.212l-1.092 4.098c-.12.45.33.84.72.63l4.62-2.31c.712.09 1.442.138 2.18.138 6.627 0 12-4.373 12-9.765C24 7.373 18.627 3 12 3z"/>
+              </svg>
+              카카오로 3초 만에 시작하기
+            </button>
+          </div>
+        </div>
+        <p class="text-[11px] text-gray-500">* 시스템 다이얼로그와 통일되도록 좌측 정렬 및 군더더기 장식 없는 플랫 UI를 적용합니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Toast & Feedback System -->
+  <section class="space-y-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">5. Toast & Feedback Alerts (피드백 알림)</h2>
+      <p class="text-xs text-gray-500 mt-0.5">하단 탭바/CTA와 충돌하지 않는 비침해적 토스트 규격입니다.</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+        <div class="text-sm font-bold text-gray-800">Toast Component (<code class="text-xs text-amber-700">@/components/ui/Toast.tsx</code>)</div>
+        <span class="text-[11px] text-gray-500 font-mono">fixed bottom-20 · bg-gray-800 · text-white · 3초 유지</span>
+      </div>
+
+      <div class="bg-gray-100 p-8 rounded-xl flex flex-col items-center justify-center gap-4 relative overflow-hidden">
+        <div class="bg-gray-800 text-white px-5 py-3.5 rounded-xl shadow-lg text-[13px] font-medium text-center break-keep max-w-[90vw] animate-in fade-in">
+          추천 리스트 링크가 복사되었습니다! 단톡방에 공유해 보세요.
+        </div>
+        <div class="bg-gray-800 text-white px-5 py-3.5 rounded-xl shadow-lg text-[13px] font-medium text-center break-keep max-w-[90vw] animate-in fade-in">
+          로그아웃 되었습니다.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Input & SearchBar System -->
+  <section class="space-y-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">6. Input & SearchBar System (입력/검색)</h2>
+      <p class="text-xs text-gray-500 mt-0.5">회원가입/마이페이지 폼 인풋 및 홈/도서 검색바 실제 규격입니다.</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+        <!-- Default Form Input -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-gray-700">기본 폼 인풋 (<code class="text-[11px] text-amber-700">@/components/ui/Input.tsx</code>)</label>
+            <span class="text-[10px] font-mono text-gray-400">h-12 (48px) · rounded-xl</span>
+          </div>
+          <input 
+            type="text" 
+            placeholder="아이 이름을 입력해주세요" 
+            class="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent focus:bg-white transition-all outline-none text-sm text-gray-900 placeholder:text-gray-400" 
+          />
+          <p class="text-[11px] text-gray-400">* Focus 시 Primary(#F59E0B) 2px 테두리 링 및 흰색 배경 활성화 (내부 아이콘 배제)</p>
+        </div>
+
+        <!-- Search Bar with Action -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-gray-700">도서 검색바 (<code class="text-[11px] text-amber-700">@/components/SearchBar.tsx</code>)</label>
+            <span class="text-[10px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">Minimal Underline Style</span>
+          </div>
+          <div class="pt-1">
+            <div class="flex items-center border-b-2 border-gray-200 focus-within:border-gray-900 pb-2 gap-3 relative transition-colors">
+              <input 
+                type="text" 
+                value="백희나 그림책" 
+                placeholder="어떤 책을 찾으시나요?" 
+                class="w-full bg-transparent text-lg font-bold text-gray-900 placeholder:text-gray-300 focus:outline-none pr-16 py-0.5" 
+              />
+              <div class="absolute right-0 flex items-center gap-1.5">
+                <button type="button" class="text-gray-400 hover:text-gray-600 p-1 text-xs font-bold" aria-label="검색어 지우기">✕</button>
+                <button class="p-1 text-gray-700 hover:text-gray-900 transition-colors flex items-center justify-center shrink-0" aria-label="검색">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <p class="text-[11px] text-gray-400">* 차분한 연회색 밑줄 + 포커스 시 다크 라인 강조 + 우측 미니멀 돋보기 아이콘 적용</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Badges, Loan Status & Chips -->
+  <section class="space-y-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">7. Badges, Loan Status & Chips</h2>
+      <p class="text-xs text-gray-500 mt-0.5">상태 뱃지 및 메타데이터 태그 규격입니다.</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-4">
+      <div class="flex flex-wrap items-center gap-6">
+        <!-- 연령 태그 -->
+        <div class="space-y-1">
+          <div class="text-[11px] text-gray-400 font-mono">연령 캡슐 (표지 오버레이)</div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-black/60 text-white shadow-sm backdrop-blur-sm">
+            4-7세
+          </span>
+        </div>
+
+        <!-- 테마 태그 -->
+        <div class="space-y-1">
+          <div class="text-[11px] text-gray-400 font-mono">테마 태그 (플랫 텍스트)</div>
+          <span class="text-xs font-medium text-[#6B7280]">
+            #잠자리그림책
+          </span>
+        </div>
+
+        <!-- 대출가능 -->
+        <div class="space-y-1">
+          <div class="text-[11px] text-gray-400 font-mono">대출가능 (Success)</div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#ECFDF5] text-[#059669] border border-emerald-200">
+            대출가능
+          </span>
+        </div>
+
+        <!-- 미소장 -->
+        <div class="space-y-1">
+          <div class="text-[11px] text-gray-400 font-mono">미소장 (Neutral)</div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#F3F4F6] text-[#6B7280]">
+            미소장
+          </span>
+        </div>
+
+        <!-- 청구기호 강조 -->
+        <div class="space-y-1">
+          <div class="text-[11px] text-gray-400 font-mono">청구기호 (Primary)</div>
+          <span class="text-sm font-extrabold text-[#F59E0B]">
+            유아 813.8-백98ㄱ
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. Book Cards (도서 카드 실물 컴포넌트) -->
+  <section class="space-y-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">8. Book Item Cards (도서 카드 단일 컴포넌트)</h2>
+      <p class="text-xs text-gray-500 mt-0.5">책자리의 모든 화면은 <code class="text-xs text-amber-700 font-bold">@/components/BookItem.tsx</code> 세로형 단일 카드를 사용합니다.</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+      <!-- 1) Home Curation Mode (showLibraryInfo = false) -->
+      <div class="bg-white rounded-2xl p-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+          <div class="text-sm font-bold text-gray-800">1) 홈 큐레이션 모드</div>
+          <span class="text-[11px] text-gray-500 font-mono bg-gray-100 px-2 py-0.5 rounded">Discovery First</span>
+        </div>
+
+        <!-- Sample Card Preview -->
+        <div class="flex justify-center p-4 bg-[#F5F5F8] rounded-xl">
+          <div class="w-[170px] bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col">
+            <!-- Cover with Age Capsule -->
+            <div class="relative h-[160px] w-full bg-[#F9FAFB] flex items-center justify-center overflow-hidden shrink-0">
+              <div class="text-4xl">📖</div>
+              <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-black/60 text-white backdrop-blur-sm">
+                4-7세
+              </span>
+            </div>
+            <!-- Info -->
+            <div class="p-3.5 flex flex-col gap-1 bg-white">
+              <h4 class="text-[14px] font-bold text-gray-900 leading-snug line-clamp-2">알사탕</h4>
+              <p class="text-xs text-gray-500 truncate">백희나 · 책읽는곰</p>
+              <div class="pt-1 text-[11px] font-medium text-gray-400 truncate">
+                #마음공감 #성장
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="text-[11px] text-gray-400">* 홈 화면은 모든 카드가 동일한 큐레이션 모드로 구성되어 높이가 완벽히 일치합니다.</p>
+      </div>
+
+      <!-- 2) Library Linked Mode (showLibraryInfo = true) -->
+      <div class="bg-white rounded-2xl p-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+          <div class="text-sm font-bold text-gray-800">2) 목록/검색 모드 (도서관 연동)</div>
+          <span class="text-[11px] text-emerald-700 font-mono bg-emerald-50 px-2 py-0.5 rounded">Login + Library Active</span>
+        </div>
+
+        <!-- Sample Card Preview -->
+        <div class="flex justify-center p-4 bg-[#F5F5F8] rounded-xl">
+          <div class="w-[170px] bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col">
+            <!-- Cover with Age Capsule -->
+            <div class="relative h-[160px] w-full bg-[#F9FAFB] flex items-center justify-center overflow-hidden shrink-0">
+              <div class="text-4xl">📚</div>
+              <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-black/60 text-white backdrop-blur-sm">
+                4-7세
+              </span>
+            </div>
+            <!-- Info -->
+            <div class="p-3.5 flex flex-col gap-1 bg-white">
+              <h4 class="text-[14px] font-bold text-gray-900 leading-snug line-clamp-2">구름빵</h4>
+              <p class="text-xs text-gray-500 truncate">백희나 · 한솔수북</p>
+              <div class="pt-1 text-[11px] font-medium text-gray-400 truncate">
+                #상상력 #가족사랑
+              </div>
+              <!-- Library Call No & Badge -->
+              <div class="flex items-center justify-between gap-1 pt-2 border-t border-gray-100 mt-1">
+                <span class="text-[12px] font-extrabold text-[#F59E0B] truncate">유아 813.8-백</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-[#ECFDF5] text-[#059669] border border-emerald-200 shrink-0">
+                  대출가능
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="text-[11px] text-gray-400">* 로그인 및 선호 도서관 설정 시 실시간 대출 상태와 청구기호를 한 줄에 노출합니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. Navigation Header System -->
+  <section class="space-y-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">9. Navigation & Header System</h2>
+      <p class="text-xs text-gray-500 mt-0.5">상단 고정 헤더(PageHeader) 및 모바일 11자 말줄임 방지 규격입니다.</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+        <div class="text-sm font-bold text-gray-800">PageHeader Component (<code class="text-xs text-amber-700">@/components/PageHeader.tsx</code>)</div>
+        <span class="text-[11px] text-gray-500 font-mono">w-[80px] slots · flex-1 center title (max 11 chars)</span>
+      </div>
+
+      <!-- Preview -->
+      <div class="bg-[#F5F5F8] p-4 rounded-xl">
+        <header class="w-full max-w-lg mx-auto bg-white h-14 border-b border-gray-100 rounded-xl px-4 flex items-center justify-between shadow-xs">
+          <!-- Left: Back Button + Home Icon (w-[84px]) -->
+          <div class="w-[84px] flex items-center gap-1">
+            <button class="flex items-center justify-center w-8 h-8 -ml-1 text-gray-500 hover:text-gray-900 rounded-full hover:bg-gray-100 transition-colors" aria-label="뒤로가기">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-900 rounded-full hover:bg-gray-100 transition-colors" aria-label="홈으로 이동">
+              <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Center: Title (11자 이내 말줄임 방지) -->
+          <div class="flex-1 min-w-0 mx-2 flex justify-center">
+            <h3 class="text-[17px] font-bold text-gray-900 truncate">
+              이번 주 추천 그림책
+            </h3>
+          </div>
+
+          <!-- Right: Search + My / Action Icons (w-[84px]) -->
+          <div class="w-[84px] flex items-center justify-end gap-1">
+            <button class="flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-900 rounded-full hover:bg-gray-100 transition-colors" aria-label="검색">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </button>
+            <button class="flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-900 rounded-full hover:bg-gray-100 transition-colors" aria-label="마이페이지">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </button>
+          </div>
+        </header>
+      </div>
+      <p class="text-[11px] text-gray-400">* 좌측(뒤로가기+홈 아이콘)과 우측(검색/마이 등 액션 슬롯)에 84px 고정 너비를 두어 중앙 타이틀 정렬을 보장합니다.</p>
+    </div>
+  </section>
+
+  <!-- 10. Bottom Sheet Pattern -->
+  <section class="space-y-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">10. Bottom Sheet Pattern (도서관 선택 시트)</h2>
+      <p class="text-xs text-gray-500 mt-0.5">도서 상세 및 마이페이지에서 사용되는 <code class="text-xs text-amber-700 font-bold">@/components/LibrarySelector.tsx</code> 바텀시트 규격입니다.</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+        <div class="text-sm font-bold text-gray-800">도서관 선택 바텀시트 (LibrarySelector)</div>
+        <span class="text-[11px] text-amber-700 font-mono bg-amber-50 px-2 py-0.5 rounded">rounded-t-[28px] · List Selection</span>
+      </div>
+
+      <!-- Preview -->
+      <div class="bg-black/40 p-6 rounded-xl flex items-center justify-center">
+        <div class="w-full max-w-sm bg-white rounded-t-[28px] p-6 shadow-2xl space-y-4 relative text-left">
+          <!-- Top Drag Handle -->
+          <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto -mt-1 mb-1"></div>
+          
+          <!-- Close (X) -->
+          <button class="absolute top-5 right-5 text-gray-400 hover:text-gray-600 font-bold text-sm">✕</button>
+
+          <div>
+            <h3 class="text-lg font-bold text-gray-900 pr-6">자주 가는 도서관을 선택해주세요</h3>
+            <p class="text-xs text-gray-500 mt-0.5">선택한 도서관의 청구기호를 보여드립니다.</p>
+          </div>
+
+          <!-- Library List -->
+          <div class="space-y-2 pt-1">
+            <!-- Selected Option -->
+            <div class="w-full flex items-center justify-between p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 text-amber-800 font-bold text-sm">
+              <span class="flex items-center gap-2.5">
+                <span class="w-2 h-2 rounded-full bg-[#F59E0B]"></span>
+                송파어린이도서관
+              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+
+            <!-- Unselected Option -->
+            <div class="w-full flex items-center justify-between p-3.5 rounded-xl bg-gray-50 text-gray-700 font-medium text-sm hover:bg-gray-100">
+              <span class="flex items-center gap-2.5">
+                <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                판교도서관
+              </span>
+            </div>
+
+            <!-- Unselected Option -->
+            <div class="w-full flex items-center justify-between p-3.5 rounded-xl bg-gray-50 text-gray-700 font-medium text-sm hover:bg-gray-100">
+              <span class="flex items-center gap-2.5">
+                <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                가락몰도서관
+              </span>
+            </div>
+          </div>
+
+          <!-- Request Library Footer -->
+          <div class="pt-3 border-t border-gray-100 text-center text-[11.5px] text-gray-400">
+            우리 동네 도서관이 아직 없나요? <span class="font-semibold text-gray-600 underline ml-0.5 cursor-pointer">도서관 신청하기 ↗</span>
+          </div>
+        </div>
+      </div>
+      <p class="text-[11px] text-gray-400">* 모바일 뷰포트 하단에서 부드럽게 올라오며, 원하는 도서관 터치 시 즉시 선택 후 닫힙니다.</p>
+    </div>
+  </section>
+
+  <!-- 11. Loading System -->
+  <section class="space-y-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">11. Loading System (로딩 화면)</h2>
+      <p class="text-xs text-gray-500 mt-0.5">앱 전체에서 공통으로 사용하는 <code class="text-xs text-amber-700 font-bold">@/components/ui/PageLoader.tsx</code> 단일 로더 규격입니다.</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-6 shadow-[0_1px_4px_rgba(0,0,0,0.06)] space-y-4">
+      <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+        <div class="text-sm font-bold text-gray-800">PageLoader Component</div>
+        <span class="text-[11px] text-amber-700 font-mono bg-amber-50 px-2 py-0.5 rounded">/children-book.gif · w-24 h-24</span>
+      </div>
+
+      <div class="h-44 bg-[#F5F5F8] rounded-xl flex items-center justify-center">
+        <img 
+          src="/children-book.gif" 
+          alt="책자리 로딩 애니메이션" 
+          class="w-24 h-24 object-contain"
+        />
+      </div>
+      <p class="text-[11px] text-gray-400">* 책자리 전용 움직이는 그림책 GIF(<code>/children-book.gif</code>)를 브랜드 로더로 단일화하여 사용하며, 텍스트 없이 중앙에 배치합니다.</p>
+    </div>
+  </section>
+
+  <!-- 12. Empty States & Feedback Fallback -->
+  <section class="space-y-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">12. Empty States & Fallback (빈 화면)</h2>
+      <p class="text-xs text-gray-500 mt-0.5">검색 0건 및 데이터 미존재 시 이탈 방지 폴백 레이아웃입니다.</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-8 shadow-[0_1px_4px_rgba(0,0,0,0.06)] text-center space-y-4">
+      <div class="text-4xl">🔍</div>
+      <div>
+        <div class="text-base font-bold text-gray-900">검색 결과가 없습니다</div>
+        <p class="text-xs text-gray-500 mt-1">입력하신 검색어의 철자를 확인하거나 필터를 초기화해 보세요.</p>
+      </div>
+      <div class="pt-2">
+        <button class="px-5 py-2.5 bg-[#F3F4F6] text-gray-700 font-semibold rounded-xl text-xs active:bg-gray-200">
+          필터 전체 초기화
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="text-center text-xs text-gray-400 pt-6 border-t border-gray-200">
+    책자리 디자인 시스템 가이드 · Single Primary Color (v3.5)
+  </footer>
+
+</body>
+</html>

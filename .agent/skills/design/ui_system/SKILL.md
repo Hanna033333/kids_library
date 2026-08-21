@@ -16,7 +16,12 @@ description: Rules for maintaining consistency across planning, design, and deve
 ## 🎨 2. 디자인/UX 팀장 (@design) 지침
 - **규격화된 UI 세트 기준 정의**: 버튼(`Button`), 입력창(`Input`) 등은 `.agent/skills/design/color_system/SKILL.md`와 결합하여 정의된 일관적인 **공용 컴포넌트 디자인 시스템**을 따릅니다. 
 - **플랫(Flat) 디자인 준수**: 버튼이나 카드 디자인 등에서 무작위적인 엠보싱/그림자 처리(`shadow-lg`, `shadow-[...]` 등)를 특별한 사유 없이 사용하는 것을 지양합니다. 모던하고 일관된 룩을 유지해야 합니다.
-- 유효성 검사 등 부가 상태 인디케이터 UI 역시 각기 다른 디자인으로 만들지 말고 **가장 최근에 정립된 UI 규격(좌측 아이콘(Leading Icon) 삽입 유무 등)**을 참고합니다.
+- **버튼 4종 체계**: 기본 높이 `48px` (`h-12`)의 Primary(`#F59E0B`), Secondary(`#F3F4F6`), Outline, Kakao(`#FEE500`) 및 바텀 고정 CTA `56px` (`h-14`)로 단순화하며 파괴적(Red) 버튼을 전면 배제합니다.
+- **팝업 및 모달**: 중앙 팝업은 좌측 정렬(`text-left`) 및 `타이틀(18~20px Bold)` ➔ `설명(14px Regular)` ➔ `버튼`의 플랫한 위계를 유지하고 상단 이모지 장식을 배제합니다.
+- **도서 카드 규격**: `@/components/BookItem.tsx` 세로형 단일 카드를 사용하며, 상단 표지(1:1.1) + 연령 캡슐 ➔ 하단 제목 ➔ 출판사 ➔ 태그 ➔ 청구기호/대출배지가 4~8px의 콤팩트한 여백으로 연결되도록 합니다.
+- **단일 로딩 경험**: 모든 로딩 화면은 `/children-book.gif`(`w-24 h-24`)를 사용하는 `@/components/ui/PageLoader.tsx`만 단독 노출하며, 텍스트나 스켈레톤 카드를 배제합니다.
+- **바텀시트**: 모바일 도서관 변경 전용 `@/components/LibrarySelector.tsx`(`rounded-t-[28px]`) 시트 규격을 따릅니다.
+- **네비게이션 헤더**: `@/components/PageHeader.tsx`는 좌측(`w-[84px]`: 뒤로가기+홈) + 중앙(`flex-1`: 11자 이내 타이틀) + 우측(`w-[84px]`: 검색/마이) 3분할 구조를 유지합니다.
 - **섹션 타이틀 구조 일관성**: 추천 도서, 큐레이션 등 컨텐츠 섹션의 타이틀을 구성할 때는 항상 **'서브 타이틀 위, 메인 타이틀 아래'**의 2단 계층 구조를 유지하여 화면 내 정보 위계를 통일합니다.
 - **모바일 인터랙션 및 터치 최적화**: 모든 대화형 인터랙티브 컴포넌트는 오클릭 방지를 위해 패딩을 포함한 터치 영역 최소 규격(`48px x 48px` 이상)을 보장합니다. 모바일에서 동작하지 않는 hover 스타일링을 배제하고, active/pressed 시점에 명확한 비주얼 피드백(Pressed 색상 변화, 스케일 조정 등)을 필수로 정의합니다.
 
@@ -25,3 +30,4 @@ description: Rules for maintaining consistency across planning, design, and deve
 - 폼 요소를 추가할 때는 반드시 `@/components/ui/Input.tsx`, `@/components/ui/Button.tsx` 등의 **공용 UI 컴포넌트**를 호출(Import)하여 프롭스(Props)에 필요한 텍스트 및 속성, 아이콘 여부만 전달하는 방식으로 작성합니다.
 - 반복 렌더링을 막고 한 곳의 스타일 수정 (`Input.tsx`의 텍스트 색상, 모서리 등)이 전체 서비스에 동일하게 퍼지도록 리팩토링과 구현을 동시에 진행해야 합니다.
 - **모바일 우선 코드 스타일 준수**: Tailwind CSS 클래스는 항상 모바일 스타일을 기본 클래스로 정의하고, 데스크톱 대응 스타일은 접두사(`sm:`, `md:`, `lg:`)를 사용하여 추가합니다. 뷰포트 높이 처리에 `100vh` 대신 `100dvh`를 기본 적용하며, Next.js Image 컴포넌트에 모바일 친화적 `sizes` 속성을 필수로 부여해 최적의 모바일 렌더링 성능을 확보합니다.
+- **디자인 시스템 SSOT 참조**: 개발 시 `frontend/public/design-system.html` (`http://localhost:3000/design-system.html`)의 실물 컴포넌트 구조와 토큰 규격을 항상 기준으로 준수합니다.

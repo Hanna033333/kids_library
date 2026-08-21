@@ -89,6 +89,8 @@ trigger: always_on
 37. **텔레그램 미리보기 및 백엔드 URL 안전성 방어막 규격**:
     - 텔레그램 승인/생성 버튼 및 어드민 URL 생성 시 `BACKEND_URL` 환경변수를 참조할 때, 로컬 임시 터널 주소(`loca.lt`, `loca.it`, `localtunnel` 등)가 서버 `.env`에 잔재하여 503 에러를 유발하지 않도록 `get_backend_url()`과 같은 보정 필터를 거치게 해야 한다.
     - 환경변수가 없거나 임시 터널 주소가 들어오는 경우 기본 fallback 주소는 항상 상용 백엔드 도메인(`https://api.checkjari.com`)으로 자동 대체되어야 하며, 로컬 개발 환경(`localhost`, `127.0.0.1`)인 경우에만 텔레그램 인라인 버튼 허용을 위해 `lvh.me` 루프백 도메인으로 치환한다.
+38. **UI 시스템 가이드 준수**:
+    - 모든 프론트엔드 UI 컴포넌트, 컬러 및 스타일링 개발 시 `frontend/public/design-system.html` (`http://localhost:3000/design-system.html`)의 디자인 가이드 규격을 단일 기준으로 준수하여 개발한다.
 
 ## 🔒 보안 가이드
 1. **환경변수 관리**

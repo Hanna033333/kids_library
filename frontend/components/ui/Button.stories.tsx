@@ -38,10 +38,10 @@ export const CssCheck: Story = {
 };
 
 // 3. Variant-only stories (no play functions as per step 6 guidelines)
-export const Secondary: Story = {
+export const Gray: Story = {
   args: {
-    children: '보조 액션',
-    variant: 'secondary',
+    children: '회색 액션',
+    variant: 'gray',
   },
 };
 

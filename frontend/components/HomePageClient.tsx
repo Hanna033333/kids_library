@@ -87,7 +87,6 @@ export default function HomePageClient({
   // 회원 탈퇴 팝업 상태
   const [isWithdrawnPopupOpen, setIsWithdrawnPopupOpen] = useState(false)
   const [logoutToastMessage, setLogoutToastMessage] = useState('')
-  const [isSignupCompleteOpen, setIsSignupCompleteOpen] = useState(false)
 
   // 회원 탈퇴 후 랜딩 시 팝업 띄우기
   useEffect(() => {
@@ -99,10 +98,6 @@ export default function HomePageClient({
       if (sessionStorage.getItem('showLogoutToast') === 'true') {
         setLogoutToastMessage('로그아웃 되었습니다.')
         sessionStorage.removeItem('showLogoutToast')
-      }
-      if (sessionStorage.getItem('showSignupComplete') === 'true') {
-        setIsSignupCompleteOpen(true)
-        sessionStorage.removeItem('showSignupComplete')
       }
     }
   }, [])
@@ -439,28 +434,6 @@ export default function HomePageClient({
         confirmLabel="확인"
         cancelLabel=""
         confirmVariant="primary"
-      />
-
-      {/* 회원가입 완료 팝업 */}
-      <ConfirmModal
-        isOpen={isSignupCompleteOpen}
-        onClose={() => setIsSignupCompleteOpen(false)}
-        onConfirm={() => {
-          setIsSignupCompleteOpen(false)
-          router.push('/my-page?action=select-library')
-        }}
-        title="회원 가입을 축하해요! 🎉"
-        description={
-          <div className="text-gray-600 leading-relaxed text-center break-keep">
-            책자리 가입이 완료되었습니다.<br />
-            <span className="font-bold text-amber-600">자주 가는 도서관 1곳</span>을 설정하시면,<br />
-            찜한 책의 대출 가능 여부를 바로 확인할 수 있어요!
-          </div>
-        }
-        confirmLabel="내 도서관 설정하기 📍"
-        cancelLabel="나중에 할게요"
-        confirmVariant="primary"
-        hideOverlay
       />
 
       {/* 하단 토스트 팝업 */}

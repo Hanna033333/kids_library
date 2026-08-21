@@ -137,11 +137,11 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
               </p>
               {normalizedStatus && normalizedStatus.status !== "확인중" && (
                 <span className={`shrink-0 inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
-                  ? "bg-green-100 text-green-700"
+                  ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
                   : normalizedStatus.available === false
-                    ? "bg-red-100 text-red-700"
+                    ? "bg-red-50 text-red-600 border border-red-200"
                     : normalizedStatus.status === "미소장"
-                      ? "bg-gray-100 text-gray-700"
+                      ? "bg-[#F3F4F6] text-[#6B7280]"
                       : "bg-white text-gray-600 border border-gray-300"
                   }`}>
                   {normalizedStatus.status}

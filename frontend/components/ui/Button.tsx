@@ -11,26 +11,24 @@ const buttonVariants = cva(
                 primary:
                     "bg-brand-primary text-white hover:bg-brand-primary active:bg-brand-primary-active",
                 secondary:
-                    "bg-brand-primary-200 text-brand-primary border border-transparent active:opacity-80",
+                    "bg-surface-sub text-gray-700 border border-transparent active:bg-gray-200 font-semibold",
+                gray:
+                    "bg-surface-sub text-gray-700 border border-transparent active:bg-gray-200 font-semibold",
                 outline:
                     "bg-white text-brand-primary border border-brand-primary font-bold active:bg-gray-50",
                 kakao:
                     "bg-brand-kakao text-brand-kakao-text font-semibold active:bg-brand-kakao-active",
                 google:
                     "bg-white text-gray-700 border border-gray-300 font-semibold active:bg-gray-100",
-                intro:
-                    "bg-brand-intro text-white active:opacity-80",
-                accent:
-                    "bg-brand-accent text-white font-bold active:opacity-80",
                 ghost:
                     "text-gray-500 rounded-lg active:bg-gray-100",
                 destructive:
                     "bg-red-600 text-white active:bg-red-700",
             },
             size: {
-                sm: "h-11 px-4 text-[13px] font-semibold", // Gray 보조 액션 (44px)
-                md: "h-12 px-5 text-[15px] font-semibold", // Medium/Secondary (48px)
-                lg: "h-14 px-6 text-[16px] font-bold", // CTA (56px)
+                sm: "h-10 px-4 text-[13px] font-medium", // 인라인/소형 (40px)
+                md: "h-12 px-5 text-[15px] font-semibold", // 앱 기본 표준 (48px - 모달, 폼, 액션)
+                lg: "h-14 px-6 text-[16px] font-bold", // 바텀 고정 CTA (56px)
                 icon: "h-10 w-10",
             },
         },

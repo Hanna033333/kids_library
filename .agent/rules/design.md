@@ -28,7 +28,7 @@ trigger: always_on
 - **효율적 인터랙션**: 복잡한 단계를 최소화하여 '검색 후 결과 확인'까지의 동선을 단축해.
 
 ## 🔄 로딩 시스템 (Loading System)
-- **일관된 로딩 경험**: 모든 로딩 화면에서는 부가적인 텍스트('불러오는 중...', '처리 중...' 등) 없이 `PageLoader` 컴포넌트만 중앙에 배치하여 사용해.
+- **일관된 로딩 경험**: 모든 로딩 화면에서는 부가적인 텍스트('불러오는 중...', '처리 중...' 등) 없이 브랜드 움직이는 그림책 GIF(`/children-book.gif`)를 사용하는 `PageLoader` 컴포넌트만 중앙에 배치하여 사용해.
 - **버튼 내 로딩 인디케이터 지양**: 버튼 내부에는 스피너나 `로딩 중...`과 같은 별도의 로딩 인디케이터를 사용하지 마. 로딩 중일 때는 버튼의 상태를 disabled로 변경하여 비활성화하는 방식으로만 시각적 피드백을 제공해.
 
 ## ⬛ 컨텐츠 섹션 및 레이아웃 (Card & Flat 스타일 병합)
@@ -43,6 +43,10 @@ trigger: always_on
 
 ## 🖱️ 버튼 인터랙션 (Button Interaction)
 - **Hover 지양, Active(Pressed) 색상 변경 허용**: 웹뷰 특성상 버튼에 마우스를 올렸을 때(hover)의 배경색 변경은 사용하지 않아. 하지만 **버튼을 클릭했을 때(active, pressed)**는 명확한 조작 피드백을 주기 위해 배경색을 변경해 (예: Primary 버튼 클릭 시 `#F59E0B` -> `#D97706`). 필요 시 크기 변화(scale 애니메이션)도 함께 적용할 수 있어.
+- **버튼 내 이모티콘 사용 금지 (No Emoji in Buttons)**: 모든 버튼(CTA, 모달 확인/취소, 액션 버튼, 네비게이션 탭 등)의 라벨에는 이모티콘/이모지(예: 📍, 📚, 🔍, 💡 등)를 일체 사용하지 않는다. 시각적 메타포가 필요한 경우 텍스트에 이모지를 넣지 말고 `lucide-react`의 SVG 아이콘 컴포넌트를 명시적으로 분리하여 사용한다.
+
+## 🪟 모달 닫기(X) 인터랙션 가이드
+- 회원가입 축하, 알림 등의 안내 모달에서는 '나중에 할게요'와 같은 불필요한 보조 버튼을 늘리지 않고, 상단 우측 'X' 닫기 버튼을 배치하여 모달 내부 CTA 버튼을 단일화하고 인지 부하를 줄인다.
 
 ## 🗺️ 내비게이션 연속성 및 스마트 백 루트 (Smart Back Route) UX 정책
 - **내부 페이지 전환 우선**: 이용약관, 개인정보처리방침, 고객센터 등 서비스 내의 주요 문서는 `target="_blank"`를 통한 새 창 열기보다는 내부 페이지 전환(`Link` 또는 `router.push`)을 우선한다.
@@ -107,22 +111,18 @@ trigger: always_on
 
 ## 🎨 UI 공통 규약 (UI-KIT)
 
-### 1. CSS 변수 및 Color Tokens
-| 역할 | 토큰 | HEX |
-| :--- | :--- | :--- |
-| Primary | `--primary` | `#F59E0B` |
-| Primary Dark (Pressed) | `--primary-dark` | `#D97706` |
-| Primary Light | `--primary-light` | `#FEF3C7` |
-| Primary 200 (Secondary BG) | `--primary-200` | `#FDE68A` |
-| Primary Dim (10%) | `--primary-dim` | `rgba(245,158,11,0.10)` |
-| Card BG | `--card-bg` | `#FFFFFF` |
-| Muted BG | `--muted-bg` | `#F5F5F8` |
-| Border | `--border` | `#E5E7EB` |
-| Text 1 (Primary) | `--text-1` | `#111827` |
-| Text 2 (Secondary) | `--text-2` | `#6B7280` |
-| Text 3 (Muted) | `--text-3` | `#9CA3AF` |
-| Success | `--success` | `#10B981` |
-| Error | `--error` | `#EF4444` |
+### 1. CSS 변수 및 Color Tokens (초슬림 단일 브랜드 규격)
+| 역할 | 토큰 | HEX | 용도 |
+| :--- | :--- | :--- | :--- |
+| **Primary (Brand)** | `--primary` | `#F59E0B` | 메인 브랜드, CTA, 활성 인디케이터, 청구기호 강조 (*터치 시 `#D97706` 자동 피드백) |
+| **Card BG (Surface)** | `--card-bg` | `#FFFFFF` | 카드, 모달, 바텀시트 흰색 배경 |
+| **Muted BG (Canvas)** | `--muted-bg` | `#F5F5F8` | 앱 전체 배경 (Body) |
+| **Surface Sub (Gray)** | `--surface-sub` | `#F3F4F6` | 회색 버튼, 미소장 뱃지 배경 |
+| **Border** | `--border` | `#E5E7EB` | 구분선(Divider), 인풋 테두리 |
+| **Text Main (Primary)** | `--text-1` / `--text-main` | `#111827` | 모든 타이틀 및 본문 텍스트 |
+| **Text Sub (Muted)** | `--text-2` / `--text-sub` | `#6B7280` | 보조 설명, 메타 텍스트, 플레이스홀더, 태그 |
+| **Success** | `--success` | `#10B981` | 대출가능 상태 |
+| **Error** | `--error` | `#EF4444` | 오류 및 삭제 경고 |
 
 ### 2. Typography
 - 폰트 로드: `SUIT Variable`
@@ -138,17 +138,39 @@ trigger: always_on
 ### 4. Shadow
 - **Level 0**: none 
 - **Level 1**: `0 1px 4px rgba(0,0,0,0.06)` (카드, 리스트 아이템) 
-- **Level 2**: `0 4px 16px rgba(0,0,0,0.10)` (드롭다운) 
+- **Level 2**: `0 4px 16px rgba(0,0,0,0.10)` (드롭다운, 팝업) 
 - **Level 3**: `0 -4px 24px rgba(0,0,0,0.10)` (바텀시트) 
 - **FAB**: `0 4px 20px rgba(0,0,0,0.25)`
 
 ### 5. 핵심 컴포넌트 규격
-- **Button**: 높이 기준 통일 (CTA `56px`, Medium/Secondary `48px`, Gray `44px`, Pill `40px`). Secondary 버튼은 `#FDE68A` 배경에 `#F59E0B` 텍스트 사용.
-- **Input Field**: 높이 52px, 내부 패딩 16px, 기본 보더 1.5px, Focus 시 Primary 2px 테두리 적용.
-- **Bottom Sheet**: `border-radius: 24px 24px 0 0`, 슬라이드업(Transform) 애니메이션 필수.
+- **Button (버튼 4종 단일 체계)**: 기본 표준 높이 `48px` (`h-12`, 모달/팝업/폼/액션 앱 전체 공통) 및 모바일 전폭 바텀 고정 CTA `56px` (`h-14`)로 단순화 통일. Primary(주황 `#F59E0B`, 핵심 액션/저장/탈퇴) vs Secondary(회색 `#F3F4F6`, 취소/닫기/보조) vs Outline(주황 테두리, 3차 액션) vs Kakao(노랑 `#FEE500`, 간편 로그인)의 명확한 4종 분리 및 터치 시 `active:scale-[0.98]` 적용. 파괴적(Red) 버튼은 전면 배제.
+- **Book Item Card (도서 카드 단일 규격 `BookItem.tsx`)**: 앱 전체(홈 큐레이션, 전체 목록, 검색 결과 등)에서 세로형 단일 카드를 사용. 상단 표지(1:1.1 비율) + 연령 캡슐(`4-7세`) ➔ 하단 제목(2줄) ➔ 출판사 ➔ 태그 ➔ (도서관 연동 시) 청구기호(주황 `#F59E0B`) & 대출가능 배지(초록 `#059669`)의 콤팩트한 수직 위계(4~8px 간격)를 유지하며 인위적인 과도한 공백을 두지 않음.
+- **Loading System (로딩 시스템 `PageLoader.tsx`)**: 책자리 브랜드 전용 움직이는 그림책 GIF(`/children-book.gif`, `w-24 h-24`)를 중앙에 단독 노출. 불필요한 로딩 안내 텍스트('로딩 중...') 및 스켈레톤 카드는 일체 배제.
+- **Input Field & SearchBar**:
+  - **Input Field**: 기본 폼 인풋 높이 `48px` (`h-12`), 내부 패딩 `px-4` (16px), `bg-gray-50`, 기본 보더 `border-gray-200`, `rounded-xl`, Focus 시 Primary 2px 테두리 링(`focus:ring-2 focus:ring-[#F59E0B]`) 및 흰색 배경 적용 (인풋 내부 아이콘 배제 원칙).
+  - **SearchBar**: 도서 검색바(`SearchBar.tsx`)는 화면 상단 고정 미니멀 언더라인 바(`border-b-2 border-gray-200`, Focus-within 시 `border-gray-900`) 스타일을 기본으로 하며, 우측 텍스트 삭제(X) 버튼 및 깔끔한 돋보기(`Search`) 아이콘 버튼을 표준 규격으로 지원.
+- **Modal & Popup (중앙 팝업)**:
+  - `ConfirmModal`, `LoginPromptModal`, `SignupWelcomeModal`: 너비 `max-w-[340px] ~ max-w-[344px]`, 모서리 `rounded-[16px]`, 내부 패딩 `p-6`, dimmed 오버레이 `bg-black/50 backdrop-blur-sm`, 닫기(X) 우측 상단 `top-6 right-6`.
+  - **정렬 및 타이포 규격**: 모든 팝업은 **좌측 정렬(`text-left`)**을 원칙으로 하며, 상단 이모지 뱃지 등 불필요한 장식 요소를 배제하고 `타이틀(18~20px Bold)` ➔ `설명(14px Regular)` ➔ `액션 버튼`의 플랫한 위계를 유지한다.
+  - **버튼 구성**: 2버튼 시 취소 Secondary(`flex-1`, 48px) + 확인 Primary(`flex-1`, 48px), 단일 CTA 시 Full Width 배치.
+- **Bottom Sheet (도서관 선택 시트 `LibrarySelector.tsx`)**:
+  - 모바일 하단 고정(`items-end`, `rounded-t-[28px]`, 슬라이드업 애니메이션), 데스크톱 중앙 모달(`sm:items-center`, `sm:rounded-[28px]`).
+  - 상단 드래그 핸들 바 + 타이틀("자주 가는 도서관을 선택해주세요") + 도서관 선택 리스트(선택 시 Amber 톤 및 체크 아이콘) + 하단 신청 링크 구조.
+- **Navigation Header (`PageHeader.tsx`)**:
+  - 좌측 슬롯(`w-[84px]`): 뒤로가기(`<`) + 홈(`Home` SVG 아이콘)
+  - 중앙 슬롯(`flex-1`): 타이틀 (모바일 말줄임 방지를 위한 11자 이내 관리)
+  - 우측 슬롯(`w-[84px]`): 검색(`Search`) + 마이페이지(`User`) 액션 버튼
+- **Toast & Feedback (토스트 알림)**:
+  - 컴포넌트: `@/components/ui/Toast.tsx`
+  - 위치: `fixed bottom-20 left-1/2 -translate-x-1/2` (하단 네비/CTA 미간섭 80px 높이)
+  - 스타일: `bg-gray-800` (다크 차콜), `text-white`, `px-5 py-3.5`, `rounded-xl` (12px), `shadow-lg`, `text-[13px] font-medium`, 최대 너비 `max-w-[90vw]`, 3초 자동 유지 후 fade-out.
 - **Tab Bar**: Top Tab Bar(높이 46px), Content Tab Bar(높이 48px), Active 시 하단 2px 인디케이터 적용.
 - **Badge & Chip**: Success/Primary/Error (Radius 6px) / Count 및 Chip (Radius 9999px).
-- **Empty State & FAB**: Empty 텍스트는 16px 700 (#6B7280). FAB는 52x52px, 그림자 적용.
+- **Empty State & FAB**:
+  - Empty State: 아이콘/이모지(48px) + 타이틀(16px 700 `#111827`) + 설명(14px `#6B7280`) + 복구 액션 버튼(44px) + 검색 0건 시 하단 추천 도서 폴백 자동 렌더링.
+  - FAB: 52x52px, Level 2 / FAB 그림자 적용.
 - **실시간 대출 상태 배지 톤앤매너**:
-  - 사용자에게 부정적 인식을 줄 수 있는 `'확인불가'`, `'시간초과'` 등의 강한 표현을 지양하고, **`'확인중'`** 배지(연한 주황색 배경, 주황색 텍스트: `bg-orange-100 text-orange-700`)로 순화하여 통일합니다.
-  - `'정보없음'`과 `'미소장'`은 사용자 인지 복잡도를 낮추기 위해 **`'미소장'`**(회색 배경, 회색 텍스트: `bg-gray-100 text-gray-700`)으로 일관되게 단일화하여 표현합니다.
+  - **대출가능**: 배경 `#ECFDF5`, 텍스트 `#059669` (Emerald)
+  - **미소장**: 배경 `#F3F4F6` (`--surface-sub`), 텍스트 `#6B7280` (`--text-sub`)으로 일관되게 단일화하여 표현합니다.
+- **디자인 시스템 SSOT 가이드**:
+  - 모든 UI 개발 및 컴포넌트 스타일링 검증 시 `frontend/public/design-system.html` (`http://localhost:3000/design-system.html`)를 단일 진실 공급원(SSOT)으로 삼습니다.
