@@ -5,10 +5,23 @@ import { useLibrary, LibraryName } from '@/context/LibraryContext'
 import { ChevronDown, MapPin, Check } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
-export default function LibrarySelector({ whiteMode = false }: { whiteMode?: boolean }) {
+export default function LibrarySelector({ 
+    whiteMode = false, 
+    autoOpen = false 
+}: { 
+    whiteMode?: boolean
+    autoOpen?: boolean 
+}) {
     const { selectedLibrary, setSelectedLibrary, availableLibraries } = useLibrary()
-    const [isOpen, setIsOpen] = useState(false)
+    const [isOpen, setIsOpen] = useState(autoOpen)
     const [isAnimating, setIsAnimating] = useState(false)
+
+    // autoOpen 프로퍼티가 변경되거나 true로 들어올 때 열림 처리
+    useEffect(() => {
+        if (autoOpen) {
+            setIsOpen(true)
+        }
+    }, [autoOpen])
 
     // 바텀 시트 열기/닫기 애니메이션 처리
     useEffect(() => {
@@ -27,9 +40,9 @@ export default function LibrarySelector({ whiteMode = false }: { whiteMode?: boo
         setIsOpen(false)
     }
 
-    const displayLibraryName = selectedLibrary && selectedLibrary.length > 15
-        ? `${selectedLibrary.slice(0, 15)}...`
-        : selectedLibrary
+    const displayLibraryName = selectedLibrary
+        ? (selectedLibrary.length > 15 ? `${selectedLibrary.slice(0, 15)}...` : selectedLibrary)
+        : '도서관을 선택해주세요'
 
     return (
         <>
@@ -38,11 +51,15 @@ export default function LibrarySelector({ whiteMode = false }: { whiteMode?: boo
                 onClick={() => setIsOpen(true)}
                 className={`flex items-center gap-1.5 text-sm sm:text-base font-black py-1 px-0.5 transition-colors shrink-0 max-w-full ${whiteMode
                     ? 'text-white hover:text-white/80'
-                    : 'text-gray-900 hover:text-gray-700'
+                    : selectedLibrary 
+                        ? 'text-gray-900 hover:text-gray-700' 
+                        : 'text-amber-600 hover:text-amber-700'
                     }`}
             >
                 <MapPin className={`w-4 h-4 shrink-0 ${whiteMode ? 'text-white' : 'text-amber-500'}`} />
-                <span className="truncate underline decoration-gray-300 underline-offset-4">{displayLibraryName}</span>
+                <span className={`truncate underline decoration-gray-300 underline-offset-4 ${!selectedLibrary ? 'font-bold' : ''}`}>
+                    {displayLibraryName}
+                </span>
                 <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
             </button>
 

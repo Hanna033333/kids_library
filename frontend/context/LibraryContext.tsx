@@ -14,7 +14,7 @@ const AVAILABLE_LIBRARIES = [
 export type LibraryName = typeof AVAILABLE_LIBRARIES[number]
 
 interface LibraryContextType {
-    selectedLibrary: LibraryName
+    selectedLibrary: LibraryName | null
     setSelectedLibrary: (library: LibraryName) => void
     availableLibraries: readonly string[]
 }
@@ -22,8 +22,8 @@ interface LibraryContextType {
 export const LibraryContext = createContext<LibraryContextType | undefined>(undefined)
 
 export function LibraryProvider({ children }: { children: ReactNode }) {
-    // 기본값은 판교도서관
-    const [selectedLibrary, setSelectedLibraryState] = useState<LibraryName>('판교도서관')
+    // 기본값은 미선택 (null)
+    const [selectedLibrary, setSelectedLibraryState] = useState<LibraryName | null>(null)
     const [isLoaded, setIsLoaded] = useState(false)
 
     useEffect(() => {

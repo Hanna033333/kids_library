@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronRight, Lock, Loader2, Check } from 'lucide-react'
 import LibrarySelector from '@/components/LibrarySelector'
@@ -30,6 +30,8 @@ const DELETE_REASONS = [
 
 export default function MyPageClient() {
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const isAutoOpenLibrary = searchParams?.get('action') === 'select-library'
     const { user, isLoading: authLoading, signOut } = useAuth()
 
     const [currentView, setCurrentView] = useState<ViewState>('main')
@@ -378,7 +380,7 @@ export default function MyPageClient() {
                                 <div className="w-full flex items-center justify-between px-5 py-4 gap-3 min-w-0">
                                     <span className="font-semibold text-gray-900 text-[15px] shrink-0 whitespace-nowrap">내 도서관</span>
                                     <div className="min-w-0 shrink flex justify-end">
-                                        <LibrarySelector />
+                                        <LibrarySelector autoOpen={isAutoOpenLibrary} />
                                     </div>
                                 </div>
                             </div>

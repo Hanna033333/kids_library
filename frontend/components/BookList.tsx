@@ -160,7 +160,7 @@ export default function BookList({
   const { data: loanStatuses } = useQuery({
     queryKey: ['batch-loan-status', bookIds, selectedLibrary],
     queryFn: async () => {
-      if (visibleBooksForLoan.length === 0) return {};
+      if (visibleBooksForLoan.length === 0 || !selectedLibrary) return {};
       try {
         const { fetchLoanStatuses } = await import("@/lib/api");
         return await fetchLoanStatuses(visibleBooksForLoan.map(b => b.id), selectedLibrary);
@@ -169,7 +169,7 @@ export default function BookList({
         throw err;
       }
     },
-    enabled: visibleBooksForLoan.length > 0,
+    enabled: !!selectedLibrary && visibleBooksForLoan.length > 0,
     staleTime: 3 * 60 * 1000, // 3 minutes cache
     retry: 1,
     placeholderData: keepPreviousData,

@@ -47,7 +47,9 @@ export default function MyLibraryPage() {
                 // Fetch loan statuses in background
                 setBooks(booksData)
 
-                const loanStatuses = await fetchLoanStatuses(savedIds, selectedLibrary)
+                const loanStatuses = selectedLibrary 
+                    ? await fetchLoanStatuses(savedIds, selectedLibrary) 
+                    : {}
                 const updatedBooks = booksData.map(book => ({
                     ...book,
                     loan_status: loanStatuses[book.id] || null
@@ -96,7 +98,7 @@ export default function MyLibraryPage() {
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {books.map((book) => (
-                            <BookItem key={book.id} book={book} loanStatus={book.loan_status ?? undefined} />
+                            <BookItem key={book.id} book={book} loanStatus={book.loan_status ?? undefined} showLibraryInfo={true} />
                         ))}
                     </div>
                 )}

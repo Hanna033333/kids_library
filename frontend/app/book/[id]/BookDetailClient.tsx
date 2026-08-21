@@ -87,7 +87,9 @@ export default function BookDetailClient({
 
     // 청구기호 결정 로직
     let displayCallNo = '청구기호 없음'
-    if (selectedLibrary === '판교도서관') {
+    if (!selectedLibrary) {
+        displayCallNo = '도서관을 선택해주세요'
+    } else if (selectedLibrary === '판교도서관') {
         if (book.pangyo_callno && book.pangyo_callno !== '없음') {
             displayCallNo = book.pangyo_callno
         } else {
@@ -107,9 +109,10 @@ export default function BookDetailClient({
     const { data: loanStatuses, isError: isLoanError } = useQuery({
         queryKey: ['book-loan-status', book.id, selectedLibrary],
         queryFn: async () => {
+            if (!selectedLibrary) return {};
             return await fetchLoanStatuses([book.id], selectedLibrary);
         },
-        enabled: !!displayCallNo && displayCallNo !== '청구기호 없음' && displayCallNo !== '보유 정보 없음',
+        enabled: !!selectedLibrary && !!displayCallNo && displayCallNo !== '청구기호 없음' && displayCallNo !== '보유 정보 없음' && displayCallNo !== '도서관을 선택해주세요',
         staleTime: 3 * 60 * 1000,
         retry: 1,
         refetchOnWindowFocus: false,
@@ -118,7 +121,7 @@ export default function BookDetailClient({
     // Derive final status
     const normalizedStatus = (() => {
         // 1. 청구기호 없으면 무조건 '미소장'
-        if (!displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음') {
+        if (!selectedLibrary || !displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음' || displayCallNo === '도서관을 선택해주세요') {
             return { status: "미소장", available: null };
         }
 
@@ -459,10 +462,14 @@ export default function BookDetailClient({
 
                                         {/* 2행: 청구기호 & 대출 상태 뱃지 */}
                                         <div className="flex items-center gap-3 flex-wrap pt-0.5">
-                                            <span className={`font-black text-xl md:text-2xl tracking-tight ${displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'text-gray-400' : 'text-gray-900'}`}>
-                                                {displayCallNo}{book.vol ? `-${book.vol}` : ''}
+                                            <span className={`tracking-tight ${
+                                                !selectedLibrary 
+                                                    ? 'font-bold text-base md:text-lg text-amber-600' 
+                                                    : (displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'font-black text-xl md:text-2xl text-gray-400' : 'font-black text-xl md:text-2xl text-gray-900')
+                                            }`}>
+                                                {displayCallNo}{book.vol && selectedLibrary ? `-${book.vol}` : ''}
                                             </span>
-                                            {normalizedStatus && normalizedStatus.status !== "확인중" && (
+                                            {selectedLibrary && normalizedStatus && normalizedStatus.status !== "확인중" && (
                                                 <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
                                                     ? "bg-green-100 text-green-700"
                                                     : normalizedStatus.available === false

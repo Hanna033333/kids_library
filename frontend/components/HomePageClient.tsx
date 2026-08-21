@@ -447,7 +447,7 @@ export default function HomePageClient({
         onClose={() => setIsSignupCompleteOpen(false)}
         onConfirm={() => {
           setIsSignupCompleteOpen(false)
-          router.push('/my-page')
+          router.push('/my-page?action=select-library')
         }}
         title="회원 가입을 축하해요! 🎉"
         description={

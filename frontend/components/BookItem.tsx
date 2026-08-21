@@ -28,7 +28,9 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
   // 청구기호 결정 로직 (showLibraryInfo일 때만 연산)
   let displayCallNo = '청구기호 없음';
   if (showLibraryInfo) {
-    if (selectedLibrary === '판교도서관') {
+    if (!selectedLibrary) {
+      displayCallNo = '도서관 미설정';
+    } else if (selectedLibrary === '판교도서관') {
       if (book.pangyo_callno && book.pangyo_callno !== '없음') {
         displayCallNo = book.pangyo_callno;
       } else {
@@ -47,9 +49,9 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
 
   // Normalize loan status (showLibraryInfo일 때만 사용)
   const normalizedStatus = (() => {
-    if (!showLibraryInfo) return null;
+    if (!showLibraryInfo || !selectedLibrary) return null;
 
-    if (!displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음') {
+    if (!displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음' || displayCallNo === '도서관 미설정') {
       return { status: "미소장", available: null };
     }
 
