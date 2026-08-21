@@ -25,12 +25,10 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
   const { selectedLibrary } = useLibrary();
   const displayAge = getAgeDisplayLabel(book.age);
 
-  // 청구기호 결정 로직 (showLibraryInfo일 때만 연산)
+  // 청구기호 결정 로직 (showLibraryInfo이고 선호 도서관이 설정되었을 때만 연산)
   let displayCallNo = '청구기호 없음';
-  if (showLibraryInfo) {
-    if (!selectedLibrary) {
-      displayCallNo = '도서관 미설정';
-    } else if (selectedLibrary === '판교도서관') {
+  if (showLibraryInfo && selectedLibrary) {
+    if (selectedLibrary === '판교도서관') {
       if (book.pangyo_callno && book.pangyo_callno !== '없음') {
         displayCallNo = book.pangyo_callno;
       } else {
@@ -47,11 +45,11 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
     }
   }
 
-  // Normalize loan status (showLibraryInfo일 때만 사용)
+  // Normalize loan status (showLibraryInfo 및 selectedLibrary 존재 시에만 사용)
   const normalizedStatus = (() => {
     if (!showLibraryInfo || !selectedLibrary) return null;
 
-    if (!displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음' || displayCallNo === '도서관 미설정') {
+    if (!displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음') {
       return { status: "미소장", available: null };
     }
 
@@ -128,8 +126,8 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
             </div>
           )}
 
-          {/* 청구기호 & 대출 가능 상태 배지 (구분선 없이 한 라인 정렬) */}
-          {showLibraryInfo && user && (
+          {/* 청구기호 & 대출 가능 상태 배지 (선호 도서관 설정 시에만 노출) */}
+          {showLibraryInfo && user && selectedLibrary && (
             <div className="flex items-center justify-between gap-2 pt-0.5">
               <p className="text-[14px] font-extrabold text-[#F59E0B] tracking-tight truncate flex-1 min-w-0">
                 {displayCallNo}
