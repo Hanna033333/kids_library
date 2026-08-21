@@ -84,15 +84,7 @@ export function isSummerCurationActive(targetDate: Date = new Date()): boolean {
  * 도서 카드/상세에서 UI에 노출하지 않는 특수 태그 목록 (SSOT)
  * BookItem, BookDetailClient 등 모든 UI 컴포넌트가 이 목록을 공유합니다.
  */
-export const HIDDEN_UI_TAGS = new Set([
-  'caldecott',
-  '어린이도서연구회',
-  'research-council',
-  '겨울방학2026',
-  '여름방학2026',
-  'winter-vacation',
-  'summer-vacation',
-])
+export const HIDDEN_UI_TAGS = new Set<string>([])
 
 /**
  * book.curation_tag 문자열을 파싱하여 UI에 표시할 태그 배열을 반환합니다. (SSOT)

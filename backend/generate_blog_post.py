@@ -239,26 +239,11 @@ def main():
     # 2. 원고 생성
     blog_content = generate_blog_content(tag, books)
 
-    # 3. 아티팩트 경로에 저장
-    possible_dirs = [
-        Path("/Users/1004823/.gemini/antigravity-ide/brain/8d48d87a-4925-4b77-a8f7-098803abdb13"),
-        Path("/Users/1004823/.gemini/antigravity-ide/brain/000a513c-46a2-49bf-9432-925415ba6911"),
-        Path("/Users/1004823/.gemini/antigravity-ide/brain/000a513c-46a2-49bf-9432-925415ba6911/scratch"),
-        Path("/Users/1004823/.gemini/antigravity-ide/brain/7e72f194-cca6-498b-ac99-a2519ed4e13b"),
-        Path("/Users/1004823/.gemini/antigravity-ide/brain/a290fb72-aa04-4d36-8b25-6d1abd1d9a58"),
-        Path("/Users/1004823/.gemini/antigravity-ide/brain/2deb7665-edf7-4024-9ab6-c2682fcdf678")
-    ]
-    artifact_dir = None
-    for d in possible_dirs:
-        if d.exists():
-            artifact_dir = d
-            break
-            
-    if not artifact_dir:
-        # 폴백으로 로컬 backend 경로에 저장
-        artifact_dir = Path(__file__).parent
+    # 3. 출력 디렉토리에 저장 (backend/output/blog_posts/ 에 안전하게 동적 생성)
+    output_dir = Path(__file__).parent / "output" / "blog_posts"
+    output_dir.mkdir(parents=True, exist_ok=True)
         
-    output_file = artifact_dir / f"naver_blog_post_{tag}.md"
+    output_file = output_dir / f"naver_blog_post_{tag}.md"
     
     try:
         with open(output_file, "w", encoding="utf-8") as f:

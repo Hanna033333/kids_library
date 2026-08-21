@@ -463,7 +463,7 @@ export default function BookDetailClient({
                                                 {displayCallNo}{book.vol ? `-${book.vol}` : ''}
                                             </span>
                                             {normalizedStatus && normalizedStatus.status !== "확인중" && (
-                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
+                                                <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
                                                     ? "bg-green-100 text-green-700"
                                                     : normalizedStatus.available === false
                                                         ? "bg-red-100 text-red-700"

@@ -16,9 +16,11 @@ interface BookItemProps {
   showLibraryInfo?: boolean;
   /** true이면 next/image priority 활성화 (첫 뷰포트 LCP 최적화용) */
   priority?: boolean;
+  /** 섹션 타이틀과 중복되는 태그를 카드에서 제외 (예: 잠자리 섹션이면 '#잠자리' 제거) */
+  excludeTag?: string;
 }
 
-export default function BookItem({ book, loanStatus, showLibraryInfo = false, priority = false }: BookItemProps) {
+export default function BookItem({ book, loanStatus, showLibraryInfo = false, priority = false, excludeTag }: BookItemProps) {
   const { user } = useAuth();
   const { selectedLibrary } = useLibrary();
   const displayAge = getAgeDisplayLabel(book.age);
@@ -65,7 +67,10 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
   })();
 
   // curation_tag 추출 (최대 2개) — SSOT: parseCurationTags 사용
-  const tags = parseCurationTags(book.curation_tag, 2);
+  const rawTags = parseCurationTags(book.curation_tag, 3);
+  const tags = excludeTag
+    ? rawTags.filter((t) => t !== excludeTag).slice(0, 2)
+    : rawTags.slice(0, 2);
 
   return (
     <Link
@@ -129,7 +134,7 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
                 {book.vol && `-${book.vol}`}
               </p>
               {normalizedStatus && normalizedStatus.status !== "확인중" && (
-                <span className={`shrink-0 px-2 py-0.5 rounded-md text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
+                <span className={`shrink-0 inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
                   ? "bg-green-100 text-green-700"
                   : normalizedStatus.available === false
                     ? "bg-red-100 text-red-700"

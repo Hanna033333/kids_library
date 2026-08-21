@@ -230,6 +230,7 @@ export default function HomePageClient({
           href="/books?curation=summer-vacation"
           onViewMore={() => sendGAEvent('click_view_more', { section: 'summer_vacation' })}
           bgColor="bg-white"
+          sectionTag="여름방학2026"
           priorityImages
         />
       )}
@@ -248,6 +249,7 @@ export default function HomePageClient({
           href={`/books?curation=${encodeURIComponent(curation.tag)}`}
           onViewMore={() => sendGAEvent('click_view_more', { section: curation.tag })}
           bgColor={index % 2 === 0 ? 'bg-white' : 'bg-muted-bg'}
+          sectionTag={curation.tag}
           priorityImages={index === 0 && !isSummerCurationActive()}
         />
       ))}
@@ -260,6 +262,7 @@ export default function HomePageClient({
         href="/books?curation=caldecott"
         onViewMore={() => sendGAEvent('click_view_more', { section: 'caldecott' })}
         bgColor="bg-muted-bg"
+        sectionTag="caldecott"
       />
 
       {/* 우리 아이 나이에 딱! (연령별 추천 섹션) - 어린이도서연구회 추천 위로 이동 */}
@@ -354,6 +357,7 @@ export default function HomePageClient({
         href="/books?curation=research-council"
         onViewMore={() => sendGAEvent('click_view_more', { section: 'research_council' })}
         bgColor="bg-muted-bg"
+        sectionTag="어린이도서연구회"
       />
 
       {/* 겨울방학 추천 섹션 (주석 처리) */}
