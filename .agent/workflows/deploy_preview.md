@@ -51,19 +51,20 @@ Vercel Preview 환경이 배포될 때마다 도메인이 유동적으로 생성
 
 ---
 
-## 🚀 [Phase 4] 깃허브 푸시 및 프리뷰 트리거 (Triggers)
+## 🚀 [Phase 4] 깃허브 커밋 & 원스톱 푸시 (Triggers)
 
-위의 1~3단계 검증이 100% 통과되면, 변경 사항을 Git Staging에 올리고 프리뷰 브랜치로 푸시하도록 안내합니다.
+위의 1~3단계 검증이 100% 통과되면, 사용자의 추가 확인 대기 없이 변경 사항을 Git Staging에 올리고 원격 `dev` 브랜치로 커밋 및 즉시 푸시를 실행합니다.
 
 ```bash
 # 변경 사항 확인 및 브랜치 체크
 git status
 
-# 커밋 및 원격 리포지토리 dev 브랜치로 푸시 (현재 로컬 브랜치를 정확히 지정)
+# 커밋 및 원격 리포지토리 dev 브랜치로 즉시 푸시
 git add .
 git commit -m "feat: 프리뷰 검증 완료 및 배포 트리거"
 git push origin HEAD:dev
 ```
+
 
 > [!TIP]
 > 배포 성공 후 생성되는 Vercel Preview URL로 접속하여 프론트엔드와 백엔드의 실시간 연동성 및 모바일 한 손 조작성(Bottom navigation, 고대비 UI)이 훼손되지 않았는지 최종 점검하세요.
