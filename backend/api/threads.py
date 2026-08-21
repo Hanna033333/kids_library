@@ -846,27 +846,27 @@ async def approve_feed_submit(req: ApproveSubmitRequest):
     if not db_result.data:
         raise HTTPException(status_code=404, detail="해당 피드 레코드를 찾을 수 없습니다.")
         
-    # KST 시간 확인 및 즉시 발행 분기 적용
+    # KST 시간 확인 및 즉시 발행 분기 적용 (밤 9시 30분 기준)
     tz_kst = datetime.timezone(datetime.timedelta(hours=9))
     now_kst = datetime.datetime.now(tz_kst)
     
-    if now_kst.hour >= 20:
-        # 저녁 8시 이후 늦은 승인이므로 즉시 발행을 수행 (백그라운드 차단 방지 위해 비동기로 실행 호출)
+    if (now_kst.hour > 21) or (now_kst.hour == 21 and now_kst.minute >= 30):
+        # 밤 9시 30분 이후 늦은 승인이므로 즉시 발행을 수행 (백그라운드 차단 방지 위해 비동기로 실행 호출)
         asyncio.create_task(publish_approved_feed(feed_id))
         return {"status": "success", "message": "늦은 승인이 감지되어 Threads 채널로 즉시 배포를 시작합니다."}
         
-    await send_telegram_message("🚀 <b>주간 큐레이션 발행 승인이 최종 완료되었습니다!</b> 오늘 저녁 8시 정규 스케줄에 자동으로 Threads로 최종 발행됩니다.")
+    await send_telegram_message("🚀 <b>주간 큐레이션 발행 승인이 최종 완료되었습니다!</b> 오늘 밤 9시 30분 정규 스케줄(육퇴 골든타임)에 자동으로 Threads로 최종 발행됩니다.")
     return {"status": "success", "message": "발행 예약 확정 완료"}
 
 async def weekly_threads_scheduler():
-    """매분마다 시간을 감지하여 월/수/금 저녁 6시에는 텍스트 시안을 자동 빌드하고, 저녁 8시에는 최종 승인된 피드를 발행합니다."""
+    """매분마다 시간을 감지하여 월/수/금 저녁 8시에는 텍스트 시안을 자동 빌드하고, 밤 9시 30분(육퇴 골든타임)에는 최종 승인된 피드를 발행합니다."""
     print("⏰ [Weekly Threads Scheduler] 스케줄러 태스크 가동 시작...")
     
     tz_kst = datetime.timezone(datetime.timedelta(hours=9))
     
     # 중복 실행 방지용 메모리 락 (당일 한 번만 실행)
-    last_trigger_date_6pm = None
     last_trigger_date_8pm = None
+    last_trigger_date_930pm = None
     
     while True:
         try:
@@ -874,12 +874,12 @@ async def weekly_threads_scheduler():
             today_date = now_kst.date()
             weekday = now_kst.weekday()  # 0: 월, 2: 수, 4: 금
             
-            # 1. 월/수/금요일 저녁 6시 (18:00) -> 1단계 텍스트 시안 생성 및 텔레그램 발송
+            # 1. 월/수/금요일 저녁 8시 (20:00) -> 1단계 텍스트 시안 생성 및 텔레그램 발송
             # minute==0 정확 일치는 루프 드리프트(sleep 60초 + 처리 시간)로 트리거를 통째로 놓칠 수 있어 hour 단위로 판정
-            if weekday in (0, 2, 4) and now_kst.hour == 18:
-                if last_trigger_date_6pm != today_date:
-                    last_trigger_date_6pm = today_date  # 실패 여부와 무관하게 1일 1회만 시도 (매분 재시도 스팸 방지)
-                    print(f"📡 [스케줄러] 저녁 6시 감지. 요일: {weekday}, 날짜: {today_date} -> 1단계 텍스트 시안 생성 시작")
+            if weekday in (0, 2, 4) and now_kst.hour == 20:
+                if last_trigger_date_8pm != today_date:
+                    last_trigger_date_8pm = today_date  # 실패 여부와 무관하게 1일 1회만 시도 (매분 재시도 스팸 방지)
+                    print(f"📡 [스케줄러] 저녁 8시 감지. 요일: {weekday}, 날짜: {today_date} -> 1단계 텍스트 시안 생성 시작")
                     target_idx = 0 if weekday == 0 else (1 if weekday == 2 else 2)
                     try:
                         # 이미 오늘 동일 큐레이션 태그로 생성된 피드가 있는지 재검증
@@ -895,15 +895,14 @@ async def weekly_threads_scheduler():
                         if not dup.data:
                             await execute_weekly_threads_generation(index=target_idx)
                     except Exception as e:
-                        print(f"❌ [스케줄러] 6시 1단계 생성 중 에러: {e}")
-                        await send_telegram_message(f"❌ [스케줄러 경고] 저녁 6시 1단계 시안 생성 실패: {e}")
+                        print(f"❌ [스케줄러] 8시 1단계 생성 중 에러: {e}")
+                        await send_telegram_message(f"❌ [스케줄러 경고] 저녁 8시 1단계 시안 생성 실패: {e}")
                         
-            # 2. 월/수/금요일 저녁 8시 (20:00) -> 승인된 카드뉴스 최종 배포
-            # minute==0 정확 일치는 루프 드리프트로 트리거를 놓칠 수 있어 hour 단위로 판정
-            if weekday in (0, 2, 4) and now_kst.hour == 20:
-                if last_trigger_date_8pm != today_date:
-                    last_trigger_date_8pm = today_date  # 실패 여부와 무관하게 1일 1회만 시도 (매분 재시도 스팸 방지)
-                    print(f"📡 [스케줄러] 저녁 8시 감지. 요일: {weekday}, 날짜: {today_date} -> 최종 배포 스캔")
+            # 2. 월/수/금요일 밤 9시 30분 (21:30~21:59) -> 승인된 카드뉴스 최종 배포 (육퇴 골든타임)
+            if weekday in (0, 2, 4) and now_kst.hour == 21 and now_kst.minute >= 30:
+                if last_trigger_date_930pm != today_date:
+                    last_trigger_date_930pm = today_date  # 실패 여부와 무관하게 1일 1회만 시도 (매분 재시도 스팸 방지)
+                    print(f"📡 [스케줄러] 밤 9시 30분 감지. 요일: {weekday}, 날짜: {today_date} -> 최종 배포 스캔")
                     try:
                         today_str = today_date.strftime("%Y-%m-%d")
                         approved_result = supabase.table("threads_feeds").select("*")\

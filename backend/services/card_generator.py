@@ -1,5 +1,7 @@
 import os
 import requests
+import html
+import re
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 
@@ -18,6 +20,22 @@ COLOR_TEXT_MUTED = (75, 85, 99)      # 회색 본문 텍스트 (#4B5563)
 COLOR_TEXT_SECONDARY = (107, 114, 128) # 보조 텍스트 (#6B7280)
 COLOR_WHITE = (255, 255, 255)
 COLOR_LIGHT_GRAY = (229, 231, 235)   # 구분선용 연회색 (#E5E7EB)
+
+def clean_html_text(text: str) -> str:
+    """HTML 엔티티(&lt;, &gt;, &amp;, &quot;, &#39; 등)를 도서 표기용 유니코드 꺾쇠(〈 〉) 및 일반 문자로 정제합니다."""
+    if not text:
+        return ""
+    # 1. &lt; / &gt; 를 책 제목용 유니코드 꺾쇠로 변환 (폰트 깨짐 및 태그 오인 삭제 방지)
+    text = text.replace("&lt;", "〈").replace("&gt;", "〉")
+    text = text.replace("&amp;", "&").replace("&quot;", '"').replace("&apos;", "'").replace("&#39;", "'")
+    text = html.unescape(text)
+    
+    # 2. 실제 HTML 마크업 태그(<p>, <br>, <div> 등)만 선별적 제거
+    text = re.sub(r'</?(?:p|b|br|div|span|strong|em|i|a|img|h[1-6])[^>]*>', '', text, flags=re.IGNORECASE)
+    
+    # 3. 연속 공백 정리
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
 
 def download_image(url: str) -> Image.Image:
     """도서 표지 이미지 다운로드 (로컬 경로 및 HTTP 지원)"""
@@ -83,10 +101,16 @@ def generate_card_news(
 ) -> Image.Image:
     """
     1080x1080 정방형 카드뉴스 생성 (고급 오버랩 레이아웃)
-    - 배경: 책자리 메인 브랜드 컬러 (#5F46FF)
+    - 배경: 책자리 메인 브랜드 컬러 (#F59E0B)
     - 중앙 상단: 흰색 사각형 이너 카드 (텍스트 정보 배치)
     - 하단: 흰색 카드를 오버랩하여 아래로 돌출 배치되는 책 표지 이미지
     """
+    # 0. 텍스트 정제 (HTML 엔티티 및 태그 제거)
+    title = clean_html_text(title)
+    publisher = clean_html_text(publisher)
+    description = clean_html_text(description)
+    curation_title = clean_html_text(curation_title)
+
     # 1. 캔버스 생성 (메인 컬러 배경)
     card = Image.new("RGB", (1080, 1080), color=COLOR_PRIMARY)
     draw = ImageDraw.Draw(card)

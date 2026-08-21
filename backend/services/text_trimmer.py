@@ -6,66 +6,58 @@
 """
 
 
-def trim_text_fallback(text: str) -> str:
-    """텍스트를 3줄을 꽉 채우는 60자 ~ 70자 범위의 자연스러운 문장으로 다듬습니다. (문장 완성형 종결 보장)"""
-    sentences = text.replace("\r", "").split(".")
-    sentences = [s.strip() for s in sentences if s.strip()]
-
-    combined = []
-    current_len = 0
-    for s in sentences:
-        if current_len + len(s) + 1 <= 68:
-            combined.append(s + ".")
-            current_len += len(s) + 1
-        else:
-            if not combined:
-                combined.append(s[:64] + ".")
-            break
-
-    result = " ".join(combined)
-    if len(result) < 60:
-        # 분량이 다소 짧을 경우 뒤를 메워 3줄을 꽉 채움
-        filler = " 아이와 함께 읽으며 따뜻한 감동과 교훈을 배울 수 있는 그림책입니다."
-        result = (result + filler)[:68]
-        if not result.endswith("."):
-            result = result.rstrip(".") + "."
-
-    if not result.endswith("다."):
-        result = result[:64] + " 이야기입니다."
-    return result
-
-
-def force_trim_description(text: str, max_len: int = 70) -> str:
-    """텍스트가 max_len(70자)을 초과하는 경우, 자연스러운 문장 종결을 보장하며 강제 슬라이싱합니다."""
-    text = text.strip()
+def trim_text_fallback(text: str, max_len: int = 65) -> str:
+    """텍스트를 3줄 규격(55~65자)에 알맞게 어절과 문장이 훼손되지 않도록 자연스럽게 다듬습니다."""
+    import re
+    # 연속 공백 및 줄바꿈 정리
+    text = re.sub(r'\s+', ' ', text).strip()
+    
     if len(text) <= max_len:
+        if not text.endswith(('.', '!', '?')):
+            text += '.'
         return text
 
-    # 70자 이내에서 가장 뒤에 있는 마침표(".") 위치를 찾음
-    sliced = text[:max_len]
-    last_dot = sliced.rfind(".")
-    if last_dot != -1 and last_dot >= 30:  # 적어도 30자 이상인 유의미한 곳에서 잘라야 함
-        result = sliced[:last_dot + 1]
-    else:
-        # 마침표가 마땅치 않으면 그냥 어절 단위로 자르고 존댓말 종결 적용
-        words = sliced.split()
-        if len(words) > 1:
-            result = " ".join(words[:-1])
+    # 마침표 기준으로 문장 분할
+    sentences = [s.strip() for s in text.split('.') if s.strip()]
+    
+    combined = ""
+    for s in sentences:
+        candidate = (combined + " " + s).strip() + "."
+        if len(candidate) <= max_len:
+            combined = candidate
         else:
-            result = sliced
-
-    # 마침표로 끝나지 않는 경우 마침표 및 존댓말 종결 보정
-    result = result.strip().rstrip(".")
-    if not result.endswith("다"):
-        # 마지막 어절이 "다"가 아니면 안전하게 존댓말로 종결
-        if len(result) > (max_len - 10):
-            result = result[:max_len - 12] + " 이야기입니다."
+            break
+            
+    # 첫 문장부터 max_len을 초과하는 경우, 어절(공백) 단위로 안전하게 자르기
+    if not combined:
+        first_sentence = sentences[0] if sentences else text
+        words = first_sentence.split()
+        temp = ""
+        for w in words:
+            if len(temp + " " + w) <= max_len - 8:
+                temp = (temp + " " + w).strip()
+            else:
+                break
+        if temp:
+            combined = temp + " 이야기입니다."
         else:
-            result = result + " 이야기입니다."
-    else:
-        result = result + "."
+            combined = first_sentence[:max_len - 1].rstrip() + "."
+            
+    # 길이가 너무 짧으면(40자 미만) 2번째 문장을 적절히 요약하거나 보충
+    if len(combined) < 40 and len(sentences) > 1:
+        second = sentences[1]
+        words = second.split()
+        temp = combined.rstrip('.')
+        for w in words:
+            if len(temp + " " + w) <= max_len - 1:
+                temp = temp + " " + w
+            else:
+                break
+        combined = temp.strip() + "."
 
-    # 최종 길이 재검증 (혹시나 추가된 문구 때문에 max_len을 초과하는 경우)
-    if len(result) > max_len:
-        result = result[:max_len - 7] + " 책입니다."
-    return result
+    return combined
+
+
+def force_trim_description(text: str, max_len: int = 65) -> str:
+    """텍스트가 max_len을 초과하는 경우, 어절이 잘리지 않도록 안전하게 완성형으로 트리밍합니다."""
+    return trim_text_fallback(text, max_len)
