@@ -14,18 +14,18 @@ export const BADGE_CATEGORIES = ['도서 특징', '아이 반응'] as const;
 
 export const BADGES: Badge[] = [
   // 1. 도서 특징 (책의 5대 요소: 일러스트/분량/어휘문장/지식생활/메시지)
-  { emoji: '🎨', label: '그림체가 따뜻하고 예뻐요', full: '🎨 그림체가 따뜻하고 예뻐요', category: '도서 특징' },
+  { emoji: '🎨', label: '그림체가 예뻐요', full: '🎨 그림체가 예뻐요', category: '도서 특징' },
   { emoji: '📖', label: '글밥이 적당해요', full: '📖 글밥이 적당해요', category: '도서 특징' },
-  { emoji: '💡', label: '표현과 문장이 아름다워요', full: '💡 표현과 문장이 아름다워요', category: '도서 특징' },
-  { emoji: '💬', label: '바른 생활 습관을 도와줘요', full: '💬 바른 생활 습관을 도와줘요', category: '도서 특징' },
-  { emoji: '📚', label: '따뜻한 교훈과 위안을 줘요', full: '📚 따뜻한 교훈과 위안을 줘요', category: '도서 특징' },
+  { emoji: '💡', label: '문장이 아름다워요', full: '💡 문장이 아름다워요', category: '도서 특징' },
+  { emoji: '💬', label: '바른 습관을 도와줘요', full: '💬 바른 습관을 도와줘요', category: '도서 특징' },
+  { emoji: '📚', label: '교훈과 위안을 줘요', full: '📚 교훈과 위안을 줘요', category: '도서 특징' },
 
   // 2. 아이 반응 (아동의 5대 독립 반응: 애정도/즐거움/집중도/독립성/호기심)
-  { emoji: '⭐', label: '우리 아이 최애 책이에요', full: '⭐ 우리 아이 최애 책이에요', category: '아이 반응' },
-  { emoji: '😆', label: '깔깔 웃으며 재미있어해요', full: '😆 깔깔 웃으며 재미있어해요', category: '아이 반응' },
-  { emoji: '👏', label: '끝까지 몰입해서 집중해요', full: '👏 끝까지 몰입해서 집중해요', category: '아이 반응' },
-  { emoji: '☀️', label: '혼자서도 알아서 잘 봐요', full: '☀️ 혼자서도 알아서 잘 봐요', category: '아이 반응' },
-  { emoji: '🧠', label: '"이게 뭐야?" 질문을 던져요', full: '🧠 "이게 뭐야?" 질문을 던져요', category: '아이 반응' },
+  { emoji: '⭐', label: '아이 최애 책이에요', full: '⭐ 아이 최애 책이에요', category: '아이 반응' },
+  { emoji: '😆', label: '깔깔 웃고 좋아해요', full: '😆 깔깔 웃고 좋아해요', category: '아이 반응' },
+  { emoji: '👏', label: '몰입해서 집중해요', full: '👏 몰입해서 집중해요', category: '아이 반응' },
+  { emoji: '☀️', label: '혼자서도 잘 봐요', full: '☀️ 혼자서도 잘 봐요', category: '아이 반응' },
+  { emoji: '🧠', label: '질문을 많이 해요', full: '🧠 질문을 많이 해요', category: '아이 반응' },
 ];
 
 /** 뱃지 full 텍스트로 Badge 객체 찾기 */

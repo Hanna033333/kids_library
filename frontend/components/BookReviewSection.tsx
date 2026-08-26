@@ -269,17 +269,17 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
             <div className="w-px h-12 bg-gray-100" />
 
             {/* 뱃지 득표 Top */}
-            <div className="flex-1 flex flex-wrap gap-1.5">
+            <div className="flex-1 flex flex-col gap-1.5 min-w-0">
               {sortedBadgeCounts.slice(0, 6).map(([badge, count]) => {
                 const badgeObj = findBadge(badge)
                 return (
-                  <span
+                  <div
                     key={badge}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-white text-gray-700 rounded-full text-[13px] font-bold border border-gray-200 shadow-2xs"
+                    className="inline-flex items-center justify-between gap-1.5 px-3 py-1.5 bg-white text-gray-700 rounded-full text-xs sm:text-[13px] font-bold border border-gray-200 shadow-2xs whitespace-nowrap shrink-0"
                   >
-                    {badgeObj?.emoji || '👍'} {badgeObj?.label || badge}
-                    <span className="text-gray-900 ml-0.5">{count}</span>
-                  </span>
+                    <span className="truncate">{badgeObj?.emoji || '👍'} {badgeObj?.label || badge}</span>
+                    <span className="text-gray-900 font-extrabold shrink-0">{count}</span>
+                  </div>
                 )
               })}
             </div>
@@ -463,15 +463,15 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
                 </div>
               </div>
 
-              {/* 선택한 뱃지 */}
+              {/* 선택한 뱃지 (단정한 한 줄 1-Line Flow) */}
               {review.selected_badges && review.selected_badges.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                <div className="flex items-center gap-1.5 mb-2.5 overflow-x-auto scrollbar-hide py-0.5 whitespace-nowrap">
                   {review.selected_badges.map((badge) => {
                     const badgeObj = findBadge(badge)
                     return (
                       <span
                         key={badge}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-white text-gray-700 rounded-full text-[13px] font-medium border border-gray-200"
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-white text-gray-700 rounded-full text-[13px] font-medium border border-gray-200 shrink-0"
                       >
                         {badgeObj?.emoji} {badgeObj?.label || badge}
                       </span>

@@ -429,7 +429,7 @@ export default function BookDetailClient({
                                 ))}
                             </div>
 
-                            <h1 className="text-xl md:text-2xl font-black text-gray-900 leading-tight mb-2 tracking-tight line-clamp-3">
+                            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight mb-2.5 tracking-tight line-clamp-3">
                                 {book.title}
                             </h1>
 
