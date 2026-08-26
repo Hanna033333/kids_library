@@ -128,8 +128,14 @@ trigger: always_on
 - 폰트 로드: `SUIT Variable`
 - **Display**: 36px, 700, -0.5px
 - **Title 1~4**: 28px/22px/18px/16px, 700, -0.3px
-- **Body 1**: 15px, 400, 0 / **Body 2**: 14px, 400, 0
-- **Caption 1**: 13px, 400, -0.2px / **Caption 2**: 12px, 400, -0.2px
+- **Body 1**: 16px/15px, 400~500, 0 / **Body 2**: 14px, 400, 0
+- **Caption 1**: 13px, 400~700, -0.2px / **Caption 2**: 12px, 500~700, -0.2px
+- **📱 모바일 폰트 가독성 보장 원칙 (Mobile Legibility Rules)**:
+  - 모바일 해상도(320px~480px)에서 답답함 없는 시원한 가독성을 제공하기 위해 `text-[10px]` 및 `text-[11px]` 등의 극소 폰트 사용을 금지하며, 최소 캡션 규격을 `12px~13px` 이상으로 보장한다.
+  - **리뷰 본문**: 네이버 스마트스토어/브랜드스토어 상품 리뷰 스타일을 기준 삼아 `text-base` (16px) `leading-relaxed` `font-medium`을 적용하여 또렷한 독자성을 확보한다.
+  - **리뷰 작성자 닉네임**: `text-base font-bold text-gray-900`
+  - **태그 & 키워드 칩**: 도서 태그, 리뷰 뱃지 칩, 키워드 선택 버튼은 `text-[13px] font-bold` (`px-3 py-1` ~ `px-2.5 py-2.5`)를 표준 규격으로 적용한다.
+  - **모바일 폼 입력창**: 모바일 Safari 등에서 터치 포커스 시 브라우저 자동 확대(Zoom-in) 현상을 방지하기 위해 리뷰 작성 모달 등 폼 내 `textarea` 및 `select` 입력 필드 폰트는 `text-base` (16px) 이상으로 고정한다.
 
 ### 3. Spacing & Border Radius
 - **4px Base Grid** 사용 (space-1=4px, space-2=8px, space-3=12px, space-4=16px, space-5=20px, space-6=24px, space-8=32px)
@@ -144,7 +150,8 @@ trigger: always_on
 
 ### 5. 핵심 컴포넌트 규격
 - **Button (버튼 4종 단일 체계)**: 기본 표준 높이 `48px` (`h-12`, 모달/팝업/폼/액션 앱 전체 공통) 및 모바일 전폭 바텀 고정 CTA `56px` (`h-14`)로 단순화 통일. Primary(주황 `#F59E0B`, 핵심 액션/저장/탈퇴) vs Secondary(회색 `#F3F4F6`, 취소/닫기/보조) vs Outline(주황 테두리, 3차 액션) vs Kakao(노랑 `#FEE500`, 간편 로그인)의 명확한 4종 분리 및 터치 시 `active:scale-[0.98]` 적용. 파괴적(Red) 버튼은 전면 배제.
-- **Book Item Card (도서 카드 단일 규격 `BookItem.tsx`)**: 앱 전체(홈 큐레이션, 전체 목록, 검색 결과 등)에서 세로형 단일 카드를 사용. 상단 표지(1:1.1 비율) + 연령 캡슐(`4-7세`) ➔ 하단 제목(2줄) ➔ 출판사 ➔ 태그 ➔ (도서관 연동 시) 청구기호(주황 `#F59E0B`) & 대출가능 배지(초록 `#059669`)의 콤팩트한 수직 위계(4~8px 간격)를 유지하며 인위적인 과도한 공백을 두지 않음.
+- **Book Item Card (도서 카드 단일 규격 `BookItem.tsx`)**: 앱 전체(홈 큐레이션, 전체 목록, 검색 결과 등)에서 세로형 단일 카드를 사용. 상단 표지(1:1.1 비율) + 연령 캡슐(`text-xs font-bold bg-black/65 text-white`) ➔ 하단 제목(2줄) ➔ 출판사 ➔ 태그(`text-[13px] font-medium text-gray-500`) ➔ (도서관 연동 시) 청구기호(주황 `#F59E0B`) & 대출가능 배지(초록 `#059669`, `text-xs font-bold`)의 콤팩트한 수직 위계(4~8px 간격)를 유지하며 인위적인 과도한 공백을 두지 않음.
+- **Book Review Component (`BookReviewSection.tsx`)**: 네이버 브랜드스토어 상품 리뷰 스타일의 고가독성 모바일 리뷰 영역. 1-Tap 별점 직접 클릭 카드(`text-sm sm:text-base font-bold`) + 리뷰 작성 모달(`text-lg` 타이틀, `text-[13px]` 키워드 버튼, `text-base` 인풋) + 리뷰 리스트(닉네임 `text-base font-bold`, 뱃지 칩 `text-[13px] font-medium`, 본문 `text-base font-medium leading-relaxed`).
 - **Loading System (로딩 시스템 `PageLoader.tsx`)**: 책자리 브랜드 전용 움직이는 그림책 GIF(`/children-book.gif`, `w-24 h-24`)를 중앙에 단독 노출. 불필요한 로딩 안내 텍스트('로딩 중...') 및 스켈레톤 카드는 일체 배제.
 - **Input Field & SearchBar**:
   - **Input Field**: 기본 폼 인풋 높이 `48px` (`h-12`), 내부 패딩 `px-4` (16px), `bg-gray-50`, 기본 보더 `border-gray-200`, `rounded-xl`, Focus 시 Primary 2px 테두리 링(`focus:ring-2 focus:ring-[#F59E0B]`) 및 흰색 배경 적용 (인풋 내부 아이콘 배제 원칙).
@@ -165,7 +172,7 @@ trigger: always_on
   - 위치: `fixed bottom-20 left-1/2 -translate-x-1/2` (하단 네비/CTA 미간섭 80px 높이)
   - 스타일: `bg-gray-800` (다크 차콜), `text-white`, `px-5 py-3.5`, `rounded-xl` (12px), `shadow-lg`, `text-[13px] font-medium`, 최대 너비 `max-w-[90vw]`, 3초 자동 유지 후 fade-out.
 - **Tab Bar**: Top Tab Bar(높이 46px), Content Tab Bar(높이 48px), Active 시 하단 2px 인디케이터 적용.
-- **Badge & Chip**: Success/Primary/Error (Radius 6px) / Count 및 Chip (Radius 9999px).
+- **Badge & Chip**: Success/Primary/Error (Radius 6px) / Count 및 Chip (Radius 9999px / `text-[13px] font-medium px-3 py-1`).
 - **Empty State & FAB**:
   - Empty State: 아이콘/이모지(48px) + 타이틀(16px 700 `#111827`) + 설명(14px `#6B7280`) + 복구 액션 버튼(44px) + 검색 0건 시 하단 추천 도서 폴백 자동 렌더링.
   - FAB: 52x52px, Level 2 / FAB 그림자 적용.

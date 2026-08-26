@@ -100,7 +100,7 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
         {/* 태그 (이미지 위에 오버레이 — 연령 단독 노출) */}
         <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
           {displayAge && (
-            <span className="text-[11px] px-2.5 py-1 rounded-full bg-black/60 text-white font-medium shadow-sm backdrop-blur-sm">
+            <span className="text-xs px-2.5 py-1 rounded-full bg-black/65 text-white font-bold shadow-sm backdrop-blur-sm">
               {displayAge}
             </span>
           )}
@@ -117,7 +117,7 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
         <div className="mt-auto pt-3 flex flex-col gap-2.5 w-full">
           {/* 태그 (박스 테두리 제거로 깔끔하고 여유로운 텍스트 톤) */}
           {tags.length > 0 && (
-            <div className="flex items-center gap-2 text-[12px] font-medium text-gray-500 flex-wrap">
+            <div className="flex items-center gap-2 text-[13px] font-medium text-gray-500 flex-wrap">
               {tags.map((tag, idx) => (
                 <span key={idx} className="text-gray-500">
                   #{tag}
@@ -134,7 +134,7 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
                 {book.vol && `-${book.vol}`}
               </p>
               {normalizedStatus && normalizedStatus.status !== "확인중" && (
-                <span className={`shrink-0 inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[11px] font-bold leading-none text-center ${normalizedStatus.available === true
+                <span className={`shrink-0 inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
                   ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
                   : normalizedStatus.available === false
                     ? "bg-red-50 text-red-600 border border-red-200"

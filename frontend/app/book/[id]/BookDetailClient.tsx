@@ -57,7 +57,9 @@ export default function BookDetailClient({
     const [isSaved, setIsSaved] = useState(false)
     const [saveCount, setSaveCount] = useState(initialBook.save_count || 0)
     const [isToggling, setIsToggling] = useState(false)
-    const [imageError, setImageError] = useState(false)
+    const [imgSrc, setImgSrc] = useState<string | null>(() =>
+        initialBook.image_url ? getOptimizedImageUrl(initialBook.image_url, 'detail') : null
+    )
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
     const { selectedLibrary } = useLibrary()
 
@@ -65,7 +67,7 @@ export default function BookDetailClient({
     useEffect(() => {
         setBook(initialBook)
         setSaveCount(initialBook.save_count || 0)
-        setImageError(false)
+        setImgSrc(initialBook.image_url ? getOptimizedImageUrl(initialBook.image_url, 'detail') : null)
         setIsSaved(false)
     }, [initialBook])
 
@@ -376,15 +378,23 @@ export default function BookDetailClient({
                     {/* Left: Image Card */}
                     <div className="w-full md:w-[35%] shrink-0 max-w-[320px] mx-auto md:mx-0">
                         <div className="relative aspect-[3/4] bg-gray-50 rounded-[28px] overflow-hidden shadow-sm">
-                            {book.image_url && !imageError ? (
+                            {imgSrc ? (
                                 <Image
-                                    src={getOptimizedImageUrl(book.image_url, 'detail')}
+                                    src={imgSrc}
                                     alt={`${book.title} 표지`}
                                     fill
                                     priority
                                     sizes="(max-width: 768px) 100vw, 400px"
                                     className="object-cover"
-                                    onError={() => setImageError(true)}
+                                    onError={() => {
+                                        // cover500 실패 시 원본 URL로 폴백, 원본도 실패하면 플레이스홀더
+                                        const fallback = book.image_url
+                                        if (fallback && imgSrc !== fallback) {
+                                            setImgSrc(fallback)
+                                        } else {
+                                            setImgSrc(null)
+                                        }
+                                    }}
                                 />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-300">
@@ -412,7 +422,7 @@ export default function BookDetailClient({
                                 {visibleTags.map((tag, idx) => (
                                     <span 
                                         key={`${tag.type}-${tag.text}-${idx}`} 
-                                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${tag.className}`}
+                                        className={`px-3 py-1 rounded-full text-xs sm:text-[13px] font-semibold border ${tag.className}`}
                                     >
                                         {tag.text}
                                     </span>
@@ -426,7 +436,7 @@ export default function BookDetailClient({
                             {/* AI Curation Note */}
                             {book.curation_note && (
                                 <div className="mt-4 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100 relative">
-                                    <div className="absolute top-0 right-4 -translate-y-1/2 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold rounded-full shadow-sm">
+                                    <div className="absolute top-0 right-4 -translate-y-1/2 px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold rounded-full shadow-sm">
                                         전문 사서의 추천 포인트
                                     </div>
                                     <p className="text-[14.5px] text-gray-700 font-bold leading-relaxed tracking-tight">
@@ -453,9 +463,9 @@ export default function BookDetailClient({
                                                         sendGAEvent('click_report_error', { book_id: book.id });
                                                         window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
                                                     }}
-                                                    className="flex items-center gap-1 text-gray-400 hover:text-gray-600 text-[11px] font-medium transition-colors shrink-0"
+                                                    className="flex items-center gap-1 text-gray-400 hover:text-gray-600 text-xs font-medium transition-colors shrink-0"
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
                                                     정보가 다른가요? 제보하기
                                                 </button>
                                             </div>
