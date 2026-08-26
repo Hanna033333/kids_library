@@ -443,45 +443,72 @@ export default function BookDetailClient({
                             {/* 🏛️ Library Info Section (Flat & Minimal Line) */}
                             <div className="my-5 py-4 border-y border-gray-100 flex flex-col gap-2.5">
                                 {user ? (
-                                    <>
-                                        {/* 1행: 설정한 도서관 선택기 & 제보 버튼 */}
-                                        <div className="flex items-center justify-between gap-2">
-                                            <LibrarySelector />
-                                            <button
-                                                onClick={() => {
-                                                    sendGAEvent('click_report_error', { book_id: book.id });
-                                                    window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
-                                                }}
-                                                className="flex items-center gap-1 text-gray-400 hover:text-gray-600 text-[11px] font-medium transition-colors shrink-0"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
-                                                정보가 다른가요? 제보하기
-                                            </button>
-                                        </div>
+                                    selectedLibrary ? (
+                                        <>
+                                            {/* 1행: 설정한 도서관 선택기 & 제보 버튼 */}
+                                            <div className="flex items-center justify-between gap-2">
+                                                <LibrarySelector />
+                                                <button
+                                                    onClick={() => {
+                                                        sendGAEvent('click_report_error', { book_id: book.id });
+                                                        window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
+                                                    }}
+                                                    className="flex items-center gap-1 text-gray-400 hover:text-gray-600 text-[11px] font-medium transition-colors shrink-0"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
+                                                    정보가 다른가요? 제보하기
+                                                </button>
+                                            </div>
 
-                                        {/* 2행: 청구기호 & 대출 상태 뱃지 */}
-                                        <div className="flex items-center gap-3 flex-wrap pt-0.5">
-                                            <span className={`tracking-tight ${
-                                                !selectedLibrary 
-                                                    ? 'font-bold text-base md:text-lg text-amber-600' 
-                                                    : (displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'font-black text-xl md:text-2xl text-gray-400' : 'font-black text-xl md:text-2xl text-gray-900')
-                                            }`}>
-                                                {displayCallNo}{book.vol && selectedLibrary ? `-${book.vol}` : ''}
-                                            </span>
-                                            {selectedLibrary && normalizedStatus && normalizedStatus.status !== "확인중" && (
-                                                <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
-                                                    ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
-                                                    : normalizedStatus.available === false
-                                                        ? "bg-red-50 text-red-600 border border-red-200"
-                                                        : normalizedStatus.status === "미소장"
-                                                            ? "bg-[#F3F4F6] text-[#6B7280]"
-                                                            : "bg-white text-gray-600 border border-gray-300"
-                                                    }`}>
-                                                    {normalizedStatus.status}
+                                            {/* 2행: 청구기호 & 대출 상태 뱃지 */}
+                                            <div className="flex items-center gap-3 flex-wrap pt-0.5">
+                                                <span className={`tracking-tight ${
+                                                    displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'font-black text-xl md:text-2xl text-gray-400' : 'font-black text-xl md:text-2xl text-gray-900'
+                                                }`}>
+                                                    {displayCallNo}{book.vol && selectedLibrary ? `-${book.vol}` : ''}
                                                 </span>
+                                                {normalizedStatus && normalizedStatus.status !== "확인중" && (
+                                                    <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
+                                                        ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
+                                                        : normalizedStatus.available === false
+                                                            ? "bg-red-50 text-red-600 border border-red-200"
+                                                            : normalizedStatus.status === "미소장"
+                                                                ? "bg-[#F3F4F6] text-[#6B7280]"
+                                                                : "bg-white text-gray-600 border border-gray-300"
+                                                        }`}>
+                                                        {normalizedStatus.status}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        /* 도서관 미선택 상태 -> 단일 CTA 버튼 */
+                                        <LibrarySelector
+                                            customTrigger={(open) => (
+                                                <button
+                                                    onClick={open}
+                                                    className="w-full text-left flex items-center justify-between py-1.5 active:opacity-75 transition-opacity"
+                                                >
+                                                    <div className="flex items-center gap-3.5">
+                                                        <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                                            <MapPin className="w-5 h-5" />
+                                                        </div>
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <div className="text-base sm:text-[17px] font-bold text-gray-900 leading-snug">
+                                                                자주 가는 도서관을 선택해 주세요
+                                                            </div>
+                                                            <p className="text-xs sm:text-sm text-gray-500 font-medium leading-snug">
+                                                                선택한 도서관의 청구기호와 대출 상태를 바로 확인할 수 있어요
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="w-7 h-7 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 ml-3">
+                                                        <ChevronRight className="w-4 h-4" />
+                                                    </div>
+                                                </button>
                                             )}
-                                        </div>
-                                    </>
+                                        />
+                                    )
                                 ) : (
                                     <button
                                         onClick={() => {
@@ -578,8 +605,8 @@ export default function BookDetailClient({
 
             </div>
 
-            {/* 리뷰/별점 기능 가림 (미완성) */}
-            {/* <BookReviewSection bookId={book.id} bookTitle={book.title} /> */}
+            {/* Book Review & Badge Section */}
+            <BookReviewSection bookId={book.id} bookTitle={book.title} />
 
             {/* Recommendations Section 1: Age Group Popular (bg-muted-bg) */}
             {ageRecommended && ageRecommended.length > 0 && (

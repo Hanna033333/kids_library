@@ -7,10 +7,12 @@ import { createPortal } from 'react-dom'
 
 export default function LibrarySelector({ 
     whiteMode = false, 
-    autoOpen = false 
+    autoOpen = false,
+    customTrigger
 }: { 
     whiteMode?: boolean
     autoOpen?: boolean 
+    customTrigger?: (open: () => void) => React.ReactNode
 }) {
     const { selectedLibrary, setSelectedLibrary, availableLibraries } = useLibrary()
     const [isOpen, setIsOpen] = useState(autoOpen)
@@ -47,21 +49,25 @@ export default function LibrarySelector({
     return (
         <>
             {/* Trigger Button */}
-            <button
-                onClick={() => setIsOpen(true)}
-                className={`flex items-center gap-1.5 text-sm sm:text-base font-bold py-1 px-0.5 transition-colors shrink-0 max-w-full ${whiteMode
-                    ? 'text-white hover:text-white/80'
-                    : selectedLibrary 
-                        ? 'text-gray-900 hover:text-gray-700 font-black' 
-                        : 'text-gray-400 hover:text-gray-600 font-medium'
-                    }`}
-            >
-                <MapPin className={`w-4 h-4 shrink-0 ${whiteMode ? 'text-white' : selectedLibrary ? 'text-amber-500' : 'text-gray-400'}`} />
-                <span className="truncate underline decoration-gray-300 underline-offset-4">
-                    {displayLibraryName}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
-            </button>
+            {customTrigger ? (
+                customTrigger(() => setIsOpen(true))
+            ) : (
+                <button
+                    onClick={() => setIsOpen(true)}
+                    className={`flex items-center gap-1.5 text-sm sm:text-base font-bold py-1 px-0.5 transition-colors shrink-0 max-w-full ${whiteMode
+                        ? 'text-white hover:text-white/80'
+                        : selectedLibrary 
+                            ? 'text-gray-900 hover:text-gray-700 font-black' 
+                            : 'text-gray-400 hover:text-gray-600 font-medium'
+                        }`}
+                >
+                    <MapPin className={`w-4 h-4 shrink-0 ${whiteMode ? 'text-white' : selectedLibrary ? 'text-amber-500' : 'text-gray-400'}`} />
+                    <span className="truncate underline decoration-gray-300 underline-offset-4">
+                        {displayLibraryName}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                </button>
+            )}
 
             {/* Bottom Sheet Portal */}
             {(isOpen || isAnimating) && createPortal(

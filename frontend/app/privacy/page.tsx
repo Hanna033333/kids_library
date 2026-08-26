@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import PageHeader from '@/components/PageHeader'
 
 export const metadata: Metadata = {
-    title: '개인정보 처리방침 | 책자리',
+    title: '개인정보 처리방침',
     description: '책자리 개인정보 처리방침입니다.',
 }
 

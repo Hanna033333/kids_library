@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>책자리 (Checkjari) - 서비스 UX Flow Map</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css">
+  <style>
+    body {
+      font-family: 'SUIT Variable', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      background-color: #0F172A;
+      color: #F8FAFC;
+      -webkit-font-smoothing: antialiased;
+    }
+    .flow-line {
+      stroke: #38BDF8;
+      stroke-width: 2;
+      stroke-dasharray: 6;
+      animation: dash 20s linear infinite;
+    }
+    @keyframes dash {
+      to {
+        stroke-dashoffset: -100;
+      }
+    }
+    .card-glass {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .card-active {
+      border-color: #F59E0B !important;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+    }
+  </style>
+</head>
+<body class="p-6 sm:p-10 max-w-7xl mx-auto space-y-8">
+
+  <!-- Header -->
+  <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+    <div class="flex items-center gap-3.5">
+      <div class="w-11 h-11 rounded-2xl bg-amber-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-amber-500/20">
+        🗺️
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-white tracking-tight">책자리 (Checkjari) UX Flow Map</h1>
+        <p class="text-xs text-slate-400 mt-1">로컬에서 한눈에 확인하는 사용자 여정 (User Journey & Navigation Map)</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="http://localhost:3000" target="_blank" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition shadow-md flex items-center gap-1.5">
+        <span>🚀 실제 서비스 접속</span>
+      </a>
+      <a href="http://localhost:3000/design-system.html" target="_blank" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 transition">
+        🎨 UI 시스템 가이드
+      </a>
+    </div>
+  </header>
+
+  <!-- Flow Selector Tabs -->
+  <nav class="flex flex-wrap gap-2.5 border-b border-slate-800 pb-4">
+    <button onclick="switchTab('all')" id="tab-all" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 text-white shadow-md">
+      🌐 전체 UX Map (Architecture)
+    </button>
+    <button onclick="switchTab('discovery')" id="tab-discovery" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 hover:text-white transition">
+      📖 1. 큐레이션 탐색 흐름
+    </button>
+    <button onclick="switchTab('search')" id="tab-search" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 hover:text-white transition">
+      🔍 2. 도서 검색 & 0건 폴백
+    </button>
+    <button onclick="switchTab('library')" id="tab-library" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 hover:text-white transition">
+      📍 3. 도서관 연동 & 대출 조회
+    </button>
+    <button onclick="switchTab('auth')" id="tab-auth" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 hover:text-white transition">
+      🔐 4. 가입 & 온보딩 & 마이라이브러리
+    </button>
+    <button onclick="switchTab('marketing')" id="tab-marketing" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 hover:text-white transition">
+      📱 5. 외부 유입 & 스마트 백(Back)
+    </button>
+  </nav>
+
+  <!-- Flow Map Visualizer -->
+  <main class="space-y-12">
+
+    <!-- 1. 큐레이션 탐색 Flow -->
+    <section id="sec-discovery" class="flow-sec space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold text-amber-400 tracking-wider uppercase">Flow 01</span>
+          <h2 class="text-xl font-bold text-white mt-0.5">큐레이션 발견 ➔ 도서 상세 탐색 여정</h2>
+        </div>
+        <span class="text-xs px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">
+          핵심 Value Proposition
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Step 1: Home Feed -->
+        <div class="card-glass p-5 rounded-2xl space-y-4 border-l-4 border-l-amber-500">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 border-b border-slate-700/60 pb-2">
+            <span>STEP 1</span>
+            <span class="text-amber-400">/ (홈 피드)</span>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-base font-bold text-white">홈 화면 & 큐레이션 섹션</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              - 2단 계층 서브/메인 타이틀<br>
+              - 7일 주기 자동 순차 큐레이션<br>
+              - 도서관 미지정 시 큐레이션에 집중
+            </p>
+          </div>
+          <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-400">
+            👉 <span class="text-amber-300 font-bold">액션</span>: '더보기' 클릭 ➔ 전체 목록 / 책 카드 클릭 ➔ 상세
+          </div>
+        </div>
+
+        <!-- Step 2: Book List / Collections -->
+        <div class="card-glass p-5 rounded-2xl space-y-4 border-l-4 border-l-sky-500">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 border-b border-slate-700/60 pb-2">
+            <span>STEP 2</span>
+            <span class="text-sky-400">/books?curation=...</span>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-base font-bold text-white">큐레이션 전체 목록</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              - <strong>7-Book Rule</strong>: 홈 7권 상단 고정<br>
+              - ㄱㄴㄷ 오름차순 기본 정렬<br>
+              - 연령 필터 및 큐레이션 태그 매칭
+            </p>
+          </div>
+          <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-400">
+            👉 <span class="text-sky-300 font-bold">액션</span>: 도서 클릭 ➔ 상세 진입
+          </div>
+        </div>
+
+        <!-- Step 3: Book Detail -->
+        <div class="card-glass p-5 rounded-2xl space-y-4 border-l-4 border-l-emerald-500">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 border-b border-slate-700/60 pb-2">
+            <span>STEP 3</span>
+            <span class="text-emerald-400">/book/[id]</span>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-base font-bold text-white">도서 상세 & 2단 추천</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              - 도서 기본 정보 & 줄거리<br>
+              - 1순위: 연령별 인기 추천 (7권)<br>
+              - 2순위: 동일 태그 추천 (7권)<br>
+              - <strong>Smart Back</strong> 버튼으로 이탈 방지
+            </p>
+          </div>
+          <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-400">
+            👉 <span class="text-emerald-300 font-bold">액션</span>: 북마크 / 도서관 소장 상태 확인 / 뒤로가기
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 검색 & 0건 폴백 Flow -->
+    <section id="sec-search" class="flow-sec space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold text-sky-400 tracking-wider uppercase">Flow 02</span>
+          <h2 class="text-xl font-bold text-white mt-0.5">도서 검색 & 검색 결과 0건 폴백(Empty State)</h2>
+        </div>
+        <span class="text-xs px-3 py-1 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 font-medium">
+          Zero-Result Retention
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Search Trigger -->
+        <div class="card-glass p-5 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 border-b border-slate-700/60 pb-2">
+            <span>START</span>
+            <span>SearchBar</span>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-base font-bold text-white">검색어 입력 & 필터링</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              - 상단 언더라인 SearchBar<br>
+              - 제목/저자/키워드 통합 검색<br>
+              - 연령 필터 분기 처리
+            </p>
+          </div>
+        </div>
+
+        <!-- Branch A: Success -->
+        <div class="card-glass p-5 rounded-2xl space-y-4 border border-emerald-500/40">
+          <div class="flex items-center justify-between text-xs font-bold text-emerald-400 border-b border-slate-700/60 pb-2">
+            <span>BRANCH A</span>
+            <span>결과 ≥ 1건</span>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-base font-bold text-white">검색 결과 목록</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              - 매칭된 도서 카드 수직 리스트<br>
+              - 선호 도서관 설정 시 실시간 대출 배지 표시
+            </p>
+          </div>
+        </div>
+
+        <!-- Branch B: Empty Fallback -->
+        <div class="card-glass p-5 rounded-2xl space-y-4 border border-amber-500/60">
+          <div class="flex items-center justify-between text-xs font-bold text-amber-400 border-b border-slate-700/60 pb-2">
+            <span>BRANCH B (핵심)</span>
+            <span>결과 0건 (Empty)</span>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-base font-bold text-white">추천 도서 폴백 노출</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              - "조건에 맞는 책이 없지만 이 책은 어떨까요?"<br>
+              - <strong>연령 선택 시</strong>: 연령별 전국 인기 8권<br>
+              - <strong>일반 검색 실패 시</strong>: 전체 전국 인기 8권
+            </p>
+          </div>
+          <div class="bg-amber-500/10 p-3 rounded-xl border border-amber-500/20 text-[11px] text-amber-300">
+            🎯 유저 이탈을 100% 방지하고 탐색 연장!
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 도서관 연동 & 대출 조회 Flow -->
+    <section id="sec-library" class="flow-sec space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold text-purple-400 tracking-wider uppercase">Flow 03</span>
+          <h2 class="text-xl font-bold text-white mt-0.5">자주 가는 도서관 선택 & 실시간 대출 가능 확인</h2>
+        </div>
+        <span class="text-xs px-3 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium">
+          실용주의 양육자 페르소나
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Step 1: Selector -->
+        <div class="card-glass p-5 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 border-b border-slate-700/60 pb-2">
+            <span>STEP 1</span>
+            <span>LibrarySelector</span>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-base font-bold text-white">도서관 선택 바텀시트</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              - 하단 고정 슬라이드업 바텀시트<br>
+              - 6자리 정식 정보나루 공공도서관 검색<br>
+              - 선호 도서관 1차 등록
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 2: Context Sync -->
+        <div class="card-glass p-5 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 border-b border-slate-700/60 pb-2">
+            <span>STEP 2</span>
+            <span>LibraryContext</span>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-base font-bold text-white">로그인 조건부 조인 (Batch)</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              - <strong>비로그인/미설정</strong>: 도서관 쿼리 생략 (초고속)<br>
+              - <strong>로그인/설정완료</strong>: 조건부 DB 쿼리 실행<br>
+              - React Query 캐시 키 분리 (`!!user`)
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 3: Visual Badge -->
+        <div class="card-glass p-5 rounded-2xl space-y-4 border-l-4 border-l-emerald-400">
+          <div class="flex items-center justify-between text-xs font-bold text-emerald-400 border-b border-slate-700/60 pb-2">
+            <span>STEP 3</span>
+            <span>BookCard / BookItem</span>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-base font-bold text-white">청구기호 & 대출 배지</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              - <span class="text-amber-400 font-bold">청구기호</span>: 주황 `#F59E0B`<br>
+              - <span class="text-emerald-400 font-bold">대출가능</span>: 초록 `#059669` / `#ECFDF5`<br>
+              - <span class="text-slate-400 font-bold">미소장</span>: 회색 `#6B7280` / `#F3F4F6`
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 가입 & 온보딩 & 마이페이지 Flow -->
+    <section id="sec-auth" class="flow-sec space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold text-emerald-400 tracking-wider uppercase">Flow 04</span>
+          <h2 class="text-xl font-bold text-white mt-0.5">회원가입 ➔ 온보딩 팝업 ➔ 나만의 라이브러리</h2>
+        </div>
+        <span class="text-xs px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+          User Conversion & Retention
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Step 1: Prompt -->
+        <div class="card-glass p-4 rounded-xl space-y-3">
+          <div class="text-[11px] font-bold text-amber-400">1. LoginPromptModal</div>
+          <h3 class="text-sm font-bold text-white">가입 유도 팝업</h3>
+          <p class="text-xs text-slate-300">비로그인 시 북마크 클릭 시 발동</p>
+        </div>
+
+        <!-- Step 2: Kakao -->
+        <div class="card-glass p-4 rounded-xl space-y-3 border border-yellow-500/40">
+          <div class="text-[11px] font-bold text-yellow-400">2. Kakao OAuth</div>
+          <h3 class="text-sm font-bold text-white">카카오 간편 가입</h3>
+          <p class="text-xs text-slate-300">최소 정보(닉네임/이메일)로 즉시 연동</p>
+        </div>
+
+        <!-- Step 3: Welcome -->
+        <div class="card-glass p-4 rounded-xl space-y-3 border border-emerald-500/40">
+          <div class="text-[11px] font-bold text-emerald-400">3. SignupWelcomeModal</div>
+          <h3 class="text-sm font-bold text-white">웰컴 온보딩 팝업</h3>
+          <p class="text-xs text-slate-300">가입 축하 & 서비스 핵심 혜택 안내</p>
+        </div>
+
+        <!-- Step 4: My Library -->
+        <div class="card-glass p-4 rounded-xl space-y-3">
+          <div class="text-[11px] font-bold text-sky-400">4. /my-library & /my-page</div>
+          <h3 class="text-sm font-bold text-white">북마크 & 설정 관리</h3>
+          <p class="text-xs text-slate-300">찜한 그림책 목록 & 자주 가는 도서관 관리</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. 외부 유입 & 스마트 백 Flow -->
+    <section id="sec-marketing" class="flow-sec space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold text-amber-400 tracking-wider uppercase">Flow 05</span>
+          <h2 class="text-xl font-bold text-white mt-0.5">외부 SNS 유입 ➔ 스마트 뒤로가기(Smart Back Route)</h2>
+        </div>
+        <span class="text-xs px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">
+          Smart Back Route
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Referral -->
+        <div class="card-glass p-5 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 border-b border-slate-700/60 pb-2">
+            <span>EXTERNAL</span>
+            <span>Threads / Naver Blog</span>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-base font-bold text-white">스레드 / 블로그 유입</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              - UTM 파라미터 기반 추적<br>
+              - 단축링크 `/c/[tag]` ➔ 컬렉션 페이지로 자동 전환
+            </p>
+          </div>
+        </div>
+
+        <!-- Landing -->
+        <div class="card-glass p-5 rounded-2xl space-y-4 border border-sky-500/40">
+          <div class="flex items-center justify-between text-xs font-bold text-sky-400 border-b border-slate-700/60 pb-2">
+            <span>LANDING</span>
+            <span>HistoryTracker</span>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-base font-bold text-white">다이렉트 랜딩</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              - 외부 유입 시 브라우저 히스토리 1개 감지<br>
+              - `sessionStorage` 세션 히스토리 추적
+            </p>
+          </div>
+        </div>
+
+        <!-- Smart Back -->
+        <div class="card-glass p-5 rounded-2xl space-y-4 border-l-4 border-l-amber-500">
+          <div class="flex items-center justify-between text-xs font-bold text-amber-400 border-b border-slate-700/60 pb-2">
+            <span>SMART BACK</span>
+            <span>BackButton</span>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-base font-bold text-white">홈(`/`) 피드 자동 폴백</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              - 이전 이력 없으면 뒤로가기 클릭 시 <strong>홈(`/`)으로 안전 이동</strong><br>
+              - 서비스 이탈 방지 & 탐색 전환율 극대화
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-amber-500', 'text-white', 'shadow-md');
+        btn.classList.add('bg-slate-800', 'text-slate-400');
+      });
+
+      const activeBtn = document.getElementById('tab-' + tabName);
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-slate-800', 'text-slate-400');
+        activeBtn.classList.add('bg-amber-500', 'text-white', 'shadow-md');
+      }
+
+      const sections = document.querySelectorAll('.flow-sec');
+      if (tabName === 'all') {
+        sections.forEach(sec => sec.style.display = 'block');
+      } else {
+        sections.forEach(sec => sec.style.display = 'none');
+        const targetSec = document.getElementById('sec-' + tabName);
+        if (targetSec) targetSec.style.display = 'block';
+      }
+    }
+  </script>
+
+</body>
+</html>

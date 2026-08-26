@@ -74,15 +74,38 @@ function timeAgo(dateStr: string): string {
 
 
 // ─────────────────────────────────────────────────
+// 별점 반응형 라벨
+// ─────────────────────────────────────────────────
+function getRatingLabel(rating: number): string {
+  switch (rating) {
+    case 5: return '최고예요! 🌟'
+    case 4: return '좋아요! 👍'
+    case 3: return '보통이에요 🙂'
+    case 2: return '아쉬워요 😅'
+    case 1: return '별로예요 😢'
+    default: return '별점을 남겨주세요'
+  }
+}
+
+// ─────────────────────────────────────────────────
+// 회원가입 정책 기준 랜덤 닉네임 생성기
+// ─────────────────────────────────────────────────
+const ADJECTIVES = ['지혜로운', '따스한', '포근한', '정겨운', '행복한', '다정한', '꿈꾸는', '다독이는', '슬기로운', '다복한', '마음넓은', '빛나는', '샘깊은', '글사랑', '봄날의']
+const NOUNS = ['책벌레', '이야기꾼', '책부엉이', '파랑새', '독서가', '책요정', '글벗', '책탐험가', '책마을님', '글나무', '책나무']
+
+function generateRandomNickname() {
+  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
+  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
+  return `${adj}${noun}`
+}
+
+// ─────────────────────────────────────────────────
 // 메인 컴포넌트
 // ─────────────────────────────────────────────────
 export default function BookReviewSection({ bookId, bookTitle }: BookReviewSectionProps) {
-  // 리뷰 및 별점 기능 미완성으로 인한 UI 가림 처리
-  return null;
-
   const queryClient = useQueryClient()
   const { user } = useAuth()
-  const [showWriteForm, setShowWriteForm] = useState(false)
+  const [showWriteModal, setShowWriteModal] = useState(false)
   const [showAllReviews, setShowAllReviews] = useState(false)
 
   // 폼 상태
@@ -114,6 +137,7 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
     } catch { /* ignore */ }
   }, [])
 
+
   const userProfileName =
     user?.user_metadata?.nickname ||
     user?.user_metadata?.full_name ||
@@ -123,7 +147,7 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
   const effectiveNickname = (
     userProfileName ||
     nickname ||
-    '책자리부모님'
+    generateRandomNickname()
   ).replace(/\s+/g, '')
 
   const handleBadgeToggle = (badgeFull: string) => {
@@ -141,7 +165,19 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
     setSelectedBadges([])
     setContent('')
     setFormError('')
-    setShowWriteForm(false)
+    setShowWriteModal(false)
+  }
+
+  // 별점 클릭 시 팝업 열기
+  const handleStarClick = (starVal: number) => {
+    setRating(starVal)
+    setFormError('')
+    setShowWriteModal(true)
+    sendGAEvent('click_inline_star_rating', {
+      book_id: bookId,
+      book_title: bookTitle,
+      rating: starVal,
+    })
   }
 
   const handleSubmit = async () => {
@@ -219,8 +255,8 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
 
       {/* ── 평점 요약 카드 ── */}
       {reviewCount > 0 && (
-        <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 mb-5">
-          <div className="flex items-center gap-4 mb-4">
+        <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 mb-4">
+          <div className="flex items-center gap-4">
             {/* 평균 별점 */}
             <div className="flex flex-col items-center gap-1">
               <span className="text-3xl font-black text-gray-900">
@@ -239,10 +275,10 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
                 return (
                   <span
                     key={badge}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-800 rounded-full text-[11px] font-bold border border-amber-100"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white text-gray-700 rounded-full text-[11px] font-normal border border-gray-200 shadow-2xs"
                   >
                     {badgeObj?.emoji || '👍'} {badgeObj?.label || badge}
-                    <span className="text-amber-500 ml-0.5">{count}</span>
+                    <span className="text-gray-900 ml-0.5">{count}</span>
                   </span>
                 )
               })}
@@ -251,141 +287,157 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
         </div>
       )}
 
-      {/* ── 리뷰 작성 버튼 ── */}
-      {!showWriteForm && (
-        <button
-          onClick={() => setShowWriteForm(true)}
-          className="w-full py-3.5 bg-brand-primary/5 text-brand-primary font-bold text-sm rounded-xl border border-brand-primary/10 active:bg-brand-primary/10 active:scale-[0.99] transition-all mb-5"
-        >
-          리뷰 남기기
-        </button>
-      )}
-
-      {/* ── 리뷰 작성 폼 ── */}
-      {showWriteForm && (
-        <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] border border-gray-100 p-5 mb-5 animate-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center justify-between mb-5">
-            <h4 className="text-base font-black text-gray-900">리뷰 작성</h4>
-            <button onClick={resetForm} className="p-1 text-gray-400 active:text-gray-600">
-              <X className="w-5 h-5" />
+      {/* ── 밀리의 서재 스타일: 1-Tap 별점 직접 클릭 카드 ── */}
+      <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-6 mb-5 text-center flex flex-col items-center justify-center">
+        <div className="flex items-center justify-center gap-1.5 mb-2.5">
+          {[1, 2, 3, 4, 5].map((starVal) => (
+            <button
+              key={starVal}
+              type="button"
+              onClick={() => handleStarClick(starVal)}
+              className="p-1 active:scale-125 transition-transform group"
+              aria-label={`${starVal}점 평가하기`}
+            >
+              <Star className="w-9 h-9 text-gray-200 group-hover:text-amber-400 group-hover:fill-amber-400 transition-colors" />
             </button>
-          </div>
+          ))}
+        </div>
+        <p className="text-xs sm:text-sm font-bold text-gray-500">
+          이 책은 어떠셨나요? 별점을 남겨주세요
+        </p>
+      </div>
 
-          {/* 1. 책에 만족하셨나요? (별점) */}
-          <div className="bg-gray-50/80 rounded-2xl p-4 mb-4 border border-gray-100/80">
-            <div className="flex items-center gap-2 mb-2">
-              <h4 className="text-sm font-extrabold text-gray-900">책에 만족하셨나요?</h4>
-              <span className="px-1.5 py-0.5 text-[10px] font-extrabold text-white bg-gray-900 rounded-md">필수</span>
+      {/* ── 밀리의 서재 스타일: 리뷰 작성 모달 팝업 ── */}
+      {showWriteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-[24px] shadow-2xl max-w-[440px] w-full max-h-[90vh] overflow-y-auto p-6 relative animate-in zoom-in-95 duration-200">
+            {/* 상단 닫기 */}
+            <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+              <h4 className="text-base font-black text-gray-900">리뷰 작성</h4>
+              <button
+                onClick={resetForm}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full transition-colors"
+                aria-label="닫기"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div className="flex justify-center py-2">
-              <StarInput value={rating} onChange={setRating} />
-            </div>
-          </div>
 
-          {/* 2. 어떤 점이 좋았나요? (2단 카드 레이아웃) */}
-          <div className="bg-gray-50/80 rounded-2xl p-4 mb-4 border border-gray-100/80">
-            <div className="flex items-center gap-2 mb-1">
-              <h4 className="text-sm font-extrabold text-gray-900">어떤 점이 좋았나요?</h4>
-              <span className="px-1.5 py-0.5 text-[10px] font-extrabold text-white bg-gray-900 rounded-md">필수</span>
+            {/* 도서 정보 및 별점 피드백 */}
+            <div className="text-center my-3">
+              <p className="text-xs font-bold text-gray-400 mb-1 truncate px-4">{bookTitle}</p>
+              <div className="text-lg font-black text-gray-900 mb-2">
+                {getRatingLabel(rating)}
+              </div>
+              <div className="flex justify-center py-1">
+                <StarInput value={rating} onChange={setRating} />
+              </div>
             </div>
-            <p className="text-xs font-semibold text-gray-400 mb-4">
-              이 책에 어울리는 키워드를 골라주세요. (1개~5개)
-            </p>
 
-            {/* 좌우 2단 병렬 카테고리 카드 */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              {BADGE_CATEGORIES.map((cat) => {
-                const catBadges = BADGES.filter((b) => b.category === cat)
-                return (
-                  <div key={cat} className="bg-white rounded-2xl p-3 border border-gray-100 shadow-xs flex flex-col justify-between">
-                    <div>
-                      <h5 className="text-xs font-black text-gray-800 mb-3 px-0.5 flex items-center justify-between">
-                        <span>{cat}</span>
-                      </h5>
-                      <div className="flex flex-col gap-2">
-                        {catBadges.map((badge) => {
-                          const isSelected = selectedBadges.includes(badge.full)
-                          return (
-                            <button
-                              key={badge.full}
-                              type="button"
-                              onClick={() => handleBadgeToggle(badge.full)}
-                              className={`w-full flex items-center justify-start gap-1.5 px-2.5 py-2.5 rounded-2xl text-[11px] sm:text-xs font-bold border transition-all active:scale-[0.97] text-left leading-tight ${
-                                isSelected
-                                  ? 'bg-amber-50 text-amber-900 border-amber-300 shadow-xs ring-1 ring-amber-400/30 font-extrabold'
-                                  : 'bg-gray-50/70 text-gray-700 border-gray-100 hover:bg-gray-100/80 hover:border-gray-200'
-                              }`}
-                            >
-                              <span className="text-sm shrink-0">{badge.emoji}</span>
-                              <span className="truncate">{badge.label}</span>
-                            </button>
-                          )
-                        })}
+            {/* 키워드 뱃지 선택 (2단 카테고리) */}
+            <div className="bg-gray-50/80 rounded-2xl p-4 my-4 border border-gray-100/80">
+              <div className="flex items-center gap-2 mb-1">
+                <h4 className="text-sm font-extrabold text-gray-900">어떤 점이 좋았나요?</h4>
+                <span className="px-1.5 py-0.5 text-[10px] font-extrabold text-white bg-gray-900 rounded-md">필수</span>
+              </div>
+              <p className="text-xs font-semibold text-gray-400 mb-3">
+                이 책에 어울리는 키워드를 골라주세요. (1~5개)
+              </p>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                {BADGE_CATEGORIES.map((cat) => {
+                  const catBadges = BADGES.filter((b) => b.category === cat)
+                  return (
+                    <div key={cat} className="bg-white rounded-2xl p-2.5 border border-gray-100 shadow-2xs flex flex-col justify-between">
+                      <div>
+                        <h5 className="text-[11px] font-black text-gray-800 mb-2 px-0.5">
+                          {cat}
+                        </h5>
+                        <div className="flex flex-col gap-1.5">
+                          {catBadges.map((badge) => {
+                            const isSelected = selectedBadges.includes(badge.full)
+                            return (
+                              <button
+                                key={badge.full}
+                                type="button"
+                                onClick={() => handleBadgeToggle(badge.full)}
+                                className={`w-full flex items-center justify-start gap-1 px-2 py-2 rounded-xl text-[11px] font-bold border transition-all active:scale-[0.97] text-left leading-tight ${
+                                  isSelected
+                                    ? 'bg-brand-primary text-white border-brand-primary shadow-2xs font-extrabold'
+                                    : 'bg-gray-50/70 text-gray-700 border-gray-100 hover:bg-gray-100/80 hover:border-gray-200'
+                                }`}
+                              >
+                                <span className="text-xs shrink-0">{badge.emoji}</span>
+                                <span className="truncate">{badge.label}</span>
+                              </button>
+                            )
+                          })}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* 한줄평/리뷰 내용 입력 */}
-          <div className="mb-4">
-            <p className="text-xs font-bold text-gray-500 mb-1.5">리뷰 내용 (선택)</p>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="이 책에 대한 솔직한 후기를 남겨주세요 ☺️"
-              maxLength={500}
-              rows={2}
-              className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 resize-none"
-            />
-          </div>
-
-          {/* 아이 나이 */}
-          <div className="mb-4">
-            <p className="text-xs font-bold text-gray-500 mb-1.5">아이 나이 (선택)</p>
-            <div className="relative">
-              <select
-                value={childAge}
-                onChange={(e) => setChildAge(e.target.value)}
-                className={`w-full pl-4 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium appearance-none focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 cursor-pointer ${
-                  !childAge ? 'text-gray-400' : 'text-gray-900'
-                }`}
-              >
-                <option value="" className="text-gray-400">선택</option>
-                <option value="0세" className="text-gray-900">0세</option>
-                <option value="1세" className="text-gray-900">1세</option>
-                <option value="2세" className="text-gray-900">2세</option>
-                <option value="3세" className="text-gray-900">3세</option>
-                <option value="4세" className="text-gray-900">4세</option>
-                <option value="5세" className="text-gray-900">5세</option>
-                <option value="6세" className="text-gray-900">6세</option>
-                <option value="7세" className="text-gray-900">7세</option>
-                <option value="8세" className="text-gray-900">8세</option>
-                <option value="9세" className="text-gray-900">9세</option>
-                <option value="10세" className="text-gray-900">10세</option>
-                <option value="11세" className="text-gray-900">11세</option>
-                <option value="12세" className="text-gray-900">12세</option>
-                <option value="13세 이상" className="text-gray-900">13세 이상</option>
-              </select>
-              <ChevronDown className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+            {/* 한줄평/리뷰 내용 입력 */}
+            <div className="mb-4">
+              <p className="text-xs font-bold text-gray-500 mb-1.5">한 줄 리뷰 (선택)</p>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="이 책에 대한 솔직한 후기를 남겨주세요 ☺️"
+                maxLength={500}
+                rows={3}
+                className="w-full min-h-[85px] px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium leading-relaxed text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 resize-none"
+              />
             </div>
+
+            {/* 아이 나이 */}
+            <div className="mb-4">
+              <p className="text-xs font-bold text-gray-500 mb-1.5">아이 나이 (선택)</p>
+              <div className="relative">
+                <select
+                  value={childAge}
+                  onChange={(e) => setChildAge(e.target.value)}
+                  className={`w-full pl-4 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium appearance-none focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/30 cursor-pointer ${
+                    !childAge ? 'text-gray-400' : 'text-gray-900'
+                  }`}
+                >
+                  <option value="" className="text-gray-400">선택</option>
+                  <option value="0세" className="text-gray-900">0세</option>
+                  <option value="1세" className="text-gray-900">1세</option>
+                  <option value="2세" className="text-gray-900">2세</option>
+                  <option value="3세" className="text-gray-900">3세</option>
+                  <option value="4세" className="text-gray-900">4세</option>
+                  <option value="5세" className="text-gray-900">5세</option>
+                  <option value="6세" className="text-gray-900">6세</option>
+                  <option value="7세" className="text-gray-900">7세</option>
+                  <option value="8세" className="text-gray-900">8세</option>
+                  <option value="9세" className="text-gray-900">9세</option>
+                  <option value="10세" className="text-gray-900">10세</option>
+                  <option value="11세" className="text-gray-900">11세</option>
+                  <option value="12세" className="text-gray-900">12세</option>
+                  <option value="13세 이상" className="text-gray-900">13세 이상</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* 에러 메시지 */}
+            {formError && (
+              <p className="text-xs text-red-500 font-bold mb-3">{formError}</p>
+            )}
+
+            {/* 등록 버튼 */}
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="w-full h-12 bg-brand-primary active:bg-brand-primary-dark text-white font-bold text-sm rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+            >
+              등록하기
+            </button>
           </div>
-
-          {/* 에러 메시지 */}
-          {formError && (
-            <p className="text-xs text-red-500 font-bold mb-3">{formError}</p>
-          )}
-
-          {/* 등록 버튼 */}
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="w-full py-3 bg-brand-primary text-white font-bold text-sm rounded-xl active:bg-brand-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            등록하기
-          </button>
         </div>
       )}
 
@@ -413,13 +465,13 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
 
               {/* 선택한 뱃지 */}
               {review.selected_badges && review.selected_badges.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-2">
+                <div className="flex flex-wrap gap-1.5 mb-2">
                   {review.selected_badges.map((badge) => {
                     const badgeObj = findBadge(badge)
                     return (
                       <span
                         key={badge}
-                        className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-amber-50 text-amber-700 rounded-md text-[10px] font-bold"
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-white text-gray-700 rounded-full text-[11px] font-normal border border-gray-200"
                       >
                         {badgeObj?.emoji} {badgeObj?.label || badge}
                       </span>
@@ -450,7 +502,7 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
           )}
         </div>
       ) : (
-        !isLoading && reviewCount === 0 && !showWriteForm && (
+        !isLoading && reviewCount === 0 && !showWriteModal && (
           <div className="text-center py-8">
             <p className="text-sm text-gray-400 font-medium mb-1">아직 작성된 리뷰가 없어요</p>
             <p className="text-xs text-gray-300">첫 번째 후기의 주인공이 되어주세요!</p>

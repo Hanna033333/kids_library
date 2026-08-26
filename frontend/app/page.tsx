@@ -13,7 +13,7 @@ export const revalidate = 3600; // 1시간 주기 ISR 캐시 활성화
 export const metadata: Metadata = {
   metadataBase: new URL("https://checkjari.com"),
   alternates: { canonical: '/' },
-  title: "내 주변 도서관 책 검색 & 그림책 대출 가능 여부 3초 조회 | 책자리",
+  title: "내 주변 도서관 책 검색 & 그림책 대출 가능 여부 3초 조회",
   description: "도서관 가기 전 헛걸음 방지! 내 주변 도서관의 책 검색, 실시간 대출 가능 상태와 청구기호를 3초 만에 조회하세요. 연령 및 정서 발달에 딱 맞는 그림책 큐레이션도 제공합니다.",
   keywords: "어린이 도서 추천, 유아 그림책 큐레이션, 초등 필독서, 칼데콧 수상작, 어린이도서연구회, 연령별 추천도서, 책자리, 어린이 정서 교육, 아이 감정 발달, 상황별 그림책, 주변 도서관 책 검색, 도서관 대출",
   openGraph: {
@@ -86,12 +86,57 @@ export default async function HomePage() {
     books: dynamicBooks[index]
   }))
 
-  return <HomePageClient
-    initialCaldecottBooks={caldecottBooks.slice(0, 7)}
-    initialResearchBooks={researchBooks}
-    initialAgeBooks={ageBooks}
-    initialSummerBooks={summerBooks}
-    initialSelectedAge={defaultAge}
-    dynamicCurations={dynamicCurations}
-  />
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': 'https://checkjari.com/#website',
+        url: 'https://checkjari.com',
+        name: '책자리',
+        description: '내 주변 도서관 책 검색 및 연령별 그림책 큐레이션 서비스',
+        inLanguage: 'ko-KR',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: 'https://checkjari.com/search?q={search_term_string}',
+          },
+          'query-input': 'required name=search_term_string',
+        },
+      },
+      {
+        '@type': 'Organization',
+        '@id': 'https://checkjari.com/#organization',
+        name: '책자리',
+        url: 'https://checkjari.com',
+        logo: {
+          '@type': 'ImageObject',
+          url: 'https://checkjari.com/logo.png',
+          width: 512,
+          height: 512,
+        },
+        sameAs: [
+          'https://www.threads.net/@checkjari',
+        ],
+      },
+    ],
+  }
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <HomePageClient
+        initialCaldecottBooks={caldecottBooks.slice(0, 7)}
+        initialResearchBooks={researchBooks}
+        initialAgeBooks={ageBooks}
+        initialSummerBooks={summerBooks}
+        initialSelectedAge={defaultAge}
+        dynamicCurations={dynamicCurations}
+      />
+    </>
+  )
 }

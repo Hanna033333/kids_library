@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import PageHeader from '@/components/PageHeader'
 
 export const metadata: Metadata = {
-    title: '마케팅 정보 수신 동의 | 책자리',
+    title: '마케팅 정보 수신 동의',
     description: '책자리 이벤트 및 마케팅 정보 수신 동의 안내입니다.',
 }
 

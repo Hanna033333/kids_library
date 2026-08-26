@@ -88,37 +88,37 @@ def get_book_reviews(book_id: int):
                 "created_at": str(r.get("created_at", "")),
             })
 
-        # 리뷰가 아직 없는 경우 UI 샘플 확인용 데모 데이터 제공
+        # 리뷰가 아직 없는 경우 UI 샘플 확인용 데모 데이터 제공 (구체적 육아 에피소드 & 선택 이유 반영)
         if not formatted_reviews:
             formatted_reviews = [
                 {
                     "id": f"sample-1-{book_id}",
                     "book_id": book_id,
-                    "nickname": "서아맘",
+                    "nickname": "지혜로운책벌레",
                     "child_age": "4세",
                     "rating": 5.0,
                     "selected_badges": ["🎨 그림체가 좋아요", "⭐ 우리 아이 최애 책이에요"],
-                    "content": "자기 전에 읽어주기 딱 좋은 책이에요. 그림체도 너무 따뜻하고 아이가 밤마다 이 책만 읽어달라고 가져와요 ☺️",
+                    "content": "어린이집 등원 거부와 분리 불안이 심해서 고민 끝에 선택한 책인데 대성공이에요! '엄마는 언제나 다시 돌아와'라는 대목을 밤마다 읽어주니 아이 마음이 한결 편안해졌는지 이제 등원할 때 웃으며 인사해 줍니다 😭",
                     "created_at": "2026-08-14T10:00:00Z",
                 },
                 {
                     "id": f"sample-2-{book_id}",
                     "book_id": book_id,
-                    "nickname": "민준아빠",
+                    "nickname": "다정한이야기꾼",
                     "child_age": "5세",
                     "rating": 5.0,
                     "selected_badges": ["📖 글밥이 적당해요", "💡 새로운 상상력을 자극해요"],
-                    "content": "어둠에 대한 무서움을 편안하게 다독여주는 이야기라 정말 만족스럽습니다. 추천해요!",
+                    "content": "요즘 자기 전에 '어둠 속에 몬스터가 있다'며 무서워하길래 이 책을 사서 읽어줬어요. 어둠을 귀여운 친구로 바라보는 주인공 모습을 보더니 이제는 스스로 불 끄고 침대에 누워요!",
                     "created_at": "2026-08-13T15:30:00Z",
                 },
                 {
                     "id": f"sample-3-{book_id}",
                     "book_id": book_id,
-                    "nickname": "지우맘",
+                    "nickname": "따스한책부엉이",
                     "child_age": "3세",
-                    "rating": 4.0,
-                    "selected_badges": ["👏 아이 집중력이 엄청 높아져요"],
-                    "content": "잔잔한 감성이 돋보이는 양서입니다. 아이가 유심히 집중해서 보네요.",
+                    "rating": 4.5,
+                    "selected_badges": ["👏 아이 집중력이 엄청 높아져요", "😆 깔깔 웃으며 무한 반복 요청해요"],
+                    "content": "배변 훈련 2주 차에 응가하는 걸 자꾸 무서워해서 들였는데, 주인공이 기저귀 떼고 변기와 친해지는 과정을 보면서 아이 자신감이 부쩍 커졌어요. 덕분에 오늘 드디어 변기 성공했습니다!",
                     "created_at": "2026-08-12T09:15:00Z",
                 },
             ]
@@ -154,7 +154,7 @@ def get_book_reviews(book_id: int):
                 {
                     "id": f"sample-1-{book_id}",
                     "book_id": book_id,
-                    "nickname": "서아맘",
+                    "nickname": "지혜로운책벌레",
                     "child_age": "4세",
                     "rating": 5.0,
                     "selected_badges": ["🎨 그림체가 좋아요", "⭐ 우리 아이 최애 책이에요"],
@@ -164,7 +164,7 @@ def get_book_reviews(book_id: int):
                 {
                     "id": f"sample-2-{book_id}",
                     "book_id": book_id,
-                    "nickname": "민준아빠",
+                    "nickname": "다정한이야기꾼",
                     "child_age": "5세",
                     "rating": 5.0,
                     "selected_badges": ["📖 글밥이 적당해요", "💡 새로운 상상력을 자극해요"],
@@ -174,7 +174,7 @@ def get_book_reviews(book_id: int):
                 {
                     "id": f"sample-3-{book_id}",
                     "book_id": book_id,
-                    "nickname": "지우맘",
+                    "nickname": "따스한책부엉이",
                     "child_age": "3세",
                     "rating": 4.0,
                     "selected_badges": ["👏 아이 집중력이 엄청 높아져요"],

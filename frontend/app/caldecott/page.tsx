@@ -8,7 +8,7 @@ import { getHighResImageUrl } from '@/lib/utils/image'
 export const metadata: Metadata = {
     metadataBase: new URL("https://checkjari.com"),
     alternates: { canonical: '/caldecott' },
-    title: "칼데콧 수상작 (2000-2026) - 책자리",
+    title: "칼데콧 수상작 (2000-2026)",
     description: "2000년부터 2026년까지 칼데콧 메달을 수상한 세계 최고의 어린이 그림책 목록입니다. 판교도서관 청구기호와 대출 정보를 확인하세요.",
     keywords: "칼데콧상, Caldecott Medal, 어린이 그림책, 수상작, 추천 도서, 판교도서관",
     openGraph: {
