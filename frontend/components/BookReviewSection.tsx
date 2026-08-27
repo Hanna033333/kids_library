@@ -471,7 +471,7 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
                     return (
                       <span
                         key={badge}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-white text-gray-700 rounded-full text-[13px] font-medium border border-gray-200 shrink-0"
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-white text-gray-700 rounded-full text-[13px] font-bold border border-gray-200 shrink-0"
                       >
                         {badgeObj?.emoji} {badgeObj?.label || badge}
                       </span>
