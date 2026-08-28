@@ -45,6 +45,17 @@ export default function SetPasswordPage() {
         }
     }, [authUser])
 
+    // 닉네임 유효성 검사
+    const nicknameValidation = useMemo(() => {
+        const trimmed = nickname.trim()
+        return {
+            isLengthValid: trimmed.length >= 2 && trimmed.length <= 10,
+            isFormatValid: /^[가-힣a-zA-Z0-9]+$/.test(trimmed)
+        }
+    }, [nickname])
+
+    const isNicknameValid = nicknameValidation.isLengthValid && nicknameValidation.isFormatValid
+
     // 실시간 유효성 검사 상태
     const validation = useMemo(() => {
         return {
@@ -56,6 +67,7 @@ export default function SetPasswordPage() {
     }, [password, confirmPassword])
 
     const isValid =
+        isNicknameValid &&
         validation.hasLetter &&
         validation.hasNumber &&
         validation.isLengthValid &&
@@ -178,15 +190,43 @@ export default function SetPasswordPage() {
                         className="w-14 h-auto mb-5"
                     />
                     <h1 className="text-[24px] font-bold text-gray-900 leading-tight mb-2 tracking-tight">
-                        비밀번호 설정
+                        닉네임 · 비밀번호 설정
                     </h1>
                     <p className="text-gray-500 text-[14px] leading-relaxed">
-                        책자리에서 사용할 비밀번호를 설정해 주세요
+                        책자리에서 사용할 정보를 설정해 주세요
                     </p>
                 </div>
 
                 {/* 입력 카드 영역 */}
                 <form onSubmit={(e) => e.preventDefault()} autoComplete="off" className="w-full bg-gray-50/50 rounded-[24px] p-6 mb-8 border border-gray-100/50 space-y-6">
+                    {/* 닉네임 입력 */}
+                    <div className="space-y-2">
+                        <label className="block text-xs font-bold text-gray-500 px-1">
+                            닉네임
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="닉네임 입력 (2~10자)"
+                            value={nickname}
+                            onChange={(e) => setNickname(e.target.value.replace(/\s/g, ''))}
+                            maxLength={10}
+                            autoComplete="nickname"
+                            className="w-full h-[54px] px-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-primary focus:border-brand-primary transition-all text-[16px]"
+                        />
+                        <div className="flex flex-wrap gap-x-3 gap-y-1.5 px-1 pt-1">
+                            <div className="flex items-center gap-1">
+                                <Check className={`w-3.5 h-3.5 stroke-[2] ${nicknameValidation.isLengthValid ? 'text-green-500' : 'text-gray-200'}`} />
+                                <span className={`text-[12px] ${nicknameValidation.isLengthValid ? 'text-green-600 font-medium' : 'text-gray-400'}`}>2~10자 이내</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <Check className={`w-3.5 h-3.5 stroke-[2] ${nicknameValidation.isFormatValid ? 'text-green-500' : 'text-gray-200'}`} />
+                                <span className={`text-[12px] ${nicknameValidation.isFormatValid ? 'text-green-600 font-medium' : 'text-gray-400'}`}>한글·영문·숫자만</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="h-[1px] bg-gray-100 w-full" />
+
                     {/* 비밀번호 입력 */}
                     <div className="space-y-2">
                         <label className="block text-xs font-bold text-gray-500 px-1">
