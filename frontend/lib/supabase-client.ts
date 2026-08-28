@@ -31,6 +31,11 @@ export async function getBooksFromSupabase(
         // is_hidden 컬럼이 없으면 무시
     }
 
+    // pangyo_callno가 있는 책만 표시 (백엔드 services/search.py와 동일한 필터).
+    // 이 필터가 빠져 있으면 검색어를 입력했을 때(백엔드 /api/books/search 경유)와
+    // 입력하지 않았을 때(이 함수 경유) 노출되는 도서 목록이 서로 달라집니다.
+    query = query.not('pangyo_callno', 'is', null).neq('pangyo_callno', '없음');
+
     // 연령 필터 — DB 표준화 후 단순 .eq() 쿼리
     if (filters?.age) {
         const ageKey = filters.age === 'teen' ? '13+' : filters.age;

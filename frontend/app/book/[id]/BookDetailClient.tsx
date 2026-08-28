@@ -30,6 +30,7 @@ import ProfileDropdown from '@/components/ProfileDropdown'
 import { Button } from '@/components/ui/Button'
 import PageHeader from '@/components/PageHeader'
 import { getAgeDisplayLabel } from '@/lib/utils/age'
+import { sanitizeDescriptionHtml } from '@/lib/utils/sanitize-html'
 import Image from 'next/image'
 import BookReviewSection from '@/components/BookReviewSection'
 import { getOptimizedImageUrl } from '@/lib/utils/image'
@@ -439,7 +440,7 @@ export default function BookDetailClient({
                                     <div className="absolute top-0 right-4 -translate-y-1/2 px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold rounded-full shadow-sm">
                                         전문 사서의 추천 포인트
                                     </div>
-                                    <p className="text-[14.5px] text-gray-700 font-bold leading-relaxed tracking-tight">
+                                    <p className="text-[14.5px] text-gray-700 font-normal leading-relaxed tracking-tight">
                                         “{book.curation_note}”
                                     </p>
                                 </div>
@@ -604,7 +605,7 @@ export default function BookDetailClient({
                 <div className="text-gray-600 leading-relaxed text-sm md:text-base font-medium">
                     {book.description ? (
                         <div
-                            dangerouslySetInnerHTML={{ __html: book.description }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeDescriptionHtml(book.description) }}
                             className="prose prose-sm max-w-none prose-p:mb-3 prose-strong:text-brand-primary"
                         />
                     ) : (

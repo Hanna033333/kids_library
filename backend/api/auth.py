@@ -52,8 +52,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     """JWT 토큰에서 현재 사용자 정보 추출"""
     token = credentials.credentials
     
-    # QA 전용 테스터 토큰 처리
-    if token == "TEST_QA_TOKEN":
+    # QA 전용 테스터 토큰 처리 (development 모드이거나 모의 환경이 명시적으로 켜졌을 때만 활성화)
+    is_qa_allowed = os.getenv("ENV") == "development" or os.getenv("ALLOW_QA_MOCK") == "true"
+    if token == "TEST_QA_TOKEN" and is_qa_allowed:
         from types import SimpleNamespace
         logger.info("QA Tester Token detected")
         return SimpleNamespace(

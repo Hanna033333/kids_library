@@ -36,15 +36,16 @@ export async function getBooksFromServer({
     // but .or syntax is safer to just apply always.
     query = query.or('is_hidden.is.null,is_hidden.eq.false');
 
+    // pangyo_callno가 있는 책만 표시 (백엔드 services/search.py, lib/supabase-client.ts와 동일한 필터)
+    query = query.not('pangyo_callno', 'is', null).neq('pangyo_callno', '없음');
+
     if (filters?.age) {
         const dbAgeValues = AGE_MAP[filters.age];
         if (dbAgeValues) {
             query = query.in('age', dbAgeValues);
         }
     }
-    if (filters?.category && filters.category !== '전체') {
-        query = query.eq('category', filters.category);
-    }
+    // category 필터링은 큐레이션 태그 체계로 대체되어 제거됨 (services/search.py, supabase-client.ts와 동일)
     // Curation 필터
     if (filters?.curation) {
         const dbCurationTag = resolveDbCurationTag(filters.curation);

@@ -65,6 +65,17 @@ export interface ReviewData {
   content: string | null;
   is_ai_generated: boolean;
   created_at: string;
+  user_id: string | null;
+}
+
+export interface RatedBook extends Book {
+  review_id: string;
+  rating: number;
+  created_at: string;
+}
+
+export interface MyReviewsResponse {
+  rated_books: RatedBook[];
 }
 
 export interface ReviewsResponse {

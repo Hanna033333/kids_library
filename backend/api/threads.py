@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import uuid
 import time
@@ -44,6 +45,15 @@ def verify_action_signature(action: str, feed_id: int, signature: str) -> bool:
     import hmac
     expected = sign_action(action, feed_id)
     return hmac.compare_digest(expected, signature)
+
+_SIGNATURE_FORMAT_RE = re.compile(r"^[0-9a-f]{64}$")
+
+def _validate_signature_format(signature: str) -> None:
+    """signature 쿼리 파라미터가 HMAC-SHA256 hexdigest 형식(64자리 hex)인지 검증합니다.
+    이 값은 승인 화면 HTML(<script> 내부)에 그대로 삽입되므로, 실제 서명 검증(compare_digest) 전에
+    형식부터 걸러내지 않으면 임의 문자열이 스크립트 컨텍스트에 반사되어 XSS로 이어질 수 있습니다."""
+    if not signature or not _SIGNATURE_FORMAT_RE.match(signature):
+        raise HTTPException(status_code=400, detail="유효하지 않은 서명 형식입니다.")
 
 def get_backend_url() -> str:
     """안전한 백엔드 URL을 반환합니다. 임시 터널 주소(loca.lt, loca.it 등)는 상용 주소로 자동 교체합니다."""
@@ -609,6 +619,7 @@ async def publish_approved_feed(feed_id: int):
 @router.get("/approve-text", response_class=HTMLResponse)
 async def approve_text_view(request: Request, feed_id: int, signature: str):
     """1단계 승인 확인 화면을 렌더링합니다. (봇 링크 크롤링에 무해함)"""
+    _validate_signature_format(signature)
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -750,6 +761,7 @@ async def approve_text_submit(req: ApproveSubmitRequest):
 @router.get("/approve", response_class=HTMLResponse)
 async def approve_feed_view(request: Request, feed_id: int, signature: str):
     """2단계 최종 승인 확인 화면을 렌더링합니다."""
+    _validate_signature_format(signature)
     html_content = f"""
     <!DOCTYPE html>
     <html>

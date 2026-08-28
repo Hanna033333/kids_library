@@ -1,4 +1,4 @@
-import type { Book, BooksResponse, LoanStatus, ReviewsResponse } from "./types";
+import type { Book, BooksResponse, LoanStatus, ReviewsResponse, MyReviewsResponse } from "./types";
 
 const isLocal = typeof window !== 'undefined'
   ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -153,14 +153,74 @@ export async function createBookReview(
     rating: number;
     selected_badges: string[];
     content?: string;
-  }
+  },
+  accessToken: string
 ): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/api/books/${bookId}/reviews`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`,
+    },
     body: JSON.stringify(review),
   });
   if (!response.ok) {
-    throw new Error("Failed to create review");
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to create review");
   }
+}
+
+export async function updateBookReview(
+  bookId: number,
+  reviewId: string,
+  update: {
+    child_age?: string;
+    rating?: number;
+    selected_badges?: string[];
+    content?: string;
+  },
+  accessToken: string
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/books/${bookId}/reviews/${reviewId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(update),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to update review");
+  }
+}
+
+export async function deleteBookReview(
+  bookId: number,
+  reviewId: string,
+  accessToken: string
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/books/${bookId}/reviews/${reviewId}`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+    },
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to delete review");
+  }
+}
+
+export async function getMyRatedBooks(accessToken: string): Promise<MyReviewsResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/books/my-reviews`, {
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+    },
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to fetch rated books");
+  }
+  return response.json();
 }

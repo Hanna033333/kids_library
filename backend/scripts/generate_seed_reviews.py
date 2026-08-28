@@ -65,31 +65,49 @@ def generate_reviews_for_book(book: dict, count: int = 4) -> Optional[List[dict]
 
     title = book.get("title", "")
     author = book.get("author", "")
-    age = book.get("age", "")
+    age = book.get("age", "") or "전연령"
     category = book.get("category", "")
     curation_tag = book.get("curation_tag", "")
-    description = (book.get("description") or "정보 없음")[:300]
+    description = (book.get("description") or "정보 없음")[:400]
 
-    prompt = f"""당신은 3040 한국 부모님들의 진짜 육아 경험을 담아 생생한 도서 후기를 작성하는 전문가입니다.
-다음 어린이 도서의 주제/줄거리 맥락에 연관하여, 부모가 이 책을 들인 이유와 아이의 반응이 담긴 후기 {count}개를 JSON 배열로 생성해주세요.
+    # 연령대별 작성 지침 및 child_age 범위 정의
+    if any(k in age for k in ["0-3", "0~3", "영아", "0세", "1세", "2세", "3세"]):
+        age_guide = """- 이 책은 **0~3세 영아 추천 도서**입니다.
+- **child_age 범위**: "1세", "2세", "3세" 중 선택.
+- **후기 소재**: 촉감/사운드/보드북 반응, 첫 인지/생활습관(배변, 이닦기, 수면), 부모와의 교감, 오감 자극 등."""
+    elif any(k in age for k in ["8-12", "8~12", "초등", "8세", "9세", "10세", "11세", "12세"]):
+        age_guide = """- 이 책은 **8~12세 초등학생 추천 도서**입니다.
+- **child_age 범위**: "8세", "9세", "10세", "11세", "12세" 중 선택. (상황에 따라 "초등1", "초등3" 등)
+- **후기 소재**: 초등 학교생활, 글밥과 독해력, 친구 관계/학교 고민, 교과 연계, 생각의 깊이 확장, 독서록 작성, 자아 성찰 등.
+- 🚨 **[절대 금지]**: 어린이집 등원, 아기 보드북, 배변 훈련, 아기 젖병 등 0~4세 영아 관련 소재를 절대로 포함하지 마세요!"""
+    else:
+        age_guide = """- 이 책은 **4~7세 유아 추천 도서**입니다.
+- **child_age 범위**: "4세", "5세", "6세", "7세" 중 선택.
+- **후기 소재**: 유치원/어린이집 적응, 사회성, 상상력, 호기심, 옛이야기 감상, 아이와의 대화거리 등."""
+
+    prompt = f"""당신은 3040 한국 부모님들의 진짜 육아/독서 지도 경험을 담아 생생한 도서 후기를 작성하는 전문가입니다.
+다음 어린이 도서의 주제/줄거리 맥락과 추천 연령에 정확히 연관하여, 부모가 이 책을 들인 이유와 아이의 반응이 담긴 후기 {count}개를 JSON 배열로 생성해주세요.
 
 ## 도서 정보
 - 제목: {title}
 - 저자: {author}
-- 연령: {age}
+- 추천 연령: {age}
 - 카테고리: {category}
 - 큐레이션 태그: {curation_tag}
 - 책 줄거리/소재 참고: {description}
 
+## 연령대별 필수 지침 (반드시 준수)
+{age_guide}
+
 ## 핵심 작성 규칙 (반드시 엄수)
-1. **줄거리 직접 요약 금지 & 줄거리 맥락 연관 (최우선)**:
-   - ❌ 리뷰에 책 줄거리나 스포일러를 억지로 설명하거나 요약하지 마세요. (예: "이 책은 주인공이 소금이 나오는 맷돌을 바다에 빠뜨린 이야기입니다" - 금지)
-   - ⭕ 대신 **이 책의 줄거리/소재/주제(예: 탐욕, 거짓말, 어둠, 떼쓰기, 우정 등 책 내용의 맥락)**와 **자연스럽게 연관된 실제 부모의 육아 고민이나 선택 이유, 아이의 반응**을 써주세요.
-2. **단편 후기 지양**:
-   - 단순히 "좋아요", "잘 봐요" 같은 단순 한줄평보다는 80~160자 분량으로 실제 부모의 구체적 맥락이 담기도록 하세요.
-3. **톤앤매너**: 3040 부모의 솔직한 구어체 (예: "반신반의하며 들였는데 대성공", "아이 마음 다독여주기 딱이에요", "요즘 최애 책 됐어요 ㅋㅋ")
-4. 각 리뷰마다 rating(4.0~5.0 사이 소수점 1자리), selected_badges(아래 10종 중 1~3개 선택), content(후기 본문)를 포함하세요.
-5. child_age는 도서 연령에 맞춰 "2세"~"8세" 등으로 자연스럽게 배분하세요.
+1. **도서 추천 연령 및 줄거리/소재에 100% 매칭 (최우선)**:
+   - 8~12세 초등 도서에 영아용(등원, 배변 훈련, 젖병 등) 이야기를 쓰지 마세요.
+   - 책의 실제 소재(예: 고아원, 가족사랑, 우주, 전래동화, 공룡 등)와 연관된 부모의 계기와 아이의 실제 반응을 적어주세요.
+2. **줄거리 직접 요약 금지**:
+   - ❌ "이 책은 주인공 누구와 누구의 스토리입니다" 식의 줄거리 요약 금지.
+   - ⭕ 부모로서 이 책을 읽혀주었을 때 아이의 반응과 대화, 변화된 부분에 집중하세요.
+3. **간결하고 명확한 1~2문장 분량**: 40~80자 내외의 간결한 구어체 톤앤매너.
+4. 각 리뷰마다 rating(4.0~5.0 사이 소수점 1자리), child_age(위 연령 지침에 따름), selected_badges(아래 10종 중 1~3개 선택), content(후기 본문)를 포함하세요.
 
 ## 선택 가능한 뱃지 10종 (이 목록에서만 선택)
 {json.dumps(BADGE_LIST, ensure_ascii=False)}
@@ -189,44 +207,68 @@ def insert_reviews(book_id: int, book_title: str, reviews: List[dict]):
 
 
 def main():
-    """홈 화면 큐레이션 및 대표 인기 도서 50권에 대해 불균등 시드 리뷰 생성 및 적재"""
+    """홈 화면 큐레이션 및 대표 인기 도서들에 대해 시드 리뷰 생성 및 적재"""
     import argparse
     
     parser = argparse.ArgumentParser(description="AI 시드 리뷰 자동 생성")
-    parser.add_argument("--limit", type=int, default=50, help="처리할 도서 수 제한 (기본값: 50권)")
+    parser.add_argument("--limit", type=int, default=100, help="처리할 도서 수 제한 (기본값: 100권)")
     parser.add_argument("--skip-existing", action="store_true", default=False, help="이미 리뷰가 있는 도서 건너뛰기")
+    parser.add_argument("--clean-existing", action="store_true", default=False, help="기존 AI 생성 시드 리뷰 전체 삭제 후 재생성")
     parser.add_argument("--dry-run", action="store_true", help="DB 삽입 없이 생성만 테스트")
     args = parser.parse_args()
     
     if not GEMINI_API_KEY:
         logger.error("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.")
         sys.exit(1)
-    
-    # 큐레이션 도서 및 인기 도서 목록 조회
-    logger.info("큐레이션 및 인기 도서 목록 조회 중...")
-    result = supabase.table("childbook_items")\
-        .select("id, title, author, age, category, curation_tag, national_loan_count")\
-        .not_.is_("curation_tag", "null")\
-        .order("national_loan_count", desc=True)\
-        .limit(args.limit)\
-        .execute()
-    
-    books = result.data or []
-    
-    # 큐레이션 도서가 50권 미만일 경우 일반 인기 도서 보충
-    if len(books) < args.limit:
-        needed = args.limit - len(books)
-        existing_ids = [b["id"] for b in books]
-        more_res = supabase.table("childbook_items")\
-            .select("id, title, author, age, category, curation_tag, national_loan_count")\
-            .not_.in_("id", existing_ids)\
-            .order("national_loan_count", desc=True)\
-            .limit(needed)\
-            .execute()
-        if more_res.data:
-            books.extend(more_res.data)
 
-    logger.info(f"타겟 도서: 총 {len(books)}권 선별 완료")
+    if args.clean_existing and not args.dry_run:
+        logger.info("🧹 기존 AI 생성 시드 리뷰 전체 삭제 진행 중...")
+        try:
+            # is_ai_generated = true 인 AI 시드 리뷰만 삭제 (진짜 유저 리뷰 보호)
+            del_res = supabase.table("book_reviews").delete().eq("is_ai_generated", True).execute()
+            logger.info("✅ AI 생성 시드 리뷰 전체 삭제 완료 (유저 리뷰 보존)")
+        except Exception as e:
+            logger.error(f"기존 리뷰 삭제 중 오류: {e}")
+    
+    # 1. 큐레이션 및 인기 도서 목록 균형 추출
+    logger.info("큐레이션 및 연령별 대표 도서 목록 추출 중 (Book 8034 필수 포함)...")
+    books_map = {}
+
+    # Book 8034 (사용자가 지적한 8-12세 도서 필수 포함)
+    b8034_res = supabase.table("childbook_items").select("id, title, author, age, category, curation_tag, national_loan_count, description").eq("id", 8034).execute()
+    if b8034_res.data:
+        books_map[8034] = b8034_res.data[0]
+
+    # (1) 대표 큐레이션 인기 도서 40권
+    res1 = supabase.table("childbook_items").select("id, title, author, age, category, curation_tag, national_loan_count, description")\
+        .not_.is_("curation_tag", "null")\
+        .order("national_loan_count", desc=True).limit(40).execute()
+    for b in (res1.data or []):
+        books_map[b["id"]] = b
+
+    # (2) 8~12세 (초등) 인기 도서 20권
+    res2 = supabase.table("childbook_items").select("id, title, author, age, category, curation_tag, national_loan_count, description")\
+        .eq("age", "8-12").order("national_loan_count", desc=True).limit(20).execute()
+    for b in (res2.data or []):
+        books_map[b["id"]] = b
+
+    # (3) 0~3세 (영아) 인기 도서 15권
+    res3 = supabase.table("childbook_items").select("id, title, author, age, category, curation_tag, national_loan_count, description")\
+        .eq("age", "0-3").order("national_loan_count", desc=True).limit(15).execute()
+    for b in (res3.data or []):
+        books_map[b["id"]] = b
+
+    # (4) 4~7세 (유아) 인기 도서 25권
+    res4 = supabase.table("childbook_items").select("id, title, author, age, category, curation_tag, national_loan_count, description")\
+        .eq("age", "4-7").order("national_loan_count", desc=True).limit(25).execute()
+    for b in (res4.data or []):
+        books_map[b["id"]] = b
+
+    books = list(books_map.values())
+    if args.limit and len(books) > args.limit:
+        books = books[:args.limit]
+
+    logger.info(f"타겟 도서: 총 {len(books)}권 선별 완료 (Book 8034 포함 여부: {8034 in books_map})")
     
     success_count = 0
     fail_count = 0
@@ -235,14 +277,20 @@ def main():
     for i, book in enumerate(books, 1):
         book_id = book["id"]
         title = book.get("title", f"ID:{book_id}")
+
+        if args.skip_existing and not args.clean_existing:
+            check_exist = supabase.table("book_reviews").select("id").eq("book_id", book_id).execute()
+            if check_exist.data and len(check_exist.data) > 0:
+                logger.info(f"[{i}/{len(books)}] {title} - 이미 리뷰 존재하여 스킵")
+                continue
         
-        # 불균등 수량 배분: 상위 15권은 5~6개, 나머지 35권은 2~3개 생성
-        if i <= 15:
-            target_review_count = random.randint(5, 6)
+        # 상위 도서는 4~5개, 나머지는 2~3개 생성
+        if i <= 20:
+            target_review_count = random.randint(4, 5)
         else:
             target_review_count = random.randint(2, 3)
             
-        logger.info(f"[{i}/{len(books)}] {title} 리뷰 {target_review_count}개 생성 중...")
+        logger.info(f"[{i}/{len(books)}] {title} (연령: {book.get('age')}) 리뷰 {target_review_count}개 생성 중...")
         
         reviews = generate_reviews_for_book(book, count=target_review_count)
         
@@ -253,7 +301,7 @@ def main():
         if args.dry_run:
             logger.info(f"  [DRY RUN] 생성된 리뷰 {len(reviews)}개:")
             for r in reviews:
-                logger.info(f"    ⭐{r.get('rating')} | {r.get('content', '')[:60]}...")
+                logger.info(f"    ⭐{r.get('rating')} | [{r.get('child_age')}] {r.get('content', '')[:60]}...")
             success_count += 1
         else:
             inserted = insert_reviews(book_id, title, reviews)
@@ -266,7 +314,7 @@ def main():
                 fail_count += 1
         
         # API Rate Limit 방지
-        time.sleep(1.2)
+        time.sleep(1.0)
     
     logger.info(f"\n===== 시드 리뷰 적재 작업 완료 =====")
     logger.info(f"성공 도서: {success_count}권 | 실패: {fail_count}권 | 총 생성 및 적재된 리뷰: {total_inserted}개")

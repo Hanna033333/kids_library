@@ -55,26 +55,33 @@ app.add_middleware(
         "http://localhost:3001",
         "http://127.0.0.1:3001",
     ],
-    # Starlette CORSMiddleware regex: 모든 Vercel Preview 및 상용 도메인 허용
-    allow_origin_regex=r"^(https://kids-library-.*\.vercel\.app|https://.*-hannas-projects.*\.vercel\.app|https://(www\.)?checkjari\.com)$",
+    # Starlette CORSMiddleware regex: Vercel Preview 및 상용 도메인 허용
+    # 기존에는 "kids-library-*.vercel.app"(어느 팀이든 이 이름으로 프로젝트를 만들면 매치)와
+    # "*-hannas-projects*.vercel.app"(이 팀 소속이면 프로젝트명 무관하게 매치)를 독립적으로
+    # 허용해, 제3자가 "kids-library-xxx.vercel.app" 프로젝트를 만드는 것만으로도
+    # allow_credentials=True 상태에서 자격증명 포함 CORS 요청이 통과할 수 있었습니다.
+    # 이 프로젝트(kids-library)의 실제 팀(hannas-projects) 소속 프리뷰 URL만 매치하도록
+    # 두 조건을 하나의 패턴으로 결합해 범위를 좁혔습니다.
+    allow_origin_regex=r"^(https://kids-library-[a-zA-Z0-9-]*-hannas-projects\.vercel\.app|https://(www\.)?checkjari\.com)$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Request Validation (422) 에러 로그 출력을 위한 전역 핸들러 추가
+# Request Validation (422) 에러 로그 출력을 위한 전역 핸들러
+# 주의: 요청 본문 전체를 로그/응답에 그대로 남기면 회원가입/프로필 수정 같은 요청의
+# 이메일·닉네임 등 개인정보가 Render 로그와 클라이언트 응답에 평문으로 노출됩니다.
+# 어떤 필드가, 어떤 타입 에러로 실패했는지만 남기고 원본 값은 남기지 않습니다.
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
-    print("⚠️ Request Validation Error Detected!")
-    try:
-        body = await request.body()
-        print(f"👉 Request Body: {body.decode('utf-8')}")
-    except Exception as e:
-        print(f"❌ Failed to read request body: {e}")
-    print(f"👉 Errors Details: {exc.errors()}")
+    error_summaries = [
+        {"field": ".".join(str(p) for p in err.get("loc", [])), "type": err.get("type")}
+        for err in exc.errors()
+    ]
+    print(f"⚠️ Request Validation Error: {request.method} {request.url.path} -> {error_summaries}")
     return JSONResponse(
         status_code=422,
-        content={"detail": exc.errors(), "body": str(exc.body)},
+        content={"detail": exc.errors()},
     )
 
 # 라우터 등록

@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase'
 import { getBooksByTag, getPopularBooksByAge, getBooksByAuthor } from '@/lib/home-api'
 import { getAgeGroupKey } from '@/lib/utils/age'
 import { getFirstCurationTag } from '@/lib/utils/curation-filter'
+import { sanitizeDescriptionHtml } from '@/lib/utils/sanitize-html'
 
 interface Props {
     params: Promise<{ id: string }>
@@ -234,7 +235,7 @@ export default async function BookDetailPage({ params }: Props) {
                     {book.description && (
                         <section>
                             <h2>도서 상세 소개</h2>
-                            <div dangerouslySetInnerHTML={{ __html: book.description }} />
+                            <div dangerouslySetInnerHTML={{ __html: sanitizeDescriptionHtml(book.description) }} />
                         </section>
                     )}
                 </article>

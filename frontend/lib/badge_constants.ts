@@ -33,18 +33,20 @@ export function findBadge(full: string): Badge | undefined {
   const exact = BADGES.find((b) => b.full === full);
   if (exact) return exact;
 
-  // 기존/과거 뱃지 텍스트 유연 매핑
-  if (full.includes('그림체')) return BADGES[0];
-  if (full.includes('글밥')) return BADGES[1];
-  if (full.includes('표현') || full.includes('상상력') || full.includes('창의력')) return BADGES[2];
-  if (full.includes('습관') || full.includes('지식') || full.includes('대화')) return BADGES[3];
-  if (full.includes('교훈') || full.includes('구성') || full.includes('위안')) return BADGES[4];
+  // 구버전(이전 텍스트) → 신버전 뱃지 폴백 매핑
+  // 도서 특징 계열
+  if (full.includes('그림체')) return BADGES[0];      // 그림체가 예뻐요
+  if (full.includes('글밥')) return BADGES[1];         // 글밥이 적당해요
+  if (full.includes('문장') || full.includes('상상력') || full.includes('창의력') || full.includes('표현')) return BADGES[2]; // 문장이 아름다워요
+  if (full.includes('습관') || full.includes('대화거리') || full.includes('지식')) return BADGES[3]; // 바른 습관을 도와줘요
+  if (full.includes('교훈') || full.includes('위안') || full.includes('구성') || full.includes('꼭 읽어')) return BADGES[4]; // 교훈과 위안을 줘요
 
-  if (full.includes('최애')) return BADGES[5];
-  if (full.includes('웃으며') || full.includes('반복')) return BADGES[6];
-  if (full.includes('집중') || full.includes('몰입')) return BADGES[7];
-  if (full.includes('혼자서도') || full.includes('펼쳐')) return BADGES[8];
-  if (full.includes('질문') || full.includes('호기심')) return BADGES[9];
+  // 아이 반응 계열
+  if (full.includes('최애')) return BADGES[5];         // 아이 최애 책이에요
+  if (full.includes('웃으') || full.includes('반복') || full.includes('웃고')) return BADGES[6]; // 깔깔 웃고 좋아해요
+  if (full.includes('집중') || full.includes('몰입')) return BADGES[7]; // 몰입해서 집중해요
+  if (full.includes('혼자서도') || full.includes('펼쳐')) return BADGES[8]; // 혼자서도 잘 봐요
+  if (full.includes('질문') || full.includes('호기심')) return BADGES[9]; // 질문을 많이 해요
 
   return undefined;
 }

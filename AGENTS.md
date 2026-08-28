@@ -31,6 +31,8 @@
 @.agent/skills/development/loan_status/SKILL.md
 @.agent/skills/development/image_optimization/SKILL.md
 @.agent/skills/development/SEO/SKILL.md
+@.agent/skills/development/back_route/SKILL.md
+@.agent/skills/development/library_expansion/SKILL.md
 
 ### Design
 @.agent/skills/design/ui_system/SKILL.md
