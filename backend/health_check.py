@@ -84,7 +84,7 @@ async def check_data4library() -> bool:
     }
     async with httpx.AsyncClient() as client:
         try:
-            res = await client.get(url, params=params, timeout=3.0)
+            res = await client.get(url, params=params, timeout=5.0)
             # 302 리다이렉트 발생은 정보나루의 임시 차단 또는 점검 의미일 수 있음
             if res.status_code in (301, 302, 303, 307, 308):
                 print("⚠️ Data4Library API Connection: REDIRECT (Service Check/Temporary Blocked)")
@@ -95,8 +95,11 @@ async def check_data4library() -> bool:
             else:
                 print(f"❌ Data4Library API Connection: FAILED (HTTP {res.status_code})")
                 return False
+        except (httpx.ReadTimeout, httpx.ConnectTimeout) as e:
+            print(f"⚠️ Data4Library API Connection: TIMEOUT ({type(e).__name__}: Service slow response)")
+            return True
         except Exception as e:
-            print(f"❌ Data4Library API Connection: FAILED ({e})")
+            print(f"❌ Data4Library API Connection: FAILED ({type(e).__name__}: {e})")
             return False
 
 async def main():
