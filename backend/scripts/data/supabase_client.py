@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 env_path = Path(__file__).parent / ".env"
+if not env_path.exists():
+    env_path = Path(__file__).resolve().parents[2] / ".env"
 
 # .env 파일에서 직접 읽기 (dotenv 실패 대비)
 env_vars = {}

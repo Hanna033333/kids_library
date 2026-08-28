@@ -91,12 +91,18 @@ trigger: always_on
     - 환경변수가 없거나 임시 터널 주소가 들어오는 경우 기본 fallback 주소는 항상 상용 백엔드 도메인(`https://api.checkjari.com`)으로 자동 대체되어야 하며, 로컬 개발 환경(`localhost`, `127.0.0.1`)인 경우에만 텔레그램 인라인 버튼 허용을 위해 `lvh.me` 루프백 도메인으로 치환한다.
 38. **UI 시스템 가이드 준수**:
     - 모든 프론트엔드 UI 컴포넌트, 컬러 및 스타일링 개발 시 `frontend/public/design-system.html` (`http://localhost:3000/design-system.html`)의 디자인 가이드 규격을 단일 기준으로 준수하여 개발한다.
+39. **환경변수 파일 단일화 (Single Source of Truth)**:
+    - 백엔드 영역의 모든 환경변수는 `backend/.env` 파일 단 하나에서 통합 관리하며, `backend/scripts/data/` 등 하위 폴더에 별도의 `.env` 파일을 복사해 두지 않는다.
+    - 데이터 처리 및 AI 스크립트 작성 시 `backend/.env` 경로를 자동으로 탐색하도록 상위 경로 폴백(`Path(__file__).resolve().parents[2] / ".env"`) 처리를 적용한다.
+40. **AWS 환경변수 수정 안내 트러블슈팅**:
+    - 사용자 화면/로그상 이미 AWS SSH 터미널에 접속된 상태(`ubuntu@...`)인 경우 로컬 `scp` 명령어 안내를 지양하고, 서버 내부 직수정(`nano ~/kids_library/backend/.env`) 후 `sudo systemctl restart fastapi.service` 안내를 우선 제공한다.
 
 ## 🔒 보안 가이드
 1. **환경변수 관리**
-   - 모든 API 키, DB 접속 정보는 `.env.local` (프론트엔드) 또는 `.env` (백엔드)에 저장
+   - 모든 API 키, DB 접속 정보는 `.env.local` (프론트엔드) 또는 `.env` (백엔드 메인 `backend/.env`)에 저장
    - `.gitignore`에 환경변수 파일 등록 필수 (`.env*` 패턴)
-   - 프로덕션 환경에서는 Vercel/Railway 등의 환경변수 관리 시스템 활용
+   - 백엔드 및 하위 데이터 스크립트는 `backend/.env` 하나만을 단일 진입점(Single Source of Truth)으로 참조함
+   - 프로덕션 환경에서는 Vercel/Railway/AWS 등의 환경변수 관리 시스템 활용
    - **절대 금지:** 코드에 하드코딩된 API 키, 비밀번호, 토큰
 
 2. **Supabase 보안**
@@ -146,6 +152,28 @@ trigger: always_on
 7. **백엔드 파일(backend/ 및 weekly_schedule.json) 변경 시 AWS 동기화 필수 연동 규정 (최중요)**:
    - `backend/` 소스코드 또는 `weekly_schedule.json` 등 백엔드 동작에 직접적인 영향을 주는 파일이 수정된 경우, 푸시/배포 단계에서 `./deploy_to_aws.sh` 실행을 누락하는 것은 금지됩니다.
    - 백엔드 파일 변경이 포함된 배포 요청 시, 무조건 `./deploy_to_aws.sh`를 세트로 동시 실행하여 AWS Lightsail 인스턴스 업로드 및 `fastapi.service` 재시작까지 한 번에 완료해야 합니다.
+
+41. **시드 리뷰 생성 스크립트 단일화 규칙 (절대 준수)**:
+    - 리뷰 시드 데이터를 생성할 때는 반드시 `backend/scripts/generate_seed_reviews.py` (Gemini API 기반)만 사용한다.
+    - 이 스크립트는 책의 실제 줄거리(`description`), 추천 연령(`age`), 큐레이션 태그를 Gemini에게 제공하여 맥락에 맞는 리뷰를 생성한다.
+    - **절대 금지**: 고정 템플릿 문장 배열(`REVIEW_TEMPLATES`)에서 `random.choice()`로 내용을 선택하는 방식 — 책 내용과 무관한 판박이 리뷰가 생성됨.
+    - **절대 금지**: 책의 추천 연령(`age`)과 무관하게 공통 `AGES` 풀에서 `child_age`를 랜덤 뽑는 방식 — 8-12세 초등 소설에 "3세" child_age가 달리는 등 연령 불일치가 발생함.
+    - **절대 금지**: AI 생성 리뷰임에도 `is_ai_generated: False`로 위장하는 방식 — 이 경우 품질 감사 및 일괄 삭제가 불가능해짐. 반드시 `is_ai_generated: True`로 저장해야 한다.
+    - 스크립트 실행 시 `--skip-existing` 플래그를 사용하고, 이미 리뷰가 있는 도서는 건너뛴다.
+    - 리뷰 삽입 후에는 반드시 `qa/SKILL.md`의 **시드 리뷰 품질 감사 체크리스트**를 실행하여 문제 리뷰 0건 기준을 통과했는지 확인한다.
+42. **장기 실행 명령어의 파이프 차단 금지 (절대 준수)**:
+    - `python3 script.py | head -N` 형태로 파이프를 걸면 `head`가 N줄 후 파이프를 닫아 **스크립트 자체가 SIGPIPE로 조기 종료**된다.
+    - Gemini API 다수 호출, 대량 DB 작업, 크롤링 등 장기 실행 스크립트는 반드시 **로그 파일로 리다이렉트** 후 실행한다:
+      ```bash
+      # ✅ 올바른 방법
+      python3 script.py > /tmp/script.log 2>&1
+      tail -f /tmp/script.log       # 별도로 진행 상황 확인
+      tail -30 /tmp/script.log      # 완료 후 결과 확인
+
+      # ❌ 금지 — head가 파이프 닫으면 스크립트 중단됨
+      python3 script.py | head -60
+      ```
+    - `WaitMsBeforeAsync` 설정 시, 장기 실행 스크립트는 충분한 시간을 주거나 IsDaemon=false로 완료를 기다리며, 절대 `| head` 로 출력을 제한하지 않는다.
 
 ## 핵심
 1. Next.js와 FastAPI 구조를 숙지해. 특히 Data4Library API와 판교도서관 스크래핑 시 타임아웃과 캐싱(5분) 처리가 project_plan대로 구현되었는지 검토해.

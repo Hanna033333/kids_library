@@ -229,6 +229,15 @@ export default function AuthClient() {
                         </Button>
                     </div>
 
+                    {/* 약관 고지 */}
+                    <p className="text-center text-[12px] text-gray-400 leading-relaxed px-2 pt-1">
+                        로그인하면{' '}
+                        <a href="/terms" className="underline underline-offset-2">이용약관</a>
+                        {' '}및{' '}
+                        <a href="/privacy" className="underline underline-offset-2">개인정보처리방침</a>
+                        에 동의하는 것으로<br />간주됩니다.
+                    </p>
+
                     {/* QA 테스터 로그인 (개발 및 Preview 환경 전용) */}
                     {showQaBtn && (
                         <Button

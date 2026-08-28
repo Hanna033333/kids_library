@@ -39,12 +39,10 @@ export default function Footer() {
                         <span className="text-gray-700">|</span>
 
                         <a
-                            href="https://docs.google.com/forms/d/e/1FAIpQLSdz7vpG3dj7RVHUEFWoxjdkEIyALYIry-3J-79bfowT2_82mQ/viewform?usp=publish-editor"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href="mailto:contact@chaekjari.com"
                             className="hover:text-white transition-colors"
                         >
-                            우리 동네 도서관도 추가해주세요
+                            고객 문의
                         </a>
                     </div>
                 </div>

@@ -54,6 +54,12 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
+        "http://localhost:3002",
+        "http://127.0.0.1:3002",
+        "http://localhost:3003",
+        "http://127.0.0.1:3003",
+        "http://localhost:3004",
+        "http://127.0.0.1:3004",
     ],
     # Starlette CORSMiddleware regex: Vercel Preview 및 상용 도메인 허용
     # 기존에는 "kids-library-*.vercel.app"(어느 팀이든 이 이름으로 프로젝트를 만들면 매치)와

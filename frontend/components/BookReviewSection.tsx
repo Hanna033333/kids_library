@@ -387,37 +387,48 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
         </div>
       </div>
 
-      {/* ── 평점 요약 카드 ── */}
+      {/* ── 평점 요약 카드 (정돈된 상하 2열 컴팩트 카드) ── */}
       {reviewCount > 0 && (
-        <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5 mb-4">
-          <div className="flex items-center gap-4">
-            {/* 평균 별점 */}
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-3xl font-black text-gray-900">
+        <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-4 sm:p-5 mb-4">
+          {/* 상단: 평균 별점 & 평가 개수 (좌우 수평 균형 정렬) */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="text-3xl font-black text-gray-900 leading-none">
                 {avgRating?.toFixed(1)}
               </span>
-              <StarRating rating={avgRating || 0} size={16} />
+              <StarRating rating={avgRating || 0} size={18} />
             </div>
+            <span className="text-xs text-gray-400 font-bold bg-gray-50 px-2.5 py-1 rounded-full border border-gray-100">
+              총 {reviewCount}개 평가
+            </span>
+          </div>
 
-            {/* 구분선 */}
-            <div className="w-px h-12 bg-gray-100" />
+          {/* 수평 구분선 */}
+          {sortedBadgeCounts.length > 0 && (
+            <div className="my-3.5 h-px bg-gray-100 w-full" />
+          )}
 
-            {/* 뱃지 득표 Top (2열 컴팩트 그리드 배열) */}
-            <div className="flex-1 grid grid-cols-2 gap-1.5 min-w-0">
+          {/* 뱃지 득표 Top (칼같이 정돈된 2열 그리드 배열) */}
+          {sortedBadgeCounts.length > 0 && (
+            <div className="grid grid-cols-2 gap-2">
               {sortedBadgeCounts.slice(0, 6).map(([badge, count]) => {
                 const badgeObj = findBadge(badge)
                 return (
                   <div
                     key={badge}
-                    className="inline-flex items-center justify-between gap-1 px-2.5 py-1 bg-gray-50/80 text-gray-700 rounded-xl text-xs sm:text-[13px] font-bold border border-gray-100 min-w-0"
+                    className="flex items-center justify-between gap-1.5 px-3 py-2 bg-gray-50/90 rounded-xl text-xs sm:text-[13px] font-bold border border-gray-100/80"
                   >
-                    <span className="truncate">{badgeObj?.emoji || '👍'} {badgeObj?.label || badge}</span>
-                    <span className="text-gray-900 font-extrabold text-[11px] bg-white px-1.5 py-0.5 rounded-md border border-gray-100 shrink-0">{count}</span>
+                    <span className="text-gray-700 font-bold truncate">
+                      {badgeObj?.emoji || '👍'} {badgeObj?.label || badge}
+                    </span>
+                    <span className="text-gray-900 font-extrabold text-[11px] bg-white px-1.5 py-0.5 rounded-md border border-gray-200/60 shrink-0">
+                      {count}
+                    </span>
                   </div>
                 )
               })}
             </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -803,8 +814,16 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
       ) : (
         !isLoading && reviewCount === 0 && !showWriteModal && (
           <div className="text-center py-8">
-            <p className="text-sm text-gray-400 font-medium mb-1">아직 작성된 리뷰가 없어요</p>
-            <p className="text-xs text-gray-300">첫 번째 후기의 주인공이 되어주세요!</p>
+            <p className="text-sm sm:text-base text-gray-700 font-bold mb-1">아직 작성된 리뷰가 없어요</p>
+            <p className="text-xs sm:text-sm text-gray-500 font-medium mb-4">첫 번째 후기의 주인공이 되어주세요!</p>
+            <button
+              type="button"
+              onClick={() => handleStarClick(5)}
+              className="inline-flex items-center justify-center gap-1.5 px-5 h-10 bg-white border border-gray-200 active:bg-gray-50 text-gray-600 font-bold text-xs sm:text-sm rounded-xl transition-all active:scale-[0.98] shadow-2xs"
+            >
+              <Pencil className="w-3.5 h-3.5 text-gray-400" />
+              첫 리뷰 작성하기
+            </button>
           </div>
         )
       )}

@@ -135,9 +135,10 @@ trigger: always_on
   - 모바일 해상도(320px~480px)에서 답답함 없는 시원한 가독성을 제공하기 위해 `text-[10px]` 및 `text-[11px]` 등의 극소 폰트 사용을 금지하며, 최소 캡션 규격을 `12px~13px` 이상으로 보장한다.
   - **리뷰 본문**: 네이버 스마트스토어/브랜드스토어 상품 리뷰 스타일을 기준 삼아 `text-base` (16px) `leading-relaxed` `font-medium`을 적용하여 또렷한 독자성을 확보한다.
   - **리뷰 작성자 닉네임**: `text-base font-bold text-gray-900`
-  - **태그 & 키워드 칩**: 도서 태그, 리뷰 뱃지 칩, 키워드 선택 버튼은 `text-[13px] font-bold` (`px-3 py-1` ~ `px-2.5 py-2.5`)를 표준 규격으로 적용한다.
-  - **리뷰 뱃지 한 줄 배치**: 리뷰 카드 내의 선택 뱃지는 두 줄 이상 세로 배치 대신 단정한 **한 줄 가로 배치 (`flex items-center gap-1.5 overflow-x-auto scrollbar-hide whitespace-nowrap`)**로 유연하게 처리한다.
-  - **모바일 폼 입력창**: 모바일 Safari 등에서 터치 포커스 시 브라우저 자동 확대(Zoom-in) 현상을 방지하기 위해 리뷰 작성 모달 등 폼 내 `textarea` 및 `select` 입력 필드 폰트는 `text-base` (16px) 이상으로 고정한다.
+  - **리뷰 요약 카드 2열 그리드 및 수치 뱃지 규격**: 
+    - 리뷰 평점 요약 카드는 가로 슬라이더 대신 **상하 수직 구조(상단: 별점 헤더 좌우 수평 균형 `justify-between` ➔ 구분선 ➔ 하단: 2열 균등 그리드 `grid grid-cols-2 gap-2`)**를 적용하여 정돈된 밸런스를 제공한다.
+    - 칩 내부의 득표 수치 뱃지는 시각적 산만함을 차단하기 위해 원색/주황색을 배제하고 **단정한 진한 회색(`text-gray-900 font-extrabold text-[11px] bg-white border border-gray-200/60`)**으로 통일한다.
+  - **리뷰 목록 뱃지 한 줄 배치**: 리뷰 카드 내의 작성자 선택 뱃지는 세로 배치 대신 단정한 **한 줄 가로 배치 (`flex items-center gap-1.5 overflow-x-auto scrollbar-hide whitespace-nowrap`)**로 유연하게 처리한다.
 
 ### 3. Spacing & Border Radius
 - **4px Base Grid** 사용 (space-1=4px, space-2=8px, space-3=12px, space-4=16px, space-5=20px, space-6=24px, space-8=32px)
@@ -156,7 +157,7 @@ trigger: always_on
 - **Book Review Component (`BookReviewSection.tsx`)**: 네이버 브랜드스토어 상품 리뷰 스타일의 고가독성 모바일 리뷰 영역. 1-Tap 별점 직접 클릭 카드(`text-sm sm:text-base font-bold`) + 리뷰 작성 모달(`text-lg` 타이틀, `text-[13px]` 키워드 버튼, `text-[15px]` 인풋) + 리뷰 리스트(닉네임 `text-[15px] font-bold`, 뱃지 칩 `text-[13px] font-medium 1-Line Flow`, 본문 `text-[15px] font-medium leading-relaxed line-clamp-3`).
 - **Loading System (로딩 시스템 `PageLoader.tsx`)**: 책자리 브랜드 전용 움직이는 그림책 GIF(`/children-book.gif`, `w-24 h-24`)를 중앙에 단독 노출. 불필요한 로딩 안내 텍스트('로딩 중...') 및 스켈레톤 카드는 일체 배제.
 - **Input Field & SearchBar**:
-  - **Input Field**: 기본 폼 인풋 높이 `48px` (`h-12`), 내부 패딩 `px-4` (16px), `bg-gray-50`, 기본 보더 `border-gray-200`, `rounded-xl`, Focus 시 Primary 2px 테두리 링(`focus:ring-2 focus:ring-[#F59E0B]`) 및 흰색 배경 적용 (인풋 내부 아이콘 배제 원칙).
+  - **Input Field**: 기본 폼 인풋 높이 `48px` (`h-12`), 내부 패딩 `px-4` (16px), `bg-gray-50`, 기본 보더 `border-gray-200`, `rounded-xl`, Focus 시 `focus:outline-none focus:border-[#F59E0B] focus:bg-white` 적용 — ring은 border 위에 덧씌워져 두껍게 보이므로 사용 금지. (인풋 내부 아이콘 배제 원칙).
   - **SearchBar**: 도서 검색바(`SearchBar.tsx`)는 화면 상단 고정 미니멀 언더라인 바(`border-b-2 border-gray-200`, Focus-within 시 `border-gray-900`) 스타일을 기본으로 하며, 우측 텍스트 삭제(X) 버튼 및 깔끔한 돋보기(`Search`) 아이콘 버튼을 표준 규격으로 지원.
 - **Modal & Popup (중앙 팝업)**:
   - `ConfirmModal`, `LoginPromptModal`, `SignupWelcomeModal`: 너비 `max-w-[340px] ~ max-w-[344px]`, 모서리 `rounded-[16px]`, 내부 패딩 `p-6`, dimmed 오버레이 `bg-black/50 backdrop-blur-sm`, 닫기(X) 우측 상단 `top-6 right-6`.

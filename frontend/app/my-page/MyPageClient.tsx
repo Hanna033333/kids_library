@@ -2,21 +2,31 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { ChevronRight, Check, Pencil } from 'lucide-react'
 import Link from 'next/link'
-import { ChevronRight, Lock, Loader2, Check } from 'lucide-react'
+import Image from 'next/image'
 import LibrarySelector from '@/components/LibrarySelector'
 import PageHeader from '@/components/PageHeader'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { getSavedBookIds } from '@/lib/supabase-api'
+import { getBooksByIds } from '@/lib/api'
+import { Book } from '@/lib/types'
 import ConfirmModal from '@/components/ui/ConfirmModal'
-import { Spinner } from '@/components/ui/Spinner'
 import { PageLoader } from '@/components/ui/PageLoader'
 import { sendGAEvent } from '@/lib/analytics'
 import Toast from '@/components/ui/Toast'
 
-type ViewState = 'main' | 'account' | 'password' | 'delete-notice' | 'delete-reason' | 'delete-password'
+type ViewState = 'main' | 'delete-notice' | 'delete-reason'
+
+const ADJECTIVES = ['지혜로운', '따스한', '포근한', '정겨운', '행복한', '다정한', '꿈꾸는', '다독이는', '슬기로운', '다복한', '마음넓은', '빛나는']
+const NOUNS = ['책벌레', '이야기꾼', '책부엉이', '파랑새', '독서가', '책요정', '글벗', '책탐험가', '책마을님']
+
+function generateRandomNickname() {
+    const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
+    const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
+    return `${adj}${noun}`
+}
 
 const DELETE_REASONS = [
     '자주 사용하지 않아서',
@@ -36,36 +46,31 @@ export default function MyPageClient() {
 
     const [currentView, setCurrentView] = useState<ViewState>('main')
 
-    // 비밀번호 변경
-    const [currentPassword, setCurrentPassword] = useState('')
-    const [newPassword, setNewPassword] = useState('')
-    const [confirmPassword, setConfirmPassword] = useState('')
-    const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
-    const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' })
-
-    // 회원탈퇴 STEP 1 - 유의사항
+    // 회원탈퇴 STEP 1
     const [deleteAgreed, setDeleteAgreed] = useState(false)
     const [wishlistCount, setWishlistCount] = useState<number | null>(null)
 
-    // 회원탈퇴 STEP 2 - 탈퇴 사유
+    // 회원탈퇴 STEP 2
     const [deleteReason, setDeleteReason] = useState('')
     const [deleteReasonText, setDeleteReasonText] = useState('')
-
-    // 회원탈퇴 STEP 3 - 비밀번호 확인
-    const [deletePassword, setDeletePassword] = useState('')
-    const [deletePasswordError, setDeletePasswordError] = useState('')
     const [isDeleting, setIsDeleting] = useState(false)
+
+    // 내 책장 미리보기
+    const [previewBooks, setPreviewBooks] = useState<Book[]>([])
+    const [savedCount, setSavedCount] = useState<number>(0)
+    const [isPreviewLoading, setIsPreviewLoading] = useState(true)
+
+    // 닉네임
+    const [nickname, setNickname] = useState<string | null>(null)
+    const [editNickname, setEditNickname] = useState('')
+    const [isSavingNickname, setIsSavingNickname] = useState(false)
+    const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false)
 
     // 오류 모달
     const [errorMessage, setErrorMessage] = useState('')
     const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
 
-    // 마케팅 수신 동의
-    const [marketingConsent, setMarketingConsent] = useState(false)
-    const [isMarketingLoading, setIsMarketingLoading] = useState(false)
-    const [isMarketingOffModalOpen, setIsMarketingOffModalOpen] = useState(false)
-    const [isMarketingOnNoticeOpen, setIsMarketingOnNoticeOpen] = useState(false)
-    const [marketingOffDate, setMarketingOffDate] = useState('')
+    // 토스트
     const [toastMessage, setToastMessage] = useState('')
 
     useEffect(() => {
@@ -75,32 +80,56 @@ export default function MyPageClient() {
     }, [user, authLoading, router])
 
     useEffect(() => {
-        const fetchSettings = async () => {
-            if (user) {
-                // QA Mode 방어
-                const isQaMode = typeof window !== 'undefined' && (sessionStorage.getItem('qa_mode') === 'true' || localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN')
-                if (isQaMode) {
-                    setMarketingConsent(false)
-                    return
+        const fetchPreview = async () => {
+            if (!user) return
+            setIsPreviewLoading(true)
+            try {
+                const savedIds = await getSavedBookIds(supabase, user.id)
+                setSavedCount(savedIds.length)
+                if (savedIds.length > 0) {
+                    const books = await getBooksByIds(savedIds.slice(0, 4))
+                    setPreviewBooks(books)
                 }
+            } catch (err) {
+                console.error('내 책장 미리보기 로드 실패:', err)
+            } finally {
+                setIsPreviewLoading(false)
+            }
+        }
+        if (user) fetchPreview()
+    }, [user])
 
-                const { data, error } = await supabase
-                    .from('members')
-                    .select('agreed_to_marketing')
-                    .eq('id', user.id)
-                    .single()
-                if (data && !error) {
-                    setMarketingConsent(data.agreed_to_marketing || false)
-                }
+    useEffect(() => {
+        const fetchSettings = async () => {
+            if (!user) return
+            const isQaMode = typeof window !== 'undefined' && (
+                sessionStorage.getItem('qa_mode') === 'true' ||
+                localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN'
+            )
+            if (isQaMode) {
+                // QA 모드: sessionStorage에 저장된 닉네임 복원 (SignupWelcomeModal 또는 이전 저장값)
+                const qaNickname = sessionStorage.getItem('qa_saved_nickname') || null
+                setNickname(qaNickname)
+                setEditNickname(qaNickname || generateRandomNickname())
+                return
+            }
+
+            const { data, error } = await supabase
+                .from('members')
+                .select('nickname')
+                .eq('id', user.id)
+                .single()
+            if (data && !error) {
+                const saved = data.nickname || null
+                setNickname(saved)
+                setEditNickname(saved || generateRandomNickname())
             }
         }
         fetchSettings()
     }, [user])
 
     if (authLoading || !user) {
-        return (
-            <PageLoader />
-        )
+        return <PageLoader />
     }
 
     const handleSignOut = async () => {
@@ -112,93 +141,14 @@ export default function MyPageClient() {
         router.push('/')
     }
 
-    const handleUpdatePassword = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setPasswordMessage({ type: '', text: '' })
-
-        if (!currentPassword) {
-            setPasswordMessage({ type: 'error', text: '현재 비밀번호를 입력해주세요.' })
-            return
-        }
-        if (newPassword.length < 8 || newPassword.length > 20) {
-            setPasswordMessage({ type: 'error', text: '비밀번호는 8자 이상 20자 이내여야 합니다.' })
-            return
-        }
-        if (!/[a-zA-Z]/.test(newPassword)) {
-            setPasswordMessage({ type: 'error', text: '비밀번호에 영문을 포함해야 합니다.' })
-            return
-        }
-        if (!/\d/.test(newPassword)) {
-            setPasswordMessage({ type: 'error', text: '비밀번호에 숫자를 포함해야 합니다.' })
-            return
-        }
-        if (newPassword !== confirmPassword) {
-            setPasswordMessage({ type: 'error', text: '비밀번호가 일치하지 않습니다.' })
-            return
-        }
-
-        setIsUpdatingPassword(true)
-        try {
-             // QA Mode 통과
-            const isQaMode = typeof window !== 'undefined' && (sessionStorage.getItem('qa_mode') === 'true' || localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN')
-
-            if (!isQaMode) {
-                // STEP 1: 현재 비밀번호 확인
-                const { error: signInError } = await supabase.auth.signInWithPassword({
-                    email: user.email!,
-                    password: currentPassword,
-                })
-                if (signInError) {
-                    throw new Error('현재 비밀번호가 올바르지 않습니다.')
-                }
-
-                // STEP 2: 새 비밀번호로 업데이트
-                const { error } = await supabase.auth.updateUser({ password: newPassword })
-                if (error) throw error
-            }
-
-            setCurrentPassword('')
-            setNewPassword('')
-            setConfirmPassword('')
-            setCurrentView('account')
-            setToastMessage('비밀번호가 변경되었습니다.')
-        } catch (err: any) {
-            console.error('Password update error:', err)
-            let errorMsg = err.message || '비밀번호 변경에 실패했습니다.'
-            if (errorMsg === 'New password should be different from the old password.') {
-                errorMsg = '기존 비밀번호와 다른 비밀번호를 입력해주세요.'
-            }
-            setPasswordMessage({ type: 'error', text: errorMsg })
-        } finally {
-            setIsUpdatingPassword(false)
-        }
-    }
-
-    // 탈퇴 처리 (STEP 3 완료)
-    const handleDeleteAccount = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setDeletePasswordError('')
-        if (!deletePassword) return
-
+    const handleDeleteAccount = async () => {
+        if (!deleteReason || isDeleting) return
         setIsDeleting(true)
         try {
-            // QA Mode 통과
-            const isQaMode = typeof window !== 'undefined' && (sessionStorage.getItem('qa_mode') === 'true' || localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN')
-            
-            if (!isQaMode) {
-                // STEP 1: 비밀번호 재확인
-                const { error: signInError } = await supabase.auth.signInWithPassword({
-                    email: user.email!,
-                    password: deletePassword,
-                })
-                if (signInError) {
-                    setDeletePasswordError('비밀번호가 올바르지 않습니다. 다시 확인해주세요.')
-                    setIsDeleting(false)
-                    return
-                }
-            }
-
-            // STEP 2: 세션 토큰 가져와서 백엔드 DELETE 호출
+            const isQaMode = typeof window !== 'undefined' && (
+                sessionStorage.getItem('qa_mode') === 'true' ||
+                localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN'
+            )
             let token = ''
             if (isQaMode) {
                 token = 'TEST_QA_TOKEN'
@@ -208,7 +158,9 @@ export default function MyPageClient() {
             }
             if (!token) throw new Error('세션을 찾을 수 없습니다.')
 
-            const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            const isLocal = typeof window !== 'undefined' && (
+                window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            )
             const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://127.0.0.1:8000' : 'https://api.checkjari.com')
             const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
                 method: 'DELETE',
@@ -216,16 +168,14 @@ export default function MyPageClient() {
             })
 
             if (!res.ok) {
-                const errData = await res.json().catch(() => ({}))
-                console.warn('Delete account API failed:', errData)
                 setErrorMessage('회원 탈퇴 처리 중 오류가 발생했습니다. 고객센터로 문의해주세요.')
                 setIsErrorModalOpen(true)
             } else {
                 if (typeof window !== 'undefined') {
                     sessionStorage.setItem('showWithdrawnPopup', 'true')
                 }
-                sendGAEvent('delete_account', { 
-                    method: 'password',
+                sendGAEvent('delete_account', {
+                    method: 'oauth',
                     reason: deleteReason,
                     reason_detail: deleteReason === '기타(직접 작성)' ? deleteReasonText : ''
                 })
@@ -241,66 +191,6 @@ export default function MyPageClient() {
         }
     }
 
-    // 마케팅 수신 동의 토글
-    const handleToggleClick = () => {
-        if (!marketingConsent) {
-            // OFF -> ON 시도: 팝업부터 띄움
-            setIsMarketingOnNoticeOpen(true)
-        } else {
-            // ON -> OFF 시도: 바로 해제 진행
-            executeMarketingToggle(false)
-        }
-    }
-
-    const executeMarketingToggle = async (newValue: boolean) => {
-        if (!user || isMarketingLoading) return
-        setIsMarketingLoading(true)
-        
-        // Optimistic update
-        setMarketingConsent(newValue)
-        
-        // QA Mode
-        const isQaMode = typeof window !== 'undefined' && (sessionStorage.getItem('qa_mode') === 'true' || localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN')
-        if (isQaMode) {
-            setIsMarketingLoading(false)
-            const today = new Date()
-            const dateStr = `${String(today.getFullYear()).slice(2)}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`
-            if (!newValue) { // OFF
-                setMarketingOffDate(dateStr)
-                setIsMarketingOffModalOpen(true)
-            } else { // ON
-                setIsMarketingOnNoticeOpen(false)
-                setToastMessage(`책자리 혜택알림 수신동의 완료 (수신처리일 ${dateStr})`)
-            }
-            return
-        }
-
-        const { error } = await supabase
-            .from('members')
-            .update({ agreed_to_marketing: newValue })
-            .eq('id', user.id)
-            
-        if (error) {
-            // Revert on error
-            setMarketingConsent(!newValue)
-            setErrorMessage('마케팅 수신 동의 설정 변경 중 오류가 발생했습니다.')
-            setIsErrorModalOpen(true)
-        } else {
-            const today = new Date()
-            const dateStr = `${String(today.getFullYear()).slice(2)}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`
-            if (!newValue) { // OFF
-                setMarketingOffDate(dateStr)
-                setIsMarketingOffModalOpen(true)
-            } else { // ON
-                setIsMarketingOnNoticeOpen(false)
-                setToastMessage(`책자리 혜택알림 수신동의 완료 (수신처리일 ${dateStr})`)
-            }
-        }
-        
-        setIsMarketingLoading(false)
-    }
-
-    // 찜한 도서 수 조회
     const fetchWishlistCount = async () => {
         if (!user) return
         const { count } = await supabase
@@ -310,36 +200,72 @@ export default function MyPageClient() {
         setWishlistCount(count ?? 0)
     }
 
-    // 탈퇴 state 초기화 (취소/나중에 하기)
     const resetDelete = () => {
         setDeleteAgreed(false)
         setDeleteReason('')
         setDeleteReasonText('')
-        setDeletePassword('')
-        setDeletePasswordError('')
+    }
+
+    // 닉네임 유효성
+    const nicknameValidation = (() => {
+        const trimmed = editNickname.trim()
+        return {
+            isLengthValid: trimmed.length >= 2 && trimmed.length <= 10,
+            isFormatValid: trimmed.length === 0 || /^[가-힣a-zA-Z0-9]+$/.test(trimmed),
+        }
+    })()
+    const isNicknameValid = nicknameValidation.isLengthValid && nicknameValidation.isFormatValid
+    const isNicknameChanged = editNickname.trim() !== (nickname ?? '')
+
+    const handleSaveNickname = async () => {
+        if (!isNicknameValid || isSavingNickname) return
+        setIsSavingNickname(true)
+        try {
+            const isQaMode = typeof window !== 'undefined' && (
+                sessionStorage.getItem('qa_mode') === 'true' ||
+                localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN'
+            )
+
+            if (isQaMode) {
+                // QA 모드: 실제 API 호출 없이 sessionStorage에만 저장
+                sessionStorage.setItem('qa_saved_nickname', editNickname.trim())
+            } else {
+                const isLocal = typeof window !== 'undefined' && (
+                    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                )
+                const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://127.0.0.1:8000' : 'https://api.checkjari.com')
+                const { data: sessionData } = await supabase.auth.getSession()
+                const token = sessionData?.session?.access_token || ''
+
+                const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ nickname: editNickname.trim() }),
+                })
+                if (!res.ok) throw new Error('Failed')
+            }
+
+            setNickname(editNickname.trim())
+            setIsNicknameModalOpen(false)
+            setToastMessage('닉네임이 변경되었어요')
+        } catch {
+            setErrorMessage('닉네임 저장 중 오류가 발생했습니다.')
+            setIsErrorModalOpen(true)
+        } finally {
+            setIsSavingNickname(false)
+        }
     }
 
     const getTitle = () => {
-        if (currentView === 'account') return '계정 관리'
-        if (currentView === 'password') return '비밀번호 변경'
         if (currentView.startsWith('delete')) return '회원 탈퇴'
         return '마이 페이지'
     }
 
     const getBackHandler = () => {
         if (currentView === 'main') return undefined
-        if (currentView === 'account') return () => setCurrentView('main')
-        if (currentView === 'delete-notice') return () => { resetDelete(); setCurrentView('account') }
+        if (currentView === 'delete-notice') return () => { resetDelete(); setCurrentView('main') }
         if (currentView === 'delete-reason') return () => setCurrentView('delete-notice')
-        if (currentView === 'delete-password') return () => setCurrentView('delete-reason')
-        // password view
-        return () => {
-            setCurrentView('account')
-            setPasswordMessage({ type: '', text: '' })
-            setCurrentPassword('')
-            setNewPassword('')
-            setConfirmPassword('')
-        }
+        return undefined
     }
 
     return (
@@ -354,204 +280,120 @@ export default function MyPageClient() {
                     {/* ===== MAIN ===== */}
                     {currentView === 'main' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-4">
+
                             {/* 프로필 카드 */}
-                            <button
-                                onClick={() => setCurrentView('account')}
-                                className="w-full text-left p-5 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex items-center gap-4 active:scale-[0.98] transition-all transform"
-                            >
+                            <div className="p-5 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex items-center gap-4">
                                 <div className="w-14 h-14 bg-[#FDF6E3] rounded-full flex items-center justify-center text-[#F59E0B] text-xl font-bold shrink-0">
-                                    {user.email?.[0].toUpperCase()}
+                                    {(nickname?.[0] ?? user.email?.[0] ?? '?').toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-base font-bold text-gray-900 truncate">{user.email}</p>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <p className="text-base font-bold text-gray-900 truncate">
+                                            {nickname || <span className="text-gray-400 font-medium">닉네임을 설정해주세요</span>}
+                                        </p>
+                                        <button
+                                            onClick={() => { setEditNickname(nickname || editNickname); setIsNicknameModalOpen(true) }}
+                                            className="text-gray-400 active:text-gray-600 transition-colors shrink-0"
+                                            aria-label="닉네임 수정"
+                                        >
+                                            <Pencil className="w-[13px] h-[13px]" />
+                                        </button>
+                                    </div>
+                                    <p className="text-[13px] text-gray-400 truncate mt-0.5">{user.email}</p>
                                 </div>
-                                <ChevronRight className="w-5 h-5 text-gray-400 shrink-0" />
-                            </button>
+                            </div>
 
-                            {/* 내 활동 및 도서관 설정 카드 */}
-                            <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden divide-y divide-gray-100">
-                                <button
-                                    onClick={() => router.push('/my-library')}
-                                    className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors"
-                                >
-                                    <span className="font-semibold text-gray-900 text-[15px]">내 책장</span>
-                                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                                </button>
+                            {/* 내 도서관 */}
+                            <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
                                 <div className="w-full flex items-center justify-between px-5 py-4 gap-3 min-w-0">
-                                    <span className="font-semibold text-gray-900 text-[15px] shrink-0 whitespace-nowrap">내 도서관</span>
+                                    <span className="font-bold text-gray-900 text-[15px] shrink-0 whitespace-nowrap">내 도서관</span>
                                     <div className="min-w-0 shrink flex justify-end">
                                         <LibrarySelector autoOpen={isAutoOpenLibrary} />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* 지원 및 정보 카드 */}
-                            <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden divide-y divide-gray-100">
-                                <Link href="/terms" className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors">
-                                    <span className="font-semibold text-gray-900 text-[15px]">이용약관</span>
-                                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                                </Link>
-                                <Link href="/privacy" className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors">
-                                    <span className="font-semibold text-gray-900 text-[15px]">개인정보보호정책</span>
-                                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                                </Link>
-                                <a 
-                                    href="mailto:contact@chaekjari.com" 
-                                    className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors"
-                                    onClick={() => sendGAEvent('click_customer_inquiry')}
-                                >
-                                    <span className="font-semibold text-gray-900 text-[15px]">고객문의</span>
-                                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                                </a>
-                            </div>
-
-                            {/* 로그아웃 */}
-                            <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
-                                <button 
-                                    onClick={handleSignOut} 
-                                    className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors"
-                                >
-                                    <span className="font-semibold text-gray-900 text-[15px]">로그아웃</span>
-                                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* ===== ACCOUNT ===== */}
-                    {currentView === 'account' && (
-                        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                            <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden divide-y divide-gray-100">
-                                <button
-                                    onClick={() => setCurrentView('password')}
-                                    className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors"
-                                >
-                                    <span className="font-semibold text-gray-900 text-[15px]">비밀번호 변경</span>
-                                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                                </button>
-                                {/* 마케팅 수신 동의 토글 */}
-                                <div className="w-full flex items-center justify-between px-5 py-4">
-                                    <span className="font-semibold text-gray-900 text-[15px]">마케팅 및 광고 수신 동의</span>
-                                    <button
-                                        onClick={handleToggleClick}
-                                        disabled={isMarketingLoading}
-                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#F59E0B] focus:ring-offset-2 ${
-                                            marketingConsent ? 'bg-[#F59E0B]' : 'bg-gray-200'
-                                        } ${isMarketingLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                        aria-label="마케팅 및 광고 수신 동의 온오프"
+                            {/* 내 책장 미리보기 섹션 */}
+                            <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold text-gray-900 text-[15px]">내 책장</span>
+                                        {savedCount > 0 && (
+                                            <span className="text-[13px] text-gray-400 font-medium">저장 {savedCount}권</span>
+                                        )}
+                                    </div>
+                                    <Link
+                                        href="/my-library"
+                                        className="flex items-center gap-0.5 text-[13px] text-gray-400 active:text-gray-600 transition-colors"
                                     >
-                                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                            marketingConsent ? 'translate-x-6' : 'translate-x-1'
-                                        }`} />
-                                    </button>
+                                        <ChevronRight className="w-4 h-4" />
+                                    </Link>
                                 </div>
+
+                                {isPreviewLoading ? (
+                                    <div className="flex gap-3">
+                                        {[...Array(4)].map((_, i) => (
+                                            <div key={i} className="w-[72px] shrink-0 aspect-[1/1.3] bg-gray-100 rounded-lg animate-pulse" />
+                                        ))}
+                                    </div>
+                                ) : previewBooks.length === 0 ? (
+                                    <div className="py-5 text-center">
+                                        <p className="text-[13px] text-gray-400 mb-3">아직 담아둔 책이 없어요</p>
+                                        <Link
+                                            href="/"
+                                            className="inline-block px-5 py-2.5 bg-gray-100 text-gray-600 text-[13px] font-semibold rounded-xl active:bg-gray-200 transition-colors"
+                                        >
+                                            책 둘러보기
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-5 px-5">
+                                        {previewBooks.map((book) => (
+                                            <Link key={book.id} href={`/book/${book.id}`} className="shrink-0">
+                                                <div className="relative w-[72px] aspect-[1/1.3] rounded-lg overflow-hidden bg-gray-100">
+                                                    {book.image_url ? (
+                                                        <Image
+                                                            src={book.image_url}
+                                                            alt={book.title}
+                                                            fill
+                                                            className="object-cover"
+                                                            sizes="72px"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                                            <span className="text-[10px] text-gray-400">표지없음</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 로그아웃 + 회원 탈퇴 — 한 줄 텍스트 */}
+                            <div className="flex items-center justify-between px-1 pt-1">
                                 <button
                                     onClick={() => { setCurrentView('delete-notice'); fetchWishlistCount() }}
-                                    className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50 transition-colors"
+                                    className="text-[13px] font-medium text-gray-400 active:text-gray-600 transition-colors py-2 px-1"
                                 >
-                                    <span className="font-semibold text-red-500 text-[15px]">회원 탈퇴</span>
-                                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                                    회원 탈퇴
+                                </button>
+                                <button
+                                    onClick={handleSignOut}
+                                    className="text-[13px] font-medium text-gray-500 active:text-gray-800 transition-colors py-2 px-1"
+                                >
+                                    로그아웃
                                 </button>
                             </div>
                         </div>
-                    )}
-
-                    {/* ===== PASSWORD CHANGE ===== */}
-                    {currentView === 'password' && (
-                        <section className="animate-in fade-in slide-in-from-right-4 duration-300 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-6">
-                            <div className="mb-6 text-center mt-2">
-                                <p className="text-gray-500 text-[15px] leading-relaxed">
-                                    주기적인 비밀번호 변경을 통해<br />계정을 안전하게 보호하세요.
-                                </p>
-                            </div>
-                            <form onSubmit={handleUpdatePassword} className="space-y-4 max-w-sm mx-auto">
-                                <div className="space-y-2 flex flex-col items-start">
-                                    <label className="text-sm font-semibold text-gray-700 ml-1">현재 비밀번호</label>
-                                    <Input
-                                        type="password"
-                                        value={currentPassword}
-                                        onChange={(e) => setCurrentPassword(e.target.value)}
-                                        placeholder="현재 비밀번호 입력"
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2 flex flex-col items-start">
-                                    <label className="text-sm font-semibold text-gray-700 ml-1">새 비밀번호</label>
-                                    <Input
-                                        type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        placeholder="비밀번호 입력"
-                                        required
-                                        minLength={8}
-                                        maxLength={20}
-                                    />
-                                    <div className="mt-2 flex items-center gap-4 text-xs ml-1">
-                                        <div className="flex items-center gap-1">
-                                            <Check className={`w-3.5 h-3.5 ${/[a-zA-Z]/.test(newPassword) ? 'text-green-500' : 'text-gray-300'}`} />
-                                            <span className={/[a-zA-Z]/.test(newPassword) ? 'text-green-600 font-medium' : 'text-gray-500'}>영문포함</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <Check className={`w-3.5 h-3.5 ${/\d/.test(newPassword) ? 'text-green-500' : 'text-gray-300'}`} />
-                                            <span className={/\d/.test(newPassword) ? 'text-green-600 font-medium' : 'text-gray-500'}>숫자포함</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <Check className={`w-3.5 h-3.5 ${newPassword.length >= 8 && newPassword.length <= 20 ? 'text-green-500' : 'text-gray-300'}`} />
-                                            <span className={newPassword.length >= 8 && newPassword.length <= 20 ? 'text-green-600 font-medium' : 'text-gray-500'}>8~20자 이내</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="space-y-2 flex flex-col items-start">
-                                    <label className="text-sm font-semibold text-gray-700 ml-1">새 비밀번호 확인</label>
-                                    <Input
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        placeholder="비밀번호 확인"
-                                        required
-                                    />
-                                    <div className="mt-2 flex items-center gap-1 text-xs ml-1">
-                                        <Check className={`w-3.5 h-3.5 ${confirmPassword.length > 0 && newPassword === confirmPassword ? 'text-green-500' : 'text-gray-300'}`} />
-                                        <span className={confirmPassword.length > 0 && newPassword === confirmPassword ? 'text-green-600 font-medium' : 'text-gray-500'}>비밀번호 일치</span>
-                                    </div>
-                                </div>
-                                {passwordMessage.text && (
-                                    <p className={`text-sm ml-1 ${passwordMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
-                                        {passwordMessage.text}
-                                    </p>
-                                )}
-                                <div className="pt-2">
-                                    <Button
-                                        type="submit"
-                                        variant="primary"
-                                        size="lg"
-                                        disabled={
-                                            isUpdatingPassword ||
-                                            !currentPassword ||
-                                            !newPassword ||
-                                            !confirmPassword ||
-                                            newPassword !== confirmPassword ||
-                                            newPassword.length < 8 ||
-                                            newPassword.length > 20 ||
-                                            !/[a-zA-Z]/.test(newPassword) ||
-                                            !/\d/.test(newPassword)
-                                        }
-                                        isLoading={isUpdatingPassword}
-                                        className="w-full"
-                                    >
-                                        비밀번호 변경하기
-                                    </Button>
-                                </div>
-                            </form>
-                        </section>
                     )}
 
                     {/* ===== DELETE STEP 1: 유의사항 확인 ===== */}
                     {currentView === 'delete-notice' && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-6">
-                            {/* 이용 현황 카드 */}
                             <div className="py-4 border-b border-gray-100 mb-6">
-                                <p className="text-[13px] font-bold text-gray-800 mb-3">{user.email?.split('@')[0]}의 책자리</p>
+                                <p className="text-[13px] font-bold text-gray-800 mb-3">{nickname || user.email?.split('@')[0]}의 책자리</p>
                                 <div className="flex items-center justify-between py-2 border-t border-gray-100">
                                     <span className="text-[13px] text-gray-600">찜한 도서</span>
                                     <span className="text-[13px] font-semibold text-gray-900">
@@ -573,13 +415,10 @@ export default function MyPageClient() {
                                 </li>
                             </ul>
 
-                            {/* 동의 체크박스 */}
                             <label className="flex items-start gap-3 mb-8 cursor-pointer group">
                                 <div
                                     className={`w-5 h-5 mt-0.5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
-                                        deleteAgreed
-                                            ? 'bg-[#F59E0B] border-[#F59E0B]'
-                                            : 'border-gray-300 group-hover:border-[#F59E0B]'
+                                        deleteAgreed ? 'bg-[#F59E0B] border-[#F59E0B]' : 'border-gray-300 group-hover:border-[#F59E0B]'
                                     }`}
                                     onClick={() => setDeleteAgreed(!deleteAgreed)}
                                 >
@@ -590,7 +429,6 @@ export default function MyPageClient() {
                                 </span>
                             </label>
 
-                            {/* 하단 버튼 */}
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => { resetDelete(); setCurrentView('main') }}
@@ -602,9 +440,7 @@ export default function MyPageClient() {
                                     disabled={!deleteAgreed}
                                     onClick={() => setCurrentView('delete-reason')}
                                     className={`flex-1 py-3.5 font-bold rounded-lg transition-colors text-[15px] ${
-                                        deleteAgreed
-                                            ? 'bg-[#F59E0B] text-white active:bg-[#D97706]'
-                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                        deleteAgreed ? 'bg-[#F59E0B] text-white active:bg-[#D97706]' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                     }`}
                                 >
                                     계속 진행하기
@@ -627,9 +463,7 @@ export default function MyPageClient() {
                                     >
                                         <div
                                             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                                                deleteReason === reason
-                                                    ? 'border-[#F59E0B]'
-                                                    : 'border-gray-300'
+                                                deleteReason === reason ? 'border-[#F59E0B]' : 'border-gray-300'
                                             }`}
                                         >
                                             {deleteReason === reason && (
@@ -641,7 +475,6 @@ export default function MyPageClient() {
                                 ))}
                             </div>
 
-                            {/* 기타 직접 입력 */}
                             {deleteReason === '기타(직접 작성)' && (
                                 <textarea
                                     value={deleteReasonText}
@@ -649,11 +482,10 @@ export default function MyPageClient() {
                                     placeholder="탈퇴 사유를 간략히 입력해주세요"
                                     maxLength={200}
                                     rows={4}
-                                    className="w-full mb-6 px-4 py-3 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent transition"
+                                    className="w-full mb-6 px-4 py-3 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:border-[#F59E0B] transition"
                                 />
                             )}
 
-                            {/* 하단 버튼 */}
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => { resetDelete(); setCurrentView('main') }}
@@ -662,66 +494,67 @@ export default function MyPageClient() {
                                     나중에 하기
                                 </button>
                                 <button
-                                    disabled={!deleteReason || (deleteReason === '기타(직접 작성)' && !deleteReasonText.trim())}
-                                    onClick={() => setCurrentView('delete-password')}
+                                    disabled={!deleteReason || (deleteReason === '기타(직접 작성)' && !deleteReasonText.trim()) || isDeleting}
+                                    onClick={handleDeleteAccount}
                                     className={`flex-1 py-3.5 font-bold rounded-lg transition-colors text-[15px] ${
-                                        deleteReason && !(deleteReason === '기타(직접 작성)' && !deleteReasonText.trim())
+                                        deleteReason && !(deleteReason === '기타(직접 작성)' && !deleteReasonText.trim()) && !isDeleting
                                             ? 'bg-[#F59E0B] text-white active:bg-[#D97706]'
                                             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                     }`}
                                 >
-                                    탈퇴하기
+                                    {isDeleting ? '처리 중...' : '탈퇴하기'}
                                 </button>
                             </div>
                         </div>
                     )}
 
-                    {/* ===== DELETE STEP 3: 비밀번호 확인 ===== */}
-                    {currentView === 'delete-password' && (
-                        <section className="animate-in fade-in slide-in-from-right-4 duration-300 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-6">
-                            <div className="mb-8 text-center mt-4">
-                                <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-[#FDF6E3] flex items-center justify-center">
-                                    <Lock className="w-7 h-7 text-[#F59E0B]" />
-                                </div>
-                                <p className="text-gray-500 text-[15px] leading-relaxed">
-                                    탈퇴 전 본인 확인을 위해<br />현재 비밀번호를 입력해주세요.
-                                </p>
-                            </div>
-
-                            <form onSubmit={handleDeleteAccount} className="space-y-4 max-w-sm mx-auto">
-                                <div className="space-y-2 flex flex-col items-start">
-                                    <label className="text-sm font-semibold text-gray-700 ml-1">
-                                        비밀번호 <span className="text-red-400">*</span>
-                                    </label>
-                                    <Input
-                                        type="password"
-                                        value={deletePassword}
-                                        onChange={(e) => { setDeletePassword(e.target.value); setDeletePasswordError('') }}
-                                        placeholder="비밀번호 입력"
-                                        required
-                                    />
-                                    {deletePasswordError && (
-                                        <p className="text-sm text-red-500 ml-1">{deletePasswordError}</p>
-                                    )}
-                                </div>
-
-                                <div className="pt-2">
-                                    <Button
-                                        type="submit"
-                                        variant="primary"
-                                        size="lg"
-                                        disabled={isDeleting || !deletePassword}
-                                        isLoading={isDeleting}
-                                        className="w-full"
-                                    >
-                                        확인
-                                    </Button>
-                                </div>
-                            </form>
-                        </section>
-                    )}
-
                 </div>
+
+                {/* 닉네임 수정 모달 */}
+                {isNicknameModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-6 bg-black/50 backdrop-blur-sm">
+                        <div className="w-full max-w-[340px] bg-white rounded-[16px] p-6">
+                            <h2 className="text-[20px] font-bold text-gray-900 mb-1">닉네임 변경</h2>
+                            <p className="text-[14px] text-gray-400 mb-5">2~10자, 한글·영문·숫자만 사용 가능해요</p>
+                            <input
+                                type="text"
+                                value={editNickname}
+                                onChange={(e) => setEditNickname(e.target.value.replace(/\s/g, ''))}
+                                maxLength={10}
+                                autoFocus
+                                className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-gray-900 focus:bg-white transition-all text-[16px] text-gray-900 mb-2"
+                                placeholder="닉네임 입력"
+                            />
+                            <p className={`text-[12px] px-0.5 mb-5 h-4 leading-4 ${
+                                editNickname.length === 0 ? 'text-transparent' :
+                                isNicknameValid ? 'text-[#10B981]' : 'text-red-400'
+                            }`}>
+                                {!nicknameValidation.isFormatValid ? '특수문자나 공백은 사용할 수 없어요' :
+                                 !nicknameValidation.isLengthValid ? '2자 이상 10자 이하로 입력해주세요' :
+                                 isNicknameChanged ? '사용 가능한 닉네임이에요' : '현재 닉네임이에요'}
+                            </p>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setIsNicknameModalOpen(false)}
+                                    className="flex-1 h-12 rounded-xl text-[15px] font-bold bg-gray-100 text-gray-600 active:bg-gray-200 transition-colors"
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    onClick={handleSaveNickname}
+                                    disabled={!isNicknameValid || !isNicknameChanged || isSavingNickname}
+                                    className={`flex-1 h-12 rounded-xl text-[15px] font-bold transition-all active:scale-[0.98] ${
+                                        isNicknameValid && isNicknameChanged && !isSavingNickname
+                                            ? 'bg-[#F59E0B] text-white active:bg-[#D97706]'
+                                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    }`}
+                                >
+                                    {isSavingNickname ? '저장 중...' : '저장'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* 오류 안내 팝업 */}
                 <ConfirmModal
@@ -735,48 +568,12 @@ export default function MyPageClient() {
                     confirmVariant="primary"
                 />
 
-                {/* 마케팅 수신 동의(ON) 안내 팝업 */}
-                <ConfirmModal
-                    isOpen={isMarketingOnNoticeOpen}
-                    onClose={() => setIsMarketingOnNoticeOpen(false)}
-                    onConfirm={() => executeMarketingToggle(true)}
-                    title="책자리 혜택수신 동의"
-                    description={
-                        <div className="text-gray-600 leading-relaxed break-keep">
-                            책자리를 통한 도서 추천, 프로모션 등 각종 혜택 안내 메시지를 받는 것에 동의합니다.
-                        </div>
-                    }
-                    confirmLabel="확인"
-                    cancelLabel="취소"
-                    confirmVariant="primary"
-                    isLoading={isMarketingLoading}
-                />
-
-                {/* 마케팅 수신 거부(OFF) 안내 팝업 */}
-                <ConfirmModal
-                    isOpen={isMarketingOffModalOpen}
-                    onClose={() => setIsMarketingOffModalOpen(false)}
-                    onConfirm={() => setIsMarketingOffModalOpen(false)}
-                    title="알림"
-                    description={
-                        <div className="text-gray-600 leading-relaxed break-keep">
-                            책자리를 통한 도서 추천, 프로모션 등 각종 혜택 안내 메시지 수신거부가 정상적으로 처리되었습니다.
-                            <br /><br />
-                            <span className="text-[13px]">(수신거부일 {marketingOffDate})</span>
-                        </div>
-                    }
-                    confirmLabel="확인"
-                    cancelLabel=""
-                    confirmVariant="primary"
-                />
-
-                {/* 하단 토스트 팝업 */}
+                {/* 토스트 */}
                 <Toast
                     message={toastMessage}
                     isVisible={!!toastMessage}
                     onClose={() => setToastMessage('')}
                 />
-
             </div>
         </main>
     )

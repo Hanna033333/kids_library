@@ -188,3 +188,88 @@ for (const age of ageGroups) {
 - 회귀 버그율: 5% 이하
 - Critical 버그: 배포 전 100% 해결
 
+---
+
+## 🔍 시드 리뷰 품질 감사 체크리스트
+
+새로운 시드 리뷰가 DB에 삽입된 후, 반드시 아래 4종 기준으로 전수 감사를 실행한다.
+
+### 감사 기준 (4종)
+1. **[책제목] 브래킷 패턴** — `content`가 `[`로 시작하고 50자 이내에 `]`가 존재 → 고정 템플릿 방식 생성 증거
+2. **판박이 템플릿 문구** — `"] 아이 정서에도 참 좋은"`, `"] 연령대에 딱 맞아서"`, `"] 도서관 큐레이션 보고"` 등 반복 문구 존재
+3. **연령 불일치** — `child_age`가 책의 `age` 그룹과 다름 (0-3 / 4-7 / 8-12 매핑 기준)
+4. **null 필드** — `content`, `child_age`, `nickname` 중 하나라도 null
+
+### 연령 그룹 매핑 기준
+| child_age 값 | 해당 그룹 | 허용 책 age |
+|---|---|---|
+| 1세, 2세, 3세 | 0-3 | `0-3` 도서만 |
+| 4세, 5세, 6세, 7세 | 4-7 | `4-7` 도서만 |
+| 8세 이상, 초등* | 8-12 | `8-12` 도서만 |
+
+### 감사 스크립트 (backend/ 폴더에서 실행)
+
+```bash
+source venv/bin/activate && python3 - << 'EOF'
+import os, sys
+sys.path.append('.')
+from core.config import SUPABASE_URL, SUPABASE_KEY
+from supabase import create_client
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+all_reviews = supabase.table("book_reviews").select("id, book_id, nickname, child_age, content").execute()
+book_ids = list(set([r["book_id"] for r in all_reviews.data]))
+book_res = supabase.table("childbook_items").select("id, age").in_("id", book_ids).execute()
+books = {b["id"]: b for b in book_res.data}
+
+def age_group(s):
+    if not s: return "unknown"
+    if "0-3" in s: return "0-3"
+    if "4-7" in s: return "4-7"
+    if "8-12" in s: return "8-12"
+    return "unknown"
+
+def child_age_group(s):
+    if not s: return None
+    c = s.replace("세","").strip()
+    try:
+        age = int(c)
+        if age <= 3: return "0-3"
+        elif age <= 7: return "4-7"
+        else: return "8-12"
+    except:
+        if "초등" in s: return "8-12"
+    return None
+
+template_phrases = [
+    "] 아이 정서에도 참 좋은", "] 연령대에 딱 맞아서", "] 도서관 큐레이션 보고",
+    "] 아이 눈높이에 딱 맞는", "] 요즘 저희 아이 최애", "] 주말에 도서관",
+    "] 아이랑 밤마다 같이 읽고", "] 그림체도 예쁘고", "] 아이 반응이 너무 좋아서",
+    "] 도서관에서 빌려 읽었다가",
+]
+
+total = len(all_reviews.data)
+bracket = sum(1 for r in all_reviews.data if (r.get("content","") or "").startswith("[") and "]" in (r.get("content","") or "")[:50])
+template = sum(1 for r in all_reviews.data if any(p in (r.get("content","") or "") for p in template_phrases))
+mismatch = sum(1 for r in all_reviews.data
+               if age_group(books.get(r["book_id"],{}).get("age","")) != "unknown"
+               and child_age_group(r.get("child_age"))
+               and age_group(books.get(r["book_id"],{}).get("age","")) != child_age_group(r.get("child_age")))
+null_any = sum(1 for r in all_reviews.data if not r.get("content") or not r.get("child_age") or not r.get("nickname"))
+problem = len(set(r["id"] for r in all_reviews.data if
+    (r.get("content","") or "").startswith("[") or
+    any(p in (r.get("content","") or "") for p in template_phrases) or
+    not r.get("content") or not r.get("child_age") or not r.get("nickname")))
+print(f"총 {total}건 | 브래킷:{bracket} 템플릿:{template} 연령불일치:{mismatch} null:{null_any}")
+print(f"문제 리뷰: {problem}건 ({problem/total*100:.1f}%) / 클린: {total-problem}건 ({(total-problem)/total*100:.1f}%)")
+if problem > 0:
+    print("⚠️  문제 리뷰 발견 — 즉시 삭제 후 generate_seed_reviews.py로 재생성 필요")
+else:
+    print("✅ 모든 기준 통과")
+EOF
+```
+
+### 허용 기준
+- 문제 리뷰 비율 **0%** (1건이라도 발견 시 즉시 처리)
+- 문제 발생 시: 해당 리뷰 삭제 → `backend/scripts/generate_seed_reviews.py --skip-existing` 재실행 → 재감사
+

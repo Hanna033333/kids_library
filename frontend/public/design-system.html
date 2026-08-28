@@ -684,6 +684,28 @@
 
       <!-- Live Preview -->
       <div class="space-y-3 bg-[#F5F5F8] p-4 rounded-xl">
+        {/* Rating Summary Card Sample */}
+        <div class="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-4 text-left">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="text-3xl font-black text-gray-900 leading-none">4.2</span>
+              <span class="text-amber-400 font-bold text-lg">★★★★☆</span>
+            </div>
+            <span class="text-xs text-gray-400 font-bold bg-gray-50 px-2.5 py-1 rounded-full border border-gray-100">총 5개 평가</span>
+          </div>
+          <div class="my-3.5 h-px bg-gray-100 w-full"></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="flex items-center justify-between gap-1.5 px-3 py-2 bg-gray-50/90 rounded-xl text-xs font-bold border border-gray-100/80">
+              <span class="text-gray-700 font-bold truncate">💬 바른 습관을 도와줘요</span>
+              <span class="text-gray-900 font-extrabold text-[11px] bg-white px-1.5 py-0.5 rounded-md border border-gray-200/60 shrink-0">2</span>
+            </div>
+            <div class="flex items-center justify-between gap-1.5 px-3 py-2 bg-gray-50/90 rounded-xl text-xs font-bold border border-gray-100/80">
+              <span class="text-gray-700 font-bold truncate">🧠 질문을 많이 해요</span>
+              <span class="text-gray-900 font-extrabold text-[11px] bg-white px-1.5 py-0.5 rounded-md border border-gray-200/60 shrink-0">1</span>
+            </div>
+          </div>
+        </div>
+
         {/* Sample Review Item */}
         <div class="bg-white rounded-2xl shadow-sm p-4 space-y-2 text-left">
           <div class="flex items-center justify-between">
@@ -712,7 +734,7 @@
         </div>
       </div>
 
-      <p class="text-[11px] text-gray-400">* 리뷰 본문 15px(1pt 축소), 작성자 닉네임 15px, 태그/뱃지 칩 13px 및 최대 3줄 제한(line-clamp-3)을 적용하여 간결하고 또렷한 가독성을 제공합니다.</p>
+      <p class="text-[11px] text-gray-400">* 리뷰 평점 요약 카드는 상단 수평 헤더 + 하단 2열 그리드(`grid grid-cols-2`) 및 단정한 회색 수치 뱃지(`text-gray-900 bg-white`)를 표준으로 유지합니다.</p>
     </div>
   </section>
 

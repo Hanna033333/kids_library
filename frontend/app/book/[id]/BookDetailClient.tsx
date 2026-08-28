@@ -437,7 +437,7 @@ export default function BookDetailClient({
                             {/* AI Curation Note */}
                             {book.curation_note && (
                                 <div className="mt-4 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100 relative">
-                                    <div className="absolute top-0 right-4 -translate-y-1/2 px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold rounded-full shadow-sm">
+                                    <div className="absolute top-0 right-4 -translate-y-1/2 px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium rounded-full shadow-sm">
                                         전문 사서의 추천 포인트
                                     </div>
                                     <p className="text-[14.5px] text-gray-700 font-normal leading-relaxed tracking-tight">
