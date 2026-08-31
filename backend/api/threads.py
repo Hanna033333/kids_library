@@ -615,6 +615,10 @@ async def publish_approved_feed(feed_id: int):
     #     await send_telegram_message(f"⚠️ [즉시 배포 경고] 피드 발행 성공, 첫 댓글 실패: {reply_err}")
         
     await send_telegram_message(f"🎉 <b>[즉시 배포 완료]</b> Threads에 최종 배포 성공. 포스트 ID: <code>{post_id}</code>")
+    await send_telegram_message(
+        f"📌 <b>스레드 공유 시 아래 링크를 사용하세요</b>\n\n"
+        f"https://checkjari.com/collections/curation/{slug}"
+    )
 
 @router.get("/approve-text", response_class=HTMLResponse)
 async def approve_text_view(request: Request, feed_id: int, signature: str):
@@ -991,6 +995,10 @@ async def weekly_threads_scheduler():
                                 #     await send_telegram_message(f"⚠️ [스케줄러 경고] 피드({feed_id}) 발행에는 성공했으나, 첫 댓글 등록 중 오류 발생: {reply_err}")
 
                                 await send_telegram_message(f"🎉 <b>[실시간 배포 완료]</b> Threads에 최종 배포되었습니다. 포스트 ID: <code>{post_id}</code>")
+                                await send_telegram_message(
+                                    f"📌 <b>스레드 공유 시 아래 링크를 사용하세요</b>\n\n"
+                                    f"https://checkjari.com/collections/curation/{slug}"
+                                )
                             else:
                                 print(f"⚠️ [스케줄러] 피드({feed_id})가 승인되었으나 이미지 URL이 존재하지 않아 배포를 생략합니다.")
                                 await send_telegram_message(f"⚠️ [스케줄러 경고] 피드({feed_id})가 승인되었으나 이미지 URL이 없어 배포되지 못했습니다.")
@@ -1144,6 +1152,10 @@ async def republish_feed(
         ).eq("id", feed_id).execute()
 
         await send_telegram_message(f"🎉 <b>[수동 재발행 완료]</b> 피드 ID {feed_id} 발행 성공. 포스트 ID: <code>{post_id}</code>")
+        await send_telegram_message(
+            f"📌 <b>스레드 공유 시 아래 링크를 사용하세요</b>\n\n"
+            f"https://checkjari.com/collections/curation/{slug}"
+        )
         return {"status": "success", "feed_id": feed_id, "post_id": post_id}
 
     except Exception as e:

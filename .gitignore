@@ -62,6 +62,8 @@ bulk_scrape_log_*.txt
 
 # Secrets
 ga4-key.json
+ga_service_account.json
+*_service_account.json
 
 # 리팩토링으로 이동된 로그·결과 디렉터리 (운영 불필요)
 backend/logs/

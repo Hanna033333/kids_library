@@ -301,18 +301,11 @@
     "end": "2026-09-06",
     "curations": [
       {
-        "id": 29,
-        "subtitle": "장애를 가진 친구와 함께하는 세상",
-        "title": "♿ 편견 없는 눈그림책",
-        "tag": "장애",
-        "slug": "inclusion"
-      },
-      {
-        "id": 46,
-        "subtitle": "숫자와 규칙으로 세상 읽기",
-        "title": "🧮 재미있는 수학 놀이",
-        "tag": "수학",
-        "slug": "math"
+        "id": 57,
+        "subtitle": "추석과 설날의 따뜻한 가족 문화",
+        "title": "🍡 한국의 정겨운 명절",
+        "tag": "명절",
+        "slug": "holiday"
       },
       {
         "id": 48,
@@ -320,6 +313,13 @@
         "title": "🌾 지혜 가득 문화 유산",
         "tag": "우리문화",
         "slug": "culture"
+      },
+      {
+        "id": 29,
+        "subtitle": "장애를 가진 친구와 함께하는 세상",
+        "title": "♿ 편견 없는 눈그림책",
+        "tag": "장애",
+        "slug": "inclusion"
       }
     ]
   },

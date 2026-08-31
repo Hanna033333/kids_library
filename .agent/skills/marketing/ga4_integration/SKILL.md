@@ -121,4 +121,117 @@ description: Google Analytics 4 연동, 인증 설정 및 데이터 추출 가�
 - **폐기 이유**: 네이버 검색을 통한 직접 착지가 주요 유입이어서 "홈 → 상세 진입률"이 실제 트래픽을 대표하지 못함
 
 ---
-*마지막 업데이트: 2026-08-21*
+---
+
+## 6. 주간 GA4 리포트 실행 방법 (API 직접 조회 방식)
+
+> **[2026-08-31 추가]** 브라우저 GUI 없이 Python SDK로 GA4 데이터를 직접 조회하고 아티팩트 리포트를 생성하는 표준 절차입니다.
+
+### ✅ 전제 조건
+| 항목 | 값 |
+|---|---|
+| 서비스 계정 키 파일 | `/Users/1004823/Desktop/kids_library/ga_service_account.json` |
+| GA4 속성 ID (숫자형) | `518474196` |
+| 측정 ID (gtag용, API엔 불필요) | `G-FG2WYB82L9` |
+| Python 실행 환경 | `backend/venv/bin/python3` |
+| SDK | `google-analytics-data` (venv에 설치 완료) |
+
+> ⚠️ `python3` 또는 `pip3`로 직접 실행하면 "externally managed" 오류가 남. 반드시 `backend/venv/bin/python3`를 사용할 것.
+
+---
+
+### 📋 분석 날짜 범위 계산
+- **저번주**: 직전 월요일 ~ 직전 일요일 (예: 오늘이 8/31이면 `2026-08-24 ~ 2026-08-30`)
+- **전전주**: 그 이전 주 (비교 기준)
+- 날짜는 `YYYY-MM-DD` 형식으로 스크립트 상단에 고정 입력
+
+---
+
+### 🐍 주간 분석 스크립트 구조
+
+스크립트는 `/private/tmp/` 또는 스크래치 디렉토리에 임시 생성 후 실행. 분석 섹션 구성:
+
+```
+1. 핵심 지표 요약  — activeUsers, newUsers, sessions, screenPageViews,
+                    averageSessionDuration, bounceRate (저번주 vs 전전주)
+2. 인기 페이지 Top 10 — pagePath, pageTitle, PV, activeUsers, 체류시간
+3. 유입 채널 분석  — sessionDefaultChannelGrouping (저번주 vs 전전주)
+4. 요일별 PV 패턴  — date + dayOfWeek 기준 7일 분포
+5. 기기별 분석    — deviceCategory (mobile/desktop 비율, 이탈률)
+6. 신규 vs 재방문  — newVsReturning (체류시간 차이에 주목)
+7. 지역별 상위 5  — country + region
+```
+
+**핵심 패턴 — 복수 DateRange 사용 시 주의:**
+- `date` 디멘션과 복수 `date_ranges` 동시 사용 시 `dimension_values[1]`이 `"date_range_0"` / `"date_range_1"` 문자열로 반환됨 (int 변환 불가)
+- ✅ **권장 방식**: 날짜 범위별로 **쿼리를 분리**하여 각각 호출 후 Python에서 합산
+
+**FilterExpression 필터 적용 패턴:**
+```python
+from google.analytics.data_v1beta.types import Filter
+StringFilter = Filter.StringFilter  # 별도 import 없이 내부 클래스 접근
+
+dimension_filter=FilterExpression(filter=Filter(
+    field_name="sessionDefaultChannelGrouping",
+    string_filter=StringFilter(
+        match_type=StringFilter.MatchType.EXACT,
+        value="Referral",
+    )
+))
+```
+
+---
+
+### 🔍 Referral 유입 심층 분석 방법
+
+Referral 세션이 갑자기 발생했거나 소스가 궁금할 때:
+
+```python
+# 1. 소스별 세션 분해
+dimensions=["sessionSource", "sessionMedium", "sessionCampaignName"]
+metrics=["sessions", "activeUsers", "screenPageViews", "averageSessionDuration", "bounceRate"]
+# + FilterExpression으로 sessionDefaultChannelGrouping = "Referral" 필터
+
+# 2. 랜딩 페이지 × 소스 교차 분석
+dimensions=["landingPage", "sessionSource"]
+metrics=["sessions", "activeUsers", "screenPageViews", "averageSessionDuration"]
+```
+
+> ⚠️ **GA4 `landingPage` 디멘션은 쿼리파라미터를 자동 제거**하고 path만 기록함.
+> `/books?curation=세계역사` → `landingPage = /books`로 찍힘.
+> 만약 `/books`가 아닌 `/`로 찍혔다면 실제로 홈에 착지한 것.
+
+---
+
+### ⚠️ Threads 링크 관련 알려진 이슈 (2026-08-31 발견)
+
+- **문제**: `checkjari.com/books?curation=세계역사&sort=confidence_score_desc` 링크를 스레드에 게시했는데 GA에서 대부분 `/`(홈)으로 착지 기록됨
+- **원인**: Threads 인앱브라우저가 한글 퍼센트 인코딩(`%EC%84%B8...`) 쿼리파라미터를 손실하거나, 링크 카드(OG 미리보기) 탭 시 도메인 루트로 이동하는 것으로 추정
+- **해결책**: 스레드 게시물에는 반드시 **슬러그 기반 URL** 사용
+  ```
+  ❌ /books?curation=세계역사&sort=confidence_score_desc
+  ✅ /collections/curation/world-history
+  ```
+- **자동화 완료**: 스레드 발행 완료 후 텔레그램에 `/collections/curation/{slug}` 형태의 링크가 자동 메시지로 전송됨 (`api/threads.py` 3곳에 반영)
+
+---
+
+### 📊 아티팩트 리포트 생성
+
+분석 완료 후 `artifact-design` 스킬을 로드하고 HTML 아티팩트로 시각화:
+- **KPI 카드 그리드** (3열): 핵심 6지표 + 전전주 대비 증감
+- **채널 바 차트**: 전전주 기준선 표시 + 신규/기존 증감
+- **요일별 PV 바 차트**: CSS 인라인 비율 바 (max PV 기준 100%)
+- **인기 페이지 테이블**: path + 제목 + PV + 유저 + 체류시간
+- **기기/신규재방문 카드**: 인라인 비율 바
+
+---
+
+### 📌 주간 리포트 실행 명령어 요약
+
+```bash
+# 스크립트 작성 후 실행
+/Users/1004823/Desktop/kids_library/backend/venv/bin/python3 /path/to/ga4_analysis.py
+```
+
+*마지막 업데이트: 2026-08-31*
