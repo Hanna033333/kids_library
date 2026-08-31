@@ -68,7 +68,7 @@ app.add_middleware(
     # allow_credentials=True 상태에서 자격증명 포함 CORS 요청이 통과할 수 있었습니다.
     # 이 프로젝트(kids-library)의 실제 팀(hannas-projects) 소속 프리뷰 URL만 매치하도록
     # 두 조건을 하나의 패턴으로 결합해 범위를 좁혔습니다.
-    allow_origin_regex=r"^(https://kids-library-[a-zA-Z0-9-]*-hannas-projects\.vercel\.app|https://(www\.)?checkjari\.com)$",
+    allow_origin_regex=r"^(https://kids-library-git-[a-z0-9-]+-hannas-projects-[a-z0-9]+\.vercel\.app|https://(www\.)?checkjari\.com)$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
