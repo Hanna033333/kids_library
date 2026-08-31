@@ -175,6 +175,16 @@ trigger: always_on
       ```
     - `WaitMsBeforeAsync` 설정 시, 장기 실행 스크립트는 충분한 시간을 주거나 IsDaemon=false로 완료를 기다리며, 절대 `| head` 로 출력을 제한하지 않는다.
 
+43. **큐레이션 데이터 정합성 검증 규칙 (재발 방지 필수)**:
+    - **taxonomy 세 파일의 역할 명확화**:
+      - `ALL_TAXONOMY` (`frontend/lib/constants/taxonomy.ts`): `/collections/curation/[slug]` SEO 페이지 자동 생성 목록. 빌드 시 `generateStaticParams()`가 여기서 slug를 읽어 정적 페이지를 만든다.
+      - `weekly_schedule.json`: 홈 화면에 이번 주 어떤 큐레이션 3개를 노출할지 날짜별로 결정하는 파일. 홈 큐레이션 섹션은 여기서 제어한다.
+      - `VALID_AI_TAGS`: AI가 책에 자동으로 붙일 수 있는 태그 허용 범위. `ALL_TAXONOMY`에서 태그를 제거하더라도 `VALID_AI_TAGS`는 **절대 함께 제거하면 안 된다** — 나중에 해당 태그로 책이 추가될 때 AI가 태깅할 수 있어야 하기 때문이다.
+    - **`ALL_TAXONOMY` 등록 조건**: 해당 태그가 **첫 번째 태그(`curation_tag`의 첫 번째 값)** 인 책이 DB에 반드시 1권 이상 존재해야 한다. `getBooksByTag`는 첫 번째 태그만 정밀 매칭하므로, 책이 있어도 2번째·3번째 태그로만 달려 있으면 collection 페이지에 0권이 노출된다. 책의 `curation_tag` 순서는 "책 내용에 가장 근접한 태그 우선" 원칙이므로 절대 임의로 바꾸지 않는다.
+    - **taxonomy 신규 태그 추가 시 DB 7권 확보 의무**: `ALL_TAXONOMY`에 새 태그를 추가하는 순간 SEO 페이지가 생성되어 Naver/Google이 즉시 색인한다. DB에 해당 태그가 첫 번째인 도서가 없으면 유입 유저에게 빈 페이지가 노출된다. 반드시 사전에 첫 번째 태그 기준 도서 7권 이상을 확보한 후 태그를 등록한다.
+    - **weekly_schedule.json 태그 배정 시 DB 7권 확인 의무**: 특정 태그를 주간 큐레이션으로 배정하기 전, 반드시 해당 태그의 DB 도서 수(첫 번째 태그 기준)가 7권 이상인지 확인해야 한다. 7권 미만이면 홈 화면에서 `CurationSection`이 `minBooks < 7` 조건으로 자동 숨김 처리되어 해당 주에 빈 슬롯이 발생한다.
+    - **검증 스크립트 의무 실행**: taxonomy 또는 weekly_schedule 변경 작업 후 반드시 `python3 backend/scripts/check_curation_health.py`를 실행하여 모든 태그의 도서 수가 기준 이상인지 일괄 검증한 후 배포를 진행한다.
+
 ## 핵심
 1. Next.js와 FastAPI 구조를 숙지해. 특히 Data4Library API와 판교도서관 스크래핑 시 타임아웃과 캐싱(5분) 처리가 project_plan대로 구현되었는지 검토해.
 2. 업무 수행 시 `.agent/skills/development/project_workflow/SKILL.md`의 기술 표준을 반드시 준수해.
