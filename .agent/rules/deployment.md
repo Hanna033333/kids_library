@@ -42,12 +42,19 @@
 
 4. **Phase 3: CORS 정규식 확인** (backend/main.py)
 
-5. **브랜치 확인 후 push**
+5. **큐레이션 도서 수 검증 (taxonomy/weekly_schedule 변경 시)**
+   - taxonomy 또는 weekly_schedule을 변경한 경우 아래 스크립트를 실행하여 모든 태그 7권 이상 확인:
+   ```bash
+   python3 backend/scripts/check_curation_health.py
+   ```
+   - ❌ 빨간 항목(7권 미만)이 있으면 도서 추가 완료 후 push
+
+6. **브랜치 확인 후 push**
    ```bash
    git branch  # 현재 브랜치 반드시 확인
    git push origin dev  # dev는 반드시 dev로
    ```
-6. **모바일 성능 및 가독성 사전 점검**:
+7. **모바일 성능 및 가독성 사전 점검**:
    - 모바일 최적화를 위해 Next.js 빌드 산출물 중 이미지 크기와 JS 번들 크기가 과도하게 커지지 않았는지 확인한다.
    - 로컬 테스트 환경에서 Chrome DevTools 모바일 에뮬레이터를 켜고, UI 깨짐이나 수평 스크롤이 강제로 발생하는 컴포넌트가 없는지 사전 확인한다.
 
