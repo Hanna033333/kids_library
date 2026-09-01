@@ -53,12 +53,15 @@ def search_books_service(
                 query = query.or_(or_filter)
     
     # 검색어 필터링 (제목 또는 저자에 검색어 포함)
+    # 한국어 띄어쓰기 불일치 대응: 토큰별 AND 검색
+    # 예) "수다쟁이 숲" → "수다쟁이" 포함 AND "숲" 포함 → "수다쟁이숲에 놀러와!" 히트
     # PostgREST ParserError 방지를 위해 검색어 q 내의 백슬래시(\), 쉼표(,) 및 큰따옴표(") 이스케이프 및 인용 처리 적용
     if q:
         q = q.strip()
-        if q:
-            safe_q = q.replace('\\', '\\\\').replace('"', '\\"').replace(',', '\\,')
-            query = query.or_(f'title.ilike."%{safe_q}%",author.ilike."%{safe_q}%"')
+        tokens = [t for t in q.split() if t]
+        for token in tokens:
+            safe_token = token.replace('\\', '\\\\').replace('"', '\\"').replace(',', '\\,')
+            query = query.or_(f'title.ilike."%{safe_token}%",author.ilike."%{safe_token}%"')
     
     # 연령 필터링 — DB 표준화 후 단순 .eq() 쿼리
     if age:

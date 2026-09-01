@@ -53,6 +53,7 @@ export default function BookDetailClient({
 }: BookDetailClientProps) {
     const router = useRouter()
     const hasTrackedView = useRef<string | null>(null)
+    const hasTrackedCallNumber = useRef<string | null>(null)
     const { user } = useAuth()
     const [book, setBook] = useState<Book>(initialBook)
     const [isSaved, setIsSaved] = useState(false)
@@ -158,6 +159,28 @@ export default function BookDetailClient({
     };
 
     const ctaProps = getPurchaseButtonProps();
+
+    // 청구기호 실제 노출 이벤트 — 로그인 유저가 실제 청구기호를 봤을 때만 발송
+    const PLACEHOLDER_CALL_NOS = ['청구기호 없음', '보유 정보 없음', '도서관을 선택해주세요']
+    useEffect(() => {
+        if (!user) return;
+        if (!selectedLibrary) return;
+        if (PLACEHOLDER_CALL_NOS.includes(displayCallNo)) return;
+        if (normalizedStatus === undefined) return; // 대출 상태 아직 로딩 중
+
+        const trackKey = `${book.id}_${selectedLibrary}_${displayCallNo}`
+        if (hasTrackedCallNumber.current === trackKey) return;
+
+        sendGAEvent('view_call_number', {
+            book_id: book.id,
+            book_title: book.title,
+            library: selectedLibrary,
+            call_number: displayCallNo,
+            loan_status: normalizedStatus.status,
+            loan_available: normalizedStatus.available,
+        });
+        hasTrackedCallNumber.current = trackKey;
+    }, [user, selectedLibrary, displayCallNo, normalizedStatus, book.id, book.title]);
 
     // Send GA event when book detail page is viewed (waits for loan status to resolve to send accurate data)
     useEffect(() => {
