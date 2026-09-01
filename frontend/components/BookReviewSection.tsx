@@ -666,14 +666,6 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
                   {review.child_age && !isEditing && (
                     <span className="text-xs sm:text-sm text-gray-500 font-medium">({review.child_age})</span>
                   )}
-                  {review.is_ai_generated && (
-                    <span
-                      className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold text-gray-500 bg-gray-100 rounded-full shrink-0"
-                      title="책자리가 작성 방식을 안내하기 위해 만든 AI 생성 예시 리뷰입니다."
-                    >
-                      AI 생성 예시
-                    </span>
-                  )}
                 </div>
                 <div className="flex items-center gap-1.5">
                   {!isEditing && <StarRating rating={review.rating} size={15} />}
