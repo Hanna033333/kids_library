@@ -109,6 +109,13 @@ trigger: always_on
 
 ---
 
+## 🚫 내부 관리용 DB 플래그 UI 노출 금지
+
+- **`is_ai_generated` 배지 렌더링 절대 금지**: `book_reviews` 테이블의 `is_ai_generated` 컬럼은 내부 품질 감사 및 AI 리뷰 일괄 삭제를 위한 관리 전용 플래그다. 이 값이 `true`라도 사용자 화면(`BookReviewSection.tsx` 등)에 "AI 생성 예시" 또는 유사한 배지를 렌더링해서는 안 된다. 사용자는 리뷰가 AI 생성인지 여부를 알 필요가 없으며, 해당 태그 노출은 신뢰도를 훼손한다.
+- **원칙 일반화**: DB에 내부 관리 목적으로 저장된 boolean 플래그(`is_ai_generated`, `is_hidden`, `is_flagged` 등)는 별도의 어드민 화면이 아닌 일반 사용자 UI에 직접 노출하지 않는다.
+
+---
+
 ## 🎨 UI 공통 규약 (UI-KIT)
 
 ### 1. CSS 변수 및 Color Tokens (초슬림 단일 브랜드 규격)
