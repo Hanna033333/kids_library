@@ -161,6 +161,10 @@ trigger: always_on
     - **절대 금지**: AI 생성 리뷰임에도 `is_ai_generated: False`로 위장하는 방식 — 이 경우 품질 감사 및 일괄 삭제가 불가능해짐. 반드시 `is_ai_generated: True`로 저장해야 한다.
     - 스크립트 실행 시 `--skip-existing` 플래그를 사용하고, 이미 리뷰가 있는 도서는 건너뛴다.
     - 리뷰 삽입 후에는 반드시 `qa/SKILL.md`의 **시드 리뷰 품질 감사 체크리스트**를 실행하여 문제 리뷰 0건 기준을 통과했는지 확인한다.
+    - **`book_reviews` 테이블 삽입 시 필수 스키마 제약 준수 (재발 방지)**:
+      - `rating` 컬럼은 **integer** 타입이므로 반드시 `int(round(...))` 로 변환 후 삽입한다. `4.5` 같은 float을 그대로 전달하면 DB에서 `invalid input syntax for type integer` 오류가 발생하여 삽입 자체가 실패한다.
+      - `comment` 컬럼은 **NOT NULL** 제약이 있으므로 신규 스키마(`nickname`, `content`, `selected_badges` 포함) 삽입 시에도 반드시 `"comment": content_text` 필드를 함께 포함해야 한다. 누락 시 null 제약 위반으로 새 스키마 삽입이 실패하고 레거시 폴백으로 떨어져 UI가 깨진다 (닉네임·나이·뱃지 칩이 `comment` 필드에 모두 뭉쳐서 표시됨).
+      - 새 스키마 삽입이 400으로 실패해 레거시 폴백으로 삽입된 리뷰는 `nickname IS NULL AND content IS NULL` 조건으로 식별 가능하며, `is_ai_generated`도 `False`로 저장되어 품질 감사가 불가능해진다. 삽입 후 로그에서 `400 Bad Request` 가 한 건이라도 발생했다면 반드시 원인을 조사하고 해당 레코드를 삭제 후 재생성한다.
 42. **장기 실행 명령어의 파이프 차단 금지 (절대 준수)**:
     - `python3 script.py | head -N` 형태로 파이프를 걸면 `head`가 N줄 후 파이프를 닫아 **스크립트 자체가 SIGPIPE로 조기 종료**된다.
     - Gemini API 다수 호출, 대량 DB 작업, 크롤링 등 장기 실행 스크립트는 반드시 **로그 파일로 리다이렉트** 후 실행한다:

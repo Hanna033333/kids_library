@@ -165,13 +165,15 @@ def insert_reviews(book_id: int, book_title: str, reviews: List[dict]):
         created_at_time = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - (days_ago * 86400 + hours_ago * 3600)))
 
         # 1. 신규 스키마 컬럼으로 시도
+        content_text = review.get("content", "")[:500]
         data_new = {
             "book_id": book_id,
             "nickname": nickname,
             "child_age": review.get("child_age"),
-            "rating": min(5.0, max(1.0, float(review.get("rating", 4.5)))),
+            "rating": int(round(min(5.0, max(1.0, float(review.get("rating", 4.5)))))),
             "selected_badges": selected_badges,
-            "content": review.get("content", "")[:500],
+            "content": content_text,
+            "comment": content_text,  # NOT NULL 제약 충족
             "created_at": created_at_time,
             "is_ai_generated": True,
         }
