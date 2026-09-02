@@ -134,7 +134,7 @@ export default function MyPageClient() {
 
         fetchPreview()
         return () => { cancelled = true }
-    }, [user?.id])
+    }, [user])
 
     useEffect(() => {
         const fetchSettings = async () => {
