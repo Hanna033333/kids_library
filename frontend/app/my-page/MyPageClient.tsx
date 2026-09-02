@@ -105,19 +105,25 @@ export default function MyPageClient() {
     }, [user, authLoading, router])
 
     useEffect(() => {
+        // Supabase 토큰 갱신 교착 등으로 쿼리가 응답/에러 없이 hang되면 스켈레톤이 영구 노출되므로
+        // 각 비동기 호출에 타임아웃을 걸어 반드시 결말이 나도록 보장한다.
+        const withTimeout = <T,>(p: Promise<T>, ms: number, fallback: T): Promise<T> =>
+            Promise.race([p, new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))])
+
         const fetchPreview = async () => {
             if (!user) return
             setIsPreviewLoading(true)
             try {
-                const savedIds = await getSavedBookIds(supabase, user.id)
+                const savedIds = await withTimeout(getSavedBookIds(supabase, user.id), 6000, [] as number[])
                 setSavedCount(savedIds.length)
                 if (savedIds.length > 0) {
-                    const books = await getBooksByIds(savedIds.slice(0, 6))
+                    const books = await withTimeout(getBooksByIds(savedIds.slice(0, 6)), 6000, [] as Book[])
                     setPreviewBooks(books)
                 }
             } catch (err) {
                 console.error('내 책장 미리보기 로드 실패:', err)
             } finally {
+                // 취소 여부와 무관하게 무조건 해제 (조건부 해제 시 스켈레톤 stuck 재발)
                 setIsPreviewLoading(false)
             }
         }
