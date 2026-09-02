@@ -87,7 +87,7 @@ export default function MyPageClient() {
                 const savedIds = await getSavedBookIds(supabase, user.id)
                 setSavedCount(savedIds.length)
                 if (savedIds.length > 0) {
-                    const books = await getBooksByIds(savedIds.slice(0, 4))
+                    const books = await getBooksByIds(savedIds.slice(0, 6))
                     setPreviewBooks(books)
                 }
             } catch (err) {
@@ -97,7 +97,7 @@ export default function MyPageClient() {
             }
         }
         if (user) fetchPreview()
-    }, [user])
+    }, [user?.id])
 
     useEffect(() => {
         const fetchSettings = async () => {

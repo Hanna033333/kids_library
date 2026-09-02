@@ -189,6 +189,18 @@ trigger: always_on
     - **weekly_schedule.json 태그 배정 시 DB 7권 확인 의무**: 특정 태그를 주간 큐레이션으로 배정하기 전, 반드시 해당 태그의 DB 도서 수(첫 번째 태그 기준)가 7권 이상인지 확인해야 한다. 7권 미만이면 홈 화면에서 `CurationSection`이 `minBooks < 7` 조건으로 자동 숨김 처리되어 해당 주에 빈 슬롯이 발생한다.
     - **검증 스크립트 의무 실행**: taxonomy 또는 weekly_schedule 변경 작업 후 반드시 `python3 backend/scripts/check_curation_health.py`를 실행하여 모든 태그의 도서 수가 기준 이상인지 일괄 검증한 후 배포를 진행한다.
 
+44. **책 이미지 URL 품질 검증 및 에러 폴백 규칙 (재발 방지)**:
+    - **`coversum` URL 절대 금지**: 알라딘 API에서 받아온 이미지 URL 중 `/coversum/` 패턴은 85px 극소 썸네일이며, `cover200`으로 변환 시 해당 사이즈가 없는 경우 404가 발생해 이미지가 깨진다. DB 저장 시 반드시 `/cover500/`으로 변환 후 저장한다.
+    - **신규 책 데이터 삽입 전 coversum 검사 의무화**: 스크립트로 책을 추가할 때 image_url에 `coversum`이 포함되어 있으면 즉시 `cover500`으로 치환한 뒤 삽입한다. (`url.replace('/coversum/', '/cover500/')`)
+    - **DB 잔존 coversum 정기 점검 쿼리**:
+      ```sql
+      SELECT id, title, image_url FROM childbook_items
+      WHERE image_url LIKE '%coversum%';
+      ```
+      이 쿼리 결과가 0건이어야 정상이며, 발견 시 즉시 `cover500`으로 일괄 수정한다.
+    - **`BookItem.tsx` onError 폴백 필수 유지**: `<Image>` 컴포넌트에는 반드시 `onError={() => setImgError(true)}` 핸들러를 유지하여 CDN 일시 장애·404 발생 시 BookOpen 아이콘 폴백으로 자동 전환되도록 한다. 이 핸들러를 제거하거나 누락하면 안 된다.
+    - **알라딘 CDN 단일 의존성 위험 인지**: 현재 전체 책 이미지(1,100+권)가 `image.aladin.co.kr`에서 직접 로드된다. CDN 장애 시 서비스 전체 이미지가 동시에 깨지는 구조이므로, 향후 Supabase Storage 미러링을 검토해야 한다.
+
 ## 핵심
 1. Next.js와 FastAPI 구조를 숙지해. 특히 Data4Library API와 판교도서관 스크래핑 시 타임아웃과 캐싱(5분) 처리가 project_plan대로 구현되었는지 검토해.
 2. 업무 수행 시 `.agent/skills/development/project_workflow/SKILL.md`의 기술 표준을 반드시 준수해.

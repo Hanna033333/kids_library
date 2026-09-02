@@ -2,6 +2,7 @@ import { Book, LoanStatus } from "@/lib/types";
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 import { getAgeDisplayLabel } from "@/lib/utils/age";
 import { useLibrary } from "@/context/LibraryContext";
 import { sendGAEvent } from "@/lib/analytics";
@@ -24,6 +25,7 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
   const { user } = useAuth();
   const { selectedLibrary } = useLibrary();
   const displayAge = getAgeDisplayLabel(book.age);
+  const [imgError, setImgError] = useState(false);
 
   // 청구기호 결정 로직 (showLibraryInfo이고 선호 도서관이 설정되었을 때만 연산)
   let displayCallNo = '청구기호 없음';
@@ -81,7 +83,7 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
     >
       {/* 1. 이미지 영역 (상단) */}
       <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
-        {book.image_url ? (
+        {book.image_url && !imgError ? (
           <Image
             src={getOptimizedImageUrl(book.image_url, 'list')}
             alt={book.title}
@@ -90,6 +92,7 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
             className="object-cover transition-transform duration-300 group-active:scale-105"
             loading={priority ? 'eager' : 'lazy'}
             priority={priority}
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full text-gray-300">
