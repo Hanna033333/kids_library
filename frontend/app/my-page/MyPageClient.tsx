@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ChevronRight, Check, Pencil } from 'lucide-react'
+import { ChevronRight, Check, Pencil, BookOpen } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import LibrarySelector from '@/components/LibrarySelector'
@@ -12,12 +12,37 @@ import { supabase } from '@/lib/supabase'
 import { getSavedBookIds } from '@/lib/supabase-api'
 import { getBooksByIds } from '@/lib/api'
 import { Book } from '@/lib/types'
+import { getOptimizedImageUrl } from '@/lib/utils/image'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import { PageLoader } from '@/components/ui/PageLoader'
 import { sendGAEvent } from '@/lib/analytics'
 import Toast from '@/components/ui/Toast'
 
 type ViewState = 'main' | 'delete-notice' | 'delete-reason'
+
+/** 내 책장 미리보기 - 이미지별 onError 상태를 독립적으로 관리하는 서브컴포넌트 */
+function BookCoverMini({ book }: { book: Book }) {
+    const [imgError, setImgError] = useState(false)
+    const src = getOptimizedImageUrl(book.image_url, 'list')
+    return (
+        <div className="relative w-[72px] aspect-[1/1.3] rounded-lg overflow-hidden bg-gray-100 shrink-0">
+            {src && !imgError ? (
+                <Image
+                    src={src}
+                    alt={book.title}
+                    fill
+                    className="object-cover"
+                    sizes="72px"
+                    onError={() => setImgError(true)}
+                />
+            ) : (
+                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 opacity-20 text-gray-400" />
+                </div>
+            )}
+        </div>
+    )
+}
 
 const ADJECTIVES = ['지혜로운', '따스한', '포근한', '정겨운', '행복한', '다정한', '꿈꾸는', '다독이는', '슬기로운', '다복한', '마음넓은', '빛나는']
 const NOUNS = ['책벌레', '이야기꾼', '책부엉이', '파랑새', '독서가', '책요정', '글벗', '책탐험가', '책마을님']
@@ -350,21 +375,7 @@ export default function MyPageClient() {
                                     <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-5 px-5">
                                         {previewBooks.map((book) => (
                                             <Link key={book.id} href={`/book/${book.id}`} className="shrink-0">
-                                                <div className="relative w-[72px] aspect-[1/1.3] rounded-lg overflow-hidden bg-gray-100">
-                                                    {book.image_url ? (
-                                                        <Image
-                                                            src={book.image_url}
-                                                            alt={book.title}
-                                                            fill
-                                                            className="object-cover"
-                                                            sizes="72px"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                                                            <span className="text-[10px] text-gray-400">표지없음</span>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <BookCoverMini book={book} />
                                             </Link>
                                         ))}
                                     </div>
