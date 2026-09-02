@@ -105,35 +105,23 @@ export default function MyPageClient() {
     }, [user, authLoading, router])
 
     useEffect(() => {
-        if (!user) return
-        let cancelled = false
-
         const fetchPreview = async () => {
+            if (!user) return
             setIsPreviewLoading(true)
-
-            // 8초 타임아웃 안전장치 — fetch가 hanging해도 스켈레톤이 무한 노출되지 않도록 방지
-            const timer = setTimeout(() => {
-                if (!cancelled) setIsPreviewLoading(false)
-            }, 8000)
-
             try {
                 const savedIds = await getSavedBookIds(supabase, user.id)
-                if (cancelled) return
                 setSavedCount(savedIds.length)
                 if (savedIds.length > 0) {
                     const books = await getBooksByIds(savedIds.slice(0, 6))
-                    if (!cancelled) setPreviewBooks(books)
+                    setPreviewBooks(books)
                 }
             } catch (err) {
                 console.error('내 책장 미리보기 로드 실패:', err)
             } finally {
-                clearTimeout(timer)
-                if (!cancelled) setIsPreviewLoading(false)
+                setIsPreviewLoading(false)
             }
         }
-
-        fetchPreview()
-        return () => { cancelled = true }
+        if (user) fetchPreview()
     }, [user])
 
     useEffect(() => {
@@ -145,9 +133,13 @@ export default function MyPageClient() {
             )
             if (isQaMode) {
                 // QA 모드: sessionStorage에 저장된 닉네임 복원 (SignupWelcomeModal 또는 이전 저장값)
-                const qaNickname = sessionStorage.getItem('qa_saved_nickname') || null
+                let qaNickname = sessionStorage.getItem('qa_saved_nickname') || null
+                if (!qaNickname) {
+                    qaNickname = generateRandomNickname()
+                    sessionStorage.setItem('qa_saved_nickname', qaNickname)
+                }
                 setNickname(qaNickname)
-                setEditNickname(qaNickname || generateRandomNickname())
+                setEditNickname(qaNickname)
                 return
             }
 
@@ -158,8 +150,30 @@ export default function MyPageClient() {
                 .single()
             if (data && !error) {
                 const saved = data.nickname || null
-                setNickname(saved)
-                setEditNickname(saved || generateRandomNickname())
+                if (saved) {
+                    setNickname(saved)
+                    setEditNickname(saved)
+                } else {
+                    // 닉네임 미설정 시 랜덤 닉네임 자동 부여
+                    const autoNickname = generateRandomNickname()
+                    setNickname(autoNickname)
+                    setEditNickname(autoNickname)
+                    try {
+                        const isLocal = typeof window !== 'undefined' && (
+                            window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                        )
+                        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://127.0.0.1:8000' : 'https://api.checkjari.com')
+                        const { data: sessionData } = await supabase.auth.getSession()
+                        const token = sessionData?.session?.access_token || ''
+                        await fetch(`${API_BASE_URL}/api/auth/me`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ nickname: autoNickname }),
+                        })
+                    } catch {
+                        // 자동 저장 실패는 조용히 무시 — 유저가 수동으로 수정 가능
+                    }
+                }
             }
         }
         fetchSettings()
