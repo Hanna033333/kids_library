@@ -83,7 +83,7 @@ const shouldIgnoreTracking = () => {
 
 export const sendGAEvent = (eventName: string, eventParams?: Record<string, any>) => {
     const ignored = shouldIgnoreTracking();
-    
+
     // 개발 환경에서는 차단 여부와 관계없이 콘솔에 로그를 출력하여 이벤트를 검증할 수 있도록 함
     if (process.env.NODE_ENV === "development") {
         console.log(`📢 [GA4 Event] ${eventName}`, eventParams, ignored ? "(Ignored by tracking policy)" : "");
@@ -103,4 +103,38 @@ export const sendGAEvent = (eventName: string, eventParams?: Record<string, any>
             });
         }
     }
+};
+
+/**
+ * GA 이벤트 전송 후 페이지 이동 — OAuth 콜백처럼 이벤트 직후 리다이렉트하는 상황에서 사용.
+ * gtag의 event_callback으로 전송 완료를 기다린 뒤 navigate하여 이벤트 유실을 방지한다.
+ * gtag 미초기화 시 300ms 타임아웃 후 폴백 이동.
+ */
+export const sendGAEventAndRedirect = (
+    eventName: string,
+    eventParams: Record<string, any>,
+    redirectUrl: string
+) => {
+    const ignored = shouldIgnoreTracking();
+
+    if (process.env.NODE_ENV === "development") {
+        console.log(`📢 [GA4 Event+Redirect] ${eventName}`, eventParams, `→ ${redirectUrl}`, ignored ? "(Ignored)" : "");
+    }
+
+    const doRedirect = () => window.location.replace(redirectUrl);
+
+    if (ignored || typeof window === "undefined" || !window.gtag) {
+        doRedirect();
+        return;
+    }
+
+    // 전송 완료 콜백으로 리다이렉트, 300ms 타임아웃 안전장치
+    const timer = setTimeout(doRedirect, 300);
+    window.gtag("event", eventName, {
+        ...eventParams,
+        event_callback: () => {
+            clearTimeout(timer);
+            doRedirect();
+        },
+    });
 };

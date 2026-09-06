@@ -5,7 +5,7 @@ import { useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { PageLoader } from '@/components/ui/PageLoader'
-import { sendGAEvent } from '@/lib/analytics'
+import { sendGAEvent, sendGAEventAndRedirect } from '@/lib/analytics'
 
 const ADJECTIVES = ['지혜로운', '따스한', '포근한', '정겨운', '행복한', '다정한', '꿈꾸는', '다독이는', '슬기로운', '다복한', '마음넓은', '빛나는']
 const NOUNS = ['책벌레', '이야기꾼', '책부엉이', '파랑새', '독서가', '책요정', '글벗', '책탐험가', '책마을님']
@@ -58,8 +58,6 @@ function AuthCallbackContent() {
             const provider = user.app_metadata?.provider
             if (provider) localStorage.setItem('last_login_provider', provider)
 
-            sendGAEvent('login_success', { method: provider || 'unknown' })
-
             // QA 모드
             if (isQaMode) {
                 const qaState = sessionStorage.getItem('qa_member_state')
@@ -74,6 +72,8 @@ function AuthCallbackContent() {
                 window.location.replace(returnUrl || '/')
                 return
             }
+
+            sendGAEvent('login_success', { method: provider || 'unknown' })
 
             // 기존 회원 여부 확인
             const { data: member, error: memberError } = await supabase
@@ -119,13 +119,18 @@ function AuthCallbackContent() {
                     console.error('Auto-registration failed:', e)
                 }
 
-                sendGAEvent('sign_up', { method: provider || 'unknown' })
                 sessionStorage.setItem('showSignupComplete', 'true')
             }
 
             const returnUrl = sessionStorage.getItem('returnUrl')
             sessionStorage.removeItem('returnUrl')
-            window.location.replace(returnUrl || '/')
+
+            if (isNewUser) {
+                // 신규 가입 이벤트 전송 완료 후 리다이렉트 (즉시 이동 시 이벤트 유실 방지)
+                sendGAEventAndRedirect('sign_up', { method: provider || 'unknown' }, returnUrl || '/')
+            } else {
+                window.location.replace(returnUrl || '/')
+            }
         }
 
         handleCallback()
