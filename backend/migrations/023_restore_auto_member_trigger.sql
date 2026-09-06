@@ -37,12 +37,14 @@ BEGIN
   )
   VALUES (
     NEW.id,
-    -- 이메일은 지어내지 않는다. 소셜 제공자가 이메일을 주지 않으면
-    -- NOT NULL 제약으로 INSERT가 실패하고, 아래 EXCEPTION이 이를 삼켜
-    -- members 행이 생기지 않는다(= 가입 미완료).
-    -- 이 경우 사용자에게 사유를 알리고 가입을 중단시키는 책임은 콜백
-    -- (frontend/app/auth/callback/page.tsx)에 있다. 트리거는 auth.users가
-    -- 이미 만들어진 뒤에 돌기 때문에 여기서 가입을 막을 수 없다.
+    -- 이메일은 지어내지 않는다. members.email이 NOT NULL이므로 이메일 없이는
+    -- 회원 레코드를 만들 수 없고, 그 경우 INSERT가 실패해 아래 EXCEPTION이
+    -- 삼킨다(= members 행 미생성 = 가입 미완료).
+    --
+    -- 카카오는 account_email을, 구글은 email scope를 각각 필수로 요구하도록
+    -- 설정돼 있어 실제로는 NULL이 오지 않는다. 이 전제가 깨지면(동의항목을
+    -- 선택으로 되돌리는 등) 인증은 됐는데 members가 없는 계정이 생길 수 있으므로,
+    -- 동의항목을 변경할 때는 이 제약을 함께 검토해야 한다.
     NEW.email,
     COALESCE(NEW.raw_app_meta_data->>'provider', 'email'),
     COALESCE(NEW.raw_user_meta_data->>'provider_id', NEW.id::text),
