@@ -123,7 +123,7 @@ export default function SignupWelcomeModal() {
                 </div>
 
                 {/* 하단 버튼 */}
-                <div className="mt-5 space-y-2">
+                <div className="mt-5">
                     <button
                         onClick={handleSave}
                         disabled={!isNicknameValid || isSaving}
@@ -134,12 +134,6 @@ export default function SignupWelcomeModal() {
                             }`}
                     >
                         {isSaving ? '저장 중...' : '시작하기'}
-                    </button>
-                    <button
-                        onClick={handleClose}
-                        className="w-full h-[44px] rounded-xl text-[14px] font-medium text-gray-400 active:text-gray-600 transition-colors"
-                    >
-                        나중에 설정할게요
                     </button>
                 </div>
             </div>
