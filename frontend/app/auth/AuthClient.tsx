@@ -84,6 +84,8 @@ export default function AuthClient() {
             setError('동일한 이메일로 이미 가입된 기록이 있습니다. 다른 소셜 로그인(카카오/구글)을 시도해 보세요.')
         } else if (errorCode === 'auth_failed') {
             setError('로그인 처리 중 오류가 발생했습니다. 다시 시도해 주세요.')
+        } else if (errorCode === 'email_required') {
+            setError('가입에는 이메일이 필요해요. 다시 로그인하실 때 이메일 제공에 동의해 주세요.')
         }
 
         // provider 파라미터가 있고 아직 자동 실행하지 않았다면 1회만 실행
