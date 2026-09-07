@@ -196,14 +196,14 @@ export default function BookList({
     };
   }, [isMobile, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Track no results
+  // Track no results — 실제 값이 있는 파라미터만 전송 (undefined → GA4 "(not set)" 방지)
   useEffect(() => {
     if (!isListLoading && books.length === 0 && (searchQuery || ageFilter || curationFilter)) {
-      sendGAEvent('search_no_results', { 
-        keyword: searchQuery,
-        age: ageFilter,
-        curation: curationFilter
-      });
+      const params: Record<string, string> = {};
+      if (searchQuery) params.keyword = searchQuery;
+      if (ageFilter) params.age = ageFilter;
+      if (curationFilter) params.curation = curationFilter;
+      sendGAEvent('search_no_results', params);
     }
   }, [isListLoading, books.length, searchQuery, ageFilter, curationFilter]);
 

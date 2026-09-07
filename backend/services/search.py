@@ -61,7 +61,12 @@ def search_books_service(
         tokens = [t for t in q.split() if t]
         for token in tokens:
             safe_token = token.replace('\\', '\\\\').replace('"', '\\"').replace(',', '\\,')
-            query = query.or_(f'title.ilike."%{safe_token}%",author.ilike."%{safe_token}%"')
+            query = query.or_(
+                f'title.ilike."%{safe_token}%",'
+                f'author.ilike."%{safe_token}%",'
+                f'publisher.ilike."%{safe_token}%",'
+                f'curation_tag.ilike."%{safe_token}%"'
+            )
     
     # 연령 필터링 — DB 표준화 후 단순 .eq() 쿼리
     if age:
