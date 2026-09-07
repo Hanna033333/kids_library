@@ -100,7 +100,13 @@ function CurationSection({ title, books, ...props }) {
   - UI 컴포넌트에서 특수 태그를 임의로 숨기지 않고(`HIDDEN_UI_TAGS = empty`) 일반 태그와 동일하게 표시한다.
   - `CurationSection`에 `sectionTag` prop을 전달하고 `BookItem`에 `excludeTag` prop을 적용하여, 홈 큐레이션 카드에서는 섹션 대표 태그 1개만 제외하고 나머지 부가 태그를 자연스럽게 노출한다.
 
+### 🏷️ 청구기호 및 다중 도서관 동기화 (Call Number Sync)
+- **메인 컬럼 동기화 필수**: 도서관별 청구기호를 `book_library_info`에 적재할 때, `childbook_items.pangyo_callno` 컬럼에도 판교도서관 청구기호(없을 시 타 도서관 대표 청구기호)를 함께 업데이트해야 목록 페이지(`/books?curation=xxx`) 및 SEO 페이지(`/collections/curation/[tag]`)에서 정상 노출됩니다.
+- **사전 건강검진 실행**: 주간 스케줄 반영 전 반드시 `python3 backend/scripts/check_curation_health.py`를 실행하여 청구기호가 존재하는 유효 도서가 7권 이상인지 확인합니다.
+
 ## 4. 검증 및 배포 (Verification)
 - **데이터 무결성 확인**: 이미지가 깨지지 않는지, ISBN이 정확한지 SQL 조회 및 UI 확인
-- **가독성 점검**: [디자인 팀장 페르소나](file:///Users/1004823/Desktop/kids_library/.agent/rules/design.md) 기준에 맞춰, 타이틀과 책 정보가 서가 환경(모바일)에서도 잘 보안지 확인
+- **청구기호 유효성 및 헬스체크**: `python3 backend/scripts/check_curation_health.py` 실행하여 전수 통과 확인
+- **가독성 점검**: [디자인 팀장 페르소나](file:///Users/1004823/Desktop/kids_library/.agent/rules/design.md) 기준에 맞춰, 타이틀과 책 정보가 서가 환경(모바일)에서도 잘 보이는지 확인
+
 

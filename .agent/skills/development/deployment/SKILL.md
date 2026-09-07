@@ -64,6 +64,16 @@ description: Kids Library 프로젝트의 Vercel(Next.js) 및 AWS Lightsail(Fast
 *   **원인**: Next.js는 `NEXT_PUBLIC_` 접두사가 붙지 않은 환경 변수를 보안상 브라우저에 노출하지 않음.
 *   **해결 방법**: 모든 클라이언트 사용 변수명을 `VITE_SUPABASE_URL` ➡️ `NEXT_PUBLIC_SUPABASE_URL` 등으로 변경.
 
+### ❌ Vercel Preview 환경의 ISR 캐시 지속 현상 (404 Not Found 고착)
+*   **증상**: 코드를 수정하고 새 배포를 생성했음에도 불구하고 특정 프리뷰 라우트(`/collections/curation/[tag]` 등)에서 404 상태가 계속 서빙됨.
+*   **원인**: 
+    1. Vercel의 ISR 캐시는 개별 Deployment가 아닌 **Project + Branch 단위**로 격리되어 관리됨.
+    2. 이전 빌드에서 발생했던 `notFound()` 응답이 브랜치 캐시에 저장되어 있어, 새 배포가 이루어져도 캐시 만료(TTL) 전까지 이전 응답을 서빙함.
+*   **해결 방법**:
+    1. **Build Cache 미사용 재배포**: Vercel 대시보드 > Deployments > 해당 배포의 `Redeploy` 클릭 시 **"Use existing Build Cache" 체크박스를 반드시 해제(Uncheck)**한 뒤 Redeploy 실행.
+    2. **온디맨드 Revalidate 호출**: `/api/revalidate?secret=...&path=...` 엔드포인트를 호출하여 특정 경로의 ISR 캐시를 즉시 파기.
+    3. **도메인 검증 기준**: 고유 배포 해시 URL(`kids-library-hash.vercel.app`)은 과거 스냅샷이므로, 브랜치 대표 URL(`kids-library-git-dev-*.vercel.app`)로 접속하여 검증.
+
 ### 🌐 Vercel 커스텀 도메인 소유권 인증 문제 (`Verification Needed` / `This domain is linked to another Vercel account.`)
 *   **증상**: 상용 도메인(`checkjari.com`) 접속 시 최신 배포본이 적용되지 않고 오래된 버전(예: 5일 전 버전)이 계속 서빙되거나, Vercel 대시보드 Domains 설정에서 도메인 상태가 빨간색 경고(`Verification Needed`)로 뜸.
 *   **원인**: 

@@ -96,6 +96,15 @@ trigger: always_on
     - 데이터 처리 및 AI 스크립트 작성 시 `backend/.env` 경로를 자동으로 탐색하도록 상위 경로 폴백(`Path(__file__).resolve().parents[2] / ".env"`) 처리를 적용한다.
 40. **AWS 환경변수 수정 안내 트러블슈팅**:
     - 사용자 화면/로그상 이미 AWS SSH 터미널에 접속된 상태(`ubuntu@...`)인 경우 로컬 `scp` 명령어 안내를 지양하고, 서버 내부 직수정(`nano ~/kids_library/backend/.env`) 후 `sudo systemctl restart fastapi.service` 안내를 우선 제공한다.
+41. **도서관 청구기호 수집 시 메인 테이블 동기화 (Callno Synchronization)**:
+    - `book_library_info` 테이블에 도서관별 청구기호를 수집/적재할 때, 프론트/백엔드 목록 및 검색 쿼리(`getBooksFromSupabase`, `search_books_service`)의 `pangyo_callno IS NOT NULL & != '없음'` 필터 조건을 만족할 수 있도록 메인 테이블인 `childbook_items.pangyo_callno` 컬럼에도 대표 청구기호(판교도서관 우선, 미소장 시 최초 발견 도서관 청구기호)를 반드시 함께 동기화(Upsert)해야 한다.
+42. **큐레이션 건강검진(check_curation_health.py) 실시간 필터 일치화**:
+    - `backend/scripts/check_curation_health.py`의 수량 집계 로직은 프론트엔드/백엔드 실제 도서 목록 쿼리와 100% 동일하게 `pangyo_callno IS NOT NULL` 및 `pangyo_callno != '없음'` 조건을 필수로 포함하여 False Positive(실제 목록에서 0건인데 건강검진에서는 통과로 오판하는 현상)를 원천 차단한다.
+43. **Vercel Preview 브랜치 ISR 캐시 트러블슈팅 규칙**:
+    - Vercel의 ISR 캐시는 배포 단위가 아닌 프로젝트+브랜치 단위로 관리되므로, 이전 배포의 잘못된 404/에러 캐시가 남아있는 경우 새 배포 후에도 계속 404가 서빙될 수 있다.
+    - 이를 해결하기 위해 Vercel 대시보드 Redeploy 시에는 반드시 **'Use existing Build Cache' 체크박스를 해제**하고 재배포하거나 온디맨드 revalidate API를 호출해야 하며, 테스트 시에는 영구 불변 해시 URL이 아닌 최신 브랜치 대표 도메인(`kids-library-git-dev-*.vercel.app`)을 기준으로 상태를 검증한다.
+44. **백엔드 데이터 처리 스크립트 환경변수 참조**:
+    - 백엔드 데이터 일괄 수정/적재 스크립트 작성 시 Supabase RLS 정책에 의해 일반 `SUPABASE_KEY`(anon key)는 update/insert가 차단되므로, 반드시 `SUPABASE_SERVICE_KEY`(service_role)를 환경변수에서 로드하여 사용한다.
 
 ## 🔒 보안 가이드
 1. **환경변수 관리**
