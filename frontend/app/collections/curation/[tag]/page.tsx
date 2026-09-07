@@ -10,7 +10,10 @@ interface Props {
     params: Promise<{ tag: string }>
 }
 
-export const revalidate = 86400 // 24시간마다 백그라운드 재검증 (ISR)
+// 24h → 1h로 단축(2026-09-07): revalidate 주기가 길면 일시적 오류로 캐싱된
+// 잘못된 결과(notFound 등)가 재배포와 무관하게 최대 주기만큼 방치된다.
+// 급하면 /api/revalidate로 온디맨드 무효화 가능.
+export const revalidate = 3600
 export const dynamicParams = true
 
 // 빌드 타임에 모든 AI 큐레이션 페이지와 방학, 칼데콧, 어린이도서연구회 큐레이션을 정적 파일로 초고속 생성
