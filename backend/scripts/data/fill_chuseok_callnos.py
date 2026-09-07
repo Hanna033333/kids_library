@@ -87,6 +87,10 @@ async def main():
                         {"book_id": book["id"], "library_name": lib_name, "callno": callno},
                         on_conflict="book_id, library_name",
                     ).execute()
+                    # childbook_items.pangyo_callno도 동기화 (판교 우선 또는 최초 발견 청구기호)
+                    if "판교" in lib_name or not book.get("pangyo_callno"):
+                        supabase.table("childbook_items").update({"pangyo_callno": callno}).eq("id", book["id"]).execute()
+                        book["pangyo_callno"] = callno
                     print(f"  ✅ [{book['id']}] {book['title'][:22]} | {lib_name}: {callno}")
                     inserted += 1
                     book_found_any = True

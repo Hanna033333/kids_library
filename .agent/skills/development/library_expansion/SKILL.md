@@ -19,12 +19,17 @@ description: Guidelines and checklists for expanding/adding new libraries to the
 
 ## 🛠️ 단계별 구현 절차
 
-### 1단계: 정보나루(Data4Library) 기관 코드 확인
+### 1단계: 정보나루(Data4Library) 기관 코드 및 청구기호 수집 API 엔드포인트 확인
 새로운 도서관을 추가하기 전, 도서관 실시간 대출 여부를 쿼리하기 위한 **정보나루 6자리 기관 코드**를 확보해야 합니다.
 1. [정보나루 도서관코드 조회 페이지](https://www.data4library.kr/libCode)에 접속합니다.
 2. 도서관 이름(예: `수지도서관`)을 검색하여 `도서관코드` 열의 6자리 값을 확인합니다. (예: 수지도서관은 `111295`가 아닌 `141381` 등 고유 번호가 존재합니다.)
 3. 또는 API 호출을 통해 응답 XML/JSON에서 직접 코드를 발췌합니다:
    `http://data4library.kr/api/libSrch?authKey={AUTH_KEY}&pageSize=10&pageNo=1&libName=도서관이름&format=json`
+
+> [!IMPORTANT]
+> **Data4Library 청구기호 수집 API 엔드포인트 선택 규격**:
+> - ❌ **`srchDtlList` API 사용 금지**: `srchDtlList`는 공통 KDC 주제 분류번호(`class_no`)만 반환하며, 개별 도서관의 별치기호 및 저자기호를 제공하지 않습니다.
+> - ✅ **`itemSrch` API 사용 필수**: `http://data4library.kr/api/itemSrch` 엔드포인트를 사용하여 응답 JSON `docs[0].doc.callNumbers` 내의 `separate_shelf_code` (별치기호), `class_no` (분류번호), `book_code` (도서기호), `copy_code` (복본기호)를 조합(`f"{separate_shelf_code} {class_no}-{book_code}={copy_code}"`)해야 100% 진실된 실물 서가 청구기호가 완성됩니다.
 
 ---
 

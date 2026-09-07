@@ -35,15 +35,17 @@ MIN_PAGE = 1   # 도서 목록 페이지 표시 기준 (taxonomy 태그에 적�
 
 # ── DB 태그 카운트 ────────────────────────────────────────────────────────────
 def count_books_by_tag(tag: str) -> int:
-    """getBooksByTag 동일 패턴으로 조회 (이미지 있고 숨김 아닌 것만)"""
+    """getBooksByTag / search_books_service 동일 패턴으로 조회 (이미지 있고 숨김 아니며 청구기호 있는 것만)"""
     or_filter = f'curation_tag.eq."{tag}",curation_tag.like."{tag},%",curation_tag.eq."#{tag}",curation_tag.like."#{tag},%"'
-    params = {
-        "select": "id",
-        "or": f"({or_filter})",
-        "is_hidden": "not.eq.true",
-        "image_url": "not.is.null",
-        "limit": "100",
-    }
+    params = [
+        ("select", "id"),
+        ("or", f"({or_filter})"),
+        ("is_hidden", "not.eq.true"),
+        ("image_url", "not.is.null"),
+        ("pangyo_callno", "not.is.null"),
+        ("pangyo_callno", "not.eq.없음"),
+        ("limit", "100"),
+    ]
     qs = urllib.parse.urlencode(params)
     req = urllib.request.Request(f"{SUPABASE_URL}/rest/v1/childbook_items?{qs}", headers=HEADERS)
     try:
@@ -53,14 +55,16 @@ def count_books_by_tag(tag: str) -> int:
         return -1  # 조회 실패
 
 def count_books_ilike(tag: str) -> int:
-    """getCaldecottBooks / getResearchCouncilBooks 패턴 (ilike 어디든)"""
-    params = {
-        "select": "id",
-        "curation_tag": f"ilike.%{tag}%",
-        "is_hidden": "not.eq.true",
-        "image_url": "not.is.null",
-        "limit": "100",
-    }
+    """getCaldecottBooks / getResearchCouncilBooks 패턴 (ilike 어디든, 청구기호 필수)"""
+    params = [
+        ("select", "id"),
+        ("curation_tag", f"ilike.%{tag}%"),
+        ("is_hidden", "not.eq.true"),
+        ("image_url", "not.is.null"),
+        ("pangyo_callno", "not.is.null"),
+        ("pangyo_callno", "not.eq.없음"),
+        ("limit", "100"),
+    ]
     qs = urllib.parse.urlencode(params)
     req = urllib.request.Request(f"{SUPABASE_URL}/rest/v1/childbook_items?{qs}", headers=HEADERS)
     try:

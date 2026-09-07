@@ -80,7 +80,7 @@ kids library/
 ### Frontend (Vercel)
 | 환경 | URL | 브랜치 |
 |------|-----|--------|
-| **Preview (개발)** | `https://kids-library-git-dev-hannas-projects-f9ed017f.vercel.app` | `dev` |
+| **Preview (개발)** | `https://kids-library-git-dev-hannas-projects-23405f99.vercel.app` | `dev` |
 | **Production** | `https://checkjari.com` | `main` |
 
 ### Backend (AWS Lightsail)
