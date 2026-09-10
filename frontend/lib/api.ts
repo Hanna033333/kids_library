@@ -6,6 +6,71 @@ const isLocal = typeof window !== 'undefined'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (isLocal ? "http://127.0.0.1:8000" : "https://api.checkjari.com");
 
+/** 외부 API 응답 지연 시 무한 대기를 막기 위한 공통 타임아웃 (project_plan 타임아웃 처리 원칙) */
+const DEFAULT_TIMEOUT_MS = 30000;
+
+interface ApiFetchOptions {
+  method?: string;
+  /** JSON 본문. 지정 시 Content-Type 헤더가 자동으로 붙는다. */
+  body?: unknown;
+  /** Supabase 액세스 토큰. 지정 시 Authorization 헤더가 자동으로 붙는다. */
+  accessToken?: string;
+  /** 실패 시 사용할 기본 에러 메시지 */
+  errorMessage: string;
+  /**
+   * true면 응답 본문의 `detail` 필드를 우선 사용한다.
+   * 리뷰 작성/수정/삭제는 이 메시지가 그대로 사용자에게 노출되므로(BookReviewSection) 반드시 유지한다.
+   */
+  useServerDetail?: boolean;
+  /** 에러로 취급하지 않고 그대로 반환할 상태 코드 (예: 404를 null로 처리) */
+  allowStatus?: number[];
+  timeoutMs?: number;
+}
+
+/**
+ * 백엔드 API 호출 공통 래퍼.
+ * 타임아웃·헤더 구성·에러 변환을 한 곳에서 처리한다.
+ */
+async function apiFetch(path: string, options: ApiFetchOptions): Promise<Response> {
+  const {
+    method = "GET",
+    body,
+    accessToken,
+    errorMessage,
+    useServerDetail = false,
+    allowStatus = [],
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+  } = options;
+
+  const headers: Record<string, string> = {};
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      ...(Object.keys(headers).length > 0 ? { headers } : {}),
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      signal: controller.signal,
+    });
+
+    if (!response.ok && !allowStatus.includes(response.status)) {
+      if (useServerDetail) {
+        const errorData = await response.json().catch(() => ({} as { detail?: string }));
+        throw new Error(errorData.detail || errorMessage);
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export async function searchBooks(
   query?: string,
   age?: string,
@@ -26,22 +91,10 @@ export async function searchBooks(
   params.append("limit", limit.toString());
   params.append("include_library_info", includeLibraryInfo.toString());
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/books/search?${params}`, {
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    if (!response.ok) {
-      throw new Error("Failed to fetch books");
-    }
-    return response.json();
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
+  const response = await apiFetch(`/api/books/search?${params}`, {
+    errorMessage: "Failed to fetch books",
+  });
+  return response.json();
 }
 
 export async function getBooks(
@@ -60,88 +113,50 @@ export async function getBooks(
   params.append("limit", limit.toString());
   params.append("include_library_info", includeLibraryInfo.toString());
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/books/list?${params}`, {
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    if (!response.ok) {
-      throw new Error("Failed to fetch books");
-    }
-    return response.json();
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
+  const response = await apiFetch(`/api/books/list?${params}`, {
+    errorMessage: "Failed to fetch books",
+  });
+  return response.json();
 }
 
 export async function fetchLoanStatuses(
   bookIds: number[],
   libraryName?: string
 ): Promise<Record<number, LoanStatus>> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30초 타임아웃
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/books/loan-status`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        book_ids: bookIds,
-        library_name: libraryName || "판교도서관"
-      }),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch loan statuses");
-    }
-
-    return response.json();
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
+  const response = await apiFetch("/api/books/loan-status", {
+    method: "POST",
+    body: {
+      book_ids: bookIds,
+      library_name: libraryName || "판교도서관",
+    },
+    errorMessage: "Failed to fetch loan statuses",
+  });
+  return response.json();
 }
 
 export async function getBooksByIds(bookIds: number[]): Promise<Book[]> {
   if (bookIds.length === 0) return [];
-  const response = await fetch(`${API_BASE_URL}/api/books/by-ids`, {
+  const response = await apiFetch("/api/books/by-ids", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(bookIds),
+    body: bookIds,
+    errorMessage: "Failed to fetch books by ids",
   });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch books by ids");
-  }
-
   return response.json();
 }
 
 export async function getBookById(id: number): Promise<Book | null> {
-  const response = await fetch(`${API_BASE_URL}/api/books/${id}`);
-  if (!response.ok) {
-    if (response.status === 404) return null;
-    throw new Error("Failed to fetch book detail");
-  }
+  const response = await apiFetch(`/api/books/${id}`, {
+    errorMessage: "Failed to fetch book detail",
+    allowStatus: [404],
+  });
+  if (response.status === 404) return null;
   return response.json();
 }
 
 export async function fetchBookReviews(bookId: number): Promise<ReviewsResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/books/${bookId}/reviews`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch reviews");
-  }
+  const response = await apiFetch(`/api/books/${bookId}/reviews`, {
+    errorMessage: "Failed to fetch reviews",
+  });
   return response.json();
 }
 
@@ -156,18 +171,13 @@ export async function createBookReview(
   },
   accessToken: string
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/books/${bookId}/reviews`, {
+  await apiFetch(`/api/books/${bookId}/reviews`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(review),
+    body: review,
+    accessToken,
+    errorMessage: "Failed to create review",
+    useServerDetail: true,
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || "Failed to create review");
-  }
 }
 
 export async function updateBookReview(
@@ -181,18 +191,13 @@ export async function updateBookReview(
   },
   accessToken: string
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/books/${bookId}/reviews/${reviewId}`, {
+  await apiFetch(`/api/books/${bookId}/reviews/${reviewId}`, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(update),
+    body: update,
+    accessToken,
+    errorMessage: "Failed to update review",
+    useServerDetail: true,
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || "Failed to update review");
-  }
 }
 
 export async function deleteBookReview(
@@ -200,27 +205,19 @@ export async function deleteBookReview(
   reviewId: string,
   accessToken: string
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/books/${bookId}/reviews/${reviewId}`, {
+  await apiFetch(`/api/books/${bookId}/reviews/${reviewId}`, {
     method: "DELETE",
-    headers: {
-      "Authorization": `Bearer ${accessToken}`,
-    },
+    accessToken,
+    errorMessage: "Failed to delete review",
+    useServerDetail: true,
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || "Failed to delete review");
-  }
 }
 
 export async function getMyRatedBooks(accessToken: string): Promise<MyReviewsResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/books/my-reviews`, {
-    headers: {
-      "Authorization": `Bearer ${accessToken}`,
-    },
+  const response = await apiFetch("/api/books/my-reviews", {
+    accessToken,
+    errorMessage: "Failed to fetch rated books",
+    useServerDetail: true,
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || "Failed to fetch rated books");
-  }
   return response.json();
 }

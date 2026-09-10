@@ -74,7 +74,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             title,
             description,
             type: 'website',
-            url: `https://checkjari.com/collections/curation/${encodeURIComponent(targetSlug)}`
+            url: `https://www.checkjari.com/collections/curation/${encodeURIComponent(targetSlug)}`
         },
         twitter: {
             card: 'summary_large_image',

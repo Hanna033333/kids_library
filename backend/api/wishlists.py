@@ -2,16 +2,14 @@
 찜하기(Wishlist) API
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime
-import os
 import logging
 from core.database import supabase
+from api.auth import get_current_user
 
 router = APIRouter(prefix="/api/wishlists", tags=["wishlists"])
-security = HTTPBearer()
 logger = logging.getLogger(__name__)
 
 # ============================================
@@ -22,8 +20,10 @@ class BookInfo(BaseModel):
     id: int
     title: str
     author: str
-    cover_image: str
-    callno: str
+    # DB 컬럼은 image_url / pangyo_callno 이며 select 별칭으로 매핑한다.
+    # 두 컬럼 모두 null 값이 존재하므로 Optional 로 둔다.
+    cover_image: Optional[str] = None
+    callno: Optional[str] = None
 
 
 class WishlistItem(BaseModel):
@@ -45,43 +45,6 @@ class AddWishlistRequest(BaseModel):
 
 class CheckWishlistRequest(BaseModel):
     book_ids: List[int]
-
-
-# ============================================
-# 인증 헬퍼 함수
-# ============================================
-
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """JWT 토큰에서 현재 사용자 정보 추출"""
-    token = credentials.credentials
-    
-    # QA 전용 테스터 토큰 처리 (development 모드이거나 모의 환경이 명시적으로 켜졌을 때만 활성화)
-    is_qa_allowed = os.getenv("ENV") == "development" or os.getenv("ALLOW_QA_MOCK") == "true"
-    if token == "TEST_QA_TOKEN" and is_qa_allowed:
-        from types import SimpleNamespace
-        logger.info("QA Tester Token detected in Wishlists")
-        return SimpleNamespace(
-            id="00000000-0000-0000-0000-000000000000",
-            email="qa-tester@checkjari.com",
-            app_metadata={'provider': 'kakao'},
-            user_metadata={'provider_id': 'qa-tester-001'}
-        )
-
-    try:
-        user = supabase.auth.get_user(token)
-        if not user:
-            logger.warning("get_user returned None in Wishlists")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="사용자 인증에 실패했습니다."
-            )
-        return user.user
-    except Exception as e:
-        logger.error(f"Wishlists auth failed: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="사용자 인증에 실패했습니다."
-        )
 
 
 # ============================================
@@ -109,7 +72,7 @@ async def get_wishlists(
         
         # 찜 목록 조회 (책 정보 JOIN)
         response = supabase.table("wishlists").select(
-            "id, created_at, book:childbook_items(id, title, author, cover_image, callno)"
+            "id, created_at, book:childbook_items(id, title, author, cover_image:image_url, callno:pangyo_callno)"
         ).eq("user_id", current_user.id).order("created_at", desc=True).range(offset, offset + limit - 1).execute()
         
         # 전체 개수 조회

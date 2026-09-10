@@ -12,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .or('is_hidden.is.null,is_hidden.eq.false')
         .order('id')
 
-    const baseUrl = 'https://checkjari.com'
+    const baseUrl = 'https://www.checkjari.com'
 
     const routes: MetadataRoute.Sitemap = [
         { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
