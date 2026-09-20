@@ -10,7 +10,8 @@ def search_books_service(
     sort: str = "pangyo_callno",
     page: int = 1,
     limit: int = 20,
-    include_library_info: bool = False
+    include_library_info: bool = False,
+    tag: Optional[str] = None
 ):
     """
     책 검색 및 필터링 서비스
@@ -38,10 +39,12 @@ def search_books_service(
                 '여름방학': '여름방학2026',
                 'summer-vacation': '여름방학2026',
                 '어린이도서연구회': '어린이도서연구회',  # Backward compatibility
-                'research-council': '어린이도서연구회'
+                'research-council': '어린이도서연구회',
+                '교과서수록': '교과서수록',
+                'textbook': '교과서수록'
             }
             db_curation_tag = curation_mapping.get(curation, curation)
-            special_tags = ['겨울방학2026', '여름방학2026', '어린이도서연구회', 'caldecott']
+            special_tags = ['겨울방학2026', '여름방학2026', '어린이도서연구회', 'caldecott', '교과서수록']
             
             # curation 파라미터 내의 쉼표/큰따옴표/백슬래시 이스케이프 및 인용 처리 적용
             safe_curation = db_curation_tag.replace('\\', '\\\\').replace('"', '\\"').replace(',', '\\,')
@@ -51,6 +54,13 @@ def search_books_service(
             else:
                 or_filter = f'curation_tag.eq."{safe_curation}",curation_tag.like."{safe_curation},%",curation_tag.eq."#{safe_curation}",curation_tag.like."#{safe_curation},%"'
                 query = query.or_(or_filter)
+
+    # 태그 필터링 (교과서 수록도서 학년 등)
+    if tag:
+        tag = tag.strip().lstrip("#")
+        if tag:
+            safe_tag = tag.replace('\\', '\\\\').replace('"', '\\"').replace(',', '\\,')
+            query = query.ilike('curation_tag', f'%{safe_tag}%')
     
     # 검색어 필터링 (제목 또는 저자에 검색어 포함)
     # 한국어 띄어쓰기 불일치 대응: 토큰별 AND 검색

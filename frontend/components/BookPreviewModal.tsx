@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react'
 import Image from 'next/image'
-import { getOptimizedImageUrl } from '@/lib/utils/image'
+import { getOptimizedImageUrl, isValidCoverImage } from '@/lib/utils/image'
 
 interface BookPreviewModalProps {
     isOpen: boolean
@@ -37,8 +37,10 @@ export default function BookPreviewModal({
 
     if (!isOpen) return null
 
-    const images = previewUrls || []
+    // 유효한 이미지만 필터링
+    const images = (previewUrls || []).filter(isValidCoverImage)
     const hasMultiple = images.length > 1
+    const currentImageUrl = images.length > 0 ? getOptimizedImageUrl(images[currentIndex], 'detail') : null
 
     const handlePrev = () => {
         setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1))
@@ -83,10 +85,10 @@ export default function BookPreviewModal({
 
                 {/* Content Body */}
                 <div className="relative flex-1 bg-gray-50 flex items-center justify-center p-4 overflow-hidden">
-                    {images.length > 0 ? (
+                    {currentImageUrl ? (
                         <div className="relative w-full h-full flex items-center justify-center">
                             <Image
-                                src={getOptimizedImageUrl(images[currentIndex], 'detail')}
+                                src={currentImageUrl}
                                 alt={`${bookTitle} 미리보기 ${currentIndex + 1}`}
                                 fill
                                 priority

@@ -129,7 +129,7 @@ export default function SignupWelcomeModal() {
                         disabled={!isNicknameValid || isSaving}
                         className={`w-full h-[50px] rounded-xl text-[16px] font-bold transition-all active:scale-[0.98]
                             ${isNicknameValid && !isSaving
-                                ? 'bg-[#F59E0B] text-white active:bg-[#D97706]'
+                                ? 'bg-brand-primary text-white active:bg-brand-primary-active'
                                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                             }`}
                     >

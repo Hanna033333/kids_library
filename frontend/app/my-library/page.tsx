@@ -108,7 +108,7 @@ export default function MyLibraryPage() {
                         onClick={() => setActiveTab('saved')}
                         className={`flex-1 py-3 text-sm font-semibold transition-colors ${
                             activeTab === 'saved'
-                                ? 'text-gray-900 border-b-2 border-[#F59E0B]'
+                                ? 'text-gray-900 border-b-2 border-brand-primary'
                                 : 'text-gray-400'
                         }`}
                     >
@@ -118,7 +118,7 @@ export default function MyLibraryPage() {
                         onClick={() => setActiveTab('rated')}
                         className={`flex-1 py-3 text-sm font-semibold transition-colors ${
                             activeTab === 'rated'
-                                ? 'text-gray-900 border-b-2 border-[#F59E0B]'
+                                ? 'text-gray-900 border-b-2 border-brand-primary'
                                 : 'text-gray-400'
                         }`}
                     >
@@ -166,7 +166,7 @@ export default function MyLibraryPage() {
                             <p className="text-gray-400 text-sm mb-6">책을 담고 청구기호를 한눈에 확인해 보세요</p>
                             <Link
                                 href="/"
-                                className="px-6 py-3 bg-[#F59E0B] text-white rounded-lg font-semibold transition-all"
+                                className="px-6 py-3 bg-brand-primary text-white rounded-lg font-semibold transition-all"
                             >
                                 책 보러 가기
                             </Link>
@@ -194,7 +194,7 @@ export default function MyLibraryPage() {
                             <p className="text-gray-400 text-sm mb-6">도서 상세 페이지에서 별점을 남겨보세요</p>
                             <Link
                                 href="/"
-                                className="px-6 py-3 bg-[#F59E0B] text-white rounded-lg font-semibold transition-all"
+                                className="px-6 py-3 bg-brand-primary text-white rounded-lg font-semibold transition-all"
                             >
                                 책 보러 가기
                             </Link>

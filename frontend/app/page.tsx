@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import HomePageClient from '@/components/HomePageClient'
-import { getResearchCouncilBooks, getBooksByAge, getBooksByTag, getSummerBooks } from '@/lib/home-api'
+import { getResearchCouncilBooks, getBooksByAge, getBooksByTag, getSummerBooks, getTextbookBooks } from '@/lib/home-api'
 import { getCaldecottBooks } from '@/lib/caldecott-api'
 import { createClient } from '@/lib/supabase'
 import { VALID_TAXONOMY, CurationTag } from '@/lib/constants/taxonomy'
@@ -70,11 +70,12 @@ export default async function HomePage() {
   }
 
   // 서버 사이드 병렬 데이터 페칭 (홈 화면에서는 도서관 소장 정보 조인을 생략하여 TTFB 단축)
-  const [researchBooks, ageBooks, caldecottBooks, summerBooks, ...dynamicBooks] = await Promise.all([
+  const [researchBooks, ageBooks, caldecottBooks, summerBooks, textbookBooks, ...dynamicBooks] = await Promise.all([
     getResearchCouncilBooks(7, supabase, false),
     getBooksByAge(defaultAge, 7, supabase, false),
     getCaldecottBooks(supabase, false),
     isSummerCurationActive() ? getSummerBooks(7, supabase, false) : Promise.resolve([]),
+    getTextbookBooks(undefined, 8, supabase, false),
     ...selectedTags.map(t => getBooksByTag(t.tag, 7, supabase, false))
   ])
 
@@ -100,7 +101,7 @@ export default async function HomePage() {
           '@type': 'SearchAction',
           target: {
             '@type': 'EntryPoint',
-            urlTemplate: 'https://checkjari.com/search?q={search_term_string}',
+            urlTemplate: 'https://checkjari.com/books?q={search_term_string}',
           },
           'query-input': 'required name=search_term_string',
         },
@@ -112,7 +113,7 @@ export default async function HomePage() {
         url: 'https://checkjari.com',
         logo: {
           '@type': 'ImageObject',
-          url: 'https://checkjari.com/logo.png',
+          url: 'https://checkjari.com/icon-512.png',
           width: 512,
           height: 512,
         },
@@ -134,6 +135,7 @@ export default async function HomePage() {
         initialResearchBooks={researchBooks}
         initialAgeBooks={ageBooks}
         initialSummerBooks={summerBooks}
+        initialTextbookBooks={textbookBooks}
         initialSelectedAge={defaultAge}
         dynamicCurations={dynamicCurations}
       />

@@ -77,7 +77,7 @@ export default function Pagination({
                 onClick={() => onPageChange(pageNum as number)}
                 disabled={currentPage === pageNum}
                 className={`min-w-[32px] h-8 px-1 flex items-center justify-center text-sm font-bold rounded-lg transition-all active:scale-[0.98] ${currentPage === pageNum
-                  ? "bg-[#F59E0B] text-white"
+                  ? "bg-brand-primary text-white"
                   : "text-gray-500"
                   } ${loading && currentPage !== pageNum ? "pointer-events-none" : ""}`}
               >

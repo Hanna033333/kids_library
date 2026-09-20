@@ -115,7 +115,7 @@ export default function LibrarySelector({
                                             }`}
                                     >
                                         <span className="flex items-center gap-3">
-                                            <span className={`w-2 h-2 rounded-full ${selectedLibrary === lib ? 'bg-[#F59E0B]' : 'bg-gray-300'}`} />
+                                            <span className={`w-2 h-2 rounded-full ${selectedLibrary === lib ? 'bg-brand-primary' : 'bg-gray-300'}`} />
                                             {lib}
                                         </span>
                                         {selectedLibrary === lib && (
@@ -132,7 +132,7 @@ export default function LibrarySelector({
                                     href="https://docs.google.com/forms/d/e/1FAIpQLSdz7vpG3dj7RVHUEFWoxjdkEIyALYIry-3J-79bfowT2_82mQ/viewform?usp=publish-editor"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="font-semibold text-gray-600 hover:text-amber-600 underline underline-offset-4 decoration-gray-200 hover:decoration-amber-500 transition-colors ml-1 inline-block"
+                                    className="font-semibold text-gray-600 hover:text-brand-primary underline underline-offset-4 decoration-gray-200 hover:decoration-brand-primary/50 transition-colors ml-1 inline-block"
                                 >
                                     도서관 신청하기 ↗
                                 </a>

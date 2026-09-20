@@ -20,8 +20,10 @@ import Image from 'next/image'
 import { getOptimizedImageUrl } from '@/lib/utils/image'
 import { PageLoader } from '@/components/ui/PageLoader'
 import CurationSection from '@/components/home/CurationSection'
+import TextbookCurationShowcase from '@/components/home/TextbookCurationShowcase'
 import BookCard from '@/components/home/BookCard'
 import { isSummerCurationActive } from '@/lib/utils/curation-filter'
+import { getCurationMoreLink } from '@/lib/utils/curation-link'
 
 interface DynamicCuration {
   subtitle: string;
@@ -35,6 +37,7 @@ interface HomePageClientProps {
   initialResearchBooks?: Book[];
   initialAgeBooks?: Book[];
   initialSummerBooks?: Book[];
+  initialTextbookBooks?: Book[];
   initialSelectedAge?: string;
   dynamicCurations?: DynamicCuration[];
 }
@@ -44,6 +47,7 @@ export default function HomePageClient({
   initialResearchBooks = [],
   initialAgeBooks = [],
   initialSummerBooks = [],
+  initialTextbookBooks = [],
   initialSelectedAge = '4-7',
   dynamicCurations = []
 }: HomePageClientProps) {
@@ -73,7 +77,6 @@ export default function HomePageClient({
   const [researchBooks, setResearchBooks] = useState<Book[]>(initialResearchBooks)
   const [caldecottBooks] = useState<Book[]>(initialCaldecottBooks)
   const [summerBooks, setSummerBooks] = useState<Book[]>(initialSummerBooks)
-
 
   // 초기 데이터가 있으면 로딩 상태 false
   const [loading, setLoading] = useState(() => {
@@ -222,17 +225,13 @@ export default function HomePageClient({
           subtitle="교육청이 엄선한 학년별 필독서"
           title="☀️ 여름방학 추천도서"
           books={summerBooks}
-          href="/books?curation=summer-vacation"
+          href={getCurationMoreLink({ curation: 'summer-vacation' })}
           onViewMore={() => sendGAEvent('click_view_more', { section: 'summer_vacation' })}
           bgColor="bg-white"
           sectionTag="여름방학2026"
           priorityImages
         />
       )}
-
-
-
-
 
       {/* 2. AI 큐레이션 섹션 (3일마다 랜덤 교체) */}
       {dynamicCurations.map((curation, index) => (
@@ -241,7 +240,7 @@ export default function HomePageClient({
           subtitle={curation.subtitle}
           title={curation.title}
           books={curation.books}
-          href={`/books?curation=${encodeURIComponent(curation.tag)}`}
+          href={getCurationMoreLink({ curation: curation.tag })}
           onViewMore={() => sendGAEvent('click_view_more', { section: curation.tag })}
           bgColor={index % 2 === 0 ? 'bg-white' : 'bg-muted-bg'}
           sectionTag={curation.tag}
@@ -249,19 +248,22 @@ export default function HomePageClient({
         />
       ))}
 
+      {/* 📖 2022 개정 교과서 수록도서 쇼케이스 (학년별 가로 스크롤 탭) */}
+      <TextbookCurationShowcase initialBooks={initialTextbookBooks} bgColor="bg-muted-bg" />
+
       {/* 3. 칼데콧 수상작 섹션 */}
       <CurationSection
         subtitle="미국 도서관 최고의 영예"
         title="칼데콧 수상작"
         books={caldecottBooks}
-        href="/books?curation=caldecott"
+        href={getCurationMoreLink({ curation: 'caldecott' })}
         onViewMore={() => sendGAEvent('click_view_more', { section: 'caldecott' })}
-        bgColor="bg-muted-bg"
+        bgColor="bg-white"
         sectionTag="caldecott"
       />
 
-      {/* 우리 아이 나이에 딱! (연령별 추천 섹션) - 어린이도서연구회 추천 위로 이동 */}
-      <section className="py-8 px-4 bg-white">
+      {/* 우리 아이 나이에 딱! (연령별 추천 섹션) */}
+      <section className="py-8 px-4 bg-muted-bg">
         <div className="max-w-[1200px] mx-auto">
           <div className="flex items-end justify-between mb-6 px-2">
             <div className="flex flex-col gap-1">
@@ -273,7 +275,7 @@ export default function HomePageClient({
               </h2>
             </div>
             <Link
-              href={`/books?age=${selectedAge}`}
+              href={getCurationMoreLink({ age: selectedAge })}
               className="text-gray-900 p-1 mb-0.5"
               onClick={() => sendGAEvent('click_view_more', { section: 'age_recommendation', age: selectedAge })}
             >
@@ -296,7 +298,7 @@ export default function HomePageClient({
                 }}
                 className={`flex-shrink-0 whitespace-nowrap px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedAge === age.key
                   ? 'bg-brand-primary text-white'
-                  : 'bg-gray-100 text-gray-700 active:bg-gray-200 border border-gray-200'
+                  : 'bg-surface-sub text-gray-700 active:bg-gray-200 border border-gray-200'
                   }`}
               >
                 {age.label}
@@ -349,9 +351,9 @@ export default function HomePageClient({
         subtitle="전문가가 엄선한 필독서"
         title="어린이도서연구회 추천"
         books={researchBooks}
-        href="/books?curation=research-council"
+        href={getCurationMoreLink({ curation: 'research-council' })}
         onViewMore={() => sendGAEvent('click_view_more', { section: 'research_council' })}
-        bgColor="bg-muted-bg"
+        bgColor="bg-white"
         sectionTag="어린이도서연구회"
       />
 
@@ -410,7 +412,7 @@ export default function HomePageClient({
             rel="noopener noreferrer"
             className="flex items-center gap-3 text-gray-700 hover:text-gray-900 transition-colors group"
           >
-            <Bell className="w-5 h-5 text-[#F59E0B] group-hover:text-[#D97706] transition-colors" />
+            <Bell className="w-5 h-5 text-brand-primary group-hover:text-brand-primary-hover transition-colors" />
             <span className="text-sm font-medium">서비스 오픈 안내(1/10)</span>
           </a>
         </div>

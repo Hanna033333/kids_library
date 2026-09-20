@@ -3,6 +3,9 @@ interface FilterBarProps {
   onAgeChange: (age: string) => void;
   onFilterClick: () => void;
   showFilterButton?: boolean;
+  isTextbook?: boolean;
+  selectedTag?: string;
+  onTagChange?: (tag: string) => void;
 }
 
 const AGE_OPTIONS = [
@@ -11,10 +14,24 @@ const AGE_OPTIONS = [
   { value: "8-12", label: "8~12세" },
 ];
 
+const TEXTBOOK_GRADE_OPTIONS = [
+  { value: "all", label: "전체" },
+  { value: "초등1학년", label: "초등 1학년" },
+  { value: "초등2학년", label: "초등 2학년" },
+  { value: "초등3학년", label: "초등 3학년" },
+  { value: "초등4학년", label: "초등 4학년" },
+  { value: "초등5학년", label: "초등 5학년" },
+  { value: "초등6학년", label: "초등 6학년" },
+];
+
 export default function FilterBar({
-  selectedAge, onAgeChange,
+  selectedAge,
+  onAgeChange,
   onFilterClick,
-  showFilterButton = true
+  showFilterButton = true,
+  isTextbook = false,
+  selectedTag = "",
+  onTagChange
 }: FilterBarProps) {
 
   const handleAgeToggle = (ageVal: string) => {
@@ -22,6 +39,16 @@ export default function FilterBar({
       onAgeChange(""); // Toggle off
     } else {
       onAgeChange(ageVal);
+    }
+  };
+
+  const handleTagToggle = (tagVal: string) => {
+    if (tagVal === "all" || tagVal === "") {
+      onTagChange?.(""); // 전체 선택
+    } else if (selectedTag === tagVal) {
+      onTagChange?.(""); // Toggle off -> 전체로 복귀
+    } else {
+      onTagChange?.(tagVal);
     }
   };
 
@@ -45,19 +72,39 @@ export default function FilterBar({
             </button>
           )}
 
-          {/* 연령대 필터 */}
-          {AGE_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => handleAgeToggle(option.value)}
-              className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold transition-all border active:scale-[0.98] ${selectedAge === option.value
-                ? "bg-[#F59E0B] text-white border-[#F59E0B]"
-                : "bg-white text-gray-500 border-gray-200"
-                }`}
-            >
-              {option.label}
-            </button>
-          ))}
+          {/* 교과서 수록도서: 초등 1~6학년 필터 / 일반: 연령대 필터 */}
+          {isTextbook ? (
+            TEXTBOOK_GRADE_OPTIONS.map((option) => {
+              const isSelected = option.value === "all"
+                ? !selectedTag || selectedTag === "all"
+                : selectedTag === option.value;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => handleTagToggle(option.value)}
+                  className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold transition-all border active:scale-[0.98] ${isSelected
+                    ? "bg-brand-primary text-white border-brand-primary"
+                    : "bg-white text-gray-500 border-gray-200"
+                    }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })
+          ) : (
+            AGE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => handleAgeToggle(option.value)}
+                className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold transition-all border active:scale-[0.98] ${selectedAge === option.value
+                  ? "bg-brand-primary text-white border-brand-primary"
+                  : "bg-white text-gray-500 border-gray-200"
+                  }`}
+              >
+                {option.label}
+              </button>
+            ))
+          )}
         </div>
       </div>
     </div>

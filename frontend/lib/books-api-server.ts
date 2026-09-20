@@ -12,6 +12,7 @@ interface FetchBooksParams {
         category?: string;
         sort?: string;
         curation?: string;
+        tag?: string;
     }
     client?: SupabaseClient
 }
@@ -48,12 +49,17 @@ export async function getBooksFromServer({
     // category 필터링은 큐레이션 태그 체계로 대체되어 제거됨 (services/search.py, supabase-client.ts와 동일)
     // Curation 필터
     if (filters?.curation) {
-        const dbCurationTag = resolveDbCurationTag(filters.curation);
-        if (isSpecialTag(dbCurationTag)) {
+        const cleanCuration = filters.curation.replace(/^#/, '').split(/[?&]/)[0].trim();
+        if (cleanCuration) {
+            const dbCurationTag = resolveDbCurationTag(cleanCuration);
             query = query.ilike('curation_tag', `%${dbCurationTag}%`);
-        } else {
-            query = query.or(buildCurationOrFilter(dbCurationTag));
         }
+    }
+
+    // Tag 필터 (교과서 수록도서 학년 태그 등)
+    if (filters?.tag) {
+        const normalizedTag = filters.tag.replace(/^#/, '');
+        query = query.ilike('curation_tag', `%${normalizedTag}%`);
     }
 
     // 정렬
@@ -63,6 +69,8 @@ export async function getBooksFromServer({
         query = query.order('title', { ascending: true });
     } else if (sortField === 'confidence_score_desc') {
         query = query.order('confidence_score', { ascending: false });
+    } else if (sortField === 'popular' || sortField === 'national_loan_count' || sortField === 'national_loan_count_desc') {
+        query = query.order('national_loan_count', { ascending: false, nullsFirst: false });
     } else {
         query = query.order(sortField);
     }

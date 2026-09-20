@@ -79,7 +79,8 @@ export async function searchBooks(
   page: number = 1,
   limit: number = 20,
   curation?: string,
-  includeLibraryInfo: boolean = false
+  includeLibraryInfo: boolean = false,
+  tag?: string
 ): Promise<BooksResponse> {
   const params = new URLSearchParams();
   if (query) params.append("q", query);
@@ -87,6 +88,7 @@ export async function searchBooks(
   if (category && category !== "전체") params.append("category", category);
   if (sort) params.append("sort", sort);
   if (curation) params.append("curation", curation);
+  if (tag) params.append("tag", tag);
   params.append("page", page.toString());
   params.append("limit", limit.toString());
   params.append("include_library_info", includeLibraryInfo.toString());

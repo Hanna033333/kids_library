@@ -11,6 +11,7 @@ interface UseBooksParams {
   searchQuery?: string;
   ageFilter?: string;
   curationFilter?: string;
+  tagFilter?: string;
   sortFilter?: string;
   limit?: number;
   initialBooks?: Book[];
@@ -22,6 +23,7 @@ export function useBooks({
   searchQuery,
   ageFilter,
   curationFilter,
+  tagFilter,
   sortFilter = "pangyo_callno",
   limit = 24,
   initialBooks,
@@ -36,28 +38,42 @@ export function useBooks({
     isLoading,
     error,
   } = useInfiniteQuery({
-    queryKey: ["books-infinite", searchQuery, ageFilter, curationFilter, sortFilter, includeLibraryInfo],
+    queryKey: ["books-infinite", searchQuery, ageFilter, curationFilter, tagFilter, sortFilter, includeLibraryInfo],
     enabled,
     queryFn: async ({ pageParam }): Promise<BooksResponse> => {
       const page = pageParam as number;
 
       if (searchQuery) {
-        return await searchBooks(
-          searchQuery,
-          ageFilter || undefined,
-          undefined,
-          sortFilter,
-          page,
-          limit,
-          curationFilter || undefined,
-          includeLibraryInfo
-        );
+        try {
+          return await searchBooks(
+            searchQuery,
+            ageFilter || undefined,
+            undefined,
+            sortFilter,
+            page,
+            limit,
+            curationFilter || undefined,
+            includeLibraryInfo,
+            tagFilter || undefined
+          );
+        } catch (apiErr) {
+          console.warn("Backend searchBooks failed, falling back to Supabase direct search:", apiErr);
+          const { getBooksFromSupabase } = await import("@/lib/supabase-client");
+          return await getBooksFromSupabase(page, limit, {
+            q: searchQuery,
+            age: ageFilter,
+            curation: curationFilter,
+            tag: tagFilter,
+            sort: sortFilter,
+          }, includeLibraryInfo);
+        }
       }
 
       const { getBooksFromSupabase } = await import("@/lib/supabase-client");
       return await getBooksFromSupabase(page, limit, {
         age: ageFilter,
         curation: curationFilter,
+        tag: tagFilter,
         sort: sortFilter,
       }, includeLibraryInfo);
     },

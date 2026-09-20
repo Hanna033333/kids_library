@@ -51,7 +51,10 @@ def fetch_aladin_image(isbn: str) -> str:
         if response.status_code == 200:
             data = response.json()
             if "item" in data and len(data["item"]) > 0:
-                return data["item"][0].get("cover", "")
+                cover = data["item"][0].get("cover", "")
+                if cover and any(x in cover.lower() for x in ["noimg", "no_image", "nothumb", "placeholder"]):
+                    return ""
+                return cover
     except Exception as e:
         # print(f"Error fetching {isbn}: {e}")
         pass

@@ -25,7 +25,7 @@ except ImportError as e:
     sys.exit(1)
 
 from core.taxonomy import get_weekly_curations, ALL_TAXONOMY
-from services.card_generator import generate_card_news
+from services.card_generator import generate_card_news, clean_book_title
 from services.text_trimmer import trim_text_fallback
 import google.generativeai as genai
 
@@ -117,7 +117,7 @@ def generate_card_descriptions_ai(tag: str, books: List[dict]) -> List[str]:
     books_summary_info = [
         {
             "index": idx + 1,
-            "title": b.get("title"),
+            "title": clean_book_title(b.get("title") or ""),
             "raw_description": b.get("description") or b.get("curation_note") or ""
         }
         for idx, b in enumerate(books)
@@ -231,7 +231,7 @@ def generate_blog_content(tag: str, books: List[dict], card_paths: List[str]) ->
         card_file = card_paths[idx] if idx < len(card_paths) else b.get("image_url") or ""
         books_info.append({
             "index": idx + 1,
-            "title": b.get("title"),
+            "title": clean_book_title(b.get("title") or ""),
             "author": b.get("author") or "",
             "publisher": b.get("publisher"),
             "card_image_path": card_file,

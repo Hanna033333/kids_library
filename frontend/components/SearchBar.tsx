@@ -11,6 +11,11 @@ interface SearchBarProps {
 export default function SearchBar({ onSearch, initialQuery = "" }: SearchBarProps) {
   const [query, setQuery] = useState(initialQuery);
 
+  // initialQuery 변경 시 (인기 검색어 클릭 등) 동기화
+  useEffect(() => {
+    setQuery(initialQuery);
+  }, [initialQuery]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       onSearch(query);

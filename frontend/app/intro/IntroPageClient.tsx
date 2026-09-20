@@ -100,7 +100,7 @@ export default function IntroPageClient() {
                 <div className="max-w-[1100px] mx-auto space-y-32 sm:space-y-48">
                     <div className="flex flex-col md:flex-row items-center gap-12 md:gap-28">
                         <div className="flex-1 text-left">
-                            <span className="text-[#F59E0B] font-bold text-[17px] sm:text-[19px] mb-6 block tracking-[-0.03em]">책자리 서비스</span>
+                            <span className="text-brand-primary font-bold text-[17px] sm:text-[19px] mb-6 block tracking-[-0.03em]">책자리 서비스</span>
                             <h3 className="text-[26px] sm:text-[40px] font-extrabold leading-[1.3] tracking-[-0.03em] mb-6 text-[#000] break-keep">
                                 흩어진 도서관 정보를<br />
                                 한 곳에서 모아보세요.

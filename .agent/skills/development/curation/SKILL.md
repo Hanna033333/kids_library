@@ -50,12 +50,27 @@ description: A guide for adding and managing curated book sections (e.g., Caldec
 - **가로 스크롤 지연 방지**: 터치 스와이프가 매끄럽게 동작하도록 CSS `scroll-behavior: smooth`와 `-webkit-overflow-scrolling: touch` 속성을 부여한다.
 - **마지막 아이템 여백**: 가로 스크롤 시 마지막 도서 카드가 화면 우측 끝에 너무 달라붙지 않도록, 컨테이너 끝에 적절한 padding-right(최소 `16px`)를 확보해 모바일 터치 사용성을 높인다.
 
+### 도서 태그 노출 및 중복 방지 규격 (4-Tag Rule)
+- **상세 페이지 최대 4개 태그 노출**:
+  - 도서 상세 페이지에서는 `[메타 태그 1개] + [핵심 큐레이션/주제 태그 최대 3개]` 구조로 최대 4개까지만 노출합니다.
+  - 구체적인 학년 태그(`초등1~6학년`)가 존재하는 도서는 학년 태그를 맨 앞 메타 태그로 배치하며, 포괄적 연령 태그(예: `8~12세`)는 중복 방지를 위해 렌더링에서 배제합니다.
+- **도서 카드 뱃지 정합성**:
+  - 도서 카드(`BookItem.tsx`) 이미지 위 오버레이 뱃지에도 학년 태그가 있으면 연령 대신 학년을 우선 노출하고, 카드 하단 큐레이션 목록에서는 중복을 방지하기 위해 해당 학년 태그를 제외합니다.
+
 ### 구현 체크리스트
 - [ ] **Data Fetching**: `lib/home-api.ts` 등에 해당 큐레이션을 위한 Fetch 함수 추가
 - [ ] **Display Logic (Quality Control)**: 홈 화면 섹션의 경우, 사용자 경험을 위해 **최소 7권 이상의 도서**가 존재할 때만 섹션을 렌더링하도록 조건부 로직 추가
 - [ ] **Component Update**: `HomePageClient.tsx`에 새로운 섹션 추가
 - [ ] **Responsiveness**: 모바일/태블릿/데스크탑 환경에서의 스크롤 및 배치 확인
 - [ ] **Link Routing**: "더보기" 클릭 시 해당 큐레이션 필터가 적용된 목록 페이지(`/books?curation=xxx`)로 이동
+- [ ] **SEO 7대 파이프라인 동기화 (필수)**:
+  1. `taxonomy.ts` (`ALL_TAXONOMY`, `VALID_AI_TAGS`)
+  2. `layout.tsx` (메인 키워드 & 설명)
+  3. `sitemap.ts` (`specialCurations` 및 하위 쿼리 경로)
+  4. `collections/curation/[tag]/page.tsx` (`generateStaticParams`, `generateMetadata`, `isKnownCuration`, `SPECIAL_TAGS`, `ItemList` JSON-LD)
+  5. `books/page.tsx` (`generateMetadata`, `SPECIAL_TAGS`, `ItemList` JSON-LD)
+  6. `book/[id]/page.tsx` (도서 상세 특수 태그 배지, 메타데이터, `Book` JSON-LD)
+  7. `npm run build` 빌드 및 정적 사전 생성 검증
 
 #### [예시] 노출 품질 관리 로직 (Early return)
 ```tsx
@@ -104,9 +119,29 @@ function CurationSection({ title, books, ...props }) {
 - **메인 컬럼 동기화 필수**: 도서관별 청구기호를 `book_library_info`에 적재할 때, `childbook_items.pangyo_callno` 컬럼에도 판교도서관 청구기호(없을 시 타 도서관 대표 청구기호)를 함께 업데이트해야 목록 페이지(`/books?curation=xxx`) 및 SEO 페이지(`/collections/curation/[tag]`)에서 정상 노출됩니다.
 - **사전 건강검진 실행**: 주간 스케줄 반영 전 반드시 `python3 backend/scripts/check_curation_health.py`를 실행하여 청구기호가 존재하는 유효 도서가 7권 이상인지 확인합니다.
 
+### 🏷️ 홈 큐레이션-도서 목록 헤더 타이틀 정책 (Header Title Policy)
+- **헤더 타이틀 이모티콘 배제**: 도서 리스트 상단 `PageHeader` 타이틀은 `ALL_TAXONOMY`의 `title` 속성을 매핑하되, 정규식을 통해 이모티콘(이모지)을 완전히 제거한 순수 텍스트(예: `스르륵 꿀잠 그림책`)로 일관되게 노출합니다.
+- **교과서 수록도서 및 학년별 태그 분기**: `searchParams.get('tag')`를 확인하여 학년 태그(예: `초등1학년`)가 존재할 경우 `초등 1학년 교과서 수록도서`, 전체일 경우 `교과서 수록도서`로 이모티콘 없이 명확히 분기합니다.
+- **인기 큐레이션 칩 바 동기화**: `POPULAR_CURATION_CHIPS`에 `📖 교과서`(`tag: '교과서수록'`) 칩을 포함하여 홈 주요 코너와 퀵 이동 칩 간 정합성을 유지합니다.
+
+### 🏷️ 태그 정제 및 파싱 규약 (Tag Sanitization & Grade Tags)
+- **DB 저장 불변식**: `curation_tag` 컬럼의 태그는 항상 `#`이 없는 순수 한글/영문 쉼표 구분자 포맷(예: `전래동화,옛이야기,권선징악`)으로 저장 및 적재합니다.
+- **UI 파싱 SSOT**: UI 렌더링 시 `frontend/lib/utils/curation-filter.ts`의 `parseCurationTags()`, `formatCurationTag()`, `isGradeTag()`, `extractGradeTag()`를 유일한 단일 진실 공급원(SSOT)으로 사용합니다. `parseCurationTags()`는 `Set` 기반의 순서 유지 중복 제거를 지원하여 동일 태그 다중 노출을 원천 방어합니다.
+- **학년 태그 표준 노출**: 초등 학년 태그(`초등1학년` ~ `초등6학년`)는 `TAG_DISPLAY_NAMES`를 통해 띄어쓰기가 적용된 `초등 N학년` 형태로 UI에 노출합니다.
+
+### 🔗 큐레이션 "더보기" 링크 생성 단일 규격 (`getCurationMoreLink`)
+- **수동 URL 조립 금지**: 컴포넌트마다 `URLSearchParams`를 수동 생성하면 `age`, `tag`, `sort` 파라미터가 유실되어 목록 진입 시 시각적 연속성이 깨집니다.
+- **단일 함수 호출**: 모든 더보기 링크는 `getCurationMoreLink({ curation, age, tag, sort })`(`frontend/lib/utils/curation-link.ts`)를 호출하여 생성합니다.
+  - **특수 큐레이션 (칼데콧, 방학, 도서연구회)**: 전체 도서 풀 노출을 위해 `age`, `tag` 파라미터를 배제하고 `/books?curation=...` 반환
+  - **교과서 수록도서**: 학년 `tag`가 있을 때 `/books?curation=교과서수록&tag=...` 반환
+  - **AI 주제 큐레이션**: 등록된 슬러그가 있을 때 `/collections/curation/[slug]?age=...&tag=...`, 없을 때 `/books?curation=...` 반환
+  - **연령별 추천**: `/books?age=...&sort=popular` 반환
+- **React Query 정렬 캐시 동기화**: `BookList.tsx`의 `queryKey`에 `sortFilter`를 필수로 포함하여, 인기순/신뢰도순 등 정렬 파라미터 변경 시 캐시 오염 없이 즉시 최신 데이터가 조회되도록 유지합니다.
+
 ## 4. 검증 및 배포 (Verification)
 - **데이터 무결성 확인**: 이미지가 깨지지 않는지, ISBN이 정확한지 SQL 조회 및 UI 확인
 - **청구기호 유효성 및 헬스체크**: `python3 backend/scripts/check_curation_health.py` 실행하여 전수 통과 확인
 - **가독성 점검**: [디자인 팀장 페르소나](file:///Users/1004823/Desktop/kids_library/.agent/rules/design.md) 기준에 맞춰, 타이틀과 책 정보가 서가 환경(모바일)에서도 잘 보이는지 확인
+
 
 

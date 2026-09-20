@@ -21,6 +21,22 @@ COLOR_TEXT_SECONDARY = (107, 114, 128) # 보조 텍스트 (#6B7280)
 COLOR_WHITE = (255, 255, 255)
 COLOR_LIGHT_GRAY = (229, 231, 235)   # 구분선용 연회색 (#E5E7EB)
 
+def clean_book_title(title: str) -> str:
+    """도서 제목에서 부제(서브타이틀)를 제거하고 메인 타이틀만 반환합니다.
+    예:
+    - '화내지 말고 예쁘게 말해요 - 올바른 의사표현을 도와주는 책' -> '화내지 말고 예쁘게 말해요'
+    - '진짜 일 학년 책가방을 지켜라! - 2017 아침독서신문 선정...' -> '진짜 일 학년 책가방을 지켜라!'
+    - '스마트폰이 사라진 날 : 어린이를 위한 미디어 리터러시' -> '스마트폰이 사라진 날'
+    """
+    if not title:
+        return ""
+    # 1. 앞뒤 공백이 있는 하이픈(" - ") 기준 분리
+    cleaned = re.split(r'\s+-\s+', title)[0]
+    # 2. 콜론(" : " 또는 ": ") 기준 분리
+    cleaned = re.split(r'\s*:\s+', cleaned)[0]
+    return cleaned.strip() or title
+
+
 def clean_html_text(text: str) -> str:
     """HTML 엔티티(&lt;, &gt;, &amp;, &quot;, &#39; 등)를 도서 표기용 유니코드 꺾쇠(〈 〉) 및 일반 문자로 정제합니다."""
     if not text:
@@ -105,8 +121,8 @@ def generate_card_news(
     - 중앙 상단: 흰색 사각형 이너 카드 (텍스트 정보 배치)
     - 하단: 흰색 카드를 오버랩하여 아래로 돌출 배치되는 책 표지 이미지
     """
-    # 0. 텍스트 정제 (HTML 엔티티 및 태그 제거)
-    title = clean_html_text(title)
+    # 0. 텍스트 정제 (HTML 엔티티, 태그 및 서브타이틀 부제 제거)
+    title = clean_book_title(clean_html_text(title))
     publisher = clean_html_text(publisher)
     description = clean_html_text(description)
     curation_title = clean_html_text(curation_title)

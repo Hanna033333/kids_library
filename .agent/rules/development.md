@@ -51,8 +51,10 @@ trigger: always_on
     - **홈 화면 정적 캐싱(ISR) 활성화**: 진입 지연 해소(TTFB < 50ms)를 위해 홈 화면(`app/page.tsx`)은 `force-dynamic` 대신 `revalidate = 3600` (1시간) 설정을 사용해 ISR 페이지로 배포한다.
     - **Supabase 타입 캐스팅 우회**: 쿼리 선택 항목의 동적 조립에 의해 TypeScript에서 `ParserError`가 발생할 때는 PostgREST 쿼리를 `(query as any)` 형태로 캐스팅하여 컴파일 에러를 안전하게 회피한다.
 33. **도서 상세 페이지 추천 큐레이션 데이터 로드 및 렌더링 규격**:
-    - **7-Book 추천 로드**: 도서 상세 페이지의 두 추천 섹션(연령별 인기 추천, 동일 태그 추천)은 각각 **최대 7권**씩 도서를 노출하도록 설계한다.
-    - **동일 큐레이션 추천 폴백**: 동일 큐레이션(첫 번째 태그) 기준 추천 도서가 7권 미만일 경우, 데이터 균형을 위해 연령별 인기 도서(`getPopularBooksByAge`)로 폴백하여 정확히 7권을 채워 리스트를 보장한다.
+    - **4단계 추천 슬롯 순서**: `1) 대표/교과서 큐레이션` ➔ `2) 연령별 인기 추천` ➔ `3) AI 순수 주제 큐레이션(교과서/특수 도서 대상)` ➔ `4) 동일 작가 추천(있을 때만)` 순으로 렌더링한다.
+    - **대표 큐레이션 태그 우선순위 (`getPrimaryCurationTag`)**: 태그 나열 순서와 관계없이 특수 큐레이션 태그(`교과서수록`, `caldecott`, `방학` 등)가 포함되어 있다면 특수 태그를 1번 슬롯 대표 태그로 최우선 배정하고, 특수 태그가 없을 때만 첫 번째 일반 태그를 배정한다.
+    - **7-Book 추천 로드 및 연령/학년 타겟팅**: 각 섹션은 정확히 7권의 도서를 노출한다. 특히 3번 AI 주제 태그 추천(`getBooksByTopicTag`) 시에는 타 학년 도서 혼입을 막기 위해 3단계 타겟팅(1단계: 동일 학년 태그 AND 주제 ➔ 2단계: 동일 연령대 AND 주제 ➔ 3단계: 전체 연령 주제)을 필수로 적용한다.
+    - **동일 큐레이션 추천 폴백 및 중복 차단**: 동일 큐레이션(첫 번째 태그) 또는 주제 추천 도서가 7권 미만일 경우 연령별 인기 도서(`getPopularBooksByAge`)로 폴백하여 7권을 채우되, 3번 주제 추천 폴백 시 2번 연령 추천 섹션에 이미 노출된 도서는 제외(`!ageRecommended.some(...)`)하여 섹션 간 도서 복제를 차단한다.
     - **연령 그룹 역맵핑**: DB 상의 도서 연령 포맷 문자열(예: `'5세부터'`)을 `AGE_MAP` 키(예: `'4-7'`)로 정밀 변환해주는 역맵퍼 `getAgeGroupKey` 헬퍼 함수를 적용하여 연령별 인기 도서가 올바르게 매핑되도록 처리한다.
 34. **지능형 뒤로가기(Smart Back Route) 구현 규격**:
     - **세션 히스토리 추적 (`HistoryTracker`)**: SPA 클라이언트 사이드 라우팅 시 브라우저 `document.referrer`가 갱신되지 않는 문제를 해결하기 위해, `HistoryTracker` 컴포넌트가 `usePathname`을 감지하여 `sessionStorage`의 `checkjari_history` 스택에 내부 이동 경로를 누적/삭제 관리한다.
@@ -70,6 +72,7 @@ trigger: always_on
     - 프론트엔드 단축 링크 API 라우터(`frontend/app/c/[tag]/route.ts`)는 유입되는 파라미터가 한글 태그이든 영어 슬러그이든 관계없이 모두 안전하게 대응할 수 있도록 `ALL_TAXONOMY` 상수 매핑을 조회하여 404 없이 영어 슬러그 페이지(`/collections/curation/{slug}`)로 매끄럽게 리다이렉트하도록 구현되어야 한다.
     - 큐레이션 가공 및 데이터 삽입 시 샵이 혼입되어 중첩 해시태그나 인코딩 오류가 생기지 않도록 `curation_tag.lstrip("#")` 등으로 정제하여 안전하게 처리해야 한다.
     - 카드뉴스 생성 시 텍스트 3줄 요약이 비주얼 영역을 넘거나 겹치지 않도록, `wrap_text` 계산 방식을 띄어쓰기 기준이 아닌 글자 단위(Character-wrap)로 정밀하게 분할 계산하는 규격을 철저히 고수한다.
+    - **카드뉴스 도서 제목 서브타이틀(부제) 자동 정제**: `card_generator.py` 및 AI 콘텐츠 파이프라인에서 카드뉴스 렌더링 시, `clean_book_title()`을 적용하여 ` - `(하이픈) 또는 `: `(콜론) 뒤의 상세 부제를 제거하고 메인 타이틀만 단독 노출하여 58px/44px 대형 폰트의 시각적 완성도와 가독성을 보장한다.
 31. **모바일 우선(Mobile-First) 개발 및 최적화 규칙**:
     - **Tailwind CSS 작성 표준**: CSS 클래스는 모바일(가로폭 320px~480px) 스타일을 기본값으로 작성하고, 태블릿이나 데스크톱 스크린 대응을 위해 `sm:`, `md:`, `lg:` 등 반응형 접두사(Breakpoints)를 적용한다. 모바일 우선 중단점을 절대 흐트러뜨려서는 안 된다.
     - **터치 영역 및 터치 지연**: 모든 대화형 인터랙티브 요소는 최소 터치 타겟 규격(`48px x 48px` 이상)을 유지하도록 패딩과 아웃라인을 확보하고, 모바일 웹뷰나 사파리/크롬 브라우저 환경에서 hover 효과가 유지되어 생기는 오작동을 차단하기 위해 active/pressed 상태의 스타일 피드백을 적용한다.
@@ -105,6 +108,28 @@ trigger: always_on
     - 이를 해결하기 위해 Vercel 대시보드 Redeploy 시에는 반드시 **'Use existing Build Cache' 체크박스를 해제**하고 재배포하거나 온디맨드 revalidate API를 호출해야 하며, 테스트 시에는 영구 불변 해시 URL이 아닌 최신 브랜치 대표 도메인(`kids-library-git-dev-*.vercel.app`)을 기준으로 상태를 검증한다.
 44. **백엔드 데이터 처리 스크립트 환경변수 참조**:
     - 백엔드 데이터 일괄 수정/적재 스크립트 작성 시 Supabase RLS 정책에 의해 일반 `SUPABASE_KEY`(anon key)는 update/insert가 차단되므로, 반드시 `SUPABASE_SERVICE_KEY`(service_role)를 환경변수에서 로드하여 사용한다.
+45. **도서 및 큐레이션 섹션 추가 시 SEO 7대 파이프라인 필수 동기화**:
+    - 새로운 도서 컬렉션이나 큐레이션 섹션(예: 교과서 수록도서, 특별 테마 등)을 추가할 때는 UI 노출뿐만 아니라 다음 **7대 SEO 파일 동기화**를 누락 없이 원스톱으로 즉시 완결해야 한다:
+      1) `taxonomy.ts`: `ALL_TAXONOMY` 및 `VALID_AI_TAGS`에 새 태그/슬러그 등록 (단축 URL `/c/[tag]` 및 맵퍼 지원)
+      2) `layout.tsx`: 전역 메타데이터 `keywords` 및 `description`에 새 큐레이션/도서 관련 타겟 검색어 보강
+      3) `sitemap.ts`: `specialCurations` 및 학년/카테고리별 쿼리 URL을 사이트맵에 등록
+      4) `collections/curation/[tag]/page.tsx`: `generateStaticParams`, `generateMetadata`, `isKnownCuration`, `SPECIAL_TAGS` 및 `ItemList` JSON-LD 쿼리 등록
+      5) `books/page.tsx`: `generateMetadata`의 `curation` 및 `tag` 분기, `SPECIAL_TAGS` 및 `ItemList` JSON-LD 동기화
+      6) `book/[id]/page.tsx`: 신규 테마 특수 태그 도서 판별(`isTextbook`, `isCaldecott` 등)에 따른 Title 접두사, Description, Keywords 및 Book JSON-LD `genre`/`description` 최적화
+      7) 빌드 검증: `npm run build`를 실행하여 SSG 사전 렌더링 및 타입 정합성을 검증
+46. **홈 큐레이션 및 도서 목록 페이지 헤더 타이틀 SSOT 동기화 규격**:
+    - `BooksPageClient.tsx`의 `getPageTitle()`은 하드코딩된 별도 텍스트 매핑 객체를 사용하지 않고, 홈 화면의 원천 데이터인 `ALL_TAXONOMY`를 직접 참조하여 홈 섹션 타이틀과 100% 동일한 이모지와 텍스트(`item.title`)를 반환해야 한다.
+    - 교과서 수록도서(`curation=교과서수록` 또는 `textbook`)는 URL 쿼리 파라미터 `tag`에 따라 전체(`📖 교과서 수록도서`) 및 학년별(`📖 초등 N학년 교과서 수록도서`)로 동적 타이틀을 분기 지원한다.
+    - 특수 큐레이션(어린이도서연구회 `📚 어린이도서연구회 추천`, 칼데콧 `🏆 칼데콧 수상작`, 여름방학 `☀️ 여름방학 추천도서`, 겨울방학 `⛄ 겨울방학 추천도서`)의 헤더 타이틀도 홈/칩 표기와 완벽히 일치시킨다.
+47. **도서 큐레이션 태그(curation_tag) 정제 및 중복 방지 규칙 (Tag Deduplication & Sanitization)**:
+    - **DB 저장 불변식**: `childbook_items.curation_tag`에 태그를 적재/수정/마이그레이션할 때는 반드시 선행 `#` 기호를 완전히 제거하고, 쉼표(`,`) 기준 중복 없는 순서 유지 텍스트(예: `전래동화,옛이야기,권선징악`)로 정제하여 저장한다.
+    - **프론트엔드 파싱 안전장치 (SSOT)**: `parseCurationTags` 유틸리티 함수는 `#` 제거 후 반드시 `Array.from(new Set(tags))` 기반의 중복 제거를 적용하여, 비정형 데이터가 유입되더라도 UI 상에 동일 태그가 2회 이상 중복 렌더링되지 않도록 방어한다.
+    - **초등 학년 태그 표준화**: 학년 태그(`초등1학년` ~ `초등6학년`)는 `isGradeTag()`, `extractGradeTag()`, `TAG_DISPLAY_NAMES`를 거쳐 띄어쓰기가 적용된 단정하고 일관된 명칭(`초등 N학년`)으로 UI에 노출한다.
+48. **도서 태그 노출 및 학년/연령 우선순위 UI 규격 (4-Tag Rule)**:
+    - **상세 페이지 태그 표준 (최대 4개)**: `[메타 태그 1개] + [큐레이션/주제 태그 최대 3개]` 구조를 엄격히 준수한다.
+    - **메타 태그 우선순위 및 연령 배제**: `isGradeTag`를 통해 `초등1~6학년` 등 구체적인 학년 태그가 존재하면 해당 학년 태그를 맨 앞 메타 태그(`{ type: 'grade', text: '초등 N학년', href: '/books?curation=...' }`)로 배치하고, `book.age` 연령 태그는 중복 노이즈이므로 완전히 배제한다. 학년 태그가 없을 때만 `book.age`를 메타 태그로 렌더링한다.
+    - **도서 리스트/카드 이미지 위 메타 뱃지 (`BookItem.tsx`)**: 표지 상단 오버레이 뱃지에도 학년 태그가 있으면 연령 대신 학년(`초등 N학년`)을 우선 노출하고, 하단 큐레이션 태그 목록에서는 상단 뱃지로 노출된 학년 태그를 자동 제외하여 중복 노출을 차단한다.
+    - **SSOT 헬퍼 사용**: 태그 파싱 및 학년 태그 판별 시 `parseCurationTags`, `isGradeTag`, `formatCurationTag` (`@/lib/utils/curation-filter`)를 단일 기준으로 사용한다.
 
 ## 🔒 보안 가이드
 1. **환경변수 관리**
@@ -198,15 +223,19 @@ trigger: always_on
     - **weekly_schedule.json 태그 배정 시 DB 7권 확인 의무**: 특정 태그를 주간 큐레이션으로 배정하기 전, 반드시 해당 태그의 DB 도서 수(첫 번째 태그 기준)가 7권 이상인지 확인해야 한다. 7권 미만이면 홈 화면에서 `CurationSection`이 `minBooks < 7` 조건으로 자동 숨김 처리되어 해당 주에 빈 슬롯이 발생한다.
     - **검증 스크립트 의무 실행**: taxonomy 또는 weekly_schedule 변경 작업 후 반드시 `python3 backend/scripts/check_curation_health.py`를 실행하여 모든 태그의 도서 수가 기준 이상인지 일괄 검증한 후 배포를 진행한다.
 
-44. **책 이미지 URL 품질 검증 및 에러 폴백 규칙 (재발 방지)**:
+44. **책 이미지 URL 품질 검증, noimg 플레이스홀더 차단 및 노출 규칙 (재발 방지)**:
     - **`coversum` URL 절대 금지**: 알라딘 API에서 받아온 이미지 URL 중 `/coversum/` 패턴은 85px 극소 썸네일이며, `cover200`으로 변환 시 해당 사이즈가 없는 경우 404가 발생해 이미지가 깨진다. DB 저장 시 반드시 `/cover500/`으로 변환 후 저장한다.
     - **신규 책 데이터 삽입 전 coversum 검사 의무화**: 스크립트로 책을 추가할 때 image_url에 `coversum`이 포함되어 있으면 즉시 `cover500`으로 치환한 뒤 삽입한다. (`url.replace('/coversum/', '/cover500/')`)
-    - **DB 잔존 coversum 정기 점검 쿼리**:
+    - **`noimg` 플레이스홀더 수집 및 노출 원천 차단**:
+      - 알라딘/서점 API에서 표지가 없는 상품에 반환하는 `noimg_sum_b.gif`, `noimg_b.gif`, `noimg`, `nothumb` 등의 가짜 플레이스홀더 URL은 DB에 저장하지 않고 `NULL`로 처리한다.
+      - 홈 화면 및 큐레이션 노출 쿼리(`visibleBooks`, `getCaldecottBooks` 등)에서는 `.not('image_url', 'is', null).neq('image_url', '').not('image_url', 'ilike', '%noimg%')` 필터를 적용하여 이미지가 없는 도서의 홈 화면 노출을 물리적으로 차단한다.
+      - 프론트엔드 렌더링 시 `isValidCoverImage(book.image_url)` 유틸리티를 통한 다중 안전장치를 유지한다.
+    - **DB 잔존 coversum/noimg 정기 점검 쿼리**:
       ```sql
       SELECT id, title, image_url FROM childbook_items
-      WHERE image_url LIKE '%coversum%';
+      WHERE image_url LIKE '%coversum%' OR image_url LIKE '%noimg%';
       ```
-      이 쿼리 결과가 0건이어야 정상이며, 발견 시 즉시 `cover500`으로 일괄 수정한다.
+      이 쿼리 결과가 0건이어야 정상이며, 발견 시 즉시 정제한다.
     - **`BookItem.tsx` onError 폴백 필수 유지**: `<Image>` 컴포넌트에는 반드시 `onError={() => setImgError(true)}` 핸들러를 유지하여 CDN 일시 장애·404 발생 시 BookOpen 아이콘 폴백으로 자동 전환되도록 한다. 이 핸들러를 제거하거나 누락하면 안 된다.
     - **알라딘 CDN 단일 의존성 위험 인지**: 현재 전체 책 이미지(1,100+권)가 `image.aladin.co.kr`에서 직접 로드된다. CDN 장애 시 서비스 전체 이미지가 동시에 깨지는 구조이므로, 향후 Supabase Storage 미러링을 검토해야 한다.
 
@@ -221,3 +250,41 @@ trigger: always_on
     - **GA4 auto-event 충돌 구조 인지**: GA4는 URL에 `?q=` 파라미터가 포함되면 **자체적으로 `search` 이벤트를 자동 발화**하며, 이 자동 이벤트에는 우리가 정의한 커스텀 파라미터(`keyword` 등)가 포함되지 않아 항상 `(not set)`으로 집계된다. 이는 버그가 아닌 GA4 기본 동작이다.
     - **코드 수정 판단 기준**: 동일한 데이터를 다른 방식(예: `pageLocation` 파싱)으로 이미 얻을 수 있다면 코드 변경은 불필요하다. 코드 수정은 "기존 방법으로 데이터를 얻을 수 없을 때"만 수행한다.
     - **일반 원칙**: 어떤 트래킹·분석 이슈든, 즉시 코드를 고치기 전에 **"목적이 무엇인지", "이미 다른 방법으로 해결되어 있지 않은지"**를 반드시 먼저 확인한다.
+
+46. **React `useEffect` 의존성 배열 및 토큰 리프레시 재발 방지 표준**:
+    - `useAuth()`의 `user` 객체 전체를 `useEffect` 의존성에 넣지 않는다. Supabase 토큰 갱신 등 객체 레퍼런스 변경으로 인한 불필요한 API 재요청을 막기 위해 반드시 `user?.id` 또는 `!!user` (boolean)를 바인딩한다.
+    - 이펙트 내부에서 `setCache`로 갱신하는 상태인 `cache`를 `useEffect` 의존성 배열에 넣어서는 안 된다. fetch 성공 직후 이펙트가 불필요하게 1회 더 재실행되는 것을 방지하기 위해 `cacheRef`(`useRef`)를 활용하거나 함수형 업데이트 패턴을 적용한다.
+
+47. **이미지 렌더링 시 최적화 URL 유효성 가드 필수 (<Image src=""> 방지)**:
+    - `book.image_url`이 truthy이더라도 `noimg` 플레이스홀더인 경우 강화된 `getOptimizedImageUrl()`은 빈 문자열(`""`)을 반환한다.
+    - 컴포넌트(`BookItem`, `BookPreviewModal`, 쇼케이스 등)에서 이미지 렌더링 시 `const coverUrl = getOptimizedImageUrl(book.image_url, 'list')`를 추출하고, `{coverUrl && !imgError ? <Image src={coverUrl} ... /> : <Fallback />}` 구조로 방어하여 빈 src가 Next Image 컴포넌트에 주입되지 않도록 한다.
+
+48. **도서 제목 프론트엔드 렌더링 및 텍스트 절삭 분리**:
+    - `cleanBookTitle()` 함수는 **카드뉴스 58px/44px 대형 폰트 시각 영역 제한 대응 전용(백엔드/이미지 생성기)**이다.
+    - 프론트엔드 UI 컴포넌트(도서 상세, 목록, 홈 쇼케이스 등)에서는 원본 `book.title`을 그대로 렌더링하여 시리즈물이나 중요한 부제가 누락되지 않도록 하며, 레이아웃 줄바꿈은 CSS `line-clamp-2` 또는 `truncate`로 해결한다.
+
+49. **큐레이션 메타데이터 SSOT 및 드리프트 방지**:
+    - `SPECIAL_CURATIONS` 등 파생 컬렉션을 정의할 때 `ALL_TAXONOMY`에 이미 등록된 항목(여름방학, 교과서수록 등)을 하드코딩으로 중복 재입력하지 않는다.
+    - `ALL_TAXONOMY`를 단일 진실 공급원(SSOT)으로 삼아 필터링 및 매핑(`SPECIAL_TAXONOMY_SLUGS`)으로 결합하여 3중 관리 및 메타데이터 드리프트 위험을 원천 차단한다.
+
+50. **도서 데이터베이스 적재 및 제목 정제 규격 (Book Title Sanitization)**:
+    - 알라딘, 정보나루 API, 크롤링 또는 수동 배치를 통해 도서 데이터를 DB에 적재하거나 갱신할 때, 도서 제목(`title`) 컬럼에는 부제목, 판형, 프로모션성 홍보 문구를 배제하고 **단독 메인 도서명**만 정제하여 저장한다.
+    - **정제 대상 및 패턴**:
+      1) 하이픈(` - `) 뒤의 부제목, 교과서 수록 안내, 수상 내역, 선정 도서 문구 (예: `사자마트 - 2024 경남독서한마당 추천도서...` ➔ `사자마트`)
+      2) 콜론(` : `) 뒤의 서브 설명글 (예: `한석봉 : 독창적인 서체를 만들어 낸...` ➔ `한석봉`)
+      3) 괄호 안의 판형/개정 표기: `(양장)`, `(반양장)`, `(보드북)`, `(페이퍼백)`, `(개정판)`, `(무선)`, `(YYYY년 최신판)` 등
+      4) 세트 도서의 슬래시(`/`) 뒤 구성 권수 나열 텍스트
+      5) HTML 엔티티(`&lt;`, `&gt;`, `&amp;` 등)는 유니코드 꺾쇠(`〈`, `〉`) 또는 순수 텍스트로 치환
+    - 이를 통해 카드뉴스, 도서 카드(`BookCard`/`BookItem`), 상세 페이지, 검색 결과 등 모든 사용자 노출 화면에서 시각적 노이즈를 차단하고 가독성을 보장한다.
+
+51. **큐레이션 더보기 링크 통합 관리 (Single Source of Truth) 및 정렬 캐시 규격**:
+    - 홈 화면, 도서 상세 추천 섹션, 교과서 쇼케이스 등 모든 큐레이션 및 추천 도서의 "더보기" 링크는 URL을 개별 컴포넌트에서 수동 조립하지 않고 반드시 `getCurationMoreLink()` 유틸리티(`frontend/lib/utils/curation-link.ts`)를 통해서만 생성한다.
+    - 특수 큐레이션(칼데콧, 방학, 연구회), 교과서 수록(학년별 태그), AI 주제 큐레이션(슬러그 라우팅 및 연령/학년 전달), 연령별 인기 추천 등 모든 경우에 일관된 URL 파라미터를 보장한다.
+    - `BookList.tsx`의 React Query 캐시 키(`queryKey`)에는 `ageFilter`, `curationFilter`, `tagFilter` 외에 `sortFilter`를 필수로 포함하여 정렬 변경 시 이전 캐시가 재사용되는 문제를 원천 차단한다.
+
+52. **큐레이션 동의어 사전(TAG_SYNONYMS) 및 URL 쿼리 파라미터 안전 조립 규격**:
+    - **세부 주제 태그의 공식 큐레이션 매핑**: DB 내 도서의 세부 주제 태그(`학교생활`, `친구관계`, `감정표현`, `바른언어`, `지혜와생각` 등)가 시스템 공식 분류(`UNIFIED_TAXONOMY`: `적응`, `우정`, `분노조절`, `한글`, `과학원리` 등)와 1:1로 일치하지 않을 수 있으므로, 태그 조회 및 링크 생성(`findCurationByTag`) 시 반드시 `TAG_SYNONYMS` 동의어 사전을 우선 참조하여 정식 슬러그 컬렉션(`/collections/curation/[slug]`)으로 매핑한다.
+    - **URL 쿼리 파라미터 이중 인코딩 및 값 오염 방어**: `getCurationMoreLink()` 등 URL 생성 유틸리티에서는 `URLSearchParams`를 단일 인스턴스로 파싱 및 조립하여, `?`나 `&`가 쿼리 파라미터의 값 내부로 인코딩(`%3F`, `%3D`)되어 잘못된 검색어로 변질되는 현상을 원천 차단한다.
+    - **내부 링크/라우팅 수정 시 SEO 재설정 불필요 원칙**: 프론트엔드 라우팅 및 링크 조립 로직을 수정한 경우, 이미 표준 사이트맵(`sitemap.ts`)과 서버 메타데이터 생성기가 정상 작동하고 있다면 검색엔진(네이버 서치어드바이저, 구글 서치콘솔)에 소유권 재인증이나 메타태그 재등록을 할 필요가 없다. 배포만 진행하면 검색 로봇이 다음 크롤링 주기 때 올바른 내부 링크를 자동으로 수집한다.
+
+

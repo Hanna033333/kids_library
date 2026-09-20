@@ -2,6 +2,7 @@ import { createClient } from './supabase'
 import { Book } from './types'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { buildCurationOrFilter, SPECIAL_CURATION_TAGS } from './utils/curation-filter'
+import { AGE_MAP } from './constants/age-map'
 
 /**
  * 도서 카드 렌더링에 필요한 공통 select 필드 (SSOT)
@@ -18,7 +19,7 @@ function bookSelect(includeLibraryInfo: boolean, extraFields?: string): string {
 
 /**
  * 노출 가능한 도서만 거르는 공통 기본 쿼리
- * (숨김 처리되지 않았고 표지 이미지가 존재하는 도서)
+ * (숨김 처리되지 않았고 유효한 표지 이미지가 존재하는 도서)
  */
 function visibleBooks(supabase: SupabaseClient, selectFields: string) {
     return supabase
@@ -27,6 +28,7 @@ function visibleBooks(supabase: SupabaseClient, selectFields: string) {
         .or('is_hidden.is.null,is_hidden.eq.false')
         .not('image_url', 'is', null)
         .neq('image_url', '')
+        .not('image_url', 'ilike', '%noimg%')
 }
 
 /** 연도 시작일 기준 경과 주차 (일주일마다 추천 목록이 바뀌는 기준값) */
@@ -76,7 +78,8 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
     const offset = (getWeekNumber() * limit) % estimatedTotal
 
     const selectFields = bookSelect(includeLibraryInfo)
-    const byAge = () => visibleBooks(supabase, selectFields).eq('age', normalizedAge).order('id')
+    const ageList = AGE_MAP[normalizedAge] || [normalizedAge]
+    const byAge = () => visibleBooks(supabase, selectFields).in('age', ageList).order('id')
 
     let { data, error } = await byAge().range(offset, offset + limit - 1)
 
@@ -182,6 +185,39 @@ export async function getSummerBooks(limit: number = 7, client?: SupabaseClient,
 }
 
 /**
+ * 2022 개정 교과서 수록도서 가져오기 (학년별 필터 지원)
+ */
+export async function getTextbookBooks(
+    gradeTag?: string,
+    limit: number = 8,
+    client?: SupabaseClient,
+    includeLibraryInfo: boolean = false
+): Promise<Book[]> {
+    const supabase = client || createClient()
+    let query = visibleBooks(supabase, bookSelect(includeLibraryInfo))
+        .ilike('curation_tag', '%교과서수록%')
+
+    if (gradeTag && gradeTag !== 'all') {
+        const normalizedTag = gradeTag.replace(/^#/, '').trim()
+        query = query.ilike('curation_tag', `%${normalizedTag}%`)
+    }
+
+    const fetchLimit = Math.max(limit * 3, 24)
+    const { data, error } = await query
+        .order('id', { ascending: true })
+        .limit(fetchLimit)
+
+    if (error || !data || data.length === 0) {
+        return []
+    }
+
+    // 날짜 기반 시드로 하루 동안 일관된 랜덤 순서 유지
+    const seed = getDayOfYear() * 0.001
+    const shuffled = seededShuffle(data, seed)
+    return shuffled.slice(0, Math.min(limit, shuffled.length)) as any
+}
+
+/**
  * 특정 큐레이션 태그가 포함된 책 가져오기 (매칭 방식: 콤마 구분자 포함 여부)
  */
 export async function getBooksByTag(tagName: string, limit: number = 7, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
@@ -207,6 +243,73 @@ export async function getBooksByTag(tagName: string, limit: number = 7, client?:
 }
 
 /**
+ * 주제 태그(Theme/Topic)가 포함된 책 가져오기 (연령/학년 타겟팅 지원)
+ * 현재 보고 있는 도서의 학년/연령과 부합하는 도서를 우선 매칭합니다.
+ */
+export async function getBooksByTopicTag(
+    tagName: string, 
+    limit: number = 7, 
+    options?: { age?: string | null; gradeTag?: string | null },
+    client?: SupabaseClient, 
+    includeLibraryInfo: boolean = false
+): Promise<Book[]> {
+    const supabase = client || createClient()
+    const cleanTag = tagName.replace(/^#/, '').trim()
+    if (!cleanTag) return []
+
+    const selectFields = bookSelect(includeLibraryInfo, 'curation_note, confidence_score')
+    const normalizedAge = options?.age ? normalizeAgeGroup(options.age) : null
+    const gradeTag = options?.gradeTag
+
+    let results: Book[] = []
+
+    // 1단계: 동일 학년 태그(예: '초등2학년') AND 동일 주제 태그 우선 검색
+    if (gradeTag) {
+        const { data } = await visibleBooks(supabase, selectFields)
+            .ilike('curation_tag', `%${cleanTag}%`)
+            .ilike('curation_tag', `%${gradeTag}%`)
+            .order('confidence_score', { ascending: false })
+            .limit(limit)
+
+        if (data && data.length > 0) {
+            results = [...(data as any)]
+        }
+    }
+
+    // 2단계: 부족한 경우 동일 연령 그룹(예: '8-12', '4-7') AND 동일 주제 태그로 보충
+    if (results.length < limit && normalizedAge) {
+        const remaining = limit - results.length
+        const ageList = AGE_MAP[normalizedAge] || [normalizedAge]
+        const { data } = await visibleBooks(supabase, selectFields)
+            .ilike('curation_tag', `%${cleanTag}%`)
+            .in('age', ageList)
+            .order('confidence_score', { ascending: false })
+            .limit(limit * 2)
+
+        if (data && data.length > 0) {
+            const additions = (data as any).filter((b: Book) => !results.some(r => r.id === b.id))
+            results = [...results, ...additions.slice(0, remaining)]
+        }
+    }
+
+    // 3단계: 그래도 부족한 경우 전체 연령의 동일 주제 태그 도서로 보충
+    if (results.length < limit) {
+        const remaining = limit - results.length
+        const { data } = await visibleBooks(supabase, selectFields)
+            .ilike('curation_tag', `%${cleanTag}%`)
+            .order('confidence_score', { ascending: false })
+            .limit(limit * 2)
+
+        if (data && data.length > 0) {
+            const additions = (data as any).filter((b: Book) => !results.some(r => r.id === b.id))
+            results = [...results, ...additions.slice(0, remaining)]
+        }
+    }
+
+    return results
+}
+
+/**
  * 연령대별 전국 인기 도서 가져오기 (대출수 기준)
  */
 export async function getPopularBooksByAge(ageGroup: string, limit: number = 8, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
@@ -215,8 +318,9 @@ export async function getPopularBooksByAge(ageGroup: string, limit: number = 8, 
     const normalizedAge = normalizeAgeGroup(ageGroup)
     if (!normalizedAge) return []
 
+    const ageList = AGE_MAP[normalizedAge] || [normalizedAge]
     const { data, error } = await visibleBooks(supabase, bookSelect(includeLibraryInfo))
-        .eq('age', normalizedAge)
+        .in('age', ageList)
         .order('national_loan_count', { ascending: false })
         .limit(limit)
 

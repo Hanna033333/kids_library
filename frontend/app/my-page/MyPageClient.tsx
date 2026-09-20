@@ -340,7 +340,7 @@ export default function MyPageClient() {
 
                             {/* 프로필 카드 */}
                             <div className="p-5 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex items-center gap-4">
-                                <div className="w-14 h-14 bg-[#FDF6E3] rounded-full flex items-center justify-center text-[#F59E0B] text-xl font-bold shrink-0">
+                                <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center text-brand-primary text-xl font-bold shrink-0">
                                     {(nickname?.[0] ?? user.email?.[0] ?? '?').toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -461,7 +461,7 @@ export default function MyPageClient() {
                             <label className="flex items-start gap-3 mb-8 cursor-pointer group">
                                 <div
                                     className={`w-5 h-5 mt-0.5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
-                                        deleteAgreed ? 'bg-[#F59E0B] border-[#F59E0B]' : 'border-gray-300 group-hover:border-[#F59E0B]'
+                                        deleteAgreed ? 'bg-brand-primary border-brand-primary' : 'border-gray-300 group-hover:border-brand-primary'
                                     }`}
                                     onClick={() => setDeleteAgreed(!deleteAgreed)}
                                 >
@@ -483,7 +483,7 @@ export default function MyPageClient() {
                                     disabled={!deleteAgreed}
                                     onClick={() => setCurrentView('delete-reason')}
                                     className={`flex-1 py-3.5 font-bold rounded-lg transition-colors text-[15px] ${
-                                        deleteAgreed ? 'bg-[#F59E0B] text-white active:bg-[#D97706]' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                        deleteAgreed ? 'bg-brand-primary text-white active:bg-brand-primary-active' : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                     }`}
                                 >
                                     계속 진행하기
@@ -506,11 +506,11 @@ export default function MyPageClient() {
                                     >
                                         <div
                                             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                                                deleteReason === reason ? 'border-[#F59E0B]' : 'border-gray-300'
+                                                deleteReason === reason ? 'border-brand-primary' : 'border-gray-300'
                                             }`}
                                         >
                                             {deleteReason === reason && (
-                                                <div className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
+                                                <div className="w-2.5 h-2.5 rounded-full bg-brand-primary" />
                                             )}
                                         </div>
                                         <span className="text-[15px] text-gray-700">{reason}</span>
@@ -525,7 +525,7 @@ export default function MyPageClient() {
                                     placeholder="탈퇴 사유를 간략히 입력해주세요"
                                     maxLength={200}
                                     rows={4}
-                                    className="w-full mb-6 px-4 py-3 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:border-[#F59E0B] transition"
+                                    className="w-full mb-6 px-4 py-3 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:border-brand-primary transition"
                                 />
                             )}
 
@@ -541,7 +541,7 @@ export default function MyPageClient() {
                                     onClick={handleDeleteAccount}
                                     className={`flex-1 py-3.5 font-bold rounded-lg transition-colors text-[15px] ${
                                         deleteReason && !(deleteReason === '기타(직접 작성)' && !deleteReasonText.trim()) && !isDeleting
-                                            ? 'bg-[#F59E0B] text-white active:bg-[#D97706]'
+                                            ? 'bg-brand-primary text-white active:bg-brand-primary-active'
                                             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                     }`}
                                 >
@@ -588,7 +588,7 @@ export default function MyPageClient() {
                                     disabled={!isNicknameValid || !isNicknameChanged || isSavingNickname}
                                     className={`flex-1 h-12 rounded-xl text-[15px] font-bold transition-all active:scale-[0.98] ${
                                         isNicknameValid && isNicknameChanged && !isSavingNickname
-                                            ? 'bg-[#F59E0B] text-white active:bg-[#D97706]'
+                                            ? 'bg-brand-primary text-white active:bg-brand-primary-active'
                                             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     }`}
                                 >

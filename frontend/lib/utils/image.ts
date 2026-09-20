@@ -1,4 +1,18 @@
 /**
+ * 표지 이미지 URL이 유효한지 검증하는 유틸리티
+ * null, 빈 문자열, noimg(알라딘 no image 등) 플레이스홀더를 엄격히 제외
+ */
+export function isValidCoverImage(url: string | null | undefined): boolean {
+    if (!url || typeof url !== 'string') return false;
+    const trimmed = url.trim().toLowerCase();
+    if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return false;
+    if (trimmed.includes('noimg') || trimmed.includes('no_image') || trimmed.includes('nothumb') || trimmed.includes('placeholder')) {
+        return false;
+    }
+    return true;
+}
+
+/**
  * 고해상도 이미지 URL로 변환하는 유틸리티
  * .agent/skills/development/image_optimization/SKILL.md 가이드를 따름
  * 
@@ -6,16 +20,17 @@
  * @param size 'list' (200px) 또는 'detail' (500px)
  */
 export function getOptimizedImageUrl(url: string | null | undefined, size: 'list' | 'detail' = 'detail'): string {
-    if (!url) return '';
+    if (!isValidCoverImage(url)) return '';
+    const validUrl = url!.trim();
 
     try {
-        const urlObj = new URL(url);
+        const urlObj = new URL(validUrl);
         const targetSize = size === 'list' ? 'cover200' : 'cover500';
 
         // 1. 알라딘 이미지 (image.aladin.co.kr)
         // coversum, cover200 등을 대상 사이즈로 변경
         if (urlObj.hostname.includes('aladin.co.kr')) {
-            return url
+            return validUrl
                 .replace('/coversum/', `/${targetSize}/`)
                 .replace('/cover200/', `/${targetSize}/`)
                 .replace('/cover500/', `/${targetSize}/`)
@@ -30,16 +45,16 @@ export function getOptimizedImageUrl(url: string | null | undefined, size: 'list
             return urlObj.toString();
         }
 
-        return url;
+        return validUrl;
     } catch {
         const targetSize = size === 'list' ? 'cover200' : 'cover500';
-        if (url.includes('aladin.co.kr')) {
-            return url.replace(/\/cover(sum|\d+)\//, `/${targetSize}/`);
+        if (validUrl.includes('aladin.co.kr')) {
+            return validUrl.replace(/\/cover(sum|\d+)\//, `/${targetSize}/`);
         }
-        if (url.includes('pstatic.net')) {
-            return url.replace(/\?type=[a-zA-Z0-9_]+/, '');
+        if (validUrl.includes('pstatic.net')) {
+            return validUrl.replace(/\?type=[a-zA-Z0-9_]+/, '');
         }
-        return url;
+        return validUrl;
     }
 }
 

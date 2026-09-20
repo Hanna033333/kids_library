@@ -44,7 +44,7 @@ export default function NotFound() {
                 </p>
                 <Link
                     href="/"
-                    className="inline-block px-6 py-3 bg-[#F59E0B] text-white font-medium rounded-lg hover:bg-[#D97706] transition-colors"
+                    className="inline-block px-6 py-3 bg-brand-primary text-white font-medium rounded-lg hover:bg-brand-primary-hover transition-colors"
                 >
                     홈으로 돌아가기
                 </Link>

@@ -19,12 +19,13 @@ def search_books(
     sort: Optional[str] = Query("pangyo_callno", description="정렬 기준 ('title' 또는 'pangyo_callno')"),
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
-    include_library_info: bool = Query(False, description="도서관 소장 정보 포함 여부")
+    include_library_info: bool = Query(False, description="도서관 소장 정보 포함 여부"),
+    tag: Optional[str] = Query(None, description="세부 태그 필터 (예: '초등1학년' 등)")
 ):
     """
     책 검색 및 필터링 (pangyo_callno가 있는 책만 표시)
     """
-    return search_books_service(q=q, age=age, category=category, curation=curation, sort=sort, page=page, limit=limit, include_library_info=include_library_info)
+    return search_books_service(q=q, age=age, category=category, curation=curation, sort=sort, page=page, limit=limit, include_library_info=include_library_info, tag=tag)
 
 
 @router.get("/list")
@@ -34,12 +35,13 @@ def get_books_list(
     sort: Optional[str] = Query("pangyo_callno", description="정렬 기준 ('title' 또는 'pangyo_callno')"),
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
-    include_library_info: bool = Query(False, description="도서관 소장 정보 포함 여부")
+    include_library_info: bool = Query(False, description="도서관 소장 정보 포함 여부"),
+    tag: Optional[str] = Query(None, description="세부 태그 필터 (예: '초등1학년' 등)")
 ):
     """
     전체 목록 조회 (pangyo_callno가 있는 책만 표시, 페이지네이션 포함)
     """
-    return search_books_service(age=age, category=category, sort=sort, page=page, limit=limit, include_library_info=include_library_info)
+    return search_books_service(age=age, category=category, sort=sort, page=page, limit=limit, include_library_info=include_library_info, tag=tag)
 
 
 from pydantic import BaseModel

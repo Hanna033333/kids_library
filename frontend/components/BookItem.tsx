@@ -8,7 +8,7 @@ import { useLibrary } from "@/context/LibraryContext";
 import { sendGAEvent } from "@/lib/analytics";
 import { getOptimizedImageUrl } from "@/lib/utils/image";
 import { useAuth } from "@/context/AuthContext";
-import { parseCurationTags } from "@/lib/utils/curation-filter";
+import { parseCurationTags, formatCurationTag, isGradeTag } from "@/lib/utils/curation-filter";
 
 interface BookItemProps {
   book: Book;
@@ -24,8 +24,12 @@ interface BookItemProps {
 export default function BookItem({ book, loanStatus, showLibraryInfo = false, priority = false, excludeTag }: BookItemProps) {
   const { user } = useAuth();
   const { selectedLibrary } = useLibrary();
-  const displayAge = getAgeDisplayLabel(book.age);
   const [imgError, setImgError] = useState(false);
+
+  // 1. 이미지 위 메타 뱃지 (구체적인 학년 태그가 있으면 학년으로, 없으면 연령 라벨)
+  const rawCurationTags = parseCurationTags(book.curation_tag);
+  const gradeTag = rawCurationTags.find((t) => isGradeTag(t));
+  const displayBadge = gradeTag ? formatCurationTag(gradeTag) : getAgeDisplayLabel(book.age);
 
   // 청구기호 결정 로직 (showLibraryInfo이고 선호 도서관이 설정되었을 때만 연산)
   let displayCallNo = '청구기호 없음';
@@ -68,11 +72,13 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
     return { status: "확인중", available: null };
   })();
 
-  // curation_tag 추출 (최대 2개) — SSOT: parseCurationTags 사용
-  const rawTags = parseCurationTags(book.curation_tag, 3);
+  // curation_tag 추출 (최대 2개) — 상단 뱃지로 노출된 학년 태그 및 excludeTag 제외
+  const nonGradeTags = rawCurationTags.filter((t) => !isGradeTag(t));
   const tags = excludeTag
-    ? rawTags.filter((t) => t !== excludeTag).slice(0, 2)
-    : rawTags.slice(0, 2);
+    ? nonGradeTags.filter((t) => t !== excludeTag).slice(0, 2)
+    : nonGradeTags.slice(0, 2);
+
+  const coverUrl = getOptimizedImageUrl(book.image_url, 'list');
 
   return (
     <Link
@@ -83,9 +89,9 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
     >
       {/* 1. 이미지 영역 (상단) */}
       <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
-        {book.image_url && !imgError ? (
+        {coverUrl && !imgError ? (
           <Image
-            src={getOptimizedImageUrl(book.image_url, 'list')}
+            src={coverUrl}
             alt={book.title}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -100,11 +106,11 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
           </div>
         )}
 
-        {/* 태그 (이미지 위에 오버레이 — 연령 단독 노출) */}
+        {/* 태그 (이미지 위에 오버레이 — 학년 우선, 없으면 연령 단독 노출) */}
         <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
-          {displayAge && (
+          {displayBadge && (
             <span className="text-xs px-2.5 py-1 rounded-full bg-black/65 text-white font-bold shadow-sm backdrop-blur-sm">
-              {displayAge}
+              {displayBadge}
             </span>
           )}
         </div>
@@ -123,7 +129,7 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
             <div className="flex items-center gap-2 text-[13px] font-medium text-gray-500 flex-wrap">
               {tags.map((tag, idx) => (
                 <span key={idx} className="text-gray-500">
-                  #{tag}
+                  #{formatCurationTag(tag)}
                 </span>
               ))}
             </div>

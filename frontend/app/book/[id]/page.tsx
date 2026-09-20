@@ -4,9 +4,9 @@ import { notFound } from 'next/navigation'
 import BookDetailClient from './BookDetailClient'
 import { getHighResImageUrl } from '@/lib/utils/image'
 import { createClient } from '@/lib/supabase'
-import { getBooksByTag, getPopularBooksByAge, getBooksByAuthor } from '@/lib/home-api'
+import { getBooksByTag, getBooksByTopicTag, getTextbookBooks, getPopularBooksByAge, getBooksByAuthor } from '@/lib/home-api'
 import { getAgeGroupKey } from '@/lib/utils/age'
-import { getFirstCurationTag } from '@/lib/utils/curation-filter'
+import { getPrimaryCurationTag, getTopicCurationTag, extractGradeTag, isSpecialTag } from '@/lib/utils/curation-filter'
 import { sanitizeDescriptionHtml } from '@/lib/utils/sanitize-html'
 
 interface Props {
@@ -85,16 +85,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         }
 
         const isCaldecott = book.curation_tag?.split(',').includes('caldecott') || book.curation_tag === 'caldecott'
-        const title = isCaldecott 
-            ? `${book.title} | 칼데콧 메달 수상작 & 주변 도서관 책 검색`
-            : `${book.title} | 내 주변 도서관 책 검색 & 실시간 대출 상태`
-        
-        const description = isCaldecott
-            ? `[도서관 헛걸음 방지] 세계가 인정한 칼데콧 수상작, "${book.title}". 우리 아이 마음 발달에 꼭 맞는 그림책을 발견하고, 내 주변 도서관 실시간 대출 가능 상태와 청구기호를 3초 만에 확인하세요.`
-            : `[도서관 헛걸음 방지] "${book.title}"${book.age ? ` (${book.age} 추천)` : ''} 도서의 내 주변 도서관 책 검색, 실시간 대출 가능 상태와 청구기호 확인까지 책자리에서 3초 만에 조회하세요.`
+        const isTextbook = book.curation_tag?.includes('교과서수록') || book.curation_tag?.includes('textbook')
+
+        let title = `${book.title} | 내 주변 도서관 책 검색 & 실시간 대출 상태`
+        let description = `[도서관 헛걸음 방지] "${book.title}"${book.age ? ` (${book.age} 추천)` : ''} 도서의 내 주변 도서관 책 검색, 실시간 대출 가능 상태와 청구기호 확인까지 책자리에서 3초 만에 조회하세요.`
+
+        if (isCaldecott) {
+            title = `${book.title} | 칼데콧 메달 수상작 & 주변 도서관 책 검색`
+            description = `[도서관 헛걸음 방지] 세계가 인정한 칼데콧 수상작, "${book.title}". 우리 아이 마음 발달에 꼭 맞는 그림책을 발견하고, 내 주변 도서관 실시간 대출 가능 상태와 청구기호를 3초 만에 확인하세요.`
+        } else if (isTextbook) {
+            title = `[초등 교과서 수록] ${book.title} | 내 주변 도서관 책 검색 & 실시간 대출`
+            description = `[초등 교과서 수록도서] 초등학교 국어 교과서에 실린 "${book.title}"${book.age ? ` (${book.age} 추천)` : ''}. 내 주변 도서관 실시간 대출 가능 상태와 청구기호를 책자리에서 3초 만에 확인하세요.`
+        }
         
         const caldecottKeywords = isCaldecott ? '칼데콧 수상작, Caldecott Medal, 그림책 노벨상, ' : ''
-        const keywords = `주변 도서관 책 검색, ${caldecottKeywords}${book.title}, ${book.author}, 어린이 도서 추천, ${book.category || '그림책'}, ${book.age || ''} 추천도서, 책자리, 도서관 대출 확인, 어린이 도서관`
+        const textbookKeywords = isTextbook ? '초등 교과서 수록도서, 교과서 수록 도서, 초등 국어 교과서, 초등 필독서, ' : ''
+        const keywords = `주변 도서관 책 검색, ${caldecottKeywords}${textbookKeywords}${book.title}, ${book.author}, 어린이 도서 추천, ${book.category || '그림책'}, ${book.age || ''} 추천도서, 책자리, 도서관 대출 확인, 어린이 도서관`
 
         const fullTitle = `${title} | 책자리`
 
@@ -140,18 +146,35 @@ export default async function BookDetailPage({ params }: Props) {
 
         const ageGroupKey = getAgeGroupKey(book.age)
 
-        // 동일 큐레이션 추천 도서의 첫 번째 태그 — SSOT: getFirstCurationTag 사용
-        const primaryTag = getFirstCurationTag(book.curation_tag)
+        // 1. 대표 큐레이션 태그: 교과서수록, 칼데콧 등 특수 태그 우선 선정
+        const primaryTag = getPrimaryCurationTag(book.curation_tag)
+        // 2. 순수 AI 주제 태그: 특수 태그 및 학년 태그 제외
+        const topicTag = getTopicCurationTag(book.curation_tag)
+        const gradeTag = extractGradeTag(book.curation_tag)
+        const hasDistinctTopicTag = Boolean(topicTag && topicTag !== primaryTag)
 
-        // 추천 도서 3종을 Promise.all로 병렬 조회 (직렬 4~5회 → 병렬 3회로 단축)
-        // getPopularBooksByAge를 12권으로 1회만 호출하여 폴백+연령 추천에 공용 사용
-        const [rawCurationBooks, rawAgeBooks, authorRecommended] = await Promise.all([
-            primaryTag ? getBooksByTag(primaryTag, 8) : Promise.resolve([]),
-            getPopularBooksByAge(ageGroupKey, 12),
+        // 1번 대표 큐레이션 도서 쿼리 결정 (교과서는 학년 연동, 일반 주제는 연령 타겟팅)
+        const fetchPrimaryBooks = () => {
+            if (!primaryTag) return Promise.resolve([])
+            if (primaryTag === '교과서수록') {
+                return getTextbookBooks(gradeTag || undefined, 8)
+            }
+            if (isSpecialTag(primaryTag)) {
+                return getBooksByTag(primaryTag, 8)
+            }
+            return getBooksByTopicTag(primaryTag, 8, { age: book.age, gradeTag })
+        }
+
+        // 추천 도서를 Promise.all로 병렬 조회 (직렬 호출 방지)
+        // getPopularBooksByAge를 14권으로 호출하여 폴백+연령 추천에 공용 사용
+        const [rawCurationBooks, rawTopicBooks, rawAgeBooks, authorRecommended] = await Promise.all([
+            fetchPrimaryBooks(),
+            hasDistinctTopicTag ? getBooksByTopicTag(topicTag, 8, { age: book.age, gradeTag }) : Promise.resolve([]),
+            getPopularBooksByAge(ageGroupKey, 14),
             book.author ? getBooksByAuthor(book.author, book.id, 7) : Promise.resolve([])
         ])
 
-        // 동일 큐레이션 추천 도서 구성 (7권)
+        // 1. 대표/교과서 큐레이션 추천 도서 구성 (7권)
         let curationRecommended = rawCurationBooks
             .filter((b: any) => b.id !== book.id)
             .slice(0, 7)
@@ -165,12 +188,32 @@ export default async function BookDetailPage({ params }: Props) {
             curationRecommended = [...curationRecommended, ...filteredFallback.slice(0, needCount)]
         }
 
-        // 연령별 인기 추천 도서 (7권) — rawAgeBooks 재활용 (추가 쿼리 없음)
+        // 2. 연령별 인기 추천 도서 (7권) — rawAgeBooks 재활용 (추가 쿼리 없음)
         const ageRecommended = rawAgeBooks
             .filter((b: any) => b.id !== book.id)
             .slice(0, 7)
 
+        // 3. AI 순수 주제 태그 추천 도서 구성 (7권 - 교과서/특수 도서 대상)
+        let topicRecommended: any[] = []
+        if (hasDistinctTopicTag) {
+            topicRecommended = rawTopicBooks
+                .filter((b: any) => b.id !== book.id)
+                .slice(0, 7)
+
+            // 폴백: 주제 도서가 부족한 경우 연령별 인기 도서로 채우되, 2번 연령 추천 섹션과 겹치지 않는 도서 우선 바인딩
+            if (topicRecommended.length < 7) {
+                const needCount = 7 - topicRecommended.length
+                const filteredFallback = rawAgeBooks.filter(
+                    (b: any) => b.id !== book.id && 
+                        !topicRecommended.some((tr: any) => tr.id === b.id) &&
+                        !ageRecommended.some((ar: any) => ar.id === b.id)
+                )
+                topicRecommended = [...topicRecommended, ...filteredFallback.slice(0, needCount)]
+            }
+        }
+
         const isCaldecott = book.curation_tag?.split(',').includes('caldecott') || book.curation_tag === 'caldecott'
+        const isTextbook = book.curation_tag?.includes('교과서수록') || book.curation_tag?.includes('textbook')
 
         // Schema.org 구조화 데이터 (JSON-LD)
         const generateKyoboUrl = (isbn: string) => {
@@ -192,12 +235,14 @@ export default async function BookDetailPage({ params }: Props) {
             'image': getHighResImageUrl(book.image_url) || '',
             'description': isCaldecott 
                 ? `[칼데콧 메달 수상작] 세계가 인정한 그림책, ${book.title}. 우리 아이를 위한 최고의 감성 그림책을 책자리에서 확인하세요.`
+                : isTextbook
+                ? `[초등 국어 교과서 수록도서] 초등학교 교과서에 실린 ${book.title}${book.age ? ` (${book.age} 추천)` : ''}. 전국 도서관 대출 정보와 청구기호를 확인하세요.`
                 : `${book.title}${book.age ? ` (${book.age} 추천)` : ''}. 책자리 큐레이션 도서. 전국 도서관 대출 정보와 교보문고 바로 구매 링크를 연결해 드립니다.`,
             'publisher': {
                 '@type': 'Organization',
                 'name': book.publisher || '출판사 정보 없음'
             },
-            'genre': book.category || '어린이 도서'
+            'genre': isTextbook ? '초등 교과서 수록도서' : (book.category || '어린이 도서')
         }
 
         if (isCaldecott) {
@@ -244,6 +289,7 @@ export default async function BookDetailPage({ params }: Props) {
                     book={book} 
                     curationRecommended={curationRecommended} 
                     ageRecommended={ageRecommended} 
+                    topicRecommended={topicRecommended}
                     authorRecommended={authorRecommended}
                 />
             </>

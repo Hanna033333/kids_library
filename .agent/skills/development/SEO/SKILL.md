@@ -139,3 +139,37 @@ const jsonLd = {
   - 예시: `viewport: "width=device-width, initial-scale=1.0"`
 - **모바일 Usability (사용성) 최적화**: 모바일 봇이 페이지를 긁어갈 때 터치 영역이 겹치거나 텍스트가 뷰포트 너비를 넘어가 모바일 친화성 에러가 생기지 않도록, 모바일 우선 CSS 설계를 바탕으로 레이아웃을 작성한다.
 - **콘텐츠 및 구조 정합성**: 데스크톱과 모바일 버전의 웹페이지에서 동일한 양의 마크업 데이터(메타데이터, JSON-LD, 텍스트)를 제공하여 모바일 기기에서의 검색 불이익이 생기지 않도록 한다.
+
+---
+
+## 6. 도서 및 큐레이션 섹션 추가 시 7대 필수 동기화 절차 (Mandatory Sync Pipeline)
+
+신규 추천 도서나 큐레이션 섹션(예: 교과서 수록도서, 특별 테마 큐레이션 등)을 추가할 때는 UI 컴포넌트 추가에 그치지 않고 반드시 아래 **7대 SEO 파일 동기화**를 일괄 수행해야 합니다.
+
+```
+[1. taxonomy.ts] ➔ [2. layout.tsx] ➔ [3. sitemap.ts] ➔ [4. collections/curation/page.tsx]
+       ➔ [5. books/page.tsx] ➔ [6. book/[id]/page.tsx] ➔ [7. npm run build 검증]
+```
+
+### 파일별 수정 가이드
+1. **`frontend/lib/constants/taxonomy.ts`**:
+   - `ALL_TAXONOMY` 배열에 신규 테마의 `{ id, subtitle, title, tag, slug }` 추가
+   - `VALID_AI_TAGS` 배열에 신규 한글 태그명 추가 (단축 링크 `/c/[tag]` 및 맵퍼 지원)
+2. **`frontend/app/layout.tsx`**:
+   - `metadata.description` 및 `metadata.keywords`에 신규 큐레이션 핵심 타겟 키워드 보강
+3. **`frontend/app/sitemap.ts`**:
+   - `specialCurations` 배열에 신규 슬러그 및 한글 태그명 추가
+   - 세부 학년별/분류별 쿼리 경로(예: `/books?curation=교과서수록&tag=초등1학년`)가 있는 경우 사이트맵 routes에 함께 등록
+4. **`frontend/app/collections/curation/[tag]/page.tsx`**:
+   - `generateStaticParams()`의 `specialCurations`에 슬러그 추가 (SSG 사전 빌드)
+   - `generateMetadata()`에 해당 큐레이션 전용 Title, Description, Keywords 분기 추가
+   - `CurationPage` 컴포넌트의 `isKnownCuration`, `SPECIAL_TAGS` 및 `ItemList` JSON-LD 쿼리에 매핑 로직 추가
+5. **`frontend/app/books/page.tsx`**:
+   - `generateMetadata()`에 `curation` 및 `tag` 조건 분기 추가
+   - `BooksPage` 컴포넌트의 `isKnownCuration`, `SPECIAL_TAGS` 및 `ItemList` JSON-LD 쿼리 동기화
+6. **`frontend/app/book/[id]/page.tsx`**:
+   - 도서의 `curation_tag`에 따른 특수 배지/테마 판별(`isTextbook`, `isCaldecott` 등)
+   - Title 접두사(`[초등 교과서 수록]`, `[칼데콧 수상작]` 등), Description, Keywords 및 `Book` JSON-LD의 `genre`/`description` 최적화
+7. **빌드 검증**:
+   - `npm run build`를 실행하여 SSG 정적 페이지 생성(190+ 페이지) 및 메타데이터 타입 오류 여부를 최종 확인
+

@@ -12,7 +12,9 @@ description: 신규 추천 도서 추가 및 메타데이터/테마 태그 보�
 
 ### Step 1. 도서명 및 연령대(Age) 기본 매핑
 1. **목록 확보**: 기획안이나 블로그 링크 등에서 도서 리스트를 추출합니다.
-2. **연령대(Age) 매핑 표준**:
+2. **도서 제목 정제 (Title Sanitization)**:
+   - 도서 제목(`title`) 컬럼에는 하이픈(` - `) 또는 콜론(` : `) 뒤의 부제목, 교과서 수록 안내, 수상 내역, 판형 표기(`(양장)`, `(개정판)`)를 배제하고 **순수 메인 도서명**만 단독으로 정제하여 저장합니다.
+3. **연령대(Age) 매핑 표준**:
    - 도서의 발달 단계에 적합한 연령 표시를 표준 문자열(예: `'유아'`, `'3세부터'`, `'5세부터'`, `'7세부터'`, `'9세부터'`)로 정의합니다.
    - **초등 연령 표준**: 초등 1~6학년 대상 도서는 프론트엔드 연령 필터 탭에서 **'8~12세'**에 일관되게 표시되도록 DB `age` 컬럼의 값을 **`'9세부터'`**로 통일하여 매핑합니다.
 
@@ -48,12 +50,21 @@ description: 신규 추천 도서 추가 및 메타데이터/테마 태그 보�
 2. **개발 서버 재기동 및 검증**:
    - Next.js 개발 서버(`npm run dev`)를 재부팅하여 홈 화면 카드 위와 책 상세 화면에 카테고리 뱃지 및 샵(#) 테마 태그 뱃지가 100% 정상 노출되는지 최종 검수합니다.
 
-### Step 6. 검색 엔진 최적화 (SEO) 및 사이트맵 갱신
-1. **정적 빌드 라우팅 설정 (`generateStaticParams`)**:
-   - 새로 추가된 큐레이션 슬러그가 빌드 시 정적 HTML(SSG)로 사전 생성되도록 `frontend/app/collections/curation/[tag]/page.tsx` 내 `generateStaticParams()` 의 `specialCurations` 배열에 추가합니다.
-2. **맞춤 메타데이터 설정 (`generateMetadata`)**:
-   - 해당 큐레이션 슬러그 진입 시, 전용 메타 타이틀(Title), 설명(Description), 키워드(Keywords)가 적용되도록 `generateMetadata()` 내 분기 처리를 작성합니다.
-3. **라우팅 유효성 검사 등록**:
-   - 큐레이션 접속 시 404 에러로 튕겨 나가는 것을 막기 위해, `CurationPage` 컴포넌트의 `isKnownCuration` 조건 및 `SPECIAL_TAGS` 쿼리 필터 목록에 해당 슬러그를 반드시 등록합니다.
-4. **구글 사이트맵 (`sitemap.xml`) 등록**:
-   - 검색 로봇의 지속적인 색인(Indexing) 수집을 보장하기 위해 `frontend/app/sitemap.ts` 내 `specialCurations` 목록에 신규 큐레이션 슬러그를 추가합니다.
+### Step 6. 검색 엔진 최적화 (SEO) 및 사이트맵 7대 파이프라인 동기화
+신규 큐레이션이나 대규모 도서 추가 시 검색엔진이 즉시 발견하고 색인할 수 있도록 다음 7대 SEO 파일을 빠짐없이 동기화합니다:
+
+1. **분류 체계 및 단축 라우팅 등록 (`frontend/lib/constants/taxonomy.ts`)**:
+   - `ALL_TAXONOMY`와 `VALID_AI_TAGS`에 새 태그/슬러그를 등록하여 스레드 단축 라우트(`/c/[tag]`) 및 카테고리 매퍼와 일원화합니다.
+2. **전역 메타데이터 키워드 보강 (`frontend/app/layout.tsx`)**:
+   - `keywords` 및 `description`에 신규 도서 테마 및 큐레이션 타겟 검색어를 보강합니다.
+3. **사이트맵 URL 등록 (`frontend/app/sitemap.ts`)**:
+   - `specialCurations` 목록에 신규 슬러그를 추가하고, 하위 태그/학년별 쿼리 경로가 있을 경우 사이트맵 배열에 함께 등록합니다.
+4. **정적 빌드 및 큐레이션 SEO (`frontend/app/collections/curation/[tag]/page.tsx`)**:
+   - `generateStaticParams()`의 `specialCurations`에 슬러그를 등록하여 SSG 사전 빌드되게 합니다.
+   - `generateMetadata()` 및 `CurationPage`의 `isKnownCuration`, `SPECIAL_TAGS`에 등록하고 `ItemList` JSON-LD를 생성합니다.
+5. **전체 도서 목록 SEO (`frontend/app/books/page.tsx`)**:
+   - `generateMetadata()`에 `curation` 및 `tag` 조건 분기를 추가하고, `SPECIAL_TAGS` 쿼리를 동기화합니다.
+6. **도서 상세 페이지 메타데이터 & Schema.org (`frontend/app/book/[id]/page.tsx`)**:
+   - 신규 특수 태그 도서 판별 로직을 반영하여 Title 프리픽스, Description, Keywords 및 `Book` JSON-LD의 `genre`/`description`을 최적화합니다.
+7. **빌드 검증 (`npm run build`)**:
+   - `npm run build`를 실행하여 SSG 페이지 생성 및 메타데이터 타입 오류가 없음을 최종 확인합니다.

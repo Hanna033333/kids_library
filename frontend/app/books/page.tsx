@@ -5,19 +5,28 @@ import { Suspense } from 'react'
 import { PageLoader } from '@/components/ui/PageLoader'
 
 interface Props {
-    searchParams: { age?: string; curation?: string; category?: string; q?: string }
+    searchParams: {
+        age?: string;
+        curation?: string;
+        category?: string;
+        q?: string;
+        tag?: string;
+        sort?: string;
+    }
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-    const { age: rawAge, curation: rawCuration, q } = searchParams
-    const curation = rawCuration ? decodeURIComponent(rawCuration) : undefined
+    const { age: rawAge, curation: rawCuration, tag: rawTag, q } = searchParams
+    const cleanCur = rawCuration ? decodeURIComponent(rawCuration).replace(/^#/, '').split(/[?&]/)[0].trim() : undefined
+    const curation = cleanCur || undefined
     const age = rawAge ? decodeURIComponent(rawAge) : undefined
+    const tag = rawTag ? decodeURIComponent(rawTag) : undefined
 
     let title = '내 주변 도서관 책 검색 및 상황별 맞춤 도서 큐레이션 | 책자리'
     let description = '아이 발달 맞춤형 그림책 큐레이션과 내 주변 도서관 실시간 책 검색을 한 번에! 도서관 대출 가능 여부와 청구기호 조회를 3초 만에 확인해 보세요.'
     let keywords = '주변 도서관 책 검색, 어린이 도서 추천, 아동 도서 검색, 도서 큐레이션, 어린이 정서 발달, 상황별 그림책, 도서 대출 확인'
 
-    const matchedTaxonomy = VALID_TAXONOMY.find(item => item.tag === curation);
+    const matchedTaxonomy = VALID_TAXONOMY.find(item => item.tag === curation || item.slug === curation);
 
     if (curation === 'winter-vacation' || curation === '겨울방학') {
         title = '스마트폰만 보는 아이, 방학 때 뭐 읽힐까요?'
@@ -35,6 +44,16 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         title = "2000-2026 칼데콧 수상작 | 세계 최고의 어린이 그림책 리스트 - 책자리"
         description = '2000년부터 2026년까지 칼데콧 메달을 수상한 세계 최고의 어린이 그림책 목록입니다. 전국 도서관 소장 여부와 실시간 대출 정보를 확인하고 바로 읽혀보세요.'
         keywords = '칼데콧상, Caldecott Medal, 어린이 그림책, 수상작, 추천 도서, 전국 도서관 대출, 그림책 노벨상'
+    } else if (curation === 'textbook' || curation === '교과서수록') {
+        if (tag && (tag.includes('초등') || tag.includes('학년'))) {
+            title = `${tag} 국어 교과서 수록도서 목록 & 도서관 대출 | 책자리`
+            description = `초등학교 ${tag} 국어 교과서에 실제로 실린 필독서 목록! 내 주변 도서관 실시간 소장 상태와 대출 여부, 청구기호를 즉시 확인하세요.`
+            keywords = `${tag} 교과서 수록도서, ${tag} 국어 교과서 책, 초등 교과서 수록도서, 초등 필독서, 주변 도서관 책 검색, 도서관 대출, 책자리`
+        } else {
+            title = '초등 국어 교과서 수록도서 (1~6학년 전학년) & 도서관 대출 | 책자리'
+            description = '초등학교 국어 교과서에 실제로 실린 1학년부터 6학년까지의 전학년 교과서 수록도서 및 필독서 목록! 내 주변 도서관 실시간 소장 및 대출 가능 여부를 확인하세요.'
+            keywords = '초등 교과서 수록도서, 교과서 수록 도서, 초등 국어 교과서 책, 초등학교 교과서 수록도서, 초등 필독서, 도서관 대출, 책자리'
+        }
     } else if (matchedTaxonomy) {
         title = `${matchedTaxonomy.subtitle} | ${matchedTaxonomy.title} - 책자리`
         description = `"${matchedTaxonomy.subtitle}" 우리 아이의 마음 and 정서에 꼭 맞는 '${matchedTaxonomy.tag}' 엄선 그림책 리스트! 주변 도서관 소장 상태, 대출 정보 및 교보문고 바로 구매 링크를 만나보세요.`
@@ -66,7 +85,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     }
 
     // Generate canonical URL with query parameters
-    const params = new URLSearchParams(searchParams as any).toString()
+    const searchEntries = Object.entries(searchParams).filter(([_, v]) => v !== undefined) as [string, string][]
+    const params = new URLSearchParams(searchEntries).toString()
     const canonicalUrl = params ? `/books?${params}` : '/books'
 
     return {
@@ -80,7 +100,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
             title,
             description,
             type: 'website',
-            url: `https://checkjari.com/books?${new URLSearchParams(searchParams as any).toString()}`
+            url: `https://checkjari.com/books${params ? `?${params}` : ''}`
         },
         twitter: {
             card: 'summary_large_image',
@@ -95,12 +115,13 @@ import { createClient } from '@/lib/supabase-server'
 export const dynamic = 'force-dynamic';
 
 export default async function BooksPage({ searchParams }: Props) {
-    const { curation: rawCuration } = searchParams
+    const { curation: rawCuration, tag: rawTag } = searchParams
     const curation = rawCuration ? decodeURIComponent(rawCuration) : undefined
+    const tag = rawTag ? decodeURIComponent(rawTag) : undefined
     let jsonLd = null;
 
     // curation 값이 있고, 알려진 큐레이션 태그인 경우 서버 사이드에서 데이터를 가져와 구조화된 데이터 생성
-    const isKnownCuration = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott'].includes(curation || '') || 
+    const isKnownCuration = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', 'textbook', '교과서수록'].includes(curation || '') || 
                             (curation && VALID_AI_TAGS.includes(curation));
     if (curation && isKnownCuration) {
         const supabase = createClient()
@@ -109,12 +130,16 @@ export default async function BooksPage({ searchParams }: Props) {
             .select('id, title, author, isbn, image_url')
             .or('is_hidden.is.null,is_hidden.eq.false')
 
-        const SPECIAL_TAGS = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '겨울방학2026', '여름방학2026', '어린이도서연구회'];
+        const SPECIAL_TAGS = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '겨울방학2026', '여름방학2026', '어린이도서연구회', 'textbook', '교과서수록'];
         if (SPECIAL_TAGS.includes(curation)) {
             let tagValue = curation;
             if (curation === 'summer-vacation' || curation === '여름방학') tagValue = '여름방학2026';
             if (curation === 'winter-vacation' || curation === '겨울방학') tagValue = '겨울방학2026';
+            if (curation === 'textbook' || curation === '교과서수록') tagValue = '교과서수록';
             query = query.ilike('curation_tag', `%${tagValue}%`);
+            if (tag) {
+                query = query.ilike('curation_tag', `%${tag}%`);
+            }
         } else {
             const orFilter = `curation_tag.eq."${curation}",curation_tag.like."${curation},%",curation_tag.eq."#${curation}",curation_tag.like."#${curation},%"`;
             query = query.or(orFilter);

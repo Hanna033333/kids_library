@@ -21,6 +21,7 @@ interface BookListProps {
   searchQuery?: string;
   ageFilter?: string;
   curationFilter?: string;
+  tagFilter?: string;
   sortFilter?: string;
   initialBooks?: Book[];
 }
@@ -29,6 +30,7 @@ export default function BookList({
   searchQuery,
   ageFilter,
   curationFilter,
+  tagFilter,
   sortFilter = "pangyo_callno",
   initialBooks,
 }: BookListProps) {
@@ -49,13 +51,14 @@ export default function BookList({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const isSearchWaitingState = !searchQuery && !ageFilter && !curationFilter;
+  const isSearchWaitingState = !searchQuery && !ageFilter && !curationFilter && !tagFilter;
 
   // Fetch data with infinite scroll
   const { books, loading, error, total, hasNextPage, isFetchingNextPage, fetchNextPage } = useBooks({
     searchQuery,
     ageFilter,
     curationFilter,
+    tagFilter,
     sortFilter,
     limit: ITEMS_PER_PAGE,
     initialBooks,
@@ -74,30 +77,33 @@ export default function BookList({
     staleTime: 5 * 60 * 1000,
   });
 
-  // 연령별 및 주요 큐레이션 홈 코너 추천도서 (AI 큐레이션 순 제외, 일반 필터 상태에서만 사용)
+  // 연령별 및 주요 큐레이션/AI 큐레이션 추천도서 최상단 우선 고정 (Visual Continuity 보장)
   // useQuery로 캐시화 → 상세페이지 다녀와도 캐시에서 즉시 복원 → 정렬 깜빡임 제거
   const shouldFetchRecommended = !!(
-    (ageFilter || ['caldecott', '어린이도서연구회', 'research-council', '겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026'].includes(curationFilter || "")) &&
-    !searchQuery &&
-    sortFilter === "pangyo_callno"
+    (ageFilter || curationFilter || tagFilter) &&
+    !searchQuery
   );
 
   const { data: recommendedBooks = [], isLoading: isRecommendedLoading } = useQuery<Book[]>({
-    queryKey: ['recommended-books', ageFilter, curationFilter, !!user],
+    queryKey: ['recommended-books', ageFilter, curationFilter, tagFilter, sortFilter, !!user],
     queryFn: async () => {
-      if (ageFilter) {
-        const { getBooksByAge } = await import("@/lib/home-api");
-        return getBooksByAge(ageFilter, 7, undefined, !!user);
+      // 1. 교과서 수록도서 (학년 태그 지원)
+      if (curationFilter === '교과서수록' || curationFilter === 'textbook') {
+        const { getTextbookBooks } = await import("@/lib/home-api");
+        return getTextbookBooks(tagFilter, 8, undefined, !!user);
       }
+      // 2. 칼데콧 수상작
       if (curationFilter === "caldecott") {
         const { getCaldecottBooks } = await import("@/lib/caldecott-api");
         const books = await getCaldecottBooks(undefined, !!user);
         return books.slice(0, 7);
       }
+      // 3. 어린이도서연구회
       if (curationFilter === "어린이도서연구회" || curationFilter === "research-council") {
         const { getResearchCouncilBooks } = await import("@/lib/home-api");
         return getResearchCouncilBooks(7, undefined, !!user);
       }
+      // 4. 겨울방학 / 여름방학
       if (curationFilter === "겨울방학" || curationFilter === "winter-vacation") {
         const { getWinterBooks } = await import("@/lib/home-api");
         return getWinterBooks(7, undefined, !!user);
@@ -106,6 +112,27 @@ export default function BookList({
         const { getSummerBooks } = await import("@/lib/home-api");
         return getSummerBooks(7, undefined, !!user);
       }
+      // 5. AI 순수 주제 큐레이션 (홈 화면 진입 vs 도서 상세 진입 분기)
+      if (curationFilter) {
+        if (ageFilter || tagFilter) {
+          // 도서 상세에서 연령/학년 타겟팅으로 넘어온 경우
+          const { getBooksByTopicTag } = await import("@/lib/home-api");
+          return getBooksByTopicTag(curationFilter, 8, { age: ageFilter, gradeTag: tagFilter }, undefined, !!user);
+        } else {
+          // 홈 화면 큐레이션 더보기에서 넘어온 경우: 홈 노출 도서 7권과 1:1 일치
+          const { getBooksByTag } = await import("@/lib/home-api");
+          return getBooksByTag(curationFilter, 7, undefined, !!user);
+        }
+      }
+      // 6. 연령별 추천도서 (인기순 vs 홈 화면 주간 로테이션 분기)
+      if (ageFilter) {
+        if (sortFilter === 'popular' || sortFilter === 'national_loan_count' || sortFilter === 'national_loan_count_desc') {
+          const { getPopularBooksByAge } = await import("@/lib/home-api");
+          return getPopularBooksByAge(ageFilter, 8, undefined, !!user);
+        }
+        const { getBooksByAge } = await import("@/lib/home-api");
+        return getBooksByAge(ageFilter, 7, undefined, !!user);
+      }
       return [];
     },
     enabled: shouldFetchRecommended && isMounted,
@@ -113,8 +140,7 @@ export default function BookList({
     gcTime: 10 * 60 * 1000,   // 10분 캐시 유지
   });
 
-  // 서버(page.tsx)에서 initialBooks를 받았거나, 추천 도서가 준비된 경우 병합 적용
-  // 그렇지 않으면 books 그대로 사용
+  // 추천 도서가 준비된 경우 목록 최상단에 우선 병합 고정
   const displayBooks = useMemo(() => {
     if (!shouldFetchRecommended || recommendedBooks.length === 0) return books;
 
@@ -297,7 +323,7 @@ export default function BookList({
                     조건에 맞는 책이 없지만 이 책은 어떨까요?
                   </span>
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">
-                    {ageFilter ? `${ageFilter}세 추천 도서` : "인기 도서 추천"}
+                    {ageFilter ? `${({ '0-3': '0~3세', '4-7': '4~7세', '8-12': '8~12세', '13+': '13세 이상' } as Record<string, string>)[ageFilter] ?? ageFilter} 추천 도서` : "인기 도서 추천"}
                   </h3>
                 </div>
 

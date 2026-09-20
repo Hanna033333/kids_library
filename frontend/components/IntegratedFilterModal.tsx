@@ -11,12 +11,25 @@ interface IntegratedFilterModalProps {
     onAgeChange: (age: string) => void;
     selectedSort: string;
     onSortChange: (sort: string) => void;
+    isTextbook?: boolean;
+    selectedTag?: string;
+    onTagChange?: (tag: string) => void;
 }
 
 const AGE_OPTIONS = [
     { value: "0-3", label: "0~3세" },
     { value: "4-7", label: "4~7세" },
     { value: "8-12", label: "8~12세" },
+];
+
+const TEXTBOOK_GRADE_OPTIONS = [
+    { value: "all", label: "전체" },
+    { value: "초등1학년", label: "초등 1학년" },
+    { value: "초등2학년", label: "초등 2학년" },
+    { value: "초등3학년", label: "초등 3학년" },
+    { value: "초등4학년", label: "초등 4학년" },
+    { value: "초등5학년", label: "초등 5학년" },
+    { value: "초등6학년", label: "초등 6학년" },
 ];
 
 const SORT_OPTIONS = [
@@ -27,22 +40,31 @@ const SORT_OPTIONS = [
 export default function IntegratedFilterModal({
     isOpen, onClose,
     selectedAge, onAgeChange,
-    selectedSort, onSortChange
+    selectedSort, onSortChange,
+    isTextbook = false,
+    selectedTag = "",
+    onTagChange
 }: IntegratedFilterModalProps) {
     const normalizeAge = (age: string) => age === "teen" ? "13+" : age;
     const [localAge, setLocalAge] = useState(normalizeAge(selectedAge));
+    const [localTag, setLocalTag] = useState(selectedTag);
     const [localSort, setLocalSort] = useState(selectedSort);
 
     // Sync state when modal opens
     useEffect(() => {
         if (isOpen) {
             setLocalAge(normalizeAge(selectedAge));
+            setLocalTag(selectedTag);
             setLocalSort(selectedSort);
         }
-    }, [isOpen, selectedAge, selectedSort]);
+    }, [isOpen, selectedAge, selectedTag, selectedSort]);
 
     const handleApply = () => {
-        onAgeChange(localAge);
+        if (isTextbook) {
+            onTagChange?.(localTag);
+        } else {
+            onAgeChange(localAge);
+        }
         onSortChange(localSort);
         onClose();
     };
@@ -50,6 +72,16 @@ export default function IntegratedFilterModal({
     const handleAgeToggle = (ageVal: string) => {
         if (localAge === ageVal) setLocalAge("");
         else setLocalAge(ageVal);
+    };
+
+    const handleTagToggle = (tagVal: string) => {
+        if (tagVal === "all" || tagVal === "") {
+            setLocalTag("");
+        } else if (localTag === tagVal) {
+            setLocalTag("");
+        } else {
+            setLocalTag(tagVal);
+        }
     };
 
     if (!isOpen) return null;
@@ -69,24 +101,46 @@ export default function IntegratedFilterModal({
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-8">
 
-                    {/* 연령 */}
+                    {/* 교과서 수록도서: 학년 / 일반: 연령 */}
                     <section>
-                        <h3 className="text-sm font-bold text-gray-900 mb-3">연령</h3>
+                        <h3 className="text-sm font-bold text-gray-900 mb-3">{isTextbook ? "학년" : "연령"}</h3>
                         <div className="flex flex-wrap gap-2">
-                            {AGE_OPTIONS.map((option) => (
-                                <button
-                                    key={option.value}
-                                    onClick={() => handleAgeToggle(option.value)}
-                                    className={`px-4 py-2 rounded-lg text-[15px] font-medium transition-all duration-200 border ${localAge === option.value
-                                        ? "bg-brand-primary text-white border-brand-primary shadow-md shadow-gray-200 transform scale-[1.02]"
-                                        : "bg-white text-gray-600 border-gray-200"
-                                        }`}
-                                >
-                                    {option.label}
-                                </button>
-                            ))}
+                            {isTextbook ? (
+                                TEXTBOOK_GRADE_OPTIONS.map((option) => {
+                                    const isSelected = option.value === "all"
+                                        ? !localTag || localTag === "all"
+                                        : localTag === option.value;
+                                    return (
+                                        <button
+                                            key={option.value}
+                                            onClick={() => handleTagToggle(option.value)}
+                                            className={`px-4 py-2 rounded-lg text-[15px] font-medium transition-all duration-200 border ${isSelected
+                                                ? "bg-brand-primary text-white border-brand-primary shadow-md shadow-gray-200 transform scale-[1.02]"
+                                                : "bg-white text-gray-600 border-gray-200"
+                                                }`}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    );
+                                })
+                            ) : (
+                                AGE_OPTIONS.map((option) => (
+                                    <button
+                                        key={option.value}
+                                        onClick={() => handleAgeToggle(option.value)}
+                                        className={`px-4 py-2 rounded-lg text-[15px] font-medium transition-all duration-200 border ${localAge === option.value
+                                            ? "bg-brand-primary text-white border-brand-primary shadow-md shadow-gray-200 transform scale-[1.02]"
+                                            : "bg-white text-gray-600 border-gray-200"
+                                            }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))
+                            )}
                         </div>
-                        <p className="text-xs text-gray-400 mt-2 ml-1">선택하지 않으면 전체 연령이 조회됩니다.</p>
+                        <p className="text-xs text-gray-400 mt-2 ml-1">
+                            {isTextbook ? "선택하지 않으면 전체 학년이 조회됩니다." : "선택하지 않으면 전체 연령이 조회됩니다."}
+                        </p>
                     </section>
 
                     <hr className="border-gray-100" />

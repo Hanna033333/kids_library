@@ -6,7 +6,7 @@ import SearchBar from "@/components/SearchBar";
 import BookList from "@/components/BookList";
 import { BooksResponse } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
-import { LogIn, User, Search, Share2, Home } from "lucide-react";
+import { LogIn, User, Search, Share2, Home, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import { sendGAEvent } from "@/lib/analytics";
@@ -15,32 +15,76 @@ import Toast from "@/components/ui/Toast";
 import FilterBar from "@/components/FilterBar";
 import IntegratedFilterModal from "@/components/IntegratedFilterModal";
 import BackButton from "@/components/BackButton";
+import { ALL_TAXONOMY } from "@/lib/constants/taxonomy";
+import { cleanCurationTag } from "@/lib/utils/curation-filter";
 
 interface BooksPageClientProps {
     overrideCuration?: string;
     overrideAge?: string;
 }
 
+// AI 큐레이션이 아닌 정적/특수 큐레이션 목록 (AI 신뢰도순 정렬 제외)
+const NON_AI_CURATIONS = ['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott', 'textbook', '교과서수록'];
+
 export default function BooksPageClient({ overrideCuration, overrideAge }: BooksPageClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // URL에서 초기 상태 읽기 (teen → 13+ 정규화)
+    // URL에서 초기 상태 읽기 (teen → 13+ 정규화, 학년 태그 정규화)
     const normalizeAge = (age: string) => age === "teen" ? "13+" : age;
+    const normalizeGradeTag = (tag: string) => {
+        if (!tag || tag === 'all') return '';
+        const match = tag.match(/초등\s*(\d)학년|초등학교\s*(\d)학년|(\d)학년/);
+        if (match) {
+            const num = match[1] || match[2] || match[3];
+            return `초등${num}학년`;
+        }
+        return tag;
+    };
+
+    // curation 파라미터 오염 방어 헬퍼 (?age=8-12 등이 curation 값에 붙어 들어온 경우 자동 분리 복구)
+    const parseCurationParams = (rawCuration: string | null) => {
+        if (!rawCuration) return { cleanTag: '', extraAge: '', extraTag: '', extraSort: '' };
+        if (rawCuration.includes('?') || rawCuration.includes('&')) {
+            try {
+                const parts = rawCuration.split(/[?&]/);
+                const pureTag = parts[0];
+                const queryString = rawCuration.substring(pureTag.length + 1);
+                const urlParams = new URLSearchParams(queryString);
+                return {
+                    cleanTag: cleanCurationTag(pureTag),
+                    extraAge: urlParams.get('age') || '',
+                    extraTag: urlParams.get('tag') || '',
+                    extraSort: urlParams.get('sort') || '',
+                };
+            } catch {
+                return { cleanTag: cleanCurationTag(rawCuration), extraAge: '', extraTag: '', extraSort: '' };
+            }
+        }
+        return { cleanTag: cleanCurationTag(rawCuration), extraAge: '', extraTag: '', extraSort: '' };
+    };
+
+    const initialRawCuration = overrideCuration || searchParams.get('curation') || "";
+    const parsedInitialCuration = parseCurationParams(initialRawCuration);
+
+    const rawInitialTag = searchParams.get('tag') ? decodeURIComponent(searchParams.get('tag')!) : parsedInitialCuration.extraTag;
+    const initialTag = normalizeGradeTag(rawInitialTag);
     const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
-    const [ageFilter, setAgeFilter] = useState(normalizeAge(overrideAge || searchParams.get('age') || ""));
-    const [curationFilter, setCurationFilter] = useState(overrideCuration || searchParams.get('curation') || "");
+    const [authorFilter, setAuthorFilter] = useState(searchParams.get('author') || "");
+    const [ageFilter, setAgeFilter] = useState(normalizeAge(overrideAge || searchParams.get('age') || parsedInitialCuration.extraAge || ""));
+    const [curationFilter, setCurationFilter] = useState(parsedInitialCuration.cleanTag);
+    const [tagFilter, setTagFilter] = useState(initialTag);
     const [isSearchVisible, setIsSearchVisible] = useState(() => {
-        return !!searchQuery || (!overrideCuration && !searchParams.get('curation') && !searchParams.get('age'));
+        return !!searchQuery || (!overrideCuration && !searchParams.get('curation') && !searchParams.get('age') && !searchParams.get('author'));
     });
     
     // AI 큐레이션은 기본적으로 신뢰도(confidence_score) 높은 순으로 정렬하여 홈 화면과 동일한 순서를 유지
     const [sortFilter, setSortFilter] = useState(() => {
-        const urlSort = searchParams.get('sort');
+        const urlSort = searchParams.get('sort') || parsedInitialCuration.extraSort;
         if (urlSort) return urlSort;
         
-        const curation = searchParams.get('curation');
-        if (curation && !['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott'].includes(curation)) {
+        const curation = parsedInitialCuration.cleanTag;
+        if (curation && !NON_AI_CURATIONS.includes(curation)) {
             return 'confidence_score_desc';
         }
         return 'pangyo_callno';
@@ -49,8 +93,10 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
     const { user, signOut } = useAuth();
     const [toastMessage, setToastMessage] = useState("");
 
+    // 교과서 수록도서 큐레이션 여부
+    const isTextbook = curationFilter === 'textbook' || curationFilter === '교과서수록';
+
     // AI 큐레이션 태그 여부 (알려진 non-AI 큐레이션 제외)
-    const NON_AI_CURATIONS = ['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott'];
     const isAiCuration = !!curationFilter && !NON_AI_CURATIONS.includes(curationFilter);
 
     // URL 업데이트 함수
@@ -72,141 +118,122 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
     // URL 파라미터 변경 시 상태 동기화 (브라우저 뒤로가기/앞으로가기 대응)
     useEffect(() => {
         const q = searchParams.get('q') || "";
-        const age = normalizeAge(overrideAge || searchParams.get('age') || "");
-        const curation = overrideCuration || searchParams.get('curation') || "";
-        const sort = searchParams.get('sort') || (curation && !['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott'].includes(curation) ? 'confidence_score_desc' : 'pangyo_callno');
+        const author = searchParams.get('author') ? decodeURIComponent(searchParams.get('author')!) : "";
+        const rawCuration = overrideCuration || searchParams.get('curation') || "";
+        const parsed = parseCurationParams(rawCuration);
+
+        const age = normalizeAge(overrideAge || searchParams.get('age') || parsed.extraAge || "");
+        const curation = parsed.cleanTag;
+        const rawTag = searchParams.get('tag') ? decodeURIComponent(searchParams.get('tag')!) : parsed.extraTag;
+        const tag = normalizeGradeTag(rawTag);
+        const sort = searchParams.get('sort') || parsed.extraSort || (curation && !NON_AI_CURATIONS.includes(curation) ? 'confidence_score_desc' : 'pangyo_callno');
 
         setSearchQuery(q);
+        setAuthorFilter(author);
         setAgeFilter(age);
         setCurationFilter(curation);
+        setTagFilter(tag);
         setSortFilter(sort);
 
-        if (q || (!curation && !age)) {
+        if (author || curation || age) {
+            setIsSearchVisible(false);
+        } else if (q || (!curation && !age && !tag && !author)) {
             setIsSearchVisible(true);
         }
     }, [searchParams, overrideAge, overrideCuration]);
 
+    const POPULAR_THEME_CHIPS = [
+        { label: '잠자리', tag: '잠자리' },
+        { label: '자존감', tag: '자존감' },
+        { label: '첫 사회성', tag: '사회성' },
+        { label: '기관적응', tag: '적응' },
+        { label: '감정·마음', tag: '감정조절' },
+        { label: '공룡', tag: '공룡' },
+        { label: '자연·생태', tag: '자연관찰' },
+        { label: '예술·창의', tag: '예술감성' },
+        { label: '호기심·과학', tag: '과학원리' },
+        { label: '가족사랑', tag: '가족사랑' },
+    ];
+
+// 이모티콘 제거 헬퍼 함수
+const stripEmoji = (text: string): string =>
+    text.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF\uFE0F\u200D]/g, '').trim();
+
+    const handleCurationSelect = useCallback((tag: string) => {
+        const nextCuration = curationFilter === tag ? "" : tag;
+        setCurationFilter(nextCuration);
+        setTagFilter("");
+        sendGAEvent('filter_change', { type: 'curation_chip', value: nextCuration || 'all' });
+        updateURL({ q: searchQuery, age: ageFilter, curation: nextCuration, sort: sortFilter, tag: "", author: authorFilter });
+    }, [curationFilter, searchQuery, ageFilter, sortFilter, authorFilter, updateURL]);
+
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
+        setAuthorFilter("");
         sendGAEvent('search', { search_term: query, keyword: query });
-        updateURL({ q: query, age: ageFilter, sort: sortFilter });
-    }, [ageFilter, sortFilter, updateURL]);
+        updateURL({ q: query, age: ageFilter, curation: curationFilter, sort: sortFilter, tag: tagFilter, author: "" });
+    }, [ageFilter, curationFilter, sortFilter, tagFilter, updateURL]);
 
     const handleAgeChange = useCallback((age: string) => {
         setAgeFilter(age);
         sendGAEvent('filter_change', { type: 'age', value: age });
-        updateURL({ q: searchQuery, age, sort: sortFilter });
-    }, [searchQuery, sortFilter, updateURL]);
+        updateURL({ q: searchQuery, age, curation: curationFilter, sort: sortFilter, tag: tagFilter, author: authorFilter });
+    }, [searchQuery, curationFilter, sortFilter, tagFilter, authorFilter, updateURL]);
+
+    const handleTagChange = useCallback((tag: string) => {
+        setTagFilter(tag);
+        sendGAEvent('filter_change', { type: 'textbook_grade', value: tag || 'all' });
+        updateURL({ q: searchQuery, age: ageFilter, curation: curationFilter, sort: sortFilter, tag, author: authorFilter });
+    }, [searchQuery, ageFilter, curationFilter, sortFilter, authorFilter, updateURL]);
 
     const handleSortChange = useCallback((sort: string) => {
         setSortFilter(sort);
         sendGAEvent('filter_change', { type: 'sort', value: sort });
-        updateURL({ q: searchQuery, age: ageFilter, sort });
-    }, [searchQuery, ageFilter, updateURL]);
+        updateURL({ q: searchQuery, age: ageFilter, curation: curationFilter, sort, tag: tagFilter, author: authorFilter });
+    }, [searchQuery, ageFilter, curationFilter, tagFilter, authorFilter, updateURL]);
 
     const openIntegratedFilter = () => {
         setIsFilterModalOpen(true);
     };
 
 
-    // URL 파라미터에 따라 동적 타이틀 결정
+    // URL 파라미터에 따라 동적 타이틀 결정 (공백 포함 11자 이내, 이모티콘 없이 순수 텍스트로 노출)
     const getPageTitle = () => {
+        const currentTag = tagFilter || (searchParams.get('tag') ? decodeURIComponent(searchParams.get('tag')!) : "");
+
+        // 0. 작가별 전용 리스트 타이틀
+        if (authorFilter) {
+            return authorFilter.length > 7 ? authorFilter : `${authorFilter} 작가의 책`;
+        }
+
+        // 1. 교과서 수록도서
+        if (curationFilter === 'textbook' || curationFilter === '교과서수록') {
+            return '교과서 수록도서';
+        }
+
+        // 2. 특수 큐레이션
         if (curationFilter === 'research-council' || curationFilter === '어린이도서연구회') return '어린이도서연구회 추천';
-        if (curationFilter === 'winter-vacation' || curationFilter === '겨울방학') return '겨울방학 추천도서';
+        if (curationFilter === 'winter-vacation' || curationFilter === '겨울방학' || curationFilter === '겨울방학2026') return '겨울방학 추천도서';
         if (curationFilter === 'summer-vacation' || curationFilter === '여름방학' || curationFilter === '여름방학2026') return '여름방학 추천도서';
         if (curationFilter === 'caldecott') return '칼데콧 수상작';
-        
-        // AI 큐레이션 타이틀 매핑
-        const aiCurationTitles: Record<string, string> = {
-            '잠자리': '스르륵 꿀잠 그림책',
-            '감정조절': '마음 처방전 그림책',
-            '자존감': '단단한 자존감 그림책',
-            '사회성': '다정한 첫 사회성',
-            '인체': '신비한 우리 몸 그림책',
-            '판타지': '호기심 가득 판타지',
-            '환경보호': '초록 생태 환경',
-            '생명존중': '사랑스러운 동물들',
-            '가족사랑': '따뜻한 가족 사랑',
-            '배려': '다정한 배려 그림책',
-            '모험': '씩씩한 모험 이야기',
-            '전래동화': '구수한 옛이야기',
-            '예술감성': '감성 풍부 꼬마 예술가',
-            '자연관찰': '호기심 자연 관찰',
-            '역사이야기': '지혜로운 역사',
-            '과학원리': '호기심 가득 과학 원리',
-            '다양성': '열린 마음 다양성 학교',
-            '적응': '유치원과 학교생활',
-            '우리문화': '지혜 가득 문화 유산',
-            '계절': '아름다운 사계절',
-            '상실': '이별을 다독이는 책',
-            '용기': '씩씩한 용기 그림책',
-            '우정': '다정한 내 친구',
-            '정직': '바른 마음 정직',
-            '나눔': '기쁨 두 배 나눔',
-            '분노조절': '화를 가라앉히는 책',
-            '슬픔': '슬픔을 다독이는 책',
-            '질투': '시샘을 지우는 책',
-            '두려움': '밤이 무섭지 않은 책',
-            '끈기': '포기하지 않는 끈기',
-            '위로': '따뜻한 위로 그림책',
-            '행복': '매일 매일 행복',
-            '용서': '미안해와 괜찮아',
-            '규칙': '약속을 지키는 그림책',
-            '다문화': '세계 시민 그림책',
-            '진로': '내 꿈을 찾는 그림책',
-            '경제': '현명한 돈 쓰기',
-            '의사소통': '대화가 즐거운 책',
-            '평화': '평화를 지키는 그림책',
-            '장애': '편견 없는 눈그림책',
-            '양성평등': '모두를 위한 평등',
-            '이웃': '우리 동네 이웃 사촌',
-            '미디어': '스마트폰 조절',
-            '곤충': '꿈틀꿈틀 곤충 나라',
-            '우주': '별빛 가득 우주 여행',
-            '공룡': '거대한 공룡의 세계',
-            '바다': '푸른 바다 탐험',
-            '식물': '무럭무럭 초록 식물',
-            '날씨': '변화무쌍 날씨 탐구',
-            '코딩': '생각하는 컴퓨터 코딩',
-            '인공지능': '로봇과 인공지능',
-            '수학': '재미있는 수학 놀이',
-            '발명': '위대한 발명 이야기',
-            '음악': '아름다운 소리와 음악',
-            '연극': '배우들의 무대 연극',
-            '세계역사': '세계 역사와 문화',
-            '명화': '미술관에서 만난 명화',
-            '건축': '튼튼한 건축과 집',
-            '명절': '한국의 정겨운 명절',
-            '전통놀이': '민속 전통 놀이',
-            '한글': '소중한 우리 한글',
-            '글쓰기': '상상 가득 글쓰기',
-            '유머': '웃음 빵빵 유머 그림책',
-            '추리': '명탐정의 추리 비밀',
-            '상상력': '상상의 날개를 활짝',
-            '하늘': '하늘을 나는 상상',
-            '요리': '맛있는 요리조리',
-            '패션': '내 멋진 옷과 패션',
-            '탈것': '씽씽 달리는 탈것',
-            '스포츠': '튼튼한 신체 스포츠',
-            '괴물': '친근한 괴물 친구들',
-            '미래도시': '꿈꾸는 미래 도시',
-            '신체활동': '신나게 몸을 움직여요',
-            '자연재해': '자연의 거대한 힘',
-            '생활습관': '깨끗하고 올바른 습관',
-            '인문지리': '세계 지도 여행',
-            '동물도감': '생생한 동물 도감',
-            '미래상상': '상상 속 외계인'
-        };
 
-        if (curationFilter) return aiCurationTitles[curationFilter] || curationFilter;
+        // 3. ALL_TAXONOMY 기반 매핑 (이모티콘 제거)
+        if (curationFilter) {
+            const matched = ALL_TAXONOMY.find(item => item.tag === curationFilter || item.slug === curationFilter);
+            if (matched) {
+                return stripEmoji(matched.title);
+            }
+            return stripEmoji(curationFilter);
+        }
 
+        // 4. 연령별 및 검색 타이틀
         if (ageFilter === '0-3') return '0~3세 추천 도서';
         if (ageFilter === '4-7') return '4~7세 추천 도서';
         if (ageFilter === '8-12') return '8~12세 추천 도서';
         if (ageFilter === 'teen' || ageFilter === '13+') return '13세 이상 추천 도서';
         if (searchQuery) return '도서 검색';
         return '도서 검색';
-    }
+    };
 
     const handleShareCuration = async () => {
         const curationTitle = getPageTitle();
@@ -293,12 +320,15 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
                 />
             </div>
 
-            {/* 필터 바 (간소화) */}
+            {/* 필터 바 (교과서 수록도서: 초등 1~6학년 필터 / 일반: 연령대 필터) */}
             <FilterBar
                 selectedAge={ageFilter}
                 onAgeChange={handleAgeChange}
                 onFilterClick={openIntegratedFilter}
-                showFilterButton={!!searchQuery}
+                showFilterButton={!!searchQuery || !!authorFilter}
+                isTextbook={isTextbook}
+                selectedTag={tagFilter}
+                onTagChange={handleTagChange}
             />
 
             {/* 통합 필터 모달 */}
@@ -309,14 +339,18 @@ export default function BooksPageClient({ overrideCuration, overrideAge }: Books
                 onAgeChange={handleAgeChange}
                 selectedSort={sortFilter}
                 onSortChange={handleSortChange}
+                isTextbook={isTextbook}
+                selectedTag={tagFilter}
+                onTagChange={handleTagChange}
             />
 
             {/* 책 리스트 */}
             <div className="w-full max-w-7xl mx-auto pb-4 md:pb-6 pt-2">
                 <BookList
-                    searchQuery={searchQuery || undefined}
+                    searchQuery={searchQuery || authorFilter || undefined}
                     ageFilter={ageFilter || undefined}
                     curationFilter={curationFilter || undefined}
+                    tagFilter={tagFilter || undefined}
                     sortFilter={sortFilter}
                 />
             </div>

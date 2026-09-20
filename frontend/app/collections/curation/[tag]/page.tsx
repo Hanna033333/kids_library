@@ -18,7 +18,7 @@ export const dynamicParams = true
 
 // 빌드 타임에 모든 AI 큐레이션 페이지와 방학, 칼데콧, 어린이도서연구회 큐레이션을 정적 파일로 초고속 생성
 export async function generateStaticParams() {
-    const specialCurations = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott']
+    const specialCurations = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', 'textbook', '교과서수록']
     const aiSlugs = VALID_TAXONOMY.map(item => item.slug)
     const allTags = [...aiSlugs, ...specialCurations]
     
@@ -55,6 +55,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title = "2000-2026 칼데콧 수상작 | 세계 최고의 어린이 그림책 리스트 - 책자리"
         description = '2000년부터 2026년까지 칼데콧 메달을 수상한 세계 최고의 어린이 그림책 목록입니다. 전국 도서관 소장 여부와 실시간 대출 정보를 확인하고 바로 읽혀보세요.'
         keywords = '칼데콧상, Caldecott Medal, 어린이 그림책, 수상작, 추천 도서, 전국 도서관 대출, 그림책 노벨상'
+    } else if (curationTag === 'textbook' || curationTag === '교과서수록') {
+        title = '초등 국어 교과서 수록도서 (1~6학년 전학년 필독서) & 도서관 대출 | 책자리'
+        description = '초등학교 국어 교과서에 실제로 실린 1학년부터 6학년까지의 전학년 교과서 수록도서 및 필독서 목록! 전집 살 필요 없이 내 주변 도서관 실시간 소장 및 대출 가능 여부와 청구기호를 즉시 확인하세요.'
+        keywords = '초등 교과서 수록도서, 초등 1학년 국어 교과서 수록도서, 초등 2학년 교과서 수록도서, 초등 3학년 필독서, 초등 국어 교과서 책, 초등학교 교과서 수록도서, 초등 필독서, 초등 권장도서, 도서관 대출, 주변 도서관 책 검색, 책자리'
     } else if (matchedTaxonomy) {
         title = `[${matchedTaxonomy.tag} 그림책 추천] ${matchedTaxonomy.subtitle} | ${matchedTaxonomy.title} - 책자리`
         description = `"${matchedTaxonomy.subtitle}" 우리 아이의 마음과 정서에 꼭 맞는 '${matchedTaxonomy.tag}' 엄선 그림책 리스트! 주변 도서관 소장 상태, 대출 정보 및 교보문고 바로 구매 링크를 만나보세요.`
@@ -95,7 +99,7 @@ export default async function CurationPage({ params }: Props) {
     let jsonLd = null;
 
     // Supabase 직접 조회를 통해 구조화된 데이터(JSON-LD ItemList) 생성 -> 봇 수집 극대화
-    const isKnownCuration = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '여름방학2026'].includes(curationTag) || 
+    const isKnownCuration = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '여름방학2026', 'textbook', '교과서수록'].includes(curationTag) || 
                             VALID_AI_TAGS.includes(curationTag);
                              
     if (!isKnownCuration) {
@@ -108,13 +112,15 @@ export default async function CurationPage({ params }: Props) {
             .select('id, title, author, isbn, image_url')
             .or('is_hidden.is.null,is_hidden.eq.false')
 
-        const SPECIAL_TAGS = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '겨울방학2026', '여름방학2026', '어린이도서연구회'];
+        const SPECIAL_TAGS = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '겨울방학2026', '여름방학2026', '어린이도서연구회', 'textbook', '교과서수록'];
         if (SPECIAL_TAGS.includes(curationTag)) {
             let tagValue = curationTag;
             if (curationTag === 'summer-vacation') {
                 tagValue = '여름방학2026';
             } else if (curationTag === 'winter-vacation') {
                 tagValue = '겨울방학2026';
+            } else if (curationTag === 'textbook') {
+                tagValue = '교과서수록';
             }
             query = query.ilike('curation_tag', `%${tagValue}%`);
         } else {
@@ -158,8 +164,12 @@ export default async function CurationPage({ params }: Props) {
             
             {/* 1번 전략: 검색 봇이 100% 긁어갈 수 있는 정적 텍스트 정보 노출 */}
             <article className="hidden" aria-hidden="true" style={{ display: 'none' }}>
-                <h1>책자리 {curationTag} 맞춤 도서 추천 컬렉션</h1>
-                <p>어떤 책을 읽혀야 할지 모르는 부모님을 위한 특별 큐레이션</p>
+                <h1>책자리 {curationTag === 'textbook' || curationTag === '교과서수록' ? '초등 1~6학년 국어 교과서 수록도서 및 필독서' : `${curationTag} 맞춤 도서 추천`} 컬렉션</h1>
+                <p>
+                    {curationTag === 'textbook' || curationTag === '교과서수록'
+                        ? '초등학교 1학년, 2학년, 3학년, 4학년, 5학년, 6학년 국어 교과서에 수록된 그림책과 동화책 목록입니다. 주변 도서관 실시간 대출 상태와 청구기호를 확인하고 대출해 보세요.'
+                        : '어떤 책을 읽혀야 할지 모르는 부모님을 위한 특별 큐레이션'}
+                </p>
                 {jsonLd && (
                     <ul>
                         {(jsonLd as any).itemListElement.map((el: any) => (

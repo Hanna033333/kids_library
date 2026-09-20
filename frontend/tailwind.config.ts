@@ -50,13 +50,16 @@ const config: Config = {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
-        // 책자리 브랜드 컬러 팔레트 (2종 핵심 + 소셜)
+        // 책자리 브랜드 컬러 팔레트 (UI-KIT 기준)
         brand: {
           primary: {
-            DEFAULT: '#F59E0B',       // 메인 노랑 (Primary)
+            DEFAULT: '#F59E0B',       // 메인 오렌지/앰버 (Primary)
             dark: '#D97706',          // Dark / Pressed / Active
             hover: '#D97706',         
-            active: '#D97706',        
+            active: '#D97706',
+            light: '#FEF3C7',
+            200: '#FDE68A',
+            dim: 'rgba(245, 158, 11, 0.10)',
           },
           kakao: {
             DEFAULT: '#FEE500',       // 카카오 브랜드 컬러

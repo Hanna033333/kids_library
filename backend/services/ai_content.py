@@ -15,6 +15,7 @@ import google.generativeai as genai
 
 from core.config import GEMINI_API_KEY
 from services.text_trimmer import force_trim_description, trim_text_fallback
+from services.card_generator import clean_book_title
 
 
 def remove_hashtags_and_clean(caption: str) -> str:
@@ -116,7 +117,7 @@ def generate_ai_threads_content(
     books_info = [
         {
             "index": idx + 1,
-            "title": b.get("title"),
+            "title": clean_book_title(b.get("title") or ""),
             "publisher": b.get("publisher"),
             "description": b.get("description") or b.get("curation_note") or "",
         }
@@ -207,7 +208,7 @@ async def apply_feedback_with_gemini(
     books_info = [
         {
             "index": idx + 1,
-            "title": b.get("title"),
+            "title": clean_book_title(b.get("title") or ""),
             "publisher": b.get("publisher"),
             "old_description": old_descriptions[idx] if idx < len(old_descriptions) else "",
         }

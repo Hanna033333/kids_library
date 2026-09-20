@@ -12,14 +12,16 @@ export const CURATION_TAG_MAPPING: Record<string, string> = {
   'summer-vacation': '여름방학2026',
   '어린이도서연구회': '어린이도서연구회', // Backward compatibility
   'research-council': '어린이도서연구회',
+  '교과서수록': '교과서수록',
+  'textbook': '교과서수록',
 }
 
 /** ilike '%tag%' 매칭을 사용하는 특수 큐레이션 태그 목록 */
-export const SPECIAL_CURATION_TAGS = ['겨울방학2026', '여름방학2026', '어린이도서연구회', 'caldecott'] as const
+export const SPECIAL_CURATION_TAGS = ['겨울방학2026', '여름방학2026', '어린이도서연구회', 'caldecott', '교과서수록'] as const
 
 /** 특별 큐레이션으로 분류되는 URL 파라미터 값 목록 (정렬 기본값 결정 시 사용) */
 export const SPECIAL_CURATION_PARAMS = [
-  'caldecott', 'winter-vacation', '겨울방학', 'summer-vacation', '여름방학', '여름방학2026', 'research-council', '어린이도서연구회'
+  'caldecott', 'winter-vacation', '겨울방학', 'summer-vacation', '여름방학', '여름방학2026', 'research-council', '어린이도서연구회', 'textbook', '교과서수록'
 ] as const
 
 /**
@@ -87,9 +89,56 @@ export function isSummerCurationActive(targetDate: Date = new Date()): boolean {
 export const HIDDEN_UI_TAGS = new Set<string>([])
 
 /**
+ * UI 표시용 큐레이션 태그 한글 변환 매핑
+ */
+export const TAG_DISPLAY_NAMES: Record<string, string> = {
+  'caldecott': '칼데콧',
+  'research-council': '어린이도서연구회',
+  'winter-vacation': '겨울방학',
+  'summer-vacation': '여름방학',
+  '여름방학2026': '여름방학',
+  '겨울방학2026': '겨울방학',
+  'textbook': '교과서수록',
+  '교과서수록': '교과서수록',
+  '초등1학년': '초등 1학년',
+  '초등2학년': '초등 2학년',
+  '초등3학년': '초등 3학년',
+  '초등4학년': '초등 4학년',
+  '초등5학년': '초등 5학년',
+  '초등6학년': '초등 6학년',
+}
+
+/**
+ * 큐레이션 태그 문자열을 안전하게 정제합니다 (오염된 쿼리스트링 ? & 제거, # 제거, 공백 제거)
+ */
+export function cleanCurationTag(tag: string | null | undefined): string {
+  if (!tag) return ''
+  return tag.replace(/^#/, '').split(/[?&]/)[0].trim()
+}
+
+/**
+ * 큐레이션 태그를 UI 표시용 명칭(한글)으로 변환합니다.
+ * @example formatCurationTag('caldecott') → '칼데콧'
+ */
+export function formatCurationTag(tag: string | null | undefined): string {
+  if (!tag) return ''
+  const clean = cleanCurationTag(tag)
+  return TAG_DISPLAY_NAMES[clean] || clean
+}
+
+/**
+ * 해당 태그가 초등 학년 태그(예: '초등1학년', '1학년', '#초등2학년')인지 판별합니다.
+ */
+export function isGradeTag(tag: string | null | undefined): boolean {
+  if (!tag) return false
+  const clean = cleanCurationTag(tag)
+  return /^초등\s*[1-6]학년$/.test(clean) || /^[1-6]학년$/.test(clean)
+}
+
+/**
  * book.curation_tag 문자열을 파싱하여 UI에 표시할 태그 배열을 반환합니다. (SSOT)
  *
- * - `#` 접두사 제거
+ * - `#` 접두사 제거 및 오염된 쿼리스트링(? &) 분리 정제
  * - HIDDEN_UI_TAGS에 속하는 특수 태그 제외
  * - limit 개수만큼만 반환 (기본 전체)
  *
@@ -100,9 +149,20 @@ export function parseCurationTags(raw: string | null | undefined, limit?: number
   if (!raw) return []
   const tags = raw
     .split(/[,/]/)
-    .map((t) => t.trim().replace(/^#/, ''))
+    .map((t) => cleanCurationTag(t))
     .filter((t) => t && !HIDDEN_UI_TAGS.has(t))
-  return limit !== undefined ? tags.slice(0, limit) : tags
+  const uniqueTags = Array.from(new Set(tags))
+  return limit !== undefined ? uniqueTags.slice(0, limit) : uniqueTags
+}
+
+/**
+ * curation_tag 문자열에서 첫 번째 학년 태그를 추출합니다.
+ */
+export function extractGradeTag(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  const tags = parseCurationTags(raw)
+  const gradeTag = tags.find((t) => isGradeTag(t))
+  return gradeTag ?? null
 }
 
 /**
@@ -115,3 +175,36 @@ export function parseCurationTags(raw: string | null | undefined, limit?: number
 export function getFirstCurationTag(raw: string | null | undefined): string {
   return parseCurationTags(raw, 1)[0] ?? ''
 }
+
+/**
+ * book.curation_tag에서 특수 태그(교과서수록, 방학, 칼데콧 등) 및 학년 태그를 제외한
+ * 순수 AI 주제/내용 큐레이션 태그 중 첫 번째 태그를 반환합니다.
+ *
+ * @example
+ * getTopicCurationTag('교과서수록, 초등1학년, 친구관계, 상상력') → '친구관계'
+ * getTopicCurationTag('가족사랑, 감정표현') → '가족사랑'
+ */
+export function getTopicCurationTag(raw: string | null | undefined): string {
+  if (!raw) return ''
+  const tags = parseCurationTags(raw)
+  const topicTag = tags.find((t) => !isSpecialTag(t) && !isGradeTag(t))
+  return topicTag ?? ''
+}
+
+/**
+ * 도서 상세의 1번 대표 큐레이션 태그를 결정합니다.
+ * 교과서수록, 칼데콧, 방학 등 특수 큐레이션 태그가 포함되어 있다면 특수 태그를 우선 반환하고,
+ * 일반 도서인 경우 첫 번째 태그를 반환합니다.
+ *
+ * @example
+ * getPrimaryCurationTag('상상력, 교과서수록, 초등1학년') → '교과서수록'
+ * getPrimaryCurationTag('가족사랑, 감정표현') → '가족사랑'
+ */
+export function getPrimaryCurationTag(raw: string | null | undefined): string {
+  if (!raw) return ''
+  const tags = parseCurationTags(raw)
+  const specialTag = tags.find((t) => isSpecialTag(t))
+  if (specialTag) return specialTag
+  return tags[0] ?? ''
+}
+

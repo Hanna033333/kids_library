@@ -10,9 +10,11 @@ export async function getBooksFromSupabase(
     page = 1,
     limit = 24,
     filters?: {
+        q?: string;
         age?: string;
         sort?: string;
         curation?: string;
+        tag?: string;
     },
     includeLibraryInfo: boolean = false
 ) {
@@ -36,20 +38,41 @@ export async function getBooksFromSupabase(
     // 입력하지 않았을 때(이 함수 경유) 노출되는 도서 목록이 서로 달라집니다.
     query = query.not('pangyo_callno', 'is', null).neq('pangyo_callno', '없음');
 
-    // 연령 필터 — DB 표준화 후 단순 .eq() 쿼리
+    // 검색어 필터 (제목, 저자, 출판사, 큐레이션 태그 검색)
+    if (filters?.q) {
+        const cleanQ = filters.q.trim();
+        if (cleanQ) {
+            query = query.or(`title.ilike.%${cleanQ}%,author.ilike.%${cleanQ}%,publisher.ilike.%${cleanQ}%,curation_tag.ilike.%${cleanQ}%`);
+        }
+    }
+
+    // 연령 필터 — DB 표준화 및 레거시 포맷(8세부터, 7세부터 등) 다중 매칭 지원
     if (filters?.age) {
-        const ageKey = filters.age === 'teen' ? '13+' : filters.age;
-        query = query.eq('age', ageKey);
+        const rawAge = filters.age === 'teen' ? '13+' : filters.age;
+        if (rawAge === '8-12' || rawAge.includes('8세') || rawAge.includes('9세') || rawAge.includes('초등')) {
+            query = query.or('age.eq.8-12,age.eq.8세부터,age.eq.9세부터,age.eq.8~12세');
+        } else if (rawAge === '4-7' || rawAge.includes('4세') || rawAge.includes('5세') || rawAge.includes('6세') || rawAge.includes('7세')) {
+            query = query.or('age.eq.4-7,age.eq.5세부터,age.eq.7세부터,age.eq.4~7세');
+        } else if (rawAge === '0-3' || rawAge.includes('0세') || rawAge.includes('1세') || rawAge.includes('2세') || rawAge.includes('3세')) {
+            query = query.or('age.eq.0-3,age.eq.0~3세,age.eq.0-2세,age.eq.3세부터');
+        } else {
+            query = query.eq('age', rawAge);
+        }
     }
     // category는 제거됨 (큐레이션 태그 체계로 대체)
-    // Curation 필터
+    // Curation 필터 — ?나 & 쿼리스트링 오염 안전 정제
     if (filters?.curation) {
-        const dbCurationTag = resolveDbCurationTag(filters.curation);
-        if (isSpecialTag(dbCurationTag)) {
+        const cleanCuration = filters.curation.replace(/^#/, '').split(/[?&]/)[0].trim();
+        if (cleanCuration) {
+            const dbCurationTag = resolveDbCurationTag(cleanCuration);
             query = query.ilike('curation_tag', `%${dbCurationTag}%`);
-        } else {
-            query = query.or(buildCurationOrFilter(dbCurationTag));
         }
+    }
+
+    // Tag 필터 (교과서 수록도서 학년 태그 등)
+    if (filters?.tag) {
+        const normalizedTag = filters.tag.replace(/^#/, '');
+        query = query.ilike('curation_tag', `%${normalizedTag}%`);
     }
 
     // 정렬
@@ -59,6 +82,8 @@ export async function getBooksFromSupabase(
         query = query.order('confidence_score', { ascending: false });
     } else if (sortField === 'title') {
         query = query.order('title', { ascending: true });
+    } else if (sortField === 'popular' || sortField === 'national_loan_count' || sortField === 'national_loan_count_desc') {
+        query = query.order('national_loan_count', { ascending: false, nullsFirst: false });
     } else {
         query = query.order(sortField);
     }

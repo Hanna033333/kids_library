@@ -20,6 +20,7 @@ export async function getCaldecottBooks(client?: SupabaseClient, includeLibraryI
         .or('is_hidden.is.null,is_hidden.eq.false')
         .not('image_url', 'is', null)
         .neq('image_url', '')
+        .not('image_url', 'ilike', '%noimg%')
         .order('title', { ascending: true })
 
     if (error) {
