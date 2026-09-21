@@ -79,3 +79,5 @@ backend/assets/*.png
 # 임시 분석 스크립트 및 리포트 (Rule 26)
 backend/scripts/analysis/
 backend/scripts/data/enrich_descriptions.py
+ga_report_*.txt
+output/

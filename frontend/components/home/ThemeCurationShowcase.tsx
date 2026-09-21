@@ -133,8 +133,8 @@ export default function ThemeCurationShowcase({
         </div>
 
         {/* 밀리의 서재 스타일 가로 스크롤 탭 바 (+ 50개 테마 더보기 칩 포함) */}
-        <div className="overflow-x-auto scrollbar-hide -mx-4 px-6 mb-6">
-          <div className="flex items-center gap-2 pb-1">
+        <div className="overflow-x-auto scrollbar-hide -mx-4 mb-6">
+          <div className="flex items-center gap-2 pb-1 px-6">
             {POPULAR_THEME_TABS.map(tab => {
               const isActive = tab.id === activeTabId
               return (
@@ -184,15 +184,13 @@ export default function ThemeCurationShowcase({
               {/* 슬라이더 컨테이너 */}
               <div
                 ref={sliderRef}
-                className="overflow-x-auto scrollbar-hide -mx-4 px-6 scroll-smooth"
+                className="overflow-x-auto scrollbar-hide -mx-4 scroll-smooth"
               >
-                <div className="flex gap-4 pb-4 items-stretch">
-                  {currentBooks.map((book, index) => (
+                <div className="flex gap-4 pb-4 items-stretch px-6">
+                  {currentBooks.map((book) => (
                     <div
                       key={book.id}
-                      className={`flex-shrink-0 w-[165px] sm:w-[190px] ${
-                        index === currentBooks.length - 1 ? 'mr-4' : ''
-                      }`}
+                      className="flex-shrink-0 w-[165px] sm:w-[190px]"
                     >
                       <BookCard
                         book={book}

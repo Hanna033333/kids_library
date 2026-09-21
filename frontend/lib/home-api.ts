@@ -189,7 +189,7 @@ export async function getSummerBooks(limit: number = 7, client?: SupabaseClient,
  */
 export async function getTextbookBooks(
     gradeTag?: string,
-    limit: number = 8,
+    limit: number = 6,
     client?: SupabaseClient,
     includeLibraryInfo: boolean = false
 ): Promise<Book[]> {

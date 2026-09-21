@@ -62,8 +62,8 @@ export default function RecommendationSlider({
                         </Link>
                     )}
                 </div>
-                <div className="overflow-x-auto scrollbar-hide -mx-6 px-6">
-                    <div className="flex gap-4 pb-2">
+                <div className="overflow-x-auto scrollbar-hide -mx-6">
+                    <div className="flex gap-4 pb-2 px-6">
                         {books.map((b) => (
                             <div key={`${keyPrefix}-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
                                 <BookCard book={b} />

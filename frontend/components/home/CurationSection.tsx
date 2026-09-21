@@ -62,10 +62,10 @@ export default function CurationSection({
         </div>
 
         {books.length > 0 ? (
-          <div className="overflow-x-auto scrollbar-hide -mx-4 px-6">
-            <div className="flex gap-4 pb-4">
+          <div className="overflow-x-auto scrollbar-hide -mx-4">
+            <div className="flex gap-4 pb-4 px-6">
               {books.map((book, index) => (
-                <div key={book.id} className={`flex-shrink-0 w-[165px] sm:w-[190px] ${index === books.length - 1 ? 'mr-4' : ''}`}>
+                <div key={book.id} className="flex-shrink-0 w-[165px] sm:w-[190px]">
                   <BookCard book={book} priority={priorityImages && index < 3} excludeTag={sectionTag} />
                 </div>
               ))}

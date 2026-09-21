@@ -95,7 +95,7 @@ export default function TextbookCurationShowcase({
     }
 
     setLoading(true)
-    getTextbookBooks(currentTab.tag === 'all' ? undefined : currentTab.tag, 8, undefined, !!userId)
+    getTextbookBooks(currentTab.tag === 'all' ? undefined : currentTab.tag, 6, undefined, !!userId)
       .then(books => {
         if (!isCancelled) {
           setCache(prev => ({ ...prev, [currentTab.id]: books }))
@@ -126,7 +126,7 @@ export default function TextbookCurationShowcase({
   }
 
   const currentBooks = useMemo(
-    () => (cache[currentTab.id] || []).filter(b => isValidCoverImage(b.image_url)),
+    () => (cache[currentTab.id] || []).filter(b => isValidCoverImage(b.image_url)).slice(0, 6),
     [cache, currentTab.id]
   )
 
@@ -159,8 +159,8 @@ export default function TextbookCurationShowcase({
         </div>
 
         {/* 학년별 가로 스크롤 탭 바 */}
-        <div className="overflow-x-auto scrollbar-hide -mx-4 px-6 mb-6">
-          <div className="flex items-center gap-2 pb-1">
+        <div className="overflow-x-auto scrollbar-hide -mx-4 mb-6">
+          <div className="flex items-center gap-2 pb-1 px-6">
             {TEXTBOOK_GRADE_TABS.map(tab => {
               const isActive = tab.id === activeTabId
               return (
@@ -187,14 +187,12 @@ export default function TextbookCurationShowcase({
           </div>
         ) : bookPairs.length > 0 ? (
           <div>
-            <div className="overflow-x-auto scrollbar-hide -mx-4 px-6">
-              <div className="flex gap-3 pb-3">
+            <div className="overflow-x-auto scrollbar-hide -mx-4">
+              <div className="flex gap-3 pb-3 px-6">
                 {bookPairs.map((pair, colIndex) => (
                   <div
                     key={`col-${colIndex}`}
-                    className={`flex flex-col gap-3 w-[310px] sm:w-[370px] lg:w-[455px] shrink-0 ${
-                      colIndex === bookPairs.length - 1 ? 'mr-4' : ''
-                    }`}
+                    className="flex flex-col gap-3 w-[310px] sm:w-[370px] lg:w-[455px] shrink-0"
                   >
                     {pair.map((book) => {
                       const displayTag = getDisplayTag(book, currentTab.tag)

@@ -75,7 +75,7 @@ export default async function HomePage() {
     getBooksByAge(defaultAge, 7, supabase, false),
     getCaldecottBooks(supabase, false),
     isSummerCurationActive() ? getSummerBooks(7, supabase, false) : Promise.resolve([]),
-    getTextbookBooks(undefined, 8, supabase, false),
+    getTextbookBooks(undefined, 6, supabase, false),
     ...selectedTags.map(t => getBooksByTag(t.tag, 7, supabase, false))
   ])
 

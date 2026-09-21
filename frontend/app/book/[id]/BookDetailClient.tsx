@@ -711,8 +711,8 @@ export default function BookDetailClient({
                                     <ChevronRight className="w-6 h-6" />
                                 </Link>
                             </div>
-                            <div className="overflow-x-auto scrollbar-hide -mx-6 px-6">
-                                <div className="flex gap-4 pb-2">
+                            <div className="overflow-x-auto scrollbar-hide -mx-6">
+                                <div className="flex gap-4 pb-2 px-6">
                                     {curationRecommended.map((b) => (
                                         <div key={`curation-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
                                             <BookCard book={b} />
@@ -753,8 +753,8 @@ export default function BookDetailClient({
                                     <ChevronRight className="w-6 h-6" />
                                 </Link>
                             </div>
-                            <div className="overflow-x-auto scrollbar-hide -mx-6 px-6">
-                                <div className="flex gap-4 pb-2">
+                            <div className="overflow-x-auto scrollbar-hide -mx-6">
+                                <div className="flex gap-4 pb-2 px-6">
                                     {ageRecommended.map((b) => (
                                         <div key={`age-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
                                             <BookCard book={b} />
@@ -798,8 +798,8 @@ export default function BookDetailClient({
                                     <ChevronRight className="w-6 h-6" />
                                 </Link>
                             </div>
-                            <div className="overflow-x-auto scrollbar-hide -mx-6 px-6">
-                                <div className="flex gap-4 pb-2">
+                            <div className="overflow-x-auto scrollbar-hide -mx-6">
+                                <div className="flex gap-4 pb-2 px-6">
                                     {topicRecommended.map((b) => (
                                         <div key={`topic-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
                                             <BookCard book={b} />
@@ -826,8 +826,8 @@ export default function BookDetailClient({
                                 </h3>
                             </div>
                         </div>
-                        <div className="overflow-x-auto scrollbar-hide -mx-6 px-6">
-                            <div className="flex gap-4 pb-2">
+                        <div className="overflow-x-auto scrollbar-hide -mx-6">
+                            <div className="flex gap-4 pb-2 px-6">
                                 {authorRecommended.map((b) => (
                                     <div key={`author-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
                                         <BookCard book={b} />

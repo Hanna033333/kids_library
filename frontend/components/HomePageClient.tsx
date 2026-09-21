@@ -284,34 +284,36 @@ export default function HomePageClient({
           </div>
 
           {/* 연령 탭 */}
-          <div className="flex gap-2 mb-6 px-2 overflow-x-auto scrollbar-hide">
-            {[
-              { key: '0-3', label: '0~3세' },
-              { key: '4-7', label: '4~7세' },
-              { key: '8-12', label: '8~12세' }
-            ].map(age => (
-              <button
-                key={age.key}
-                onClick={() => {
-                  setSelectedAge(age.key);
-                  sendGAEvent('click_home_age_tab', { age: age.key });
-                }}
-                className={`flex-shrink-0 whitespace-nowrap px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedAge === age.key
-                  ? 'bg-brand-primary text-white'
-                  : 'bg-surface-sub text-gray-700 active:bg-gray-200 border border-gray-200'
-                  }`}
-              >
-                {age.label}
-              </button>
-            ))}
+          <div className="overflow-x-auto scrollbar-hide -mx-4 mb-6">
+            <div className="flex gap-2 px-6">
+              {[
+                { key: '0-3', label: '0~3세' },
+                { key: '4-7', label: '4~7세' },
+                { key: '8-12', label: '8~12세' }
+              ].map(age => (
+                <button
+                  key={age.key}
+                  onClick={() => {
+                    setSelectedAge(age.key);
+                    sendGAEvent('click_home_age_tab', { age: age.key });
+                  }}
+                  className={`flex-shrink-0 whitespace-nowrap px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedAge === age.key
+                    ? 'bg-brand-primary text-white'
+                    : 'bg-surface-sub text-gray-700 active:bg-gray-200 border border-gray-200'
+                    }`}
+                >
+                  {age.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* 책 그리드 - 좌우 스크롤 */}
           {loading ? (
-            <div className="overflow-x-auto scrollbar-hide -mx-4 px-6">
-              <div className="flex gap-4 pb-2">
-                {[1, 2, 3, 4, 5, 6, 7].map((i, index, array) => (
-                  <div key={i} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === array.length - 1 ? 'mr-4' : ''}`}>
+            <div className="overflow-x-auto scrollbar-hide -mx-4">
+              <div className="flex gap-4 pb-2 px-6">
+                {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <div key={i} className="flex-shrink-0 w-[160px] sm:w-[180px]">
                     <div className="flex flex-col bg-white rounded-2xl shadow-sm overflow-hidden h-full animate-pulse">
                       {/* 이미지 스켈레톤 */}
                       <div className="w-full aspect-[1/1.1] bg-gray-200"></div>
@@ -328,10 +330,10 @@ export default function HomePageClient({
             </div>
           ) : ageBooks.length > 0 ? (
             <>
-              <div className="overflow-x-auto scrollbar-hide -mx-4 px-6">
-                <div className="flex gap-4 pb-2">
-                  {ageBooks.map((book, index) => (
-                    <div key={book.id} className={`flex-shrink-0 w-[160px] sm:w-[180px] ${index === ageBooks.length - 1 ? 'mr-4' : ''}`}>
+              <div className="overflow-x-auto scrollbar-hide -mx-4">
+                <div className="flex gap-4 pb-2 px-6">
+                  {ageBooks.map((book) => (
+                    <div key={book.id} className="flex-shrink-0 w-[160px] sm:w-[180px]">
                       <BookCard book={book} />
                     </div>
                   ))}

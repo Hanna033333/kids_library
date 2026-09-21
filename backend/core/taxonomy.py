@@ -36,6 +36,7 @@ ALL_TAXONOMY = [
     { "id": 34, "subtitle": "신비한 숲속과 들판의 비밀", "title": "🐜 호기심 자연 관찰", "tag": "자연관찰", "slug": "nature" },
     { "id": 35, "subtitle": "초록 지구와 함께 숨 쉬며 자라요", "title": "🌱 초록 생태 환경 그림책", "tag": "환경보호", "slug": "eco" },
     { "id": 36, "subtitle": "세상의 원리를 깨우치는 재미", "title": "🔍 호기심 가득 과학 원리", "tag": "과학원리", "slug": "science" },
+    { "id": 37, "subtitle": "선선한 바람과 함께 찾아온 계절", "title": "🍁 바스락 가을 감성 그림책", "tag": "계절", "slug": "season" },
     { "id": 38, "subtitle": "작은 생명 곤충들의 위대한 한살이", "title": "🦋 꿈틀꿈틀 곤충 나라", "tag": "곤충", "slug": "bugs" },
     { "id": 39, "subtitle": "광활한 우주와 반짝이는 별의 비밀", "title": "🚀 별빛 가득 우주 여행", "tag": "우주", "slug": "space" },
     { "id": 40, "subtitle": "수억 년 전 지구를 지배한 주인공", "title": "🦖 거대한 공룡의 세계", "tag": "공룡", "slug": "dinosaurs" },

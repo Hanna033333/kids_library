@@ -181,8 +181,8 @@ class ThreadsTriggerRequest(BaseModel):
 class WeeklyTriggerRequest(BaseModel):
     index: Optional[int] = None
 
-def select_three_books(curation_tag: str) -> List[dict]:
-    """도서 데이터베이스에서 조건에 맞는 책 3권을 엄선합니다. (confidence_score 내림차순)"""
+def select_five_books(curation_tag: str) -> List[dict]:
+    """도서 데이터베이스에서 조건에 맞는 책 5권을 엄선합니다. (confidence_score 내림차순)"""
     query = supabase.table("childbook_items").select("*")
     query = query.or_("is_hidden.is.null,is_hidden.eq.false")
     query = query.not_.is_("image_url", "null")
@@ -195,15 +195,15 @@ def select_three_books(curation_tag: str) -> List[dict]:
         or_filter = f'curation_tag.eq."{curation_tag}",curation_tag.like."{curation_tag},%",curation_tag.eq."#{curation_tag}",curation_tag.like."#{curation_tag},%"'
         query = query.or_(or_filter)
 
-    # AI 태깅 신뢰도 높은 순으로 정렬 (ㄱㄴㄷ 정렬 버그 수정 — 특정 초성 도서가 고정 노출되는 현상 방지)
+    # AI 태깅 신뢰도 높은 순으로 정렬
     query = query.order("confidence_score", desc=True)
     
     result = query.execute()
     books = result.data if result.data else []
     
-    # 만약 해당 태그를 가진 도서가 3권보다 부족한 경우, 전체 도서 중에서 보충
-    if len(books) < 3:
-        needed = 3 - len(books)
+    # 만약 해당 태그를 가진 도서가 5권보다 부족한 경우, 전체 도서 중에서 보충
+    if len(books) < 5:
+        needed = 5 - len(books)
         fallback_query = supabase.table("childbook_items").select("*")
         fallback_query = fallback_query.or_("is_hidden.is.null,is_hidden.eq.false")
         fallback_query = fallback_query.not_.is_("image_url", "null")
@@ -211,13 +211,13 @@ def select_three_books(curation_tag: str) -> List[dict]:
         if books:
             book_ids = [b["id"] for b in books]
             fallback_query = fallback_query.not_.in_("id", book_ids)
-        # 단순히 제목 오름차순 대신 전국 대출수(national_loan_count desc) 기준 우수 도서를 엄선하여 폴백 보충
+        # 전국 대출수(national_loan_count desc) 기준 우수 도서를 엄선하여 폴백 보충
         fallback_query = fallback_query.order("national_loan_count", desc=True).limit(needed)
         fallback_result = fallback_query.execute()
         if fallback_result.data:
             books.extend(fallback_result.data)
             
-    return books[:3]
+    return books[:5]
 
 _TRIM_FILLER = " 아이의 호기심과 상상력을 풍부하게 키워주고 부모와 함께 읽으며 따뜻한 감동과 소중한 교훈을 배울 수 있는 그림책입니다."
 
@@ -417,9 +417,9 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
     if not check_7_books_exist(c_tag):
         raise ValueError(f"큐레이션 태그 '{c_tag}'는 첫 번째 태그 정밀 매칭 기준 7권 이상 확보되지 않아 스레드 콘텐츠로 발행할 수 없습니다.")
         
-    books = select_three_books(c_tag)
-    if len(books) < 3:
-        raise ValueError(f"큐레이션 도서가 부족합니다. 최소 3권의 도서가 필요합니다.")
+    books = select_five_books(c_tag)
+    if len(books) < 5:
+        raise ValueError(f"큐레이션 도서가 부족합니다. 최소 5권의 도서가 필요합니다.")
         
     ai_content = generate_ai_threads_content(c_title, c_tag, books)
     
@@ -570,29 +570,31 @@ async def publish_approved_feed(feed_id: int):
         print(f"⚠️ [즉시 배포] 피드 {feed_id}가 이미 발행 중이거나 선점됨")
         return
         
-    # 404 리다이렉트 스모크 테스트 선행 수행 (부모 캐러셀 발행 전 차단)
+    # 첫 댓글 책자리 전환 링크 구성 및 스모크 테스트
     curation_tag = feed.get("curation_tag") or "추천"
     tag_clean = curation_tag.lstrip("#")
     slug = get_slug_by_tag(tag_clean)
-    reply_text = f"🔗 https://checkjari.com/c/{slug}"
+    reply_text = (
+        f"우리 동네 도서관에 이 책들 지금 남아있는지 실시간 대출 상태랑 더 많은 연령별 추천 도서는 책자리에서 바로 확인해봐! 👇\n\n"
+        f"🔗 https://checkjari.com/c/{slug}"
+    )
 
     print(f"📣 [즉시 배포] 피드 {feed_id} 즉시 발행 개시")
     await send_telegram_message(f"📢 <b>[즉시 배포]</b> 늦은 승인이 감지되었습니다. 피드 ID: {feed_id}의 Threads 최종 배포를 즉시 시작합니다...")
     
-    # [마케팅 전략 변경] 첫 댓글 등록을 하지 않으므로 단축 URL 스모크 테스트 생략
-    # try:
-    #     from services.threads_publisher import smoke_test_short_url
-    #     await smoke_test_short_url(reply_text)
-    # except Exception as smoke_err:
-    #     print(f"❌ [즉시 배포] 스모크 테스트 실패: {smoke_err}")
-    #     await send_telegram_message(f"🚨 <b>[발행 차단]</b> 리다이렉트 링크가 404 상태입니다. 배포를 중단했습니다.\n원인: {smoke_err}")
-    #     try:
-    #         supabase.table("threads_feeds").update({
-    #             "published_at": None
-    #         }).eq("id", feed_id).execute()
-    #     except Exception as rollback_err:
-    #         print(f"❌ [즉시 배포] 피드({feed_id}) 선점 롤백 실패: {rollback_err}")
-    #     return
+    try:
+        from services.threads_publisher import smoke_test_short_url
+        await smoke_test_short_url(reply_text)
+    except Exception as smoke_err:
+        print(f"❌ [즉시 배포] 스모크 테스트 실패: {smoke_err}")
+        await send_telegram_message(f"🚨 <b>[발행 차단]</b> 리다이렉트 링크가 404 상태입니다. 배포를 중단했습니다.\n원인: {smoke_err}")
+        try:
+            supabase.table("threads_feeds").update({
+                "published_at": None
+            }).eq("id", feed_id).execute()
+        except Exception as rollback_err:
+            print(f"❌ [즉시 배포] 피드({feed_id}) 선점 롤백 실패: {rollback_err}")
+        return
 
     try:
         post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
@@ -607,16 +609,16 @@ async def publish_approved_feed(feed_id: int):
         await send_telegram_message(f"❌ <b>[즉시 배포 오류]</b> 피드({feed_id}) 발행 실패: {publish_err}")
         return
         
-    # [마케팅 전략 변경] 첫 댓글 연동 생략 ('스하리' 유도로 전환)
-    # try:
-    #     await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
-    # except Exception as reply_err:
-    #     print(f"❌ [즉시 배포] 첫 댓글 등록 실패: {reply_err}")
-    #     await send_telegram_message(f"⚠️ [즉시 배포 경고] 피드 발행 성공, 첫 댓글 실패: {reply_err}")
+    # 첫 댓글 자동 게시 (책자리 실시간 대출 & 더보기 전환)
+    try:
+        await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
+    except Exception as reply_err:
+        print(f"⚠️ [즉시 배포] 첫 댓글 등록 실패: {reply_err}")
+        await send_telegram_message(f"⚠️ [즉시 배포 경고] 피드 발행 성공, 첫 댓글 실패: {reply_err}")
         
     await send_telegram_message(f"🎉 <b>[즉시 배포 완료]</b> Threads에 최종 배포 성공. 포스트 ID: <code>{post_id}</code>")
     await send_telegram_message(
-        f"📌 <b>스레드 공유 시 아래 링크를 사용하세요</b>\n\n"
+        f"📌 <b>스레드 공유 링크</b>\n\n"
         f"https://checkjari.com/collections/curation/{slug}"
     )
 
@@ -949,25 +951,27 @@ async def weekly_threads_scheduler():
                                 curation_tag = feed.get("curation_tag") or "추천"
                                 tag_clean = curation_tag.lstrip("#")
                                 slug = get_slug_by_tag(tag_clean)
-                                reply_text = f"🔗 https://checkjari.com/c/{slug}"
+                                reply_text = (
+                                    f"우리 동네 도서관에 이 책들 지금 남아있는지 실시간 대출 상태랑 더 많은 연령별 추천 도서는 책자리에서 바로 확인해봐! 👇\n\n"
+                                    f"🔗 https://checkjari.com/c/{slug}"
+                                )
 
                                 print(f"📣 [스케줄러] 최종 승인된 피드({feed_id}) 배포 진행")
                                 await send_telegram_message("📢 <b>[스케줄러] 최종 승인된 카드뉴스의 Threads 최종 배포를 진행합니다...</b>")
                                 
-                                # [마케팅 전략 변경] 첫 댓글 등록을 하지 않으므로 단축 URL 스모크 테스트 생략
-                                # try:
-                                #     from services.threads_publisher import smoke_test_short_url
-                                #     await smoke_test_short_url(reply_text)
-                                # except Exception as smoke_err:
-                                #     print(f"❌ [스케줄러] 스모크 테스트 실패: {smoke_err}")
-                                #     await send_telegram_message(f"🚨 <b>[발행 차단]</b> 리다이렉트 링크가 404 상태입니다. 배포를 중단했습니다.\n원인: {smoke_err}")
-                                #     try:
-                                #         supabase.table("threads_feeds").update({
-                                #             "published_at": None
-                                #         }).eq("id", feed_id).execute()
-                                #     except Exception as rollback_err:
-                                #         print(f"❌ [스케줄러] 피드({feed_id}) 선점 롤백 실패: {rollback_err}")
-                                #     continue
+                                try:
+                                    from services.threads_publisher import smoke_test_short_url
+                                    await smoke_test_short_url(reply_text)
+                                except Exception as smoke_err:
+                                    print(f"❌ [스케줄러] 스모크 테스트 실패: {smoke_err}")
+                                    await send_telegram_message(f"🚨 <b>[발행 차단]</b> 리다이렉트 링크가 404 상태입니다. 배포를 중단했습니다.\n원인: {smoke_err}")
+                                    try:
+                                        supabase.table("threads_feeds").update({
+                                            "published_at": None
+                                        }).eq("id", feed_id).execute()
+                                    except Exception as rollback_err:
+                                        print(f"❌ [스케줄러] 피드({feed_id}) 선점 롤백 실패: {rollback_err}")
+                                    continue
 
                                 try:
                                     post_id = await publish_carousel_to_threads(text=caption, image_urls=image_urls)
@@ -986,17 +990,17 @@ async def weekly_threads_scheduler():
                                     )
                                     continue
 
-                                # [마케팅 전략 변경] 첫 댓글 자동 연동 생략 ('스하리' 유도로 전환)
-                                # try:
-                                #     await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
-                                #     print(f"✅ [스케줄러] 첫 댓글 등록 성공 (태그: {curation_tag} -> 슬러그: {slug})")
-                                # except Exception as reply_err:
-                                #     print(f"❌ [스케줄러] 첫 댓글 등록 실패: {reply_err}")
-                                #     await send_telegram_message(f"⚠️ [스케줄러 경고] 피드({feed_id}) 발행에는 성공했으나, 첫 댓글 등록 중 오류 발생: {reply_err}")
+                                # 첫 댓글 자동 등록 (책자리 실시간 대출 & 더보기 전환)
+                                try:
+                                    await publish_reply_to_threads(parent_post_id=post_id, reply_text=reply_text)
+                                    print(f"✅ [스케줄러] 첫 댓글 등록 성공 (태그: {curation_tag} -> 슬러그: {slug})")
+                                except Exception as reply_err:
+                                    print(f"❌ [스케줄러] 첫 댓글 등록 실패: {reply_err}")
+                                    await send_telegram_message(f"⚠️ [스케줄러 경고] 피드({feed_id}) 발행에는 성공했으나, 첫 댓글 등록 중 오류 발생: {reply_err}")
 
                                 await send_telegram_message(f"🎉 <b>[실시간 배포 완료]</b> Threads에 최종 배포되었습니다. 포스트 ID: <code>{post_id}</code>")
                                 await send_telegram_message(
-                                    f"📌 <b>스레드 공유 시 아래 링크를 사용하세요</b>\n\n"
+                                    f"📌 <b>스레드 공유 링크</b>\n\n"
                                     f"https://checkjari.com/collections/curation/{slug}"
                                 )
                             else:
