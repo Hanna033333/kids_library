@@ -11,6 +11,7 @@ import { PageLoader } from '@/components/ui/PageLoader'
 import { sendGAEvent } from '@/lib/analytics'
 import { getOptimizedImageUrl, isValidCoverImage } from '@/lib/utils/image'
 import { getCurationMoreLink } from '@/lib/utils/curation-link'
+import { parseCurationTags, formatCurationTag, isGradeTag } from '@/lib/utils/curation-filter'
 
 export interface GradeTab {
   id: string
@@ -36,31 +37,30 @@ interface TextbookCurationShowcaseProps {
 }
 
 /**
- * 도서에서 표시할 태그 추출 (제목 상단 배치용)
+ * 교과서 카드 하단에 노출할 태그 리스트 추출
+ * - '전체' 탭일 때: 학년 태그 1개 + 주제 태그 1개 (총 2개)
+ * - 학년 필터(특정 학년 탭)일 때: 주제 태그 2개
  */
-function getDisplayTag(book: Book, activeTabTag: string): string {
-  if (book.curation_tag) {
-    const rawTags = book.curation_tag
-      .split(',')
-      .map(t => t.trim().replace(/^#/, ''))
-      .filter(t => t && t !== '교과서수록')
+function getTextbookCardTags(book: Book, isAllTab: boolean): string[] {
+  const rawTags = parseCurationTags(book.curation_tag)
+  const filteredTags = rawTags.filter(t => t !== '교과서수록' && t !== '교과서')
 
-    // 학년 관련 태그가 있으면 우선 표시
-    const gradeTag = rawTags.find(t => t.includes('초등') || t.includes('학년'))
+  const gradeTag = filteredTags.find(t => isGradeTag(t))
+  const topicTags = filteredTags.filter(t => !isGradeTag(t))
+
+  if (isAllTab) {
+    const result: string[] = []
     if (gradeTag) {
-      return gradeTag.startsWith('#') ? gradeTag : `#${gradeTag}`
+      result.push(gradeTag)
     }
-
-    if (rawTags.length > 0) {
-      return rawTags[0].startsWith('#') ? rawTags[0] : `#${rawTags[0]}`
+    if (topicTags.length > 0) {
+      result.push(topicTags[0])
     }
+    return result.slice(0, 2)
+  } else {
+    // 특정 학년 탭 선택 시: 주제 태그 2개
+    return topicTags.slice(0, 2)
   }
-
-  if (activeTabTag && activeTabTag !== 'all') {
-    return `#${activeTabTag.replace(/^#/, '')}`
-  }
-
-  return '#초등필독'
 }
 
 export default function TextbookCurationShowcase({
@@ -160,7 +160,7 @@ export default function TextbookCurationShowcase({
 
         {/* 학년별 가로 스크롤 탭 바 */}
         <div className="overflow-x-auto scrollbar-hide -mx-4 mb-6">
-          <div className="flex items-center gap-2 pb-1 px-6">
+          <div className="flex items-center gap-2 pb-1 pl-6 w-max min-w-full">
             {TEXTBOOK_GRADE_TABS.map(tab => {
               const isActive = tab.id === activeTabId
               return (
@@ -177,6 +177,8 @@ export default function TextbookCurationShowcase({
                 </button>
               )
             })}
+            {/* 탭 바 우측 끝 스크롤 마진용 스페이서 (gap-2: 8px + w-2: 8px = 16px) */}
+            <div className="shrink-0 w-2" aria-hidden="true" />
           </div>
         </div>
 
@@ -188,14 +190,14 @@ export default function TextbookCurationShowcase({
         ) : bookPairs.length > 0 ? (
           <div>
             <div className="overflow-x-auto scrollbar-hide -mx-4">
-              <div className="flex gap-3 pb-3 px-6">
+              <div className="flex gap-4 pb-4 pl-6 w-max min-w-full">
                 {bookPairs.map((pair, colIndex) => (
                   <div
                     key={`col-${colIndex}`}
-                    className="flex flex-col gap-3 w-[310px] sm:w-[370px] lg:w-[455px] shrink-0"
+                    className="flex flex-col gap-4 w-[310px] sm:w-[370px] lg:w-[455px] shrink-0"
                   >
                     {pair.map((book) => {
-                      const displayTag = getDisplayTag(book, currentTab.tag)
+                      const displayTags = getTextbookCardTags(book, currentTab.tag === 'all')
                       const coverSrc = getOptimizedImageUrl(book.image_url, 'list')
                       return (
                         <Link
@@ -228,25 +230,22 @@ export default function TextbookCurationShowcase({
                             )}
                           </div>
 
-                          {/* 우측 정보: 태그(상단) -> 제목(중단) -> 저자/출판사(하단) */}
+                          {/* 우측 정보: 제목(상단) -> 태그들(하단) */}
                           <div className="flex flex-col justify-center min-w-0 flex-1 pl-4 pr-1.5 py-1">
-                            {/* 1. 태그 ('전체' 탭 선택 시에만 학년 식별용 태그 표시) */}
-                            {currentTab.tag === 'all' && displayTag && (
-                              <span className="text-[12.5px] sm:text-[13px] font-medium text-gray-500 truncate mb-1">
-                                {displayTag}
-                              </span>
-                            )}
-
-                            {/* 2. 제목 (원본 도서 제목 렌더링) */}
-                            <h3 className="text-[14.5px] sm:text-[15.5px] font-bold text-gray-900 line-clamp-2 leading-snug">
+                            {/* 1. 제목 (원본 도서 제목 렌더링 - 디자인 시스템 표준 16px) */}
+                            <h3 className="text-base font-bold text-gray-900 line-clamp-2 leading-[1.4] tracking-tight">
                               {book.title}
                             </h3>
 
-                            {/* 3. 저자 */}
-                            {book.author && (
-                              <p className="text-[12.5px] sm:text-[13px] text-gray-500 line-clamp-1 mt-1.5">
-                                {book.author}
-                              </p>
+                            {/* 2. 태그 영역 (전체 탭: 학년태그+주제태그 / 학년 탭: 주제태그 2개) */}
+                            {displayTags.length > 0 && (
+                              <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
+                                {displayTags.map((tag, idx) => (
+                                  <span key={idx} className="text-[12.5px] sm:text-[13px] font-medium text-gray-500">
+                                    #{formatCurationTag(tag)}
+                                  </span>
+                                ))}
+                              </div>
                             )}
                           </div>
                         </Link>
@@ -254,6 +253,8 @@ export default function TextbookCurationShowcase({
                     })}
                   </div>
                 ))}
+                {/* 2단 슬라이더 우측 끝 스크롤 마진 확보용 스페이서 (gap-4: 16px 유지) */}
+                <div className="shrink-0 w-0" aria-hidden="true" />
               </div>
             </div>
 

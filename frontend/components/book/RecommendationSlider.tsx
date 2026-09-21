@@ -63,12 +63,14 @@ export default function RecommendationSlider({
                     )}
                 </div>
                 <div className="overflow-x-auto scrollbar-hide -mx-6">
-                    <div className="flex gap-4 pb-2 px-6">
+                    <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
                         {books.map((b) => (
                             <div key={`${keyPrefix}-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
                                 <BookCard book={b} />
                             </div>
                         ))}
+                        {/* 우측 끝 스크롤 마진 확보용 스페이서 (gap-4: 16px 유지) */}
+                        <div className="shrink-0 w-0" aria-hidden="true" />
                     </div>
                 </div>
             </div>

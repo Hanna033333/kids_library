@@ -285,7 +285,7 @@ export default function HomePageClient({
 
           {/* 연령 탭 */}
           <div className="overflow-x-auto scrollbar-hide -mx-4 mb-6">
-            <div className="flex gap-2 px-6">
+            <div className="flex gap-2 pl-6 w-max min-w-full">
               {[
                 { key: '0-3', label: '0~3세' },
                 { key: '4-7', label: '4~7세' },
@@ -305,13 +305,15 @@ export default function HomePageClient({
                   {age.label}
                 </button>
               ))}
+              {/* 탭 바 우측 끝 스크롤 마진용 스페이서 (gap-2: 8px + w-2: 8px = 16px) */}
+              <div className="shrink-0 w-2" aria-hidden="true" />
             </div>
           </div>
 
           {/* 책 그리드 - 좌우 스크롤 */}
           {loading ? (
             <div className="overflow-x-auto scrollbar-hide -mx-4">
-              <div className="flex gap-4 pb-2 px-6">
+              <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
                 {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                   <div key={i} className="flex-shrink-0 w-[160px] sm:w-[180px]">
                     <div className="flex flex-col bg-white rounded-2xl shadow-sm overflow-hidden h-full animate-pulse">
@@ -326,17 +328,20 @@ export default function HomePageClient({
                     </div>
                   </div>
                 ))}
+                <div className="shrink-0 w-0" aria-hidden="true" />
               </div>
             </div>
           ) : ageBooks.length > 0 ? (
             <>
               <div className="overflow-x-auto scrollbar-hide -mx-4">
-                <div className="flex gap-4 pb-2 px-6">
+                <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
                   {ageBooks.map((book) => (
                     <div key={book.id} className="flex-shrink-0 w-[160px] sm:w-[180px]">
                       <BookCard book={book} />
                     </div>
                   ))}
+                  {/* 도서 슬라이더 우측 끝 스크롤 마진용 스페이서 (gap-4: 16px 유지) */}
+                  <div className="shrink-0 w-0" aria-hidden="true" />
                 </div>
               </div>
             </>

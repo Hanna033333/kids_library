@@ -63,12 +63,14 @@ export default function CurationSection({
 
         {books.length > 0 ? (
           <div className="overflow-x-auto scrollbar-hide -mx-4">
-            <div className="flex gap-4 pb-4 px-6">
+            <div className="flex gap-4 pb-4 pl-6 w-max min-w-full">
               {books.map((book, index) => (
                 <div key={book.id} className="flex-shrink-0 w-[165px] sm:w-[190px]">
                   <BookCard book={book} priority={priorityImages && index < 3} excludeTag={sectionTag} />
                 </div>
               ))}
+              {/* 우측 끝 스크롤 마진 확보용 스페이서 (gap-4: 16px 유지) */}
+              <div className="shrink-0 w-0" aria-hidden="true" />
             </div>
           </div>
         ) : (
