@@ -4,11 +4,16 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 
 const AVAILABLE_LIBRARIES = [
     '광주광역시립무등도서관',
+    '부산광역시 강서기적의도서관',
     '서울특별시교육청서울시립어린이도서관',
+    '손기정 어린이도서관',
     '송파어린이도서관',
+    '수원시립호매실도서관',
     '수지도서관',
+    '아이꿈 작은도서관',
     '울산도서관',
     '판교도서관',
+    '하남시 위례도서관',
     '한밭도서관'
 ] as const
 export type LibraryName = typeof AVAILABLE_LIBRARIES[number]

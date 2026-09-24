@@ -64,4 +64,5 @@
 @.agent/workflows/add_books.md
 @.agent/workflows/add_library.md
 @.agent/workflows/blog_naver.md
+@.agent/workflows/notice_notion.md
 

@@ -23,11 +23,29 @@ export default function SignupWelcomeModal() {
         if (typeof window === 'undefined') return
         if (sessionStorage.getItem('showSignupComplete') === 'true') {
             sessionStorage.removeItem('showSignupComplete')
-            // 콜백에서 생성된 랜덤 닉네임 복원, 없으면 새로 생성
-            const savedNickname = sessionStorage.getItem('generatedNickname') || generateRandomNickname()
-            sessionStorage.removeItem('generatedNickname')
-            setNickname(savedNickname)
-            setIsOpen(true)
+            const loadInitialNickname = async () => {
+                const savedNickname = sessionStorage.getItem('generatedNickname')
+                sessionStorage.removeItem('generatedNickname')
+                if (savedNickname) {
+                    setNickname(savedNickname)
+                    setIsOpen(true)
+                    return
+                }
+                try {
+                    const { data: { user } } = await supabase.auth.getUser()
+                    if (user) {
+                        const { data } = await supabase.from('members').select('nickname').eq('id', user.id).single()
+                        if (data?.nickname) {
+                            setNickname(data.nickname)
+                            setIsOpen(true)
+                            return
+                        }
+                    }
+                } catch { /* ignore */ }
+                setNickname(generateRandomNickname())
+                setIsOpen(true)
+            }
+            loadInitialNickname()
         }
     }, [])
 
@@ -102,7 +120,7 @@ export default function SignupWelcomeModal() {
                 <div className="mb-5">
                     <p className="text-[13px] text-gray-400 font-medium mb-1">책자리에 오신 걸 환영해요</p>
                     <h2 className="text-[20px] font-bold text-gray-900 leading-snug">
-                        닉네임을 정해주세요
+                        이 닉네임으로 시작해 볼까요?
                     </h2>
                 </div>
 
@@ -118,7 +136,7 @@ export default function SignupWelcomeModal() {
                         placeholder="2~10자, 한글·영문·숫자"
                     />
                     <p className="mt-2 text-[12px] text-gray-400 px-1">
-                        언제든지 마이페이지에서 변경할 수 있어요
+                        마음에 드는 다른 닉네임으로 바꿀 수도 있어요
                     </p>
                 </div>
 

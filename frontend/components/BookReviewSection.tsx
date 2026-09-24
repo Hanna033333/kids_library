@@ -148,6 +148,8 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
     refetchOnWindowFocus: false,
   })
 
+  const [memberNickname, setMemberNickname] = useState<string | null>(null)
+
   // 닉네임 / 아이 나이 초기화 (로컬스토리지 기억 복원)
   useEffect(() => {
     try {
@@ -160,15 +162,26 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
     } catch { /* ignore */ }
   }, [])
 
-
-  const userProfileName =
-    user?.user_metadata?.nickname ||
-    user?.user_metadata?.full_name ||
-    user?.user_metadata?.name ||
-    ((user as any)?.email ? (user as any).email.split('@')[0] : '')
+  // 회원 테이블에서 닉네임 안전하게 조회
+  useEffect(() => {
+    if (!user) return
+    const fetchMemberNickname = async () => {
+      try {
+        const { data } = await supabase
+          .from('members')
+          .select('nickname')
+          .eq('id', user.id)
+          .single()
+        if (data?.nickname) {
+          setMemberNickname(data.nickname)
+        }
+      } catch { /* ignore */ }
+    }
+    fetchMemberNickname()
+  }, [user])
 
   const effectiveNickname = (
-    userProfileName ||
+    memberNickname ||
     nickname ||
     generateRandomNickname()
   ).replace(/\s+/g, '')

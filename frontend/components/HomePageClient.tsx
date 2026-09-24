@@ -24,6 +24,7 @@ import TextbookCurationShowcase from '@/components/home/TextbookCurationShowcase
 import BookCard from '@/components/home/BookCard'
 import { isSummerCurationActive } from '@/lib/utils/curation-filter'
 import { getCurationMoreLink } from '@/lib/utils/curation-link'
+import latestNotice from '@/shared/latest_notice.json'
 
 interface DynamicCuration {
   subtitle: string;
@@ -411,19 +412,19 @@ export default function HomePageClient({
       < div className="border-t border-gray-200" ></div >
 
       {/* 공지사항 섹션 */}
-      < section className="py-6 px-4 bg-white" >
+      <section className="py-6 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <a
-            href="https://amplified-decimal-9c4.notion.site/26-01-10-2e4939f003ba80f2b698e9e016910587?source=copy_link"
+            href={latestNotice.url || "https://app.notion.com/p/2e4939f003ba807d9580c056baacf0fa?source=copy_link"}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 text-gray-700 hover:text-gray-900 transition-colors group"
           >
-            <Bell className="w-5 h-5 text-brand-primary group-hover:text-brand-primary-hover transition-colors" />
-            <span className="text-sm font-medium">서비스 오픈 안내(1/10)</span>
+            <Bell className="w-5 h-5 text-brand-primary group-hover:text-brand-primary-hover transition-colors flex-shrink-0" />
+            <span className="text-sm font-medium">{latestNotice.title || "서비스 공지사항"}</span>
           </a>
         </div>
-      </section >
+      </section>
 
       <Footer />
 
