@@ -38,7 +38,7 @@ export const ALL_TAXONOMY: CurationTag[] = [
   { id: 34, subtitle: "신비한 숲속과 들판의 비밀", title: "🐜 호기심 자연 관찰", tag: "자연관찰", slug: "nature" },
   { id: 35, subtitle: "초록 지구와 함께 숨 쉬며 자라요", title: "🌱 초록 지구 환경 그림책", tag: "환경보호", slug: "eco" },
   { id: 36, subtitle: "세상의 원리를 깨우치는 재미", title: "🔍 호기심 가득 과학원리", tag: "과학원리", slug: "science" },
-  { id: 37, subtitle: "선선한 바람과 함께 찾아온 계절", title: "🍁 바스락 가을 감성 그림책", tag: "계절", slug: "season" },
+  { id: 37, subtitle: "파릇파릇 새싹과 따스한 햇살", title: "🌱 따스한 봄날 그림책", tag: "봄", slug: "spring" },
   { id: 38, subtitle: "작은 생명 곤충들의 위대한 한살이", title: "🦋 꿈틀꿈틀 곤충 나라", tag: "곤충", slug: "bugs" },
   { id: 39, subtitle: "광활한 우주와 반짝이는 별의 비밀", title: "🚀 별빛 가득 우주 여행", tag: "우주", slug: "space" },
   { id: 40, subtitle: "수억 년 전 지구를 지배한 주인공", title: "🦖 거대한 공룡의 세계", tag: "공룡", slug: "dinosaurs" },
@@ -62,7 +62,7 @@ export const ALL_TAXONOMY: CurationTag[] = [
   { id: 62, subtitle: "상상하는 모든 것이 이루어지는 곳", title: "🦄 호기심 가득 판타지", tag: "판타지", slug: "fantasy" },
   { id: 63, subtitle: "상상초월 재미와 유쾌한 웃음", title: "🤪 유쾌한 유머 그림책", tag: "유머", slug: "humor" },
   { id: 64, subtitle: "스스로 문제를 해결하는 논리적 탐색", title: "🔍 명탐정의 추리 비밀", tag: "추리", slug: "mystery" },
-  { id: 65, subtitle: "머릿속에서 펼쳐지는 기발한 상상들", title: "💭 상상의 날개를 활짝", "tag": "상상력", slug: "imagination" },
+  { id: 65, subtitle: "머릿속에서 펼쳐지는 기발한 상상들", title: "💭 상상의 날개를 활짝", tag: "상상력", slug: "imagination" },
   { id: 66, subtitle: "하늘 위를 훨훨 날고 싶은 꼬마 새", title: "✈️ 하늘을 나는 상상", tag: "하늘", slug: "aviation" },
   { id: 67, subtitle: "스스로 음식을 만들며 느끼는 보람", title: "🍳 맛있는 요리조리", tag: "요리", slug: "cooking" },
   { id: 68, subtitle: "마음에 드는 스타일을 스스로 고르는 법", title: "👗 내 멋진 옷과 패션", tag: "패션", slug: "fashion" },
@@ -74,12 +74,15 @@ export const ALL_TAXONOMY: CurationTag[] = [
   { id: 77, subtitle: "포유류부터 조류까지 다양한 동물의 특징", title: "🦁 생생한 동물 도감", tag: "동물도감", slug: "animal-encyclopedia" },
   { id: 78, subtitle: "상상 속 외계인과 UFO", title: "🛸 상상 속 외계인", tag: "미래상상", slug: "future-imagination" },
   { id: 79, subtitle: "교육청이 엄선한 학년별 필독서", title: "☀️ 여름방학 추천도서", tag: "여름방학2026", slug: "summer-vacation" },
-  { id: 80, subtitle: "초등 국어 수업에 실제로 실린", title: "📖 교과서 수록도서", tag: "교과서수록", slug: "textbook" }
+  { id: 80, subtitle: "초등 국어 수업에 실제로 실린", title: "📖 교과서 수록도서", tag: "교과서수록", slug: "textbook" },
+  { id: 81, subtitle: "푸른 바다와 시원한 바람", title: "🌊 싱그러운 여름 그림책", tag: "여름", slug: "summer" },
+  { id: 82, subtitle: "선선한 바람과 함께 찾아온 계절", title: "🍁 바스락 가을 감성 그림책", tag: "가을", slug: "autumn" },
+  { id: 83, subtitle: "하얀 눈과 따뜻한 온기", title: "❄️ 포근한 겨울 감성 그림책", tag: "겨울", slug: "winter" }
 ];
 
 export const VALID_AI_TAGS = [
   "가족사랑", "모험", "인체", "판타지", "우리문화", "자연관찰", "잠자리", "사회성", "환경보호",
-  "자존감", "전래동화", "계절", "생명존중", "다양성", "예술감성", "배려", "역사이야기", "용기",
+  "자존감", "전래동화", "계절", "봄", "여름", "가을", "겨울", "생명존중", "다양성", "예술감성", "배려", "역사이야기", "용기",
   "감정조절", "우정", "과학원리", "상실", "정직", "곤충", "적응", "나눔", "우주", "분노조절",
   "규칙", "공룡", "슬픔", "다문화", "바다", "질투", "진로", "식물", "두려움", "경제", "날씨",
   "끈기", "의사소통", "코딩", "위로", "평화", "인공지능", "행복", "장애", "수학", "용서",

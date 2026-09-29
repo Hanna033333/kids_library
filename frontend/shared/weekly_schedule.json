@@ -409,11 +409,11 @@
     "end": "2026-10-04",
     "curations": [
       {
-        "id": 37,
+        "id": 82,
         "subtitle": "선선한 바람과 함께 찾아온 계절",
         "title": "🍁 바스락 가을 감성 그림책",
-        "tag": "계절",
-        "slug": "season"
+        "tag": "가을",
+        "slug": "autumn"
       },
       {
         "id": 65,
