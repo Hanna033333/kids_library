@@ -49,7 +49,7 @@ export const SPOTLIGHT_BANNERS: BannerItem[] = [
   },
   {
     id: 'textbook',
-    badge: '2022 개정 교육과정',
+    badge: '최신 개정 교육과정',
     titleLines: ['초등 교과서 수록도서', '학년별 필수 필독서'],
     subtitle: '1~6학년 국어 교과서에 실린 필독서로 문해력 쑥쑥',
     href: '/collections/curation/textbook',
