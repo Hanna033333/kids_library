@@ -266,7 +266,7 @@ export default async function BookDetailPage({ params }: Props) {
                 {/* 1번 전략: 검색 로봇 봇을 위한 오리지널 정적 시맨틱 텍스트 구조 */}
                 {/* 검색 봇(네이버, 구글)은 Javascript가 배제된 원본 HTML 파싱 시점에 큐레이션 해설과 상세 소개를 완벽하게 인덱싱합니다. */}
                 <article className="hidden" aria-hidden="true" style={{ display: 'none' }}>
-                    <h1>{book.title}</h1>
+                    <h2>{book.title}</h2>
                     <p>저자: {book.author}</p>
                     <p>출판사: {book.publisher}</p>
                     <p>연령: {book.age}</p>
@@ -299,4 +299,3 @@ export default async function BookDetailPage({ params }: Props) {
         notFound();
     }
 }
-

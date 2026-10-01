@@ -52,7 +52,7 @@ export default function PageHeader({
         <header className="w-full bg-white border-b border-gray-100 flex items-center justify-between px-6 py-4 sticky top-0 z-50">
             <div className="w-[84px] flex-shrink-0 flex items-center">{left}</div>
             <div className="flex-1 min-w-0 mx-2 flex justify-center">
-                <h1 className="text-lg font-bold text-gray-900 truncate">{title}</h1>
+                <div className="text-lg font-bold text-gray-900 truncate">{title}</div>
             </div>
             <div className="w-[84px] flex-shrink-0 flex items-center justify-end">{rightSlot ?? null}</div>
         </header>
