@@ -42,40 +42,17 @@ export function useBooks({
     enabled,
     queryFn: async ({ pageParam }): Promise<BooksResponse> => {
       const page = pageParam as number;
-
-      if (searchQuery) {
-        try {
-          return await searchBooks(
-            searchQuery,
-            ageFilter || undefined,
-            undefined,
-            sortFilter,
-            page,
-            limit,
-            curationFilter || undefined,
-            includeLibraryInfo,
-            tagFilter || undefined
-          );
-        } catch (apiErr) {
-          console.warn("Backend searchBooks failed, falling back to Supabase direct search:", apiErr);
-          const { getBooksFromSupabase } = await import("@/lib/supabase-client");
-          return await getBooksFromSupabase(page, limit, {
-            q: searchQuery,
-            age: ageFilter,
-            curation: curationFilter,
-            tag: tagFilter,
-            sort: sortFilter,
-          }, includeLibraryInfo);
-        }
-      }
-
-      const { getBooksFromSupabase } = await import("@/lib/supabase-client");
-      return await getBooksFromSupabase(page, limit, {
-        age: ageFilter,
-        curation: curationFilter,
-        tag: tagFilter,
-        sort: sortFilter,
-      }, includeLibraryInfo);
+      return searchBooks(
+        searchQuery || undefined,
+        ageFilter || undefined,
+        undefined,
+        sortFilter,
+        page,
+        limit,
+        curationFilter || undefined,
+        includeLibraryInfo,
+        tagFilter || undefined
+      );
     },
     getNextPageParam: (lastPage, allPages) => {
       const currentPage = allPages.length;

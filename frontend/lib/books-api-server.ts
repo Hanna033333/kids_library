@@ -18,7 +18,7 @@ interface FetchBooksParams {
 }
 
 /**
- * Server-side equivalent of getBooksFromSupabase
+ * SEO/SSG 페이지의 초기 목록을 위한 서버 전용 도서 조회
  */
 export async function getBooksFromServer({
     page = 1,
@@ -37,7 +37,7 @@ export async function getBooksFromServer({
     // but .or syntax is safer to just apply always.
     query = query.or('is_hidden.is.null,is_hidden.eq.false');
 
-    // pangyo_callno가 있는 책만 표시 (백엔드 services/search.py, lib/supabase-client.ts와 동일한 필터)
+    // 백엔드 목록 API와 동일하게 유효한 판교 청구기호가 있는 책만 표시
     query = query.not('pangyo_callno', 'is', null).neq('pangyo_callno', '없음');
 
     if (filters?.age) {
@@ -46,13 +46,15 @@ export async function getBooksFromServer({
             query = query.in('age', dbAgeValues);
         }
     }
-    // category 필터링은 큐레이션 태그 체계로 대체되어 제거됨 (services/search.py, supabase-client.ts와 동일)
+    // category 필터링은 큐레이션 태그 체계로 대체되어 제거됨
     // Curation 필터
     if (filters?.curation) {
         const cleanCuration = filters.curation.replace(/^#/, '').split(/[?&]/)[0].trim();
         if (cleanCuration) {
             const dbCurationTag = resolveDbCurationTag(cleanCuration);
-            query = query.ilike('curation_tag', `%${dbCurationTag}%`);
+            query = isSpecialTag(dbCurationTag)
+                ? query.ilike('curation_tag', `%${dbCurationTag}%`)
+                : query.or(buildCurationOrFilter(dbCurationTag));
         }
     }
 
@@ -83,7 +85,7 @@ export async function getBooksFromServer({
 
     if (error) {
         console.error('Supabase server query error:', error);
-        return { data: [], total: 0, total_pages: 0, page, limit };
+        throw new Error(`Supabase server query failed: ${error.message}`);
     }
 
     return {

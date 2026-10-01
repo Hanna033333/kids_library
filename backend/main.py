@@ -87,7 +87,7 @@ async def validation_exception_handler(request, exc):
     print(f"⚠️ Request Validation Error: {request.method} {request.url.path} -> {error_summaries}")
     return JSONResponse(
         status_code=422,
-        content={"detail": exc.errors()},
+        content={"detail": error_summaries},
     )
 
 # 라우터 등록

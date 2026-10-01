@@ -71,12 +71,12 @@ export default async function HomePage() {
 
   // 서버 사이드 병렬 데이터 페칭 (홈 화면에서는 도서관 소장 정보 조인을 생략하여 TTFB 단축)
   const [researchBooks, ageBooks, caldecottBooks, summerBooks, textbookBooks, ...dynamicBooks] = await Promise.all([
-    getResearchCouncilBooks(7, supabase, false),
-    getBooksByAge(defaultAge, 7, supabase, false),
-    getCaldecottBooks(supabase, false),
-    isSummerCurationActive() ? getSummerBooks(7, supabase, false) : Promise.resolve([]),
-    getTextbookBooks(undefined, 6, supabase, false),
-    ...selectedTags.map(t => getBooksByTag(t.tag, 7, supabase, false))
+    getResearchCouncilBooks(7, supabase, false, true),
+    getBooksByAge(defaultAge, 7, supabase, false, true),
+    getCaldecottBooks(supabase, false, true),
+    isSummerCurationActive() ? getSummerBooks(7, supabase, false, true) : Promise.resolve([]),
+    getTextbookBooks(undefined, 6, supabase, false, true),
+    ...selectedTags.map(t => getBooksByTag(t.tag, 7, supabase, false, true))
   ])
 
   // HomePageClient에 전달할 동적 큐레이션 데이터 구성

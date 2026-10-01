@@ -2,6 +2,19 @@
 from core.database import supabase
 from typing import Optional
 
+AGE_VALUES = {
+    "0-3": ["0-3", "0~3세", "0-2세", "3세부터"],
+    "4-7": ["4-7", "4~7세", "5세부터", "7세부터"],
+    "8-12": ["8-12", "8~12세", "8세부터", "9세부터"],
+    "13+": ["13+"],
+    "teen": ["13+"],
+}
+
+SPECIAL_CURATION_PARAMS = {
+    "caldecott", "winter-vacation", "겨울방학", "summer-vacation", "여름방학",
+    "여름방학2026", "research-council", "어린이도서연구회", "textbook", "교과서수록",
+}
+
 def search_books_service(
     q: Optional[str] = None,
     age: Optional[str] = None,
@@ -78,20 +91,23 @@ def search_books_service(
                 f'curation_tag.ilike."%{safe_token}%"'
             )
     
-    # 연령 필터링 — DB 표준화 후 단순 .eq() 쿼리
+    # 프론트 AGE_MAP과 동일한 레거시 값까지 한 곳에서 처리합니다.
     if age:
         age = age.strip()
-        # 'teen'은 하위 호환 처리
-        if age == 'teen':
-            age = '13+'
         if age:
-            query = query.eq("age", age)
+            age_values = AGE_VALUES.get(age, [age])
+            query = query.in_("age", age_values)
     
     # 정렬
+    if sort == "pangyo_callno" and (age or curation in SPECIAL_CURATION_PARAMS):
+        sort = "title"
+
     if sort == "title":
         query = query.order("title")
     elif sort == "confidence_score_desc":
         query = query.order("confidence_score", desc=True)
+    elif sort in {"popular", "national_loan_count", "national_loan_count_desc"}:
+        query = query.order("national_loan_count", desc=True, nullsfirst=False)
     else:  # 기본값: pangyo_callno
         query = query.order("pangyo_callno")
 

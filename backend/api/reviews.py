@@ -295,26 +295,17 @@ def create_book_review(book_id: int, review: ReviewCreate, request: Request, cur
         )
 
     try:
-        # 우선 신규 컬럼 명으로 insert 시도, 기존 스키마일 경우 comment 컬럼으로 인서트
-        try:
-            data = {
-                "book_id": book_id,
-                "user_id": str(current_user.id),
-                "nickname": review.nickname.strip(),
-                "child_age": review.child_age.strip() if review.child_age else None,
-                "rating": review.rating,
-                "selected_badges": review.selected_badges,
-                "content": review.content.strip() if review.content else None,
-                "is_ai_generated": False,
-            }
-            result = supabase.table("book_reviews").insert(data).execute()
-        except Exception:
-            data_legacy = {
-                "book_id": book_id,
-                "rating": int(review.rating),
-                "comment": review.content.strip() if review.content else f"{review.nickname}님의 평점",
-            }
-            result = supabase.table("book_reviews").insert(data_legacy).execute()
+        data = {
+            "book_id": book_id,
+            "user_id": str(current_user.id),
+            "nickname": review.nickname.strip(),
+            "child_age": review.child_age.strip() if review.child_age else None,
+            "rating": review.rating,
+            "selected_badges": review.selected_badges,
+            "content": review.content.strip() if review.content else None,
+            "is_ai_generated": False,
+        }
+        result = supabase.table("book_reviews").insert(data).execute()
 
         if not result.data:
             raise RuntimeError("Insert returned no data")
