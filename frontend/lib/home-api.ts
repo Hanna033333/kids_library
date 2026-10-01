@@ -29,6 +29,16 @@ function visibleBooks(supabase: SupabaseClient, selectFields: string) {
         .not('image_url', 'is', null)
         .neq('image_url', '')
         .not('image_url', 'ilike', '%noimg%')
+        .not('pangyo_callno', 'is', null)
+        .neq('pangyo_callno', '없음')
+}
+
+function handleQueryError(context: string, error: unknown, failOnError: boolean): never | void {
+    console.error(`${context}:`, error)
+    if (failOnError) {
+        const message = error instanceof Error ? error.message : JSON.stringify(error)
+        throw new Error(`${context}: ${message}`)
+    }
 }
 
 /** 연도 시작일 기준 경과 주차 (일주일마다 추천 목록이 바뀌는 기준값) */
@@ -66,7 +76,7 @@ function normalizeAgeGroup(ageGroup: string): string {
 /**
  * 연령별 책 추천 가져오기 (일주일마다 랜덤 변경)
  */
-export async function getBooksByAge(ageGroup: string, limit: number = 5, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
+export async function getBooksByAge(ageGroup: string, limit: number = 5, client?: SupabaseClient, includeLibraryInfo: boolean = false, failOnError: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
 
     const normalizedAge = normalizeAgeGroup(ageGroup)
@@ -84,14 +94,17 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
     let { data, error } = await byAge().range(offset, offset + limit - 1)
 
     if (error) {
-        console.error('Error fetching books by age:', error)
+        handleQueryError('Error fetching books by age', error, failOnError)
         return []
     }
 
     // offset이 실제 데이터 범위를 초과한 경우 처음부터 재시도
     if (!data || data.length === 0) {
         const fallback = await byAge().range(0, limit - 1)
-        if (fallback.error) return []
+        if (fallback.error) {
+            handleQueryError('Error fetching fallback books by age', fallback.error, failOnError)
+            return []
+        }
         data = fallback.data
     }
 
@@ -103,7 +116,7 @@ export async function getBooksByAge(ageGroup: string, limit: number = 5, client?
 /**
  * 어린이 도서 연구회 추천 책 가져오기 (일주일마다 랜덤 변경)
  */
-export async function getResearchCouncilBooks(limit: number = 5, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
+export async function getResearchCouncilBooks(limit: number = 5, client?: SupabaseClient, includeLibraryInfo: boolean = false, failOnError: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
 
     // COUNT 쿼리 제거: pool을 한 번에 가져와 클라이언트에서 주차 기반 슬라이싱
@@ -116,7 +129,7 @@ export async function getResearchCouncilBooks(limit: number = 5, client?: Supaba
         .limit(POOL_SIZE)
 
     if (error) {
-        console.error('Error fetching research council books:', error)
+        handleQueryError('Error fetching research council books', error, failOnError)
         return []
     }
 
@@ -144,7 +157,8 @@ async function getSeasonalBooks(
     label: string,
     limit: number,
     client?: SupabaseClient,
-    includeLibraryInfo: boolean = false
+    includeLibraryInfo: boolean = false,
+    failOnError: boolean = false
 ): Promise<Book[]> {
     const supabase = client || createClient()
 
@@ -154,7 +168,7 @@ async function getSeasonalBooks(
         .limit(100) // 충분한 수 가져오기
 
     if (error) {
-        console.error(`Error fetching ${label} books:`, error)
+        handleQueryError(`Error fetching ${label} books`, error, failOnError)
         return []
     }
 
@@ -173,15 +187,15 @@ async function getSeasonalBooks(
 /**
  * 겨울방학 추천 도서 가져오기 (매일 랜덤 7권 선정)
  */
-export async function getWinterBooks(limit: number = 7, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
-    return getSeasonalBooks('겨울방학2026', 'winter', limit, client, includeLibraryInfo)
+export async function getWinterBooks(limit: number = 7, client?: SupabaseClient, includeLibraryInfo: boolean = false, failOnError: boolean = false): Promise<Book[]> {
+    return getSeasonalBooks('겨울방학2026', 'winter', limit, client, includeLibraryInfo, failOnError)
 }
 
 /**
  * 여름방학 추천 도서 가져오기 (매일 랜덤 7권 선정)
  */
-export async function getSummerBooks(limit: number = 7, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
-    return getSeasonalBooks('여름방학2026', 'summer', limit, client, includeLibraryInfo)
+export async function getSummerBooks(limit: number = 7, client?: SupabaseClient, includeLibraryInfo: boolean = false, failOnError: boolean = false): Promise<Book[]> {
+    return getSeasonalBooks('여름방학2026', 'summer', limit, client, includeLibraryInfo, failOnError)
 }
 
 /**
@@ -191,7 +205,8 @@ export async function getTextbookBooks(
     gradeTag?: string,
     limit: number = 6,
     client?: SupabaseClient,
-    includeLibraryInfo: boolean = false
+    includeLibraryInfo: boolean = false,
+    failOnError: boolean = false
 ): Promise<Book[]> {
     const supabase = client || createClient()
     let query = visibleBooks(supabase, bookSelect(includeLibraryInfo))
@@ -207,7 +222,11 @@ export async function getTextbookBooks(
         .order('id', { ascending: true })
         .limit(fetchLimit)
 
-    if (error || !data || data.length === 0) {
+    if (error) {
+        handleQueryError('Error fetching textbook books', error, failOnError)
+        return []
+    }
+    if (!data || data.length === 0) {
         return []
     }
 
@@ -220,7 +239,7 @@ export async function getTextbookBooks(
 /**
  * 특정 큐레이션 태그가 포함된 책 가져오기 (매칭 방식: 콤마 구분자 포함 여부)
  */
-export async function getBooksByTag(tagName: string, limit: number = 7, client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
+export async function getBooksByTag(tagName: string, limit: number = 7, client?: SupabaseClient, includeLibraryInfo: boolean = false, failOnError: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
 
     // 개발 규칙 29번: 매칭 정확도를 위해 항상 첫 번째 태그와만 매칭한다.
@@ -235,7 +254,7 @@ export async function getBooksByTag(tagName: string, limit: number = 7, client?:
         .limit(limit)
 
     if (error) {
-        console.error(`Error fetching books by tag ${tagName}:`, error)
+        handleQueryError(`Error fetching books by tag ${tagName}`, error, failOnError)
         return []
     }
 

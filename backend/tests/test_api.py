@@ -34,6 +34,18 @@ def test_search_books_escape():
     data = response.json()
     assert "data" in data
 
+def test_validation_error_does_not_echo_input():
+    """422 응답이 사용자가 보낸 원본 값을 다시 노출하지 않는지 검증"""
+    secret_input = "private-book-id"
+    response = client.post("/api/books/loan-status", json={"book_ids": [secret_input]})
+
+    assert response.status_code == 422
+    response_text = response.text
+    assert secret_input not in response_text
+    details = response.json()["detail"]
+    assert all(set(error) == {"field", "type"} for error in details)
+    assert any(error["type"] == "int_parsing" for error in details)
+
 # ============================================
 # 2. QA 테스터 백도어 토큰 인증 테스트
 # ============================================
@@ -51,7 +63,7 @@ def test_qa_token_blocked_in_production():
     )
     # RLS/인증에 의해 거부되어 401 Unauthorized가 리턴되어야 함 (200 OK 통과 시 백도어 노출 오류)
     assert response.status_code == 401
-    assert "사용자 인증에 실패했습니다." in response.json()["detail"]
+    assert "유효하지 않은 토큰입니다." in response.json()["detail"]
 
 def test_qa_token_allowed_in_development():
     """ENV == development 일 때는 TEST_QA_TOKEN 백도어가 열리는지 검증"""
@@ -121,8 +133,12 @@ def test_nickname_no_space_validation_in_profile():
 
 def test_review_nickname_no_space_validation():
     """리뷰 작성 시 닉네임에 띄어쓰기가 포함되면 400 Bad Request 에러를 반환하는지 테스트"""
+    os.environ["ENV"] = "development"
+    os.environ["ALLOW_QA_MOCK"] = "true"
+
     response = client.post(
         "/api/books/1/reviews",
+        headers={"Authorization": "Bearer TEST_QA_TOKEN"},
         json={
             "nickname": "서아 맘",
             "rating": 5.0,
@@ -131,4 +147,3 @@ def test_review_nickname_no_space_validation():
     )
     assert response.status_code == 400
     assert "닉네임에 띄어쓰기를 포함할 수 없습니다." in response.json()["detail"]
-

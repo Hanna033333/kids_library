@@ -6,7 +6,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
  * 칼데콧 수상작 가져오기 (2000-2026)
  * curation_tag = 'caldecott'인 도서 조회
  */
-export async function getCaldecottBooks(client?: SupabaseClient, includeLibraryInfo: boolean = false): Promise<Book[]> {
+export async function getCaldecottBooks(client?: SupabaseClient, includeLibraryInfo: boolean = false, failOnError: boolean = false): Promise<Book[]> {
     const supabase = client || createClient()
 
     const selectFields = includeLibraryInfo
@@ -21,10 +21,15 @@ export async function getCaldecottBooks(client?: SupabaseClient, includeLibraryI
         .not('image_url', 'is', null)
         .neq('image_url', '')
         .not('image_url', 'ilike', '%noimg%')
+        .not('pangyo_callno', 'is', null)
+        .neq('pangyo_callno', '없음')
         .order('title', { ascending: true })
 
     if (error) {
         console.error('Error fetching Caldecott books:', error)
+        if (failOnError) {
+            throw new Error(`Error fetching Caldecott books: ${error.message}`)
+        }
         return []
     }
 

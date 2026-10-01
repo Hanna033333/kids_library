@@ -138,10 +138,25 @@ function CurationSection({ title, books, ...props }) {
   - **연령별 추천**: `/books?age=...&sort=popular` 반환
 - **React Query 정렬 캐시 동기화**: `BookList.tsx`의 `queryKey`에 `sortFilter`를 필수로 포함하여, 인기순/신뢰도순 등 정렬 파라미터 변경 시 캐시 오염 없이 즉시 최신 데이터가 조회되도록 유지합니다.
 
+### 🌸 사계절(봄/여름/가을/겨울) 큐레이션 운영 규칙 (Seasonal Curation Policy)
+- **4대 독립 테마 분리 원칙**:
+  - `🌱 따스한 봄날 그림책` (tag: `봄`, slug: `spring`)
+  - `🌊 싱그러운 여름 그림책` (tag: `여름`, slug: `summer`)
+  - `🍁 바스락 가을 감성 그림책` (tag: `가을`, slug: `autumn`)
+  - `❄️ 포근한 겨울 감성 그림책` (tag: `겨울`, slug: `winter`)
+- **노이즈 혼입 방지 및 7-Book Rule**:
+  - 첫 번째 태그 정밀 매칭 원칙에 따라, 가을 테마에는 눈/겨울/여름 관련 도서(예: `눈 오는 날`, `수박` 등)가 1st 태그로 들어가지 않도록 데이터 정합성을 엄격히 관리합니다.
+  - 각 계절 테마는 반드시 고화질 표지 이미지와 판교도서관 청구기호가 존재하는 도서 7권 이상(권장 10권)을 DB에 확보해야 합니다.
+- **Taxonomy 및 스케줄 4중 동기화**:
+  - 계절 테마 변경 시 `frontend/lib/constants/taxonomy.ts`, `backend/core/taxonomy.py`, `frontend/shared/weekly_schedule.json`, `backend/core/weekly_schedule.json` 4개 파일을 누락 없이 100% 동기화합니다.
+- **DB 마이그레이션 권한**:
+  - 계절 태그 수정 및 일괄 정제 스크립트 작성 시 Supabase RLS 정책에 의해 일반 anon key는 업데이트가 무시되므로 반드시 `SUPABASE_SERVICE_KEY`를 사용합니다.
+
 ## 4. 검증 및 배포 (Verification)
 - **데이터 무결성 확인**: 이미지가 깨지지 않는지, ISBN이 정확한지 SQL 조회 및 UI 확인
 - **청구기호 유효성 및 헬스체크**: `python3 backend/scripts/check_curation_health.py` 실행하여 전수 통과 확인
 - **가독성 점검**: [디자인 팀장 페르소나](file:///Users/1004823/Desktop/kids_library/.agent/rules/design.md) 기준에 맞춰, 타이틀과 책 정보가 서가 환경(모바일)에서도 잘 보이는지 확인
+
 
 
 

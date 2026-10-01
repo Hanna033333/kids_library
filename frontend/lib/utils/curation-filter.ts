@@ -2,7 +2,7 @@
  * 큐레이션 필터 유틸리티 (SSOT - Single Source of Truth)
  *
  * URL 파라미터 → DB 태그 매핑, 특수 태그 판별, 기본 정렬 결정 로직을
- * supabase-client.ts / books-api-server.ts 양쪽에서 공유합니다.
+ * 목록 조회 경로에서 URL 파라미터와 DB 필터 규칙을 일관되게 적용합니다.
  */
 
 /** URL 파라미터 값 → DB curation_tag 값 매핑 */
@@ -207,4 +207,3 @@ export function getPrimaryCurationTag(raw: string | null | undefined): string {
   if (specialTag) return specialTag
   return tags[0] ?? ''
 }
-
