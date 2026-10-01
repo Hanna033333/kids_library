@@ -105,24 +105,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         const fullTitle = `${title} | 책자리`
 
         return {
+            metadataBase: new URL('https://checkjari.com'),
             title,
             description,
             keywords,
+            authors: [{ name: '책자리' }],
             alternates: {
                 canonical: `/book/${id}`
             },
             openGraph: {
                 title: fullTitle,
                 description,
-                images: book.image_url ? [getHighResImageUrl(book.image_url)] : [],
+                siteName: '책자리',
+                locale: 'ko_KR',
+                url: `https://checkjari.com/book/${id}`,
+                images: book.image_url ? [getHighResImageUrl(book.image_url)] : ['/logo.png'],
                 type: 'article',
             },
             twitter: {
                 card: 'summary_large_image',
                 title: fullTitle,
                 description,
-                images: book.image_url ? [getHighResImageUrl(book.image_url)] : [],
+                images: book.image_url ? [getHighResImageUrl(book.image_url)] : ['/logo.png'],
             },
+            robots: {
+                index: true,
+                follow: true,
+                googleBot: {
+                    index: true,
+                    follow: true
+                }
+            }
         }
     } catch (error) {
         console.error('Metadata generation failed:', error);

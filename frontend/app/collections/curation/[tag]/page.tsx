@@ -1,7 +1,7 @@
 import BooksPageClient from "@/components/BooksPageClient";
 import { Metadata } from 'next'
 import { VALID_TAXONOMY, VALID_AI_TAGS } from '@/lib/constants/taxonomy'
-import { createClient } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase-server'
 import { Suspense } from 'react'
 import { PageLoader } from '@/components/ui/PageLoader'
 import { notFound } from 'next/navigation'
@@ -68,9 +68,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const targetSlug = matchedTaxonomy ? matchedTaxonomy.slug : curation;
 
     return {
+        metadataBase: new URL('https://checkjari.com'),
         title,
         description,
         keywords,
+        authors: [{ name: '책자리' }],
         alternates: {
             canonical: `/collections/curation/${encodeURIComponent(targetSlug)}`
         },
@@ -78,12 +80,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             title,
             description,
             type: 'website',
-            url: `https://www.checkjari.com/collections/curation/${encodeURIComponent(targetSlug)}`
+            siteName: '책자리',
+            locale: 'ko_KR',
+            url: `https://checkjari.com/collections/curation/${encodeURIComponent(targetSlug)}`,
+            images: [
+                {
+                    url: '/logo.png',
+                    width: 1200,
+                    height: 630,
+                    alt: title
+                }
+            ]
         },
         twitter: {
             card: 'summary_large_image',
             title,
-            description
+            description,
+            images: ['/logo.png']
+        },
+        robots: {
+            index: true,
+            follow: true,
+            googleBot: {
+                index: true,
+                follow: true
+            }
         }
     }
 }
@@ -95,6 +116,7 @@ export default async function CurationPage({ params }: Props) {
 
     const matchedTaxonomy = VALID_TAXONOMY.find(item => item.slug === curation || item.tag === curation);
     const curationTag = matchedTaxonomy ? matchedTaxonomy.tag : curation;
+    const targetSlug = matchedTaxonomy ? matchedTaxonomy.slug : curation;
 
     let jsonLd = null;
 
@@ -134,6 +156,10 @@ export default async function CurationPage({ params }: Props) {
             jsonLd = {
                 '@context': 'https://schema.org',
                 '@type': 'ItemList',
+                name: `${curationTag} 추천 도서 큐레이션 - 책자리`,
+                description: `${curationTag} 맞춤 도서 및 그림책 추천 목록`,
+                url: `https://checkjari.com/collections/curation/${encodeURIComponent(targetSlug)}`,
+                numberOfItems: books.length,
                 itemListElement: books.map((book, index) => ({
                     '@type': 'ListItem',
                     position: index + 1,

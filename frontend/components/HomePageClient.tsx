@@ -21,6 +21,8 @@ import { getOptimizedImageUrl } from '@/lib/utils/image'
 import { PageLoader } from '@/components/ui/PageLoader'
 import CurationSection from '@/components/home/CurationSection'
 import TextbookCurationShowcase from '@/components/home/TextbookCurationShowcase'
+import ThemeCurationShowcase from '@/components/home/ThemeCurationShowcase'
+import SpotlightBanner from '@/components/home/SpotlightBanner'
 import BookCard from '@/components/home/BookCard'
 import { isSummerCurationActive } from '@/lib/utils/curation-filter'
 import { getCurationMoreLink } from '@/lib/utils/curation-link'
@@ -167,17 +169,17 @@ export default function HomePageClient({
 
   return (
     <main className="min-h-screen bg-muted-bg">
-      <header className="w-full bg-white border-b border-gray-100 flex items-center justify-center px-6 py-4 sticky top-0 z-50 relative">
+      <header className="w-full h-14 sm:h-16 bg-white flex items-center justify-center px-6 sticky top-0 z-50 relative">
         {/* 로고 중앙 정렬 */}
-        <h1>
+        <h1 className="flex items-center justify-center">
           <button
             onClick={() => router.push('/')}
-            className="relative inline-flex items-center cursor-pointer"
+            className="relative inline-flex items-center justify-center cursor-pointer"
           >
             <img
               src="/logo.png"
               alt="책자리"
-              className="h-9 w-auto"
+              className="h-8 sm:h-9 w-auto object-contain"
             />
           </button>
         </h1>
@@ -185,7 +187,7 @@ export default function HomePageClient({
         {/* 도서관 선택 버튼 숨김 처리 */}
         {/* <LibrarySelector /> */}
 
-        <div className="absolute right-6 flex items-center gap-3 md:gap-4">
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3 md:gap-4">
           <Link
             href="/books"
             className="p-1 flex items-center justify-center group"
@@ -214,17 +216,15 @@ export default function HomePageClient({
       </header>
 
 
-      {/* 메인 배너 */}
-      {/* <MainBanner /> */}
-
-      {/* 검색 바 제거 (큐레이션 집중을 위함) */}
+      {/* 에디터 스포트라이트 롤링 캐러셀 배너 */}
+      <SpotlightBanner />
 
 
       {/* 2026 여름방학 추천도서 섹션 (8/20까지만 노출) */}
       {isSummerCurationActive() && summerBooks.length > 0 && (
         <CurationSection
           subtitle="교육청이 엄선한 학년별 필독서"
-          title="☀️ 여름방학 추천도서"
+          title="여름방학 추천도서"
           books={summerBooks}
           href={getCurationMoreLink({ curation: 'summer-vacation' })}
           onViewMore={() => sendGAEvent('click_view_more', { section: 'summer_vacation' })}
@@ -248,6 +248,9 @@ export default function HomePageClient({
           priorityImages={index === 0 && !isSummerCurationActive()}
         />
       ))}
+
+      {/* 50+ 전문 테마 큐레이션 모음 진입 섹션 */}
+      <ThemeCurationShowcase bgColor="bg-white" />
 
       {/* 📖 2022 개정 교과서 수록도서 쇼케이스 (학년별 가로 스크롤 탭) */}
       <TextbookCurationShowcase initialBooks={initialTextbookBooks} bgColor="bg-muted-bg" />
@@ -286,26 +289,30 @@ export default function HomePageClient({
 
           {/* 연령 탭 */}
           <div className="overflow-x-auto scrollbar-hide -mx-4 mb-6">
-            <div className="flex gap-2 pl-6 w-max min-w-full">
+            <div className="flex items-center gap-2 pb-1 pl-6 w-max min-w-full">
               {[
                 { key: '0-3', label: '0~3세' },
                 { key: '4-7', label: '4~7세' },
                 { key: '8-12', label: '8~12세' }
-              ].map(age => (
-                <button
-                  key={age.key}
-                  onClick={() => {
-                    setSelectedAge(age.key);
-                    sendGAEvent('click_home_age_tab', { age: age.key });
-                  }}
-                  className={`flex-shrink-0 whitespace-nowrap px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedAge === age.key
-                    ? 'bg-brand-primary text-white'
-                    : 'bg-surface-sub text-gray-700 active:bg-gray-200 border border-gray-200'
+              ].map(age => {
+                const isActive = selectedAge === age.key;
+                return (
+                  <button
+                    key={age.key}
+                    onClick={() => {
+                      setSelectedAge(age.key);
+                      sendGAEvent('click_home_age_tab', { age: age.key });
+                    }}
+                    className={`shrink-0 px-4 py-2 rounded-full text-[14px] transition-all cursor-pointer outline-none focus:outline-none active:scale-95 ${
+                      isActive
+                        ? 'bg-brand-primary text-white font-bold shadow-xs active:bg-brand-primary-dark'
+                        : 'bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100'
                     }`}
-                >
-                  {age.label}
-                </button>
-              ))}
+                  >
+                    {age.label}
+                  </button>
+                );
+              })}
               {/* 탭 바 우측 끝 스크롤 마진용 스페이서 (gap-2: 8px + w-2: 8px = 16px) */}
               <div className="shrink-0 w-2" aria-hidden="true" />
             </div>
@@ -455,4 +462,3 @@ export default function HomePageClient({
     </main >
   )
 }
-

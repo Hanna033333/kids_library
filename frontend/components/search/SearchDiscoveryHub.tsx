@@ -295,10 +295,10 @@ export default function SearchDiscoveryHub({
               <button
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
-                className={`px-3.5 py-1.5 rounded-full text-xs sm:text-[13px] font-bold transition-all shrink-0 cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-full text-xs sm:text-[13px] font-bold transition-all shrink-0 cursor-pointer outline-none focus:outline-none active:scale-95 ${
                   isSelected
-                    ? "bg-gray-900 text-white shadow-xs"
-                    : "bg-gray-100 text-gray-600 active:bg-gray-200"
+                    ? "bg-brand-primary text-white shadow-xs active:bg-brand-primary-dark"
+                    : "bg-white text-gray-700 border border-gray-200/80 active:bg-gray-100"
                 }`}
               >
                 {tab.label}

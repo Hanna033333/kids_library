@@ -16,6 +16,7 @@ import PageHeader from '@/components/PageHeader'
 import { PageLoader } from '@/components/ui/PageLoader'
 import { Star } from 'lucide-react'
 import Image from 'next/image'
+import LoginPromptModal from '@/components/ui/LoginPromptModal'
 
 type Tab = 'saved' | 'rated'
 
@@ -25,6 +26,7 @@ export default function MyLibraryPage() {
     const router = useRouter()
 
     const [activeTab, setActiveTab] = useState<Tab>('saved')
+    const [showLoginModal, setShowLoginModal] = useState(false)
 
     // 저장한 책
     const [savedBooks, setSavedBooks] = useState<Book[]>([])
@@ -35,12 +37,15 @@ export default function MyLibraryPage() {
     const [isRatedLoading, setIsRatedLoading] = useState(false)
     const [ratedLoaded, setRatedLoaded] = useState(false)
 
-    // 비로그인 → 홈 리다이렉트
+    // 비로그인 시 로그인 팝업 오픈
     useEffect(() => {
         if (!authLoading && !user) {
-            router.push('/')
+            setShowLoginModal(true)
+            setIsSavedLoading(false)
+        } else if (user) {
+            setShowLoginModal(false)
         }
-    }, [user, authLoading, router])
+    }, [user, authLoading])
 
     // 저장한 책 로드
     useEffect(() => {
@@ -94,44 +99,45 @@ export default function MyLibraryPage() {
         if (activeTab === 'rated') fetchRatedBooks()
     }, [activeTab, fetchRatedBooks])
 
-    const isInitialLoading = authLoading || (isSavedLoading && savedBooks.length === 0 && activeTab === 'saved')
+    const isInitialLoading = authLoading || (!!user && isSavedLoading && savedBooks.length === 0 && activeTab === 'saved')
     if (isInitialLoading) return <PageLoader />
 
     return (
-        <main className="min-h-screen bg-[#F7F7F7]">
-            <PageHeader title="내 책장" showHome={true} rightSlot={<ProfileDropdown />} />
+        <main className="min-h-screen bg-[#F7F7F7] relative">
+            <div className={showLoginModal ? 'filter blur-[3px] pointer-events-none select-none transition-all duration-300' : ''}>
+                <PageHeader title="내 책장" showHome={true} rightSlot={<ProfileDropdown />} />
 
-            {/* 탭 */}
-            <div className="bg-white border-b border-gray-200">
-                <div className="max-w-[480px] mx-auto flex">
-                    <button
-                        onClick={() => setActiveTab('saved')}
-                        className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                            activeTab === 'saved'
-                                ? 'text-gray-900 border-b-2 border-brand-primary'
-                                : 'text-gray-400'
-                        }`}
-                    >
-                        저장한 책
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('rated')}
-                        className={`flex-1 py-3 text-sm font-semibold transition-colors ${
-                            activeTab === 'rated'
-                                ? 'text-gray-900 border-b-2 border-brand-primary'
-                                : 'text-gray-400'
-                        }`}
-                    >
-                        별점 남긴 책
-                    </button>
+                {/* 탭 */}
+                <div className="bg-white border-b border-gray-200">
+                    <div className="max-w-[480px] mx-auto flex">
+                        <button
+                            onClick={() => setActiveTab('saved')}
+                            className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+                                activeTab === 'saved'
+                                    ? 'text-gray-900 border-b-2 border-brand-primary'
+                                    : 'text-gray-400'
+                            }`}
+                        >
+                            저장한 책
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('rated')}
+                            className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+                                activeTab === 'rated'
+                                    ? 'text-gray-900 border-b-2 border-brand-primary'
+                                    : 'text-gray-400'
+                            }`}
+                        >
+                            별점 남긴 책
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            {/* 저장한 책 탭 */}
-            {activeTab === 'saved' && (
-                <div className="max-w-7xl mx-auto px-6 py-6">
-                    <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
-                        <p className="text-gray-500 font-medium">총 {savedBooks.length}권</p>
+                {/* 저장한 책 탭 */}
+                {activeTab === 'saved' && (
+                    <div className="max-w-7xl mx-auto px-6 py-6">
+                        <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
+                            <p className="text-gray-500 font-medium">총 {savedBooks.length}권</p>
                         {selectedLibrary ? (
                             <LibrarySelector
                                 customTrigger={(open) => (
@@ -213,6 +219,15 @@ export default function MyLibraryPage() {
                     )}
                 </div>
             )}
+            </div>
+
+            {/* 비로그인 유저 대상 로그인 팝업 모달 */}
+            <LoginPromptModal
+                isOpen={showLoginModal}
+                onClose={() => router.push('/')}
+                title="내 도서관 대출 상태를 한눈에!"
+                description="3초 간편 로그인으로 자주 가는 도서관을 등록하고 담아둔 책의 대출 가능 여부와 청구기호를 확인하세요."
+            />
         </main>
     )
 }
