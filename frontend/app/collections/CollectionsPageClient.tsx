@@ -132,7 +132,7 @@ export default function CollectionsPageClient() {
                   CURATION_DOMINANT_COLORS[item.tag] ||
                   CURATION_DOMINANT_COLORS[item.slug] ||
                   '#1E293B';
-                const hookText = item.subtitle || cleanTitle(item.title);
+                const displayTitle = cleanTitle(item.marketingTitle || item.title);
 
                 return (
                   <Link
@@ -141,7 +141,7 @@ export default function CollectionsPageClient() {
                     onClick={() => handleCardClick(item)}
                     className="group flex flex-col transition-all duration-300 active:scale-[0.98]"
                   >
-                    {/* 🎨 매거진 포스터 카드 (책 표지 확대 + 표지 도미넌트 그라데이션 + 훅 멘트 타이포) */}
+                    {/* 🎨 매거진 포스터 카드 (책 표지 확대 + 표지 도미넌트 그라데이션 + 15자 마케팅 훅 타이포) */}
                     <div
                       className="relative w-full aspect-[3.2/4] sm:aspect-[3.6/4.6] rounded-xl sm:rounded-2xl overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300"
                       style={{ backgroundColor: dominantColor }}
@@ -164,17 +164,17 @@ export default function CollectionsPageClient() {
                         </div>
                       )}
 
-                      {/* 2. 상단 책 표지 도미넌트 그라데이션 오버레이 (카드 중간 58%까지만 자연스럽게 페이드아웃) */}
+                      {/* 2. 상단 책 표지 도미넌트 그라데이션 오버레이 (텍스트 가독성 확보) */}
                       <div
                         className="absolute inset-x-0 top-0 h-[58%] sm:h-[60%] pointer-events-none z-1"
                         style={{
-                          background: `linear-gradient(to bottom, ${dominantColor} 0%, ${dominantColor} 46%, transparent 100%)`,
+                          background: `linear-gradient(to bottom, ${dominantColor} 0%, ${dominantColor} 48%, transparent 100%)`,
                         }}
                       />
 
                       {/* 3. 포스터 내부 컨텐츠 */}
                       <div className="relative z-10 h-full p-3 sm:p-4 flex flex-col justify-between select-none">
-                        {/* 상단 헤더 & 훅 멘트 */}
+                        {/* 상단 헤더 & 마케팅 훅 타이틀 */}
                         <div>
                           {/* 상단 태그 */}
                           <div className="flex items-center mb-2 sm:mb-2.5">
@@ -183,9 +183,9 @@ export default function CollectionsPageClient() {
                             </span>
                           </div>
 
-                          {/* 훅 멘트 헤드라인 (플랫하고 선명한 매거진 타이포그래피) */}
-                          <h3 className="text-[17px] sm:text-[22px] md:text-[24px] font-black leading-[1.25] sm:leading-[1.22] text-white tracking-tight break-keep line-clamp-3">
-                            {hookText}
+                          {/* 15자 이내 마케팅 훅 타이틀 (말줄임표 없이 완결된 문구로 시원하게 노출) */}
+                          <h3 className="text-[17.5px] sm:text-[21px] md:text-[23px] font-bold leading-[1.28] text-white tracking-tight break-keep">
+                            {displayTitle}
                           </h3>
                         </div>
                       </div>

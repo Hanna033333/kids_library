@@ -19,10 +19,103 @@ export interface UnifiedCurationItem {
   id: number | string;
   subtitle: string;
   title: string;
+  marketingTitle?: string;
   tag: string;
   slug: string;
   category: 'emotion' | 'social' | 'nature_science' | 'art_imagination' | 'special';
 }
+
+/**
+ * 15자 이내 정갈한 마케팅 훅 타이틀 (말줄임 없이 임팩트 전달)
+ */
+export const MARKETING_HOOKS: Record<string, string> = {
+  // 특수 기획
+  '칼데콧': '세계가 인정한 칼데콧 수상작',
+  'caldecott': '세계가 인정한 칼데콧 수상작',
+  '어린이도서연구회': '독서 전문가 100인의 엄선작',
+  'research-council': '독서 전문가 100인의 엄선작',
+  '여름방학2026': '문해력 키우는 방학 필독서',
+  'summer-vacation': '문해력 키우는 방학 필독서',
+  '교과서수록': '어휘력 쑥쑥 초등 교과서 수록',
+  'textbook': '어휘력 쑥쑥 초등 교과서 수록',
+
+  // 마음·정서
+  '잠자리': '눕자마자 스르륵 꿀잠 그림책',
+  '자존감': '기죽지 않는 단단한 자존감',
+  '배려': '욕심 대신 따뜻한 양보와 배려',
+  '생명존중': '작고 소중한 생명과 동물 친구',
+  '가족사랑': '세상 가장 따뜻한 가족 사랑',
+  '상실': '슬픔과 이별을 다독이는 위로',
+  '용기': '겁 많은 아이의 씩씩한 용기',
+  '우정': '처음 만난 친구와 나누는 우정',
+  '정직': '거짓말 대신 솔직한 정직 마음',
+  '나눔': '나눌수록 커지는 기쁨과 행복',
+  '분노조절': '폭발하는 화를 다스리는 지혜',
+  '질투': '샘내는 첫째를 위한 마음 처방',
+  '두려움': '어두운 밤도 무섭지 않은 용기',
+  '끈기': '포기하지 않는 끈기와 성취감',
+  '위로': '속상한 아이 마음 안아주는 책',
+  '행복': '매일매일 일상 속 감사의 행복',
+  '용서': '먼저 손 내밀고 말하는 미안해',
+
+  // 사회성·생활
+  '적응': '낯가림 걱정 없는 유치원 적응',
+  '사회성': '또래와 사이좋게 어울리는 법',
+  '규칙': '공공장소 예절과 바른 약속',
+  '다문화': '편견 없이 세상을 품는 시선',
+  '진로': '내가 좋아하는 일과 미래 꿈',
+  '경제': '떼쓰지 않는 현명한 소비 습관',
+  '평화': '싸우지 않고 대화로 푸는 평화',
+  '장애': '틀림이 아닌 다름을 품는 마음',
+  '이웃': '반갑게 인사하는 다정한 이웃',
+  '미디어': '스마트폰 내려놓고 책 펼치기',
+  '생활습관': '스스로 씻는 깨끗한 생활 습관',
+  '신체활동': '온몸 움직여 스트레스 날리기',
+
+  // 자연·과학
+  '인체': '머리부터 발끝까지 신비한 몸',
+  '자연관찰': '살아 숨 쉬는 생생한 자연 관찰',
+  '환경보호': '지구를 지키는 꼬마 환경지킴이',
+  '과학원리': '호기심 폭발할 때 만나는 과학',
+  '봄': '꽃피고 새싹 돋는 싱그러운 봄',
+  '곤충': '꿈틀꿈틀 작은 곤충들의 세계',
+  '우주': '은하계와 별빛 가득 우주 여행',
+  '공룡': '거대한 공룡들의 신비한 세계',
+  '바다': '고래와 함께 떠나는 심해 탐험',
+  '날씨': '비와 눈, 신비로운 하늘 날씨',
+  '인공지능': '로봇과 AI가 여는 신기한 미래',
+  '수학': '놀이처럼 재미있어지는 첫 수학',
+  '발명': '아이디어로 세상을 바꾼 발명',
+  '인문지리': '한눈에 펼쳐지는 세계 지도',
+  '동물도감': '동물원에 온 듯 생생한 도감',
+  '여름': '푸른 파도와 시원한 여름 바다',
+  '가을': '낙엽 밟으며 느끼는 따스한 가을',
+  '겨울': '하얀 눈 내리는 날 포근한 겨울',
+
+  // 상상·예술
+  '우리문화': '슬기와 지혜가 깃든 우리 문화',
+  '역사이야기': '타임머신 타고 떠나는 한국사',
+  '전래동화': '할머니 무릎에서 듣던 옛이야기',
+  '예술감성': '감수성과 색채 감각 깨우는 책',
+  '연극': '온몸으로 표현하는 자신감 연극',
+  '세계역사': '방구석에서 떠나는 세계사 여행',
+  '명화': '모네와 고흐 미술관 명화 산책',
+  '건축': '세계의 신기하고 튼튼한 건축물',
+  '명절': '떡국부터 송편까지 정겨운 명절',
+  '한글': '그림책으로 즐겁게 깨치는 한글',
+  '글쓰기': '생각을 표현하는 창의적 글쓰기',
+  '모험': '가슴 뛰는 씩씩한 모험 이야기',
+  '판타지': '문 열면 펼쳐지는 환상 판타지',
+  '유머': '낄낄대며 빠져드는 유쾌한 웃음',
+  '추리': '단서를 찾아 비밀 푸는 추리',
+  '상상력': '엉뚱함이 자라는 무한한 상상력',
+  '하늘': '구름 위를 나는 자유로운 상상',
+  '요리': '편식 잡는 즐거운 요리 놀이',
+  '패션': '내 옷은 내가 고르는 패션 센스',
+  '탈것': '씽씽 달리는 기차와 자동차',
+  '스포츠': '규칙 배우고 땀 흘리는 스포츠',
+  '미래상상': '외계인을 만나는 신나는 모험',
+};
 
 // ALL_TAXONOMY에 없는 외부 정적 특수 큐레이션 (칼데콧, 어린이도서연구회)
 const NON_TAXONOMY_SPECIALS: UnifiedCurationItem[] = [
@@ -30,6 +123,7 @@ const NON_TAXONOMY_SPECIALS: UnifiedCurationItem[] = [
     id: 'special-caldecott',
     subtitle: '전 세계 사서와 평론가가 극찬한 그림책계의 노벨상 수상작',
     title: '칼데콧 수상작',
+    marketingTitle: MARKETING_HOOKS['칼데콧'],
     tag: '칼데콧',
     slug: 'caldecott',
     category: 'special',
@@ -38,6 +132,7 @@ const NON_TAXONOMY_SPECIALS: UnifiedCurationItem[] = [
     id: 'special-research',
     subtitle: '실패 없는 책육아를 위한 독서 전문가 100인의 엄선작',
     title: '어린이도서연구회 추천',
+    marketingTitle: MARKETING_HOOKS['어린이도서연구회'],
     tag: '어린이도서연구회',
     slug: 'research-council',
     category: 'special',
@@ -53,6 +148,7 @@ export const SPECIAL_CURATIONS: UnifiedCurationItem[] = [
     id: `special-${item.slug}`,
     subtitle: item.subtitle,
     title: item.title,
+    marketingTitle: MARKETING_HOOKS[item.tag] || MARKETING_HOOKS[item.slug] || item.title,
     tag: item.tag,
     slug: item.slug,
     category: 'special',
@@ -155,6 +251,7 @@ export const UNIFIED_TAXONOMY: UnifiedCurationItem[] = [
     id: item.id,
     subtitle: item.subtitle,
     title: item.title,
+    marketingTitle: MARKETING_HOOKS[item.tag] || MARKETING_HOOKS[item.slug] || item.title,
     tag: item.tag,
     slug: item.slug,
     category: CATEGORY_MAP[item.tag] || 'art_imagination',
@@ -175,8 +272,8 @@ export const SITUATION_PRESCRIPTIONS: SituationPrescription[] = [
     id: 'all',
     iconName: 'LayoutGrid',
     name: '전체',
-    title: '50여 가지 맞춤 큐레이션 서가',
-    description: '아이를 위한 모든 맞춤 도서 모음이에요.',
+    title: '우리 아이 맞춤 그림책 처방전',
+    description: '잠투정부터 사회성까지, 아이 상황에 딱 맞는 책을 골라드려요.',
     tags: [],
   },
   {
