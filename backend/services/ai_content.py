@@ -18,10 +18,10 @@ from services.text_trimmer import force_trim_description, trim_text_fallback
 from services.card_generator import clean_book_title
 
 
-def remove_hashtags_and_clean(caption: str) -> str:
+def remove_hashtags_and_clean(caption: str, curation_tag: Optional[str] = None) -> str:
     """
-    본문 캡션에서 다중 해시태그를 정제하되, 스레드 추천 피드 및 검색 랭킹을 위한
-    핵심 토픽 태그 최대 2~3개(#잠자리그림책, #그림책추천, #책육아 등)를 깔끔하게 보존합니다.
+    본문 캡션에서 다중 해시태그를 정제하되, 스레드(Threads)의 1게시물 1공식토픽 정책에 맞춰
+    첫 번째 대표 토픽을 항상 '#그림책'으로 고정하고, 뒤이어 세부 테마 태그를 배치합니다.
     """
     # 모든 해시태그 검색
     tags = re.findall(r'#\S+', caption)
@@ -33,19 +33,28 @@ def remove_hashtags_and_clean(caption: str) -> str:
     # 연속 줄바꿈(3개 이상) 정돈
     cleaned = re.sub(r'\n{3,}', '\n\n', cleaned).strip()
     
-    # 핵심 대표 토픽 태그 최대 2~3개를 끝에 단정하게 복원
+    # 핵심 대표 토픽 태그 구성: 첫 번째 태그는 항상 '#그림책' 고정 (스레드 메인 토픽 지정용)
+    valid_tags = ["#그림책"]
     if tags:
-        valid_tags = []
         for t in tags:
             clean_t = re.sub(r'[^\w#가-힣]', '', t.strip())
-            if clean_t and clean_t not in valid_tags:
+            if not clean_t.startswith("#"):
+                clean_t = f"#{clean_t}"
+            if clean_t not in valid_tags and clean_t != "#그림책":
                 valid_tags.append(clean_t)
-        
-        # 최대 3개까지만 취함
-        selected_tags = valid_tags[-3:] if len(valid_tags) > 3 else valid_tags
-        if selected_tags:
-            tag_str = " ".join(selected_tags)
-            cleaned = f"{cleaned}\n\n{tag_str}".strip()
+                
+    if len(valid_tags) == 1 and curation_tag:
+        clean_c = curation_tag.lstrip("#")
+        if clean_c and f"#{clean_c}" not in valid_tags and clean_c != "그림책":
+            valid_tags.append(f"#{clean_c}")
+            
+    if "#책육아" not in valid_tags and len(valid_tags) < 3:
+        valid_tags.append("#책육아")
+
+    # 최대 3개까지만 취함 (#그림책 + 세부태그 1~2개)
+    selected_tags = valid_tags[:3]
+    tag_str = " ".join(selected_tags)
+    cleaned = f"{cleaned}\n\n{tag_str}".strip()
             
     return cleaned
 
@@ -79,13 +88,13 @@ def generate_fallback_content(
     curation_title: str, curation_tag: str, books: List[dict]
 ) -> dict:
     """Gemini API 호출이 불가할 때 로컬 DB의 도서 소개 및 요약 정보를 정제하여 스마트 폴백 텍스트를 구성합니다."""
-    tag_clean = curation_tag.lstrip("#") if curation_tag else "그림책"
+    tag_clean = curation_tag.lstrip("#") if curation_tag else "도서추천"
     caption = (
         f"도서관에서 30권씩 빌려보다가 결국 반납 못 하고 내돈내산한 그림책.\n\n"
         f"수십만 원짜리 전집보다 이 단행본들이 아이 반응 훨씬 터짐...\n"
         f"아이들은 재밌으면 알아서 책 좋아하게 되어있거든!\n\n"
         f"실패 없는 <{curation_title}> 5권, 이번 주말 도서관 갈 때 저장해두고 찾아봐 📌\n\n"
-        f"#{tag_clean} #그림책추천 #책육아"
+        f"#그림책 #{tag_clean} #책육아"
     )
     caption = normalize_caption_intro(caption)
 
@@ -159,7 +168,7 @@ def generate_ai_threads_content(
      2. [2~3줄]: 짧고 명쾌한 사이다 공감 & 현실 육아 에피소드 (예: "아이들은 재밌으면 알아서 책 좋아하게 되어있거든!")
      3. [1줄]: 테마 소개 (<{curation_title}> 5권 묶어둠!)
      4. [1줄]: 도서관 대출/저장 유도 ("이번 주말 도서관 갈 때 저장해두고 찾아봐 📌")
-     5. [빈 줄 후]: 핵심 토픽 태그 2~3개 (`#세부주제 #그림책추천 #책육아`)
+     5. [빈 줄 후]: 핵심 토픽 태그 2~3개 (첫 번째 태그는 대표 토픽 선정을 위해 반드시 `#그림책`, 이어서 `#{curation_tag} #책육아`)
    
    - **어조/문체**: **100% 반말 구어체 필수** (~야, ~해봐, ~했어, ~이거든, ~추천해, ~끝남, ~찾아봐).
    - **절대 금지**: 존댓말(~해요, ~하세요, ~입니다) 사용 금지 / 매번 똑같은 고정 인사말 / 장황한 반성문 에세이 / 본문 내 책 제목 나열 / URL / 구걸성 멘트('스하리' 등)
@@ -173,7 +182,7 @@ def generate_ai_threads_content(
 [반환 형식]
 반드시 다음 JSON 구조로 응답해야 합니다:
 {{
-  "caption": "1~2줄 도파민 훅\\n\\n사이다 공감 2~3줄\\n<{curation_title}> 5권 묶어둠!\\n이번 주말 도서관 갈 때 저장해두고 찾아봐 📌\\n\\n#세부주제 #그림책추천 #책육아",
+  "caption": "1~2줄 도파민 훅\\n\\n사이다 공감 2~3줄\\n<{curation_title}> 5권 묶어둠!\\n이번 주말 도서관 갈 때 저장해두고 찾아봐 📌\\n\\n#그림책 #{curation_tag} #책육아",
   "card_descriptions": [
     "1번 책의 3줄 요약 (60~70자)",
     "2번 책의 3줄 요약 (60~70자)",
@@ -191,7 +200,7 @@ def generate_ai_threads_content(
             raise ValueError("Invalid response structure")
             
         caption = res_data["caption"].strip()
-        caption = remove_hashtags_and_clean(caption)
+        caption = remove_hashtags_and_clean(caption, curation_tag)
         caption = normalize_caption_intro(caption)
         res_data["caption"] = caption
         
@@ -244,6 +253,7 @@ async def apply_feedback_with_gemini(
 [작성 지침 - 초압축 사이다 구어체]
 1. 본문 캡션(caption) 작성 지침:
    - 사용자의 피드백을 반영하되, 반드시 공백 포함 180자에서 250자 내외 초압축 6~8줄 구조(첫 줄 도파민 훅 ➔ 사이다 공감 ➔ 5권 안내 ➔ 도서관 저장 유도 📌 + 끝에 핵심 해시태그 2~3개)를 유지하세요.
+   - 첫 번째 해시태그는 스레드 대표 토픽 배정을 위해 반드시 `#그림책`으로 작성하세요.
    - static 인사말("안녕하세요"), '스하리', '댓글 달아주세요', URL, 본문 내 책 제목 나열은 금지합니다.
 
 2. 카드뉴스 도서 요약(card_descriptions) 작성 지침:
@@ -253,7 +263,7 @@ async def apply_feedback_with_gemini(
 [반환 형식]
 반드시 다음 JSON 구조로 응답해야 합니다:
 {{
-  "caption": "수정 반영된 초압축 6~8줄 캡션\\n\\n#세부주제 #그림책추천 #책육아",
+  "caption": "수정 반영된 초압축 6~8줄 캡션\\n\\n#그림책 #세부주제 #책육아",
   "card_descriptions": [
     "수정 반영된 1번 책의 3줄 요약 (60~70자)",
     "수정 반영된 2번 책의 3줄 요약 (60~70자)",

@@ -119,10 +119,10 @@ function CurationSection({ title, books, ...props }) {
 - **메인 컬럼 동기화 필수**: 도서관별 청구기호를 `book_library_info`에 적재할 때, `childbook_items.pangyo_callno` 컬럼에도 판교도서관 청구기호(없을 시 타 도서관 대표 청구기호)를 함께 업데이트해야 목록 페이지(`/books?curation=xxx`) 및 SEO 페이지(`/collections/curation/[tag]`)에서 정상 노출됩니다.
 - **사전 건강검진 실행**: 주간 스케줄 반영 전 반드시 `python3 backend/scripts/check_curation_health.py`를 실행하여 청구기호가 존재하는 유효 도서가 7권 이상인지 확인합니다.
 
-### 🏷️ 홈 큐레이션-도서 목록 헤더 타이틀 정책 (Header Title Policy)
-- **헤더 타이틀 이모티콘 배제**: 도서 리스트 상단 `PageHeader` 타이틀은 `ALL_TAXONOMY`의 `title` 속성을 매핑하되, 정규식을 통해 이모티콘(이모지)을 완전히 제거한 순수 텍스트(예: `스르륵 꿀잠 그림책`)로 일관되게 노출합니다.
+### 🏷️ 큐레이션 타이틀 및 Taxonomy 이모티콘 전면 배제 (No Emoji in Titles & Taxonomy)
+- **전체 큐레이션 타이틀 이모티콘 배제**: 홈 화면 섹션 메인 타이틀, 도서 리스트 상단 `PageHeader`, 공통 `ALL_TAXONOMY` 정의, `weekly_schedule.json` 등 모든 시스템 내 큐레이션 타이틀은 이모티콘(이모지)을 일체 포함하지 않는 순수 텍스트(예: `스르륵 꿀잠 그림책`, `교과서 수록도서`, `따스한 봄날 그림책`)로 일관되게 관리합니다.
 - **교과서 수록도서 및 학년별 태그 분기**: `searchParams.get('tag')`를 확인하여 학년 태그(예: `초등1학년`)가 존재할 경우 `초등 1학년 교과서 수록도서`, 전체일 경우 `교과서 수록도서`로 이모티콘 없이 명확히 분기합니다.
-- **인기 큐레이션 칩 바 동기화**: `POPULAR_CURATION_CHIPS`에 `📖 교과서`(`tag: '교과서수록'`) 칩을 포함하여 홈 주요 코너와 퀵 이동 칩 간 정합성을 유지합니다.
+- **인기 큐레이션 칩 바 동기화**: `POPULAR_CURATION_CHIPS`에 `교과서`(`tag: '교과서수록'`) 칩을 포함하여 홈 주요 코너와 퀵 이동 칩 간 정합성을 유지합니다.
 
 ### 🏷️ 태그 정제 및 파싱 규약 (Tag Sanitization & Grade Tags)
 - **DB 저장 불변식**: `curation_tag` 컬럼의 태그는 항상 `#`이 없는 순수 한글/영문 쉼표 구분자 포맷(예: `전래동화,옛이야기,권선징악`)으로 저장 및 적재합니다.
@@ -140,10 +140,10 @@ function CurationSection({ title, books, ...props }) {
 
 ### 🌸 사계절(봄/여름/가을/겨울) 큐레이션 운영 규칙 (Seasonal Curation Policy)
 - **4대 독립 테마 분리 원칙**:
-  - `🌱 따스한 봄날 그림책` (tag: `봄`, slug: `spring`)
-  - `🌊 싱그러운 여름 그림책` (tag: `여름`, slug: `summer`)
-  - `🍁 바스락 가을 감성 그림책` (tag: `가을`, slug: `autumn`)
-  - `❄️ 포근한 겨울 감성 그림책` (tag: `겨울`, slug: `winter`)
+  - `따스한 봄날 그림책` (tag: `봄`, slug: `spring`)
+  - `싱그러운 여름 그림책` (tag: `여름`, slug: `summer`)
+  - `바스락 가을 감성 그림책` (tag: `가을`, slug: `autumn`)
+  - `포근한 겨울 감성 그림책` (tag: `겨울`, slug: `winter`)
 - **노이즈 혼입 방지 및 7-Book Rule**:
   - 첫 번째 태그 정밀 매칭 원칙에 따라, 가을 테마에는 눈/겨울/여름 관련 도서(예: `눈 오는 날`, `수박` 등)가 1st 태그로 들어가지 않도록 데이터 정합성을 엄격히 관리합니다.
   - 각 계절 테마는 반드시 고화질 표지 이미지와 판교도서관 청구기호가 존재하는 도서 7권 이상(권장 10권)을 DB에 확보해야 합니다.

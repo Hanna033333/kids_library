@@ -14,13 +14,13 @@ description: 상용 배포 전 전방위 QA/디자인 검증 및 프로덕션(Pr
 
 1. **API 및 인프라 헬스 체크**
    ```bash
-   python backend/health_check.py
+   ./backend/venv/bin/python backend/health_check.py
    ```
    * **검사 기준**: 외부 오픈 API 연결 지연, Supabase 연동성, 캐싱(5분) 및 타임아웃 정책 준수 여부를 체크합니다.
 
 2. **데이터 및 Supabase RLS 보안 정합성 검증**
    ```bash
-   python backend/verify_prod.py
+   ./backend/venv/bin/python backend/verify_prod.py
    ```
    * **검사 기준**: 
      - Supabase 테이블별 **RLS (Row Level Security)** 정책의 완벽성 체크.
@@ -76,17 +76,24 @@ cd frontend && npm run build
 ## 🚀 [Phase 5] 배포 릴리즈 및 롤백 준비 (Release & Rollback)
 
 위의 모든 단계 검증에서 **100% Pass** 판정을 받으면 프로덕션 환경으로 안전하게 릴리즈합니다.
+*(주의: 별도 `git worktree`를 절대 생성하지 말고 기본 워크스페이스에서 진행합니다. 미커밋 파일이 있다면 이번 배포 파일만 커밋하거나 `git stash` 후 브랜치를 전환합니다.)*
 
 ```bash
-# 로컬 개발 브랜치에서 메인 브랜치로 이동 및 병합
+# 1. (필요 시) 미커밋 변경사항 임시 보관 또는 커밋
+# git stash
+
+# 2. 로컬 개발 브랜치에서 메인 브랜치로 이동 및 병합
 git checkout main
 git merge dev
 
-# 최종 상용 환경 원격 저장소로 배포 트리거 (Vercel 프론트엔드 자동 배포)
+# 3. 최종 상용 환경 원격 저장소로 배포 트리거 (Vercel 프론트엔드 자동 배포)
 git push origin main
 
-# AWS Lightsail 백엔드 서버 동기화 및 서비스 재시작 (백엔드 코드 변경 시 필수)
+# 4. AWS Lightsail 백엔드 서버 동기화 및 서비스 재시작 (백엔드 코드 변경 시 필수)
 ./deploy_to_aws.sh
+
+# 5. (필요 시) 임시 보관 파일 복원
+# git checkout dev && git stash pop
 ```
 
 > [!CAUTION]

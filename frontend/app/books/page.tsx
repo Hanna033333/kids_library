@@ -90,9 +90,11 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     const canonicalUrl = params ? `/books?${params}` : '/books'
 
     return {
+        metadataBase: new URL('https://checkjari.com'),
         title,
         description,
         keywords,
+        authors: [{ name: '책자리' }],
         alternates: {
             canonical: canonicalUrl
         },
@@ -100,12 +102,31 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
             title,
             description,
             type: 'website',
-            url: `https://checkjari.com/books${params ? `?${params}` : ''}`
+            siteName: '책자리',
+            locale: 'ko_KR',
+            url: `https://checkjari.com/books${params ? `?${params}` : ''}`,
+            images: [
+                {
+                    url: '/logo.png',
+                    width: 1200,
+                    height: 630,
+                    alt: title
+                }
+            ]
         },
         twitter: {
             card: 'summary_large_image',
             title,
-            description
+            description,
+            images: ['/logo.png']
+        },
+        robots: {
+            index: true,
+            follow: true,
+            googleBot: {
+                index: true,
+                follow: true
+            }
         }
     }
 }
@@ -147,10 +168,17 @@ export default async function BooksPage({ searchParams }: Props) {
 
         const { data: books } = await query.order('title', { ascending: true })
 
+        const searchEntries = Object.entries(searchParams).filter(([_, v]) => v !== undefined) as [string, string][]
+        const queryString = new URLSearchParams(searchEntries).toString()
+
         if (books && books.length > 0) {
             jsonLd = {
                 '@context': 'https://schema.org',
                 '@type': 'ItemList',
+                name: `${curation} 도서 목록 - 책자리`,
+                description: `${curation} 관련 도서 및 그림책 목록`,
+                url: `https://checkjari.com/books${queryString ? `?${queryString}` : ''}`,
+                numberOfItems: books.length,
                 itemListElement: books.map((book, index) => ({
                     '@type': 'ListItem',
                     position: index + 1,

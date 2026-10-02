@@ -20,16 +20,13 @@ export interface ThemeTab {
 }
 
 export const POPULAR_THEME_TABS: ThemeTab[] = [
-  { id: 'sleep', label: '잠자리', tag: '잠자리', subtitle: '밤마다 안 자려는 우리 아이에게' },
-  { id: 'self-esteem', label: '자존감', tag: '자존감', subtitle: '기 죽지 않고 단단하게 자라도록' },
-  { id: 'social', label: '첫 사회성', tag: '사회성', subtitle: '친구랑 더 재미있게 놀고 싶을 때' },
-  { id: 'school', label: '기관적응', tag: '적응', subtitle: '새로운 환경에서도 씩씩하고 즐겁게' },
-  { id: 'emotion', label: '감정·마음', tag: '감정조절', subtitle: '폭발하는 감정을 다스리는 지혜' },
-  { id: 'dinosaurs', label: '공룡', tag: '공룡', subtitle: '수억 년 전 지구를 지배한 주인공' },
-  { id: 'nature', label: '자연·생태', tag: '자연관찰', subtitle: '신비한 숲속과 들판의 비밀' },
-  { id: 'art', label: '예술·창의', tag: '예술감성', subtitle: '아름다움을 느끼는 눈과 마음을 길러요' },
-  { id: 'science', label: '호기심·과학', tag: '과학원리', subtitle: '세상의 원리를 깨우치는 재미' },
-  { id: 'family', label: '가족사랑', tag: '가족사랑', subtitle: '세상에서 가장 따뜻한 품' },
+  { id: 'sleep', label: '잠자리·수면', tag: '잠자리', subtitle: '밤마다 안 자려는 우리 아이에게' },
+  { id: 'habits', label: '생활습관·청결', tag: '생활습관', subtitle: '스스로 실천하는 바른 생활 습관' },
+  { id: 'self-esteem', label: '자존감·자신감', tag: '자존감', subtitle: '기 죽지 않고 단단하게 자라도록' },
+  { id: 'emotion', label: '감정표현·마음', tag: '감정조절', subtitle: '폭발하는 감정을 다스리는 지혜' },
+  { id: 'social', label: '친구·사회성', tag: '사회성', subtitle: '친구랑 더 재미있게 놀고 싶을 때' },
+  { id: 'family', label: '가족·이웃', tag: '가족사랑', subtitle: '세상에서 가장 따뜻한 품' },
+  { id: 'imagination', label: '상상·창의력', tag: '상상력', subtitle: '무한한 상상력과 흥미진진한 모험' },
 ]
 
 interface ThemeCurationShowcaseProps {
@@ -122,13 +119,13 @@ export default function ThemeCurationShowcase({
   return (
     <section className={`py-8 px-4 ${bgColor}`}>
       <div className="max-w-[1200px] mx-auto">
-        {/* 섹션 헤더 (2단 타이틀만 깔끔하게 노출) */}
+        {/* 섹션 헤더 (우리 아이 맞춤 그림책 처방전 고정) */}
         <div className="mb-6 px-2">
           <span className="text-[13px] font-semibold text-gray-500 tracking-tight">
-            아이의 마음과 호기심을 채우는
+            잠투정부터 사회성까지, 아이 상황에 딱 맞는
           </span>
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight mt-1">
-            ✨ 50+ 전문 테마 큐레이션
+            우리 아이 맞춤 그림책 처방전
           </h2>
         </div>
 
@@ -141,10 +138,10 @@ export default function ThemeCurationShowcase({
                 <button
                   key={tab.id}
                   onClick={() => handleTabClick(tab)}
-                  className={`shrink-0 px-4 py-2 rounded-full text-[14px] transition-all cursor-pointer ${
+                  className={`shrink-0 px-4 py-2 rounded-full text-[14px] transition-all cursor-pointer outline-none focus:outline-none active:scale-95 ${
                     isActive
-                      ? 'bg-brand-primary text-white font-bold shadow-sm active:scale-95'
-                      : 'bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100 active:scale-95'
+                      ? 'bg-brand-primary text-white font-bold shadow-xs active:bg-brand-primary-dark'
+                      : 'bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100'
                   }`}
                 >
                   {tab.label}

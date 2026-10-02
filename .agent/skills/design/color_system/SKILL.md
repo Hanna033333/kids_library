@@ -17,6 +17,12 @@ description: 책자리 프로젝트의 버튼 컬러 시스템 및 디자인 가
 | **Primary (Brand)** | `bg-brand-primary` / `active:bg-brand-primary-dark` | `#F59E0B` | 메인 CTA, 검색, 필터, 청구기호 (*터치 시 `#D97706` 자동 피드백) |
 | **Kakao** | `bg-brand-kakao` | `#FEE500` | 카카오 로그인 전용 |
 
+### 탭 및 필터 칩 (Tab & Filter Chip) 상태 규격
+| 상태 | Tailwind Class | 비주얼 규격 |
+|---|---|---|
+| **Selected (선택)** | `bg-brand-primary text-white font-bold shadow-xs active:bg-brand-primary-dark outline-none` | Primary(#F59E0B) 배경, 흰색 텍스트 & 흰색 아이콘 |
+| **Unselected (비선택)** | `bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100 outline-none` | 흰색 카드 배경, 회색 텍스트 & 회색 아이콘 |
+
 ### Neutral & Surfaces (슬림화 규격)
 | 컬러 이름 | CSS 토큰 | Hex Code | 용도 |
 |---|---|---|---|

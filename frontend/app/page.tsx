@@ -16,10 +16,13 @@ export const metadata: Metadata = {
   title: "내 주변 도서관 책 검색 & 그림책 대출 가능 여부 3초 조회",
   description: "도서관 가기 전 헛걸음 방지! 내 주변 도서관의 책 검색, 실시간 대출 가능 상태와 청구기호를 3초 만에 조회하세요. 연령 및 정서 발달에 딱 맞는 그림책 큐레이션도 제공합니다.",
   keywords: "어린이 도서 추천, 유아 그림책 큐레이션, 초등 필독서, 칼데콧 수상작, 어린이도서연구회, 연령별 추천도서, 책자리, 어린이 정서 교육, 아이 감정 발달, 상황별 그림책, 주변 도서관 책 검색, 도서관 대출",
+  authors: [{ name: "책자리" }],
   openGraph: {
     title: "내 주변 도서관 책 검색 & 그림책 대출 가능 여부 3초 조회 | 책자리",
     description: "도서관 가기 전 헛걸음 방지! 내 주변 도서관의 책 검색, 실시간 대출 가능 상태와 청구기호를 3초 만에 조회하세요. 연령 및 정서 발달에 딱 맞는 그림책 큐레이션도 제공합니다.",
     url: "https://checkjari.com",
+    siteName: "책자리",
+    locale: "ko_KR",
     images: [
       {
         url: "/logo.png",
@@ -34,6 +37,14 @@ export const metadata: Metadata = {
     title: "내 주변 도서관 책 검색 & 그림책 대출 가능 여부 3초 조회 | 책자리",
     description: "도서관 가기 전 헛걸음 방지! 내 주변 도서관의 책 검색, 실시간 대출 가능 상태와 청구기호를 3초 만에 조회하세요. 연령 및 정서 발달에 딱 맞는 그림책 큐레이션도 제공합니다.",
     images: ["/logo.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
   },
 };
 

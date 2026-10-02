@@ -62,7 +62,7 @@ export default function FilterBar({
           {showFilterButton && (
             <button
               onClick={onFilterClick}
-              className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all border active:scale-[0.98] bg-white text-gray-500 border-gray-200"
+              className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-[14px] font-medium transition-all cursor-pointer outline-none focus:outline-none active:scale-95 bg-white text-gray-700 border border-gray-200/80 active:bg-gray-100"
               aria-label="상세 필터 및 정렬"
             >
               <span>필터</span>
@@ -82,28 +82,33 @@ export default function FilterBar({
                 <button
                   key={option.value}
                   onClick={() => handleTagToggle(option.value)}
-                  className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold transition-all border active:scale-[0.98] ${isSelected
-                    ? "bg-brand-primary text-white border-brand-primary"
-                    : "bg-white text-gray-500 border-gray-200"
-                    }`}
+                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-[14px] transition-all cursor-pointer outline-none focus:outline-none active:scale-95 ${
+                    isSelected
+                      ? "bg-brand-primary text-white font-bold shadow-xs active:bg-brand-primary-dark"
+                      : "bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100"
+                  }`}
                 >
                   {option.label}
                 </button>
               );
             })
           ) : (
-            AGE_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => handleAgeToggle(option.value)}
-                className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold transition-all border active:scale-[0.98] ${selectedAge === option.value
-                  ? "bg-brand-primary text-white border-brand-primary"
-                  : "bg-white text-gray-500 border-gray-200"
+            AGE_OPTIONS.map((option) => {
+              const isSelected = selectedAge === option.value;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => handleAgeToggle(option.value)}
+                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-[14px] transition-all cursor-pointer outline-none focus:outline-none active:scale-95 ${
+                    isSelected
+                      ? "bg-brand-primary text-white font-bold shadow-xs active:bg-brand-primary-dark"
+                      : "bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100"
                   }`}
-              >
-                {option.label}
-              </button>
-            ))
+                >
+                  {option.label}
+                </button>
+              );
+            })
           )}
         </div>
       </div>

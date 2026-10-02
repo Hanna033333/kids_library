@@ -154,7 +154,7 @@ export default function TextbookCurationShowcase({
             초등 국어 수업에 실제로 실린
           </span>
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight mt-1">
-            📖 교과서 수록도서
+            교과서 수록도서
           </h2>
         </div>
 
@@ -167,10 +167,10 @@ export default function TextbookCurationShowcase({
                 <button
                   key={tab.id}
                   onClick={() => handleTabClick(tab)}
-                  className={`shrink-0 px-4 py-2 rounded-full text-[14px] transition-all cursor-pointer ${
+                  className={`shrink-0 px-4 py-2 rounded-full text-[14px] transition-all cursor-pointer outline-none focus:outline-none active:scale-95 ${
                     isActive
-                      ? 'bg-brand-primary text-white font-bold shadow-sm active:scale-95'
-                      : 'bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100 active:scale-95'
+                      ? 'bg-brand-primary text-white font-bold shadow-xs active:bg-brand-primary-dark'
+                      : 'bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100'
                   }`}
                 >
                   {tab.label}
