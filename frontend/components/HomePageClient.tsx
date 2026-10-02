@@ -219,22 +219,7 @@ export default function HomePageClient({
       {/* 에디터 스포트라이트 롤링 캐러셀 배너 */}
       <SpotlightBanner />
 
-
-      {/* 2026 여름방학 추천도서 섹션 (8/20까지만 노출) */}
-      {isSummerCurationActive() && summerBooks.length > 0 && (
-        <CurationSection
-          subtitle="교육청이 엄선한 학년별 필독서"
-          title="여름방학 추천도서"
-          books={summerBooks}
-          href={getCurationMoreLink({ curation: 'summer-vacation' })}
-          onViewMore={() => sendGAEvent('click_view_more', { section: 'summer_vacation' })}
-          bgColor="bg-white"
-          sectionTag="여름방학2026"
-          priorityImages
-        />
-      )}
-
-      {/* 2. AI 큐레이션 섹션 (3일마다 랜덤 교체) */}
+      {/* 1. AI 주간 큐레이션 서가 */}
       {dynamicCurations.map((curation, index) => (
         <CurationSection
           key={curation.tag}
@@ -245,130 +230,47 @@ export default function HomePageClient({
           onViewMore={() => sendGAEvent('click_view_more', { section: curation.tag })}
           bgColor={index % 2 === 0 ? 'bg-white' : 'bg-muted-bg'}
           sectionTag={curation.tag}
-          priorityImages={index === 0 && !isSummerCurationActive()}
         />
       ))}
 
-      {/* 50+ 전문 테마 큐레이션 모음 진입 섹션 */}
-      <ThemeCurationShowcase bgColor="bg-white" />
+      {/* 2. 50+ 전문 테마 큐레이션 모음 (우리 아이 맞춤 그림책 처방전 쇼케이스) */}
+      <ThemeCurationShowcase bgColor={dynamicCurations.length % 2 === 0 ? 'bg-white' : 'bg-muted-bg'} />
 
-      {/* 📖 2022 개정 교과서 수록도서 쇼케이스 (학년별 가로 스크롤 탭) */}
-      <TextbookCurationShowcase initialBooks={initialTextbookBooks} bgColor="bg-muted-bg" />
+      {/* 3. 📖 2022 개정 교과서 수록도서 쇼케이스 (학년별 가로 스크롤 탭) */}
+      <TextbookCurationShowcase initialBooks={initialTextbookBooks} bgColor={dynamicCurations.length % 2 === 0 ? 'bg-muted-bg' : 'bg-white'} />
 
-      {/* 3. 칼데콧 수상작 섹션 */}
+      {/* 4. 칼데콧 수상작 섹션 */}
       <CurationSection
         subtitle="미국 도서관 최고의 영예"
         title="칼데콧 수상작"
         books={caldecottBooks}
         href={getCurationMoreLink({ curation: 'caldecott' })}
         onViewMore={() => sendGAEvent('click_view_more', { section: 'caldecott' })}
-        bgColor="bg-white"
+        bgColor={dynamicCurations.length % 2 === 0 ? 'bg-white' : 'bg-muted-bg'}
         sectionTag="caldecott"
       />
 
-      {/* 우리 아이 나이에 딱! (연령별 추천 섹션) */}
-      <section className="py-8 px-4 bg-muted-bg">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="flex items-end justify-between mb-6 px-2">
-            <div className="flex flex-col gap-1">
-              <span className="text-[13px] font-semibold text-gray-500 tracking-tight">
-                발달 단계에 맞는 맞춤 도서를 만나보세요
-              </span>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">
-                우리 아이 나이에 딱!
-              </h2>
-            </div>
-            <Link
-              href={getCurationMoreLink({ age: selectedAge })}
-              className="text-gray-900 p-1 mb-0.5"
-              onClick={() => sendGAEvent('click_view_more', { section: 'age_recommendation', age: selectedAge })}
-            >
-              <ChevronRight className="w-6 h-6" />
-            </Link>
-          </div>
+      {/* 5. 2026 여름방학 추천도서 섹션 (시즌 조건부) */}
+      {isSummerCurationActive() && summerBooks.length > 0 && (
+        <CurationSection
+          subtitle="교육청이 엄선한 학년별 필독서"
+          title="여름방학 추천도서"
+          books={summerBooks}
+          href={getCurationMoreLink({ curation: 'summer-vacation' })}
+          onViewMore={() => sendGAEvent('click_view_more', { section: 'summer_vacation' })}
+          bgColor="bg-white"
+          sectionTag="여름방학2026"
+        />
+      )}
 
-          {/* 연령 탭 */}
-          <div className="overflow-x-auto scrollbar-hide -mx-4 mb-6">
-            <div className="flex items-center gap-2 pb-1 pl-6 w-max min-w-full">
-              {[
-                { key: '0-3', label: '0~3세' },
-                { key: '4-7', label: '4~7세' },
-                { key: '8-12', label: '8~12세' }
-              ].map(age => {
-                const isActive = selectedAge === age.key;
-                return (
-                  <button
-                    key={age.key}
-                    onClick={() => {
-                      setSelectedAge(age.key);
-                      sendGAEvent('click_home_age_tab', { age: age.key });
-                    }}
-                    className={`shrink-0 px-4 py-2 rounded-full text-[14px] transition-all cursor-pointer outline-none focus:outline-none active:scale-95 ${
-                      isActive
-                        ? 'bg-brand-primary text-white font-bold shadow-xs active:bg-brand-primary-dark'
-                        : 'bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100'
-                    }`}
-                  >
-                    {age.label}
-                  </button>
-                );
-              })}
-              {/* 탭 바 우측 끝 스크롤 마진용 스페이서 (gap-2: 8px + w-2: 8px = 16px) */}
-              <div className="shrink-0 w-2" aria-hidden="true" />
-            </div>
-          </div>
-
-          {/* 책 그리드 - 좌우 스크롤 */}
-          {loading ? (
-            <div className="overflow-x-auto scrollbar-hide -mx-4">
-              <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
-                {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-                  <div key={i} className="flex-shrink-0 w-[160px] sm:w-[180px]">
-                    <div className="flex flex-col bg-white rounded-2xl shadow-sm overflow-hidden h-full animate-pulse">
-                      {/* 이미지 스켈레톤 */}
-                      <div className="w-full aspect-[1/1.1] bg-gray-200"></div>
-                      {/* 정보 스켈레톤 */}
-                      <div className="p-4 space-y-3">
-                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                <div className="shrink-0 w-0" aria-hidden="true" />
-              </div>
-            </div>
-          ) : ageBooks.length > 0 ? (
-            <>
-              <div className="overflow-x-auto scrollbar-hide -mx-4">
-                <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
-                  {ageBooks.map((book) => (
-                    <div key={book.id} className="flex-shrink-0 w-[160px] sm:w-[180px]">
-                      <BookCard book={book} />
-                    </div>
-                  ))}
-                  {/* 도서 슬라이더 우측 끝 스크롤 마진용 스페이서 (gap-4: 16px 유지) */}
-                  <div className="shrink-0 w-0" aria-hidden="true" />
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              해당 연령대의 책이 없습니다
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* 4. 도서 연구회 추천 섹션 */}
+      {/* 6. 어린이도서연구회 추천 섹션 */}
       <CurationSection
         subtitle="전문가가 엄선한 필독서"
         title="어린이도서연구회 추천"
         books={researchBooks}
         href={getCurationMoreLink({ curation: 'research-council' })}
         onViewMore={() => sendGAEvent('click_view_more', { section: 'research_council' })}
-        bgColor="bg-white"
+        bgColor={dynamicCurations.length % 2 === 0 ? 'bg-muted-bg' : 'bg-white'}
         sectionTag="어린이도서연구회"
       />
 

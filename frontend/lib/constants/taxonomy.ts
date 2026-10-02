@@ -7,13 +7,24 @@ export interface CurationTag {
 }
 
 export const ALL_TAXONOMY: CurationTag[] = [
+  // 🏆 GA4 데이터 기반 TOP 10 테마/주제 큐레이션 (우선순위 최상단 배치)
+  { id: 35, subtitle: "초록 지구를 지키는 꼬마 환경 지킴이의 실천", title: "초록 지구 환경 그림책", tag: "환경보호", slug: "eco" },
   { id: 1, subtitle: "눕자마자 스르륵, 잠투정 없는 포근한 수면 의식", title: "스르륵 꿀잠 그림책", tag: "잠자리", slug: "sleep" },
+  { id: 57, subtitle: "설날 떡국부터 추석 송편까지 정겨운 우리 명절", title: "한국의 정겨운 명절", tag: "명절", slug: "holiday" },
+  { id: 8, subtitle: "갑작스러운 이별과 슬픔을 다독이는 다정한 위로", title: "상실과 이별 그림책", tag: "상실", slug: "loss" },
+  { id: 65, subtitle: "틀에 갇히지 않은 엉뚱함이 자라는 무한한 상상력", title: "상상의 날개를 활짝", tag: "상상력", slug: "imagination" },
+  { id: 48, subtitle: "조상들의 슬기와 지혜가 깃든 자랑스러운 우리 문화", title: "지혜 가득 문화 유산", tag: "우리문화", slug: "culture" },
+  { id: 29, subtitle: "틀림이 아닌 다름, 편견 없는 따뜻한 세상", title: "편견 없는 눈그림책", tag: "장애", slug: "inclusion" },
+  { id: 54, subtitle: "피라미드부터 에펠탑까지 방구석 세계 역사 여행", title: "세계 역사와 문화", tag: "세계역사", slug: "world-history" },
+  { id: 34, subtitle: "숲속과 들판의 작은 생명을 발견하는 자연 관찰", title: "호기심 자연 관찰", tag: "자연관찰", slug: "nature" },
+  { id: 59, subtitle: "그림책으로 즐겁게 깨치는 우리 아이 첫 한글", title: "소중한 우리 한글", tag: "한글", slug: "language" },
+
+  // 일반 큐레이션 테마
   { id: 3, subtitle: "실수해도 괜찮아! 작은 일에 기죽지 않는 단단한 마음", title: "단단한 자존감 그림책", tag: "자존감", slug: "self-esteem" },
   { id: 4, subtitle: "“내 거야!” 욕심부리던 아이의 따뜻한 양보와 배려", title: "다정한 배려 그림책", tag: "배려", slug: "care" },
   { id: 5, subtitle: "작고 소중한 생명의 가치와 따뜻한 온기", title: "사랑스러운 동물 친구들", tag: "생명존중", slug: "animal" },
   { id: 6, subtitle: "세상에서 가장 포근한 엄마 아빠의 무조건적인 사랑", title: "따뜻한 가족 사랑", tag: "가족사랑", slug: "family" },
   { id: 7, subtitle: "새 학기 낯가림 걱정 없는 즐거운 유치원 적응", title: "유치원과 학교생활", tag: "적응", slug: "school" },
-  { id: 8, subtitle: "갑작스러운 이별과 슬픔을 다독이는 다정한 위로", title: "상실과 이별 그림책", tag: "상실", slug: "loss" },
   { id: 9, subtitle: "겁 많은 아이의 씩씩한 한 걸음과 용기", title: "씩씩한 용기 그림책", tag: "용기", slug: "courage" },
   { id: 10, subtitle: "처음 만난 친구와 다정하게 마음을 나누는 우정", title: "다정한 내 친구", tag: "우정", slug: "friendship" },
   { id: 11, subtitle: "거짓말 대신 솔직하게 털어놓는 용기 있는 마음", title: "정직한 마음 그림책", tag: "정직", slug: "honesty" },
@@ -31,12 +42,9 @@ export const ALL_TAXONOMY: CurationTag[] = [
   { id: 25, subtitle: "내가 좋아하는 일과 미래를 꿈꾸는 다양한 직업", title: "내 꿈을 찾는 그림책", tag: "진로", slug: "jobs" },
   { id: 26, subtitle: "마트에서 떼쓰지 않는 올바른 소비 습관과 경제 상식", title: "현명한 돈 쓰기", tag: "경제", slug: "economy" },
   { id: 28, subtitle: "싸우지 않고 대화로 해결하는 평화로운 마음", title: "평화를 지키는 그림책", tag: "평화", slug: "peace" },
-  { id: 29, subtitle: "틀림이 아닌 다름, 편견 없는 따뜻한 세상", title: "편견 없는 눈그림책", tag: "장애", slug: "inclusion" },
   { id: 31, subtitle: "엘리베이터에서 반갑게 인사하는 다정한 우리 이웃", title: "우리 동네 이웃 사촌", tag: "이웃", slug: "community" },
   { id: 32, subtitle: "스마트폰을 내려놓고 책을 펼치는 올바른 미디어 습관", title: "스마트폰 조절 그림책", tag: "미디어", slug: "media" },
   { id: 33, subtitle: "머리부터 발끝까지 궁금증을 풀어주는 신비한 우리 몸", title: "신비한 우리 몸", tag: "인체", slug: "body" },
-  { id: 34, subtitle: "숲속과 들판의 작은 생명을 발견하는 자연 관찰", title: "호기심 자연 관찰", tag: "자연관찰", slug: "nature" },
-  { id: 35, subtitle: "초록 지구를 지키는 꼬마 환경 지킴이의 실천", title: "초록 지구 환경 그림책", tag: "환경보호", slug: "eco" },
   { id: 36, subtitle: "“왜 그래요?” 호기심 폭발할 때 만나는 첫 과학 원리", title: "호기심 가득 과학원리", tag: "과학원리", slug: "science" },
   { id: 37, subtitle: "꽃피고 새싹 돋는 봄날의 싱그러운 생명력", title: "따스한 봄날 그림책", tag: "봄", slug: "spring" },
   { id: 38, subtitle: "꿈틀꿈틀 작은 곤충들의 신비롭고 위대한 한살이", title: "꿈틀꿈틀 곤충 나라", tag: "곤충", slug: "bugs" },
@@ -47,22 +55,17 @@ export const ALL_TAXONOMY: CurationTag[] = [
   { id: 45, subtitle: "로봇과 인공지능이 함께하는 편리하고 신기한 미래", title: "로봇과 인공지능", tag: "인공지능", slug: "ai" },
   { id: 46, subtitle: "숫자와 모양이 놀이처럼 재미있어지는 첫 수학", title: "재미있는 수학 놀이", tag: "수학", slug: "math" },
   { id: 47, subtitle: "불편함을 기발한 아이디어로 바꾼 세상을 바꾼 발명", title: "세상을 바꾼 발명", tag: "발명", slug: "invention" },
-  { id: 48, subtitle: "조상들의 슬기와 지혜가 깃든 자랑스러운 우리 문화", title: "지혜 가득 문화 유산", tag: "우리문화", slug: "culture" },
   { id: 49, subtitle: "타임머신 타고 떠나는 흥미진진한 한국사 대모험", title: "지혜로운 역사 이야기", tag: "역사이야기", slug: "history" },
   { id: 50, subtitle: "할머니 무릎에서 듣던 구수하고 지혜로운 옛이야기", title: "구수한 옛이야기", tag: "전래동화", slug: "folktale" },
   { id: 51, subtitle: "아이의 감수성과 색채 감각을 깨우는 프리미엄 예술", title: "감성 풍부 꼬마 예술", tag: "예술감성", slug: "art" },
   { id: 53, subtitle: "온몸으로 감정을 표현하며 자신감을 키우는 무대 연극", title: "배우들의 무대 연극", tag: "연극", slug: "theater" },
-  { id: 54, subtitle: "피라미드부터 에펠탑까지 방구석 세계 역사 여행", title: "세계 역사와 문화", tag: "세계역사", slug: "world-history" },
   { id: 55, subtitle: "모네와 고흐의 걸작을 감상하는 미술관 명화 산책", title: "미술관에서 만난 명화", tag: "명화", slug: "painting" },
   { id: 56, subtitle: "세계의 신기한 건축물과 공간의 아름다움", title: "튼튼한 건축과 집", tag: "건축", slug: "architecture" },
-  { id: 57, subtitle: "설날 떡국부터 추석 송편까지 정겨운 우리 명절", title: "한국의 정겨운 명절", tag: "명절", slug: "holiday" },
-  { id: 59, subtitle: "그림책으로 즐겁게 깨치는 우리 아이 첫 한글", title: "소중한 우리 한글", tag: "한글", slug: "language" },
   { id: 60, subtitle: "생각을 문장으로 표현하는 창의적인 첫 글쓰기", title: "상상 가득 글쓰기", tag: "글쓰기", slug: "writing" },
   { id: 61, subtitle: "어두운 숲속도 두렵지 않은 씩씩한 모험가의 용기", title: "씩씩한 모험 이야기", tag: "모험", slug: "adventure" },
   { id: 62, subtitle: "문 하나만 열면 펼쳐지는 신비롭고 환상적인 판타지", title: "호기심 가득 판타지", tag: "판타지", slug: "fantasy" },
   { id: 63, subtitle: "책 싫어하는 아이도 낄낄대며 빠져드는 유쾌한 웃음", title: "유쾌한 유머 그림책", tag: "유머", slug: "humor" },
   { id: 64, subtitle: "단서를 모아 미스터리를 푸는 흥미진진 추리 비밀", title: "명탐정의 추리 비밀", tag: "추리", slug: "mystery" },
-  { id: 65, subtitle: "틀에 갇히지 않은 엉뚱함이 자라는 무한한 상상력", title: "상상의 날개를 활짝", tag: "상상력", slug: "imagination" },
   { id: 66, subtitle: "하늘 높이 날아올라 구름 위를 달리는 자유로운 상상", title: "하늘을 나는 상상", tag: "하늘", slug: "aviation" },
   { id: 67, subtitle: "편식 잡는 즐거운 요리 놀이와 올바른 식사 예절", title: "맛있는 요리조리", tag: "요리", slug: "cooking" },
   { id: 68, subtitle: "내 옷은 내가 고르는 주도적인 개성과 패션 센스", title: "내 멋진 옷과 패션", tag: "패션", slug: "fashion" },
@@ -81,13 +84,17 @@ export const ALL_TAXONOMY: CurationTag[] = [
 ];
 
 export const VALID_AI_TAGS = [
-  "가족사랑", "모험", "인체", "판타지", "우리문화", "자연관찰", "잠자리", "사회성", "환경보호",
+  // 🏆 GA4 TOP 10 태그 우선 배치
+  "환경보호", "잠자리", "명절", "상실", "상상력", "우리문화", "장애", "세계역사", "자연관찰", "한글",
+
+  // 기존 유효 태그
+  "가족사랑", "모험", "인체", "판타지", "사회성",
   "자존감", "전래동화", "계절", "봄", "여름", "가을", "겨울", "생명존중", "다양성", "예술감성", "배려", "역사이야기", "용기",
-  "감정조절", "우정", "과학원리", "상실", "정직", "곤충", "적응", "나눔", "우주", "분노조절",
+  "감정조절", "우정", "과학원리", "정직", "곤충", "적응", "나눔", "우주", "분노조절",
   "규칙", "공룡", "슬픔", "다문화", "바다", "질투", "진로", "식물", "두려움", "경제", "날씨",
-  "끈기", "의사소통", "코딩", "위로", "평화", "인공지능", "행복", "장애", "수학", "용서",
-  "양성평등", "발명", "음악", "이웃", "연극", "세계역사", "미디어", "명화", "건축", "유머",
-  "명절", "전통놀이", "추리", "한글", "글쓰기", "상상력", "하늘", "요리", "패션", "탈것",
+  "끈기", "의사소통", "코딩", "위로", "평화", "인공지능", "행복", "수학", "용서",
+  "양성평등", "발명", "음악", "이웃", "연극", "미디어", "명화", "건축", "유머",
+  "전통놀이", "추리", "글쓰기", "하늘", "요리", "패션", "탈것",
   "스포츠", "괴물", "미래도시", "신체활동", "자연재해", "생활습관", "인문지리", "동물도감", "미래상상",
   "여름방학2026", "교과서수록"
 ];
