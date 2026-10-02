@@ -19,13 +19,12 @@ export interface BannerItem {
   glowColor: string;
   titleColor: string;
   subColor: string;
-  badgeClass: string;
+  badgeClass?: string;
 }
 
 export const SPOTLIGHT_BANNERS: BannerItem[] = [
   {
     id: 'library',
-    badge: '도서관 헛걸음 방지',
     titleLines: ['도서관 가기 전 3초', '지금 대출 가능할까?'],
     subtitle: '자주 가는 도서관의 실시간 대출 상태와 청구기호 즉시 조회',
     href: '/my-library',
@@ -36,11 +35,9 @@ export const SPOTLIGHT_BANNERS: BannerItem[] = [
     glowColor: 'bg-amber-200/35',
     titleColor: 'text-white',
     subColor: 'text-white/95 font-medium',
-    badgeClass: 'bg-black/20 text-white border-white/25 font-bold',
   },
   {
     id: 'prescription',
-    badge: '50+ 전문 테마 큐레이션',
     titleLines: ['우리 아이 맞춤 책', '상황별 50+ 처방전'],
     subtitle: '잠투정, 훈육, 사회성... 우리 아이 맞춤 큐레이션',
     href: '/collections',
@@ -55,16 +52,14 @@ export const SPOTLIGHT_BANNERS: BannerItem[] = [
       'https://image.aladin.co.kr/product/25151/14/cover500/8954674631_2.jpg',
       'https://image.aladin.co.kr/product/37564/79/cover500/k712032523_1.jpg',
     ],
-    // MSF Blue (Primary): #6DD0F0
-    bgColor: 'bg-[#6DD0F0]',
-    glowColor: 'bg-sky-100/40',
-    titleColor: 'text-gray-950',
-    subColor: 'text-gray-900 font-semibold',
-    badgeClass: 'bg-black/10 text-gray-950 border-black/15 font-bold',
+    // 일렉트릭 바이올렛 블루: #4A45F0 (화이트 텍스트 적용)
+    bgColor: 'bg-[#4A45F0]',
+    glowColor: 'bg-indigo-300/30',
+    titleColor: 'text-white',
+    subColor: 'text-white/95 font-medium',
   },
   {
     id: 'textbook',
-    badge: '최신 개정 교육과정',
     titleLines: ['초등 교과서 수록도서', '학년별 필수 필독서'],
     subtitle: '1~6학년 국어 교과서에 실린 필독서로 문해력 쑥쑥',
     href: '/collections/curation/textbook',
@@ -75,7 +70,6 @@ export const SPOTLIGHT_BANNERS: BannerItem[] = [
     glowColor: 'bg-emerald-200/30',
     titleColor: 'text-white',
     subColor: 'text-white/95 font-medium',
-    badgeClass: 'bg-black/20 text-white border-white/25 font-bold',
   },
 ]
 
@@ -165,18 +159,13 @@ export default function SpotlightBanner() {
             >
               {/* 배너 콘텐츠 레이아웃 (좌우 분할 가로형) */}
               <div className="w-full flex items-center justify-between">
-                {/* 좌측: 뱃지 & 2줄 굵은 헤드라인 & 서브카피 */}
-                <div className="relative z-10 max-w-[60%] sm:max-w-[58%] md:max-w-[54%] min-w-0 pr-2">
-                  {currentBanner.badge && (
-                    <div className={`inline-flex items-center px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-md backdrop-blur-xs text-[11px] sm:text-xs font-bold border mb-2 sm:mb-3 ${currentBanner.badgeClass}`}>
-                      {currentBanner.badge}
-                    </div>
-                  )}
-                  <h2 className={`text-xl sm:text-2xl md:text-[32px] font-black leading-[1.3] md:leading-[1.32] tracking-tight ${currentBanner.titleColor} break-keep`}>
+                {/* 좌측: 2줄 헤드라인 & 서브카피 */}
+                <div className="relative z-10 max-w-[62%] sm:max-w-[58%] md:max-w-[54%] min-w-0 pr-2">
+                  <h2 className={`text-[22px] sm:text-2xl md:text-[32px] font-bold leading-[1.28] md:leading-[1.32] tracking-tight ${currentBanner.titleColor} break-keep`}>
                     <span className="block whitespace-nowrap">{currentBanner.titleLines[0]}</span>
                     <span className="block whitespace-nowrap">{currentBanner.titleLines[1]}</span>
                   </h2>
-                  <p className={`text-xs sm:text-sm md:text-base ${currentBanner.subColor} font-medium mt-2 sm:mt-3 leading-relaxed break-keep line-clamp-2`}>
+                  <p className={`text-xs sm:text-sm md:text-base ${currentBanner.subColor} font-normal sm:font-medium mt-2 sm:mt-2.5 leading-relaxed break-keep line-clamp-2`}>
                     {currentBanner.subtitle}
                   </p>
                 </div>
