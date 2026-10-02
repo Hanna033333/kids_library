@@ -139,12 +139,12 @@ const NON_TAXONOMY_SPECIALS: UnifiedCurationItem[] = [
   },
 ];
 
-// ALL_TAXONOMY 중 특별 기획으로 분류할 slug 목록
-const SPECIAL_TAXONOMY_SLUGS = ['summer-vacation', 'textbook'];
+// ALL_TAXONOMY 중 특별 기획으로 분류할 slug 목록 (교과서수록 1위, 여름방학 3위)
+const SPECIAL_TAXONOMY_SLUGS = ['textbook', 'summer-vacation'];
 
 export const SPECIAL_CURATIONS: UnifiedCurationItem[] = [
-  ...NON_TAXONOMY_SPECIALS,
-  ...ALL_TAXONOMY.filter(item => SPECIAL_TAXONOMY_SLUGS.includes(item.slug)).map((item): UnifiedCurationItem => ({
+  // 1. 교과서수록 (특수 기획 1위)
+  ...ALL_TAXONOMY.filter(item => item.slug === 'textbook').map((item): UnifiedCurationItem => ({
     id: `special-${item.slug}`,
     subtitle: item.subtitle,
     title: item.title,
@@ -153,6 +153,20 @@ export const SPECIAL_CURATIONS: UnifiedCurationItem[] = [
     slug: item.slug,
     category: 'special',
   })),
+  // 2. 칼데콧 (특수 기획 2위)
+  NON_TAXONOMY_SPECIALS[0],
+  // 3. 여름방학 (특수 기획 3위)
+  ...ALL_TAXONOMY.filter(item => item.slug === 'summer-vacation').map((item): UnifiedCurationItem => ({
+    id: `special-${item.slug}`,
+    subtitle: item.subtitle,
+    title: item.title,
+    marketingTitle: MARKETING_HOOKS[item.tag] || MARKETING_HOOKS[item.slug] || item.title,
+    tag: item.tag,
+    slug: item.slug,
+    category: 'special',
+  })),
+  // 4. 어린이도서연구회 (특수 기획 4위)
+  NON_TAXONOMY_SPECIALS[1],
 ];
 
 // 태그별 카테고리 매핑 규칙
@@ -277,36 +291,68 @@ export const SITUATION_PRESCRIPTIONS: SituationPrescription[] = [
     tags: [],
   },
   {
+    id: 'nature',
+    iconName: 'Leaf',
+    name: '초록 지구·환경',
+    title: '지구를 지키는 꼬마 환경지킴이',
+    description: '동식물 친구들과 아름다운 자연을 만나요.',
+    tags: ['환경보호', '자연관찰', '생명존중', '바다', '날씨', '곤충', '동물도감', '봄', '여름', '가을', '겨울', '동물', '식물'],
+  },
+  {
     id: 'sleep',
     iconName: 'Moon',
     name: '잠자리·수면',
-    title: '잠투정 없이 편안한 꿀잠 수면의식',
+    title: '밤마다 안 자려는 우리 아이에게',
     description: '포근한 동화로 평온한 밤과 꿀잠을 선물해요.',
     tags: ['잠자리'],
   },
   {
-    id: 'habits',
-    iconName: 'Sparkles',
-    name: '생활습관·청결',
-    title: '스스로 깨끗하고 바른 생활습관',
-    description: '스스로 실천하는 바른 생활 습관을 익혀요.',
-    tags: ['생활습관', '미디어', '경제', '요리', '패션', '신체활동'],
-  },
-  {
-    id: 'self_esteem',
-    iconName: 'Heart',
-    name: '자존감·자신감',
-    title: '기죽지 않고 단단한 마음과 용기',
-    description: '포기하지 않는 단단한 마음과 용기를 키워요.',
-    tags: ['자존감', '용기', '끈기', '행복'],
+    id: 'arts',
+    iconName: 'Palette',
+    name: '정겨운 명절',
+    title: '떡국부터 송편까지 우리 명절',
+    description: '명절과 전통문화, 풍부한 예술 감성을 배워요.',
+    tags: ['명절', '세계역사', '전통놀이', '명화', '예술감성', '역사이야기', '건축', '연극', '음악', '스포츠'],
   },
   {
     id: 'emotions',
     iconName: 'Smile',
-    name: '감정표현·마음',
-    title: '벅찬 감정을 다독이고 표현하기',
+    name: '상실과 위로',
+    title: '슬픔과 이별을 다독이는 다정한 위로',
     description: '다양한 감정을 이해하고 마음을 다독여줘요.',
-    tags: ['분노조절', '두려움', '질투', '슬픔', '위로', '용서'],
+    tags: ['상실', '분노조절', '두려움', '위로', '질투', '슬픔', '용서'],
+  },
+  {
+    id: 'imagination',
+    iconName: 'Lightbulb',
+    name: '상상·창의력',
+    title: '무한한 상상력과 흥미진진한 모험',
+    description: '무한한 상상력과 흥미진진한 모험을 떠나요.',
+    tags: ['상상력', '모험', '판타지', '유머', '추리', '미래상상', '하늘', '괴물', '미래도시'],
+  },
+  {
+    id: 'language',
+    iconName: 'BookOpen',
+    name: '우리 문화 유산',
+    title: '슬기와 지혜가 깃든 자랑스러운 우리 문화',
+    description: '풍부한 어휘력과 옛이야기 지혜를 배워요.',
+    tags: ['우리문화', '한글', '전래동화', '글쓰기'],
+  },
+  {
+    id: 'diversity',
+    iconName: 'Globe',
+    name: '다름과 존중',
+    title: '틀림이 아닌 다름, 편견 없는 시선',
+    description: '서로의 다름을 존중하며 넓은 시선을 배워요.',
+    tags: ['장애', '다문화', '다양성', '양성평등'],
+  },
+  {
+    id: 'curated_hall',
+    iconName: 'Award',
+    name: '교과서·수상작',
+    title: '전문가와 교과서가 검증한 필독서',
+    description: '교과서 수록도서와 검증된 추천 필독서예요.',
+    tags: ['교과서수록', '칼데콧', '여름방학2026', '어린이도서연구회'],
   },
   {
     id: 'social',
@@ -317,44 +363,20 @@ export const SITUATION_PRESCRIPTIONS: SituationPrescription[] = [
     tags: ['적응', '사회성', '우정', '배려', '나눔', '규칙', '의사소통'],
   },
   {
-    id: 'family',
-    iconName: 'Home',
-    name: '가족·이웃',
-    title: '가장 따뜻한 가족 사랑과 이웃',
-    description: '가족의 소중함과 따뜻한 이웃 사랑을 전해요.',
-    tags: ['가족사랑', '이웃', '평화'],
+    id: 'self_esteem',
+    iconName: 'Heart',
+    name: '자존감·자신감',
+    title: '기죽지 않고 단단한 마음과 용기',
+    description: '포기하지 않는 단단한 마음과 용기를 키워요.',
+    tags: ['자존감', '용기', '끈기', '행복'],
   },
   {
-    id: 'diversity',
-    iconName: 'Globe',
-    name: '다양성·존중',
-    title: '편견 없이 세상을 품는 넓은 시선',
-    description: '서로의 다름을 존중하며 넓은 시선을 배워요.',
-    tags: ['다양성', '다문화', '장애', '양성평등'],
-  },
-  {
-    id: 'language',
-    iconName: 'BookOpen',
-    name: '언어·문해력',
-    title: '말놀이 재미와 소중한 우리 한글',
-    description: '풍부한 어휘력과 옛이야기 지혜를 배워요.',
-    tags: ['한글', '글쓰기', '전래동화', '우리문화'],
-  },
-  {
-    id: 'imagination',
-    iconName: 'Lightbulb',
-    name: '상상·창의력',
-    title: '기발한 상상력과 흥미진진한 모험',
-    description: '무한한 상상력과 흥미진진한 모험을 떠나요.',
-    tags: ['상상력', '모험', '판타지', '유머', '추리', '하늘', '괴물', '미래상상', '미래도시'],
-  },
-  {
-    id: 'nature',
-    iconName: 'Leaf',
-    name: '자연·생태',
-    title: '초록 지구와 살아 숨 쉬는 자연',
-    description: '동식물 친구들과 아름다운 자연을 만나요.',
-    tags: ['자연관찰', '동물', '식물', '곤충', '환경보호', '바다', '날씨', '동물도감', '봄', '여름', '가을', '겨울', '생명존중'],
+    id: 'habits',
+    iconName: 'Sparkles',
+    name: '생활습관·청결',
+    title: '스스로 깨끗하고 바른 생활습관',
+    description: '스스로 실천하는 바른 생활 습관을 익혀요.',
+    tags: ['생활습관', '미디어', '경제', '요리', '패션', '신체활동'],
   },
   {
     id: 'science',
@@ -362,23 +384,15 @@ export const SITUATION_PRESCRIPTIONS: SituationPrescription[] = [
     name: '과학·탐구',
     title: '공룡부터 우주까지 신나는 탐구',
     description: '우주와 과학 원리로 탐구 호기심을 채워요.',
-    tags: ['공룡', '우주', '인체', '과학원리', '수학', '발명', '인공지능', '코딩', '인문지리'],
+    tags: ['과학원리', '수학', '우주', '인체', '공룡', '발명', '인공지능', '코딩', '인문지리'],
   },
   {
-    id: 'arts',
-    iconName: 'Palette',
-    name: '예술·감성',
-    title: '풍부한 예술 감성과 아름다운 명화',
-    description: '명화와 음악으로 풍부한 예술 감성을 키워요.',
-    tags: ['예술감성', '명화', '음악', '연극', '건축', '세계역사', '역사이야기', '명절', '전통놀이', '스포츠'],
-  },
-  {
-    id: 'curated_hall',
-    iconName: 'Award',
-    name: '교과서·수상작',
-    title: '전문가와 교과서가 검증한 필독서',
-    description: '교과서 수록도서와 검증된 추천 필독서예요.',
-    tags: ['교과서수록', '칼데콧', '어린이도서연구회', '여름방학2026'],
+    id: 'family',
+    iconName: 'Home',
+    name: '가족·이웃',
+    title: '가장 따뜻한 가족 사랑과 이웃',
+    description: '가족의 소중함과 따뜻한 이웃 사랑을 전해요.',
+    tags: ['가족사랑', '이웃', '평화'],
   },
 ];
 

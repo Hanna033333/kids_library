@@ -20,13 +20,13 @@ export interface ThemeTab {
 }
 
 export const POPULAR_THEME_TABS: ThemeTab[] = [
+  { id: 'eco', label: '초록 지구·환경', tag: '환경보호', subtitle: '지구를 지키는 꼬마 환경지킴이' },
   { id: 'sleep', label: '잠자리·수면', tag: '잠자리', subtitle: '밤마다 안 자려는 우리 아이에게' },
-  { id: 'habits', label: '생활습관·청결', tag: '생활습관', subtitle: '스스로 실천하는 바른 생활 습관' },
-  { id: 'self-esteem', label: '자존감·자신감', tag: '자존감', subtitle: '기 죽지 않고 단단하게 자라도록' },
-  { id: 'emotion', label: '감정표현·마음', tag: '감정조절', subtitle: '폭발하는 감정을 다스리는 지혜' },
-  { id: 'social', label: '친구·사회성', tag: '사회성', subtitle: '친구랑 더 재미있게 놀고 싶을 때' },
-  { id: 'family', label: '가족·이웃', tag: '가족사랑', subtitle: '세상에서 가장 따뜻한 품' },
+  { id: 'holiday', label: '정겨운 명절', tag: '명절', subtitle: '떡국부터 송편까지 우리 명절' },
+  { id: 'loss', label: '상실과 위로', tag: '상실', subtitle: '슬픔과 이별을 다독이는 다정한 위로' },
   { id: 'imagination', label: '상상·창의력', tag: '상상력', subtitle: '무한한 상상력과 흥미진진한 모험' },
+  { id: 'culture', label: '우리 문화 유산', tag: '우리문화', subtitle: '슬기와 지혜가 깃든 자랑스러운 우리 문화' },
+  { id: 'inclusion', label: '다름과 존중', tag: '장애', subtitle: '틀림이 아닌 다름, 편견 없는 시선' },
 ]
 
 interface ThemeCurationShowcaseProps {
@@ -36,7 +36,7 @@ interface ThemeCurationShowcaseProps {
 }
 
 export default function ThemeCurationShowcase({
-  initialTab = 'sleep',
+  initialTab = 'eco',
   initialBooks,
   bgColor = 'bg-muted-bg'
 }: ThemeCurationShowcaseProps) {
@@ -129,7 +129,7 @@ export default function ThemeCurationShowcase({
           </h2>
         </div>
 
-        {/* 밀리의 서재 스타일 가로 스크롤 탭 바 (+ 50개 테마 더보기 칩 포함) */}
+        {/* 밀리의 서재 스타일 가로 스크롤 탭 바 (+ 전체 테마 '>' 버튼) */}
         <div className="overflow-x-auto scrollbar-hide -mx-4 mb-6">
           <div className="flex items-center gap-2 pb-1 pl-6 w-max min-w-full">
             {POPULAR_THEME_TABS.map(tab => {
@@ -149,11 +149,11 @@ export default function ThemeCurationShowcase({
               )
             })}
 
-            {/* 전체 테마 더보기 '>' 아이콘 버튼 (최소 48x48px 터치 규격) */}
+            {/* 전체 테마 더보기 '>' 아이콘 버튼 */}
             <Link
               href="/collections"
               onClick={() => sendGAEvent('click_theme_showcase_more_chip')}
-              className="shrink-0 w-12 h-12 rounded-full bg-white border border-gray-200/80 flex items-center justify-center text-gray-400 active:text-gray-900 active:bg-gray-100 transition-all cursor-pointer active:scale-95 shadow-sm"
+              className="shrink-0 w-10 h-10 rounded-full bg-white border border-gray-200/80 flex items-center justify-center text-gray-400 active:text-gray-900 active:bg-gray-100 transition-all cursor-pointer active:scale-95 shadow-sm"
               aria-label="전체 테마 더보기"
             >
               <ChevronRight className="w-5 h-5" />
