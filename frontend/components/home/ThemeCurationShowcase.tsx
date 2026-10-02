@@ -119,13 +119,13 @@ export default function ThemeCurationShowcase({
   return (
     <section className={`py-8 px-4 ${bgColor}`}>
       <div className="max-w-[1200px] mx-auto">
-        {/* 섹션 헤더 (2단 타이틀만 깔끔하게 노출) */}
+        {/* 섹션 헤더 (우리 아이 맞춤 그림책 처방전 고정) */}
         <div className="mb-6 px-2">
           <span className="text-[13px] font-semibold text-gray-500 tracking-tight">
-            아이의 마음과 호기심을 채우는
+            잠투정부터 사회성까지, 아이 상황에 딱 맞는
           </span>
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight mt-1">
-            50+ 전문 테마 큐레이션
+            우리 아이 맞춤 그림책 처방전
           </h2>
         </div>
 

@@ -38,7 +38,7 @@ export const SPOTLIGHT_BANNERS: BannerItem[] = [
   },
   {
     id: 'prescription',
-    titleLines: ['우리 아이 맞춤 책', '상황별 50+ 처방전'],
+    titleLines: ['우리 아이 맞춤', '그림책 처방전'],
     subtitle: '잠투정, 훈육, 사회성... 우리 아이 맞춤 큐레이션',
     href: '/collections',
     slug: 'collections',
