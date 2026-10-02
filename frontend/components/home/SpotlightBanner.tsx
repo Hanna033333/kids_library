@@ -24,6 +24,21 @@ export interface BannerItem {
 
 export const SPOTLIGHT_BANNERS: BannerItem[] = [
   {
+    id: 'library',
+    badge: '도서관 헛걸음 방지',
+    titleLines: ['도서관 가기 전 3초', '지금 대출 가능할까?'],
+    subtitle: '자주 가는 도서관의 실시간 대출 상태와 청구기호 즉시 조회',
+    href: '/my-library',
+    slug: 'my-library',
+    coverImage: 'https://image.aladin.co.kr/product/7848/68/cover500/k252434524_2.jpg',
+    // 책자리 메인 브랜드 컬러: #F59E0B
+    bgColor: 'bg-[#F59E0B]',
+    glowColor: 'bg-amber-200/35',
+    titleColor: 'text-white',
+    subColor: 'text-white/95 font-medium',
+    badgeClass: 'bg-black/20 text-white border-white/25 font-bold',
+  },
+  {
     id: 'prescription',
     badge: '50+ 전문 테마 큐레이션',
     titleLines: ['우리 아이 맞춤 책', '상황별 50+ 처방전'],
@@ -58,21 +73,6 @@ export const SPOTLIGHT_BANNERS: BannerItem[] = [
     // MSF Green (Primary): #00B487
     bgColor: 'bg-[#00B487]',
     glowColor: 'bg-emerald-200/30',
-    titleColor: 'text-white',
-    subColor: 'text-white/95 font-medium',
-    badgeClass: 'bg-black/20 text-white border-white/25 font-bold',
-  },
-  {
-    id: 'library',
-    badge: '도서관 헛걸음 방지',
-    titleLines: ['도서관 가기 전 3초', '지금 대출 가능할까?'],
-    subtitle: '자주 가는 도서관의 실시간 대출 상태와 청구기호 즉시 조회',
-    href: '/my-library',
-    slug: 'my-library',
-    coverImage: 'https://image.aladin.co.kr/product/7848/68/cover500/k252434524_2.jpg',
-    // 책자리 메인 브랜드 컬러: #F59E0B
-    bgColor: 'bg-[#F59E0B]',
-    glowColor: 'bg-amber-200/35',
     titleColor: 'text-white',
     subColor: 'text-white/95 font-medium',
     badgeClass: 'bg-black/20 text-white border-white/25 font-bold',
