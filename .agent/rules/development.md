@@ -99,8 +99,10 @@ trigger: always_on
     - 데이터 처리 및 AI 스크립트 작성 시 `backend/.env` 경로를 자동으로 탐색하도록 상위 경로 폴백(`Path(__file__).resolve().parents[2] / ".env"`) 처리를 적용한다.
 40. **AWS 환경변수 수정 안내 트러블슈팅**:
     - 사용자 화면/로그상 이미 AWS SSH 터미널에 접속된 상태(`ubuntu@...`)인 경우 로컬 `scp` 명령어 안내를 지양하고, 서버 내부 직수정(`nano ~/kids_library/backend/.env`) 후 `sudo systemctl restart fastapi.service` 안내를 우선 제공한다.
-41. **도서관 청구기호 수집 시 메인 테이블 동기화 (Callno Synchronization)**:
-    - `book_library_info` 테이블에 도서관별 청구기호를 수집/적재할 때, 프론트/백엔드 목록 및 검색 쿼리(`getBooksFromSupabase`, `search_books_service`)의 `pangyo_callno IS NOT NULL & != '없음'` 필터 조건을 만족할 수 있도록 메인 테이블인 `childbook_items.pangyo_callno` 컬럼에도 대표 청구기호(판교도서관 우선, 미소장 시 최초 발견 도서관 청구기호)를 반드시 함께 동기화(Upsert)해야 한다.
+41. **공공도서관 실소장 도서 엄격 원칙 및 청구기호 동기화 (Strict Real-holding Callno Policy)**:
+    - **가상/임의 청구기호 생성 절대 금지**: 연동된 공공도서관에 소장되지 않은 도서에 대해 전국 표준 KDC 분류나 임의의 청구기호를 생성하여 강제로 노출시켜서는 안 된다. 실제 도서관에 없는 책이 노출되면 유저가 헛걸음하게 되어 서비스 신뢰도를 치명적으로 훼손한다.
+    - **미소장 도서 미노출 원칙**: 연동된 모든 공공도서관에서 미소장인 도서는 `childbook_items.pangyo_callno = NULL` 상태를 유지하여 검색 및 큐레이션 목록에서 자연스럽게 노출되지 않도록(제외) 처리한다.
+    - **실소장 청구기호 동기화**: `book_library_info`에 실제로 수집된 실존 청구기호가 존재할 때만, 판교도서관 청구기호(1순위) 또는 최초 발견된 연동 도서관의 실존 청구기호(2순위)를 메인 테이블인 `childbook_items.pangyo_callno`에 동기화(Upsert)한다.
 42. **큐레이션 건강검진(check_curation_health.py) 실시간 필터 일치화**:
     - `backend/scripts/check_curation_health.py`의 수량 집계 로직은 프론트엔드/백엔드 실제 도서 목록 쿼리와 100% 동일하게 `pangyo_callno IS NOT NULL` 및 `pangyo_callno != '없음'` 조건을 필수로 포함하여 False Positive(실제 목록에서 0건인데 건강검진에서는 통과로 오판하는 현상)를 원천 차단한다.
 43. **Vercel Preview 브랜치 ISR 캐시 트러블슈팅 규칙**:
