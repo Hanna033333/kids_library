@@ -81,3 +81,4 @@ backend/scripts/analysis/
 backend/scripts/data/enrich_descriptions.py
 ga_report_*.txt
 output/
+scratch/

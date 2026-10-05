@@ -141,6 +141,10 @@ export default async function BooksPage({ searchParams }: Props) {
     const tag = rawTag ? decodeURIComponent(rawTag) : undefined
     let jsonLd = null;
 
+    const searchEntries = Object.entries(searchParams).filter(([_, v]) => v !== undefined) as [string, string][]
+    const queryString = new URLSearchParams(searchEntries).toString()
+    const pageKey = queryString || 'default'
+
     // curation 값이 있고, 알려진 큐레이션 태그인 경우 서버 사이드에서 데이터를 가져와 구조화된 데이터 생성
     const isKnownCuration = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', 'textbook', '교과서수록'].includes(curation || '') || 
                             (curation && VALID_AI_TAGS.includes(curation));
@@ -167,9 +171,6 @@ export default async function BooksPage({ searchParams }: Props) {
         }
 
         const { data: books } = await query.order('title', { ascending: true })
-
-        const searchEntries = Object.entries(searchParams).filter(([_, v]) => v !== undefined) as [string, string][]
-        const queryString = new URLSearchParams(searchEntries).toString()
 
         if (books && books.length > 0) {
             jsonLd = {
@@ -207,7 +208,7 @@ export default async function BooksPage({ searchParams }: Props) {
                 />
             )}
             <Suspense fallback={<PageLoader />}>
-                <BooksPageClient />
+                <BooksPageClient key={pageKey} />
             </Suspense>
         </>
     );

@@ -11,6 +11,7 @@ import {
   UnifiedCurationItem,
   SITUATION_PRESCRIPTIONS,
   SituationPrescription,
+  findCurationByTag,
 } from '@/lib/constants/curation-categories';
 import { CURATION_THEME_SAMPLES } from '@/lib/constants/curation-samples';
 import { CURATION_DOMINANT_COLORS } from '@/lib/constants/curation-colors';
@@ -36,17 +37,53 @@ export default function CollectionsPageClient() {
     );
   }, [selectedSituation]);
 
+  // '전체' 탭일 때도 상단 탭 및 각 탭별 태그 정의 순서대로 정렬된 큐레이션 리스트
+  const allOrderedCurations = useMemo(() => {
+    const items: UnifiedCurationItem[] = [];
+    const addedIds = new Set<string | number>();
+
+    SITUATION_PRESCRIPTIONS.forEach((prescription) => {
+      if (prescription.id === 'all') return;
+      prescription.tags.forEach((tag) => {
+        const item = findCurationByTag(tag);
+        if (item && !addedIds.has(item.id)) {
+          items.push(item);
+          addedIds.add(item.id);
+        }
+      });
+    });
+
+    // SITUATION_PRESCRIPTIONS에 미포함된 항목이 있다면 UNIFIED_TAXONOMY 순서로 끝에 추가
+    UNIFIED_TAXONOMY.forEach((item) => {
+      if (!addedIds.has(item.id)) {
+        items.push(item);
+        addedIds.add(item.id);
+      }
+    });
+
+    return items;
+  }, []);
+
   const filteredCurations = useMemo(() => {
     if (selectedSituation === 'all') {
-      return UNIFIED_TAXONOMY;
+      return allOrderedCurations;
     }
     const current = SITUATION_PRESCRIPTIONS.find((p) => p.id === selectedSituation);
-    if (!current || current.tags.length === 0) return UNIFIED_TAXONOMY;
+    if (!current || current.tags.length === 0) return allOrderedCurations;
 
-    return UNIFIED_TAXONOMY.filter((item) =>
-      current.tags.some((t) => t === item.tag || t === item.slug)
-    );
-  }, [selectedSituation]);
+    const items: UnifiedCurationItem[] = [];
+    const addedIds = new Set<string | number>();
+
+    current.tags.forEach((tag) => {
+      const item = findCurationByTag(tag);
+      if (item && !addedIds.has(item.id)) {
+        items.push(item);
+        addedIds.add(item.id);
+      }
+    });
+
+    return items;
+  }, [selectedSituation, allOrderedCurations]);
 
   const handleSituationSelect = (prescription: SituationPrescription) => {
     setSelectedSituation(prescription.id);
@@ -184,7 +221,7 @@ export default function CollectionsPageClient() {
                           </div>
 
                           {/* 15자 이내 마케팅 훅 타이틀 (말줄임표 없이 완결된 문구로 시원하게 노출) */}
-                          <h3 className="text-[17.5px] sm:text-[21px] md:text-[23px] font-bold leading-[1.28] text-white tracking-tight break-keep">
+                          <h3 className="text-[17.5px] sm:text-[21px] md:text-[23px] font-bold leading-[1.28] text-white tracking-tight break-keep drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.55)]">
                             {displayTitle}
                           </h3>
                         </div>
