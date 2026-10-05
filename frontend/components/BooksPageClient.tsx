@@ -17,6 +17,7 @@ import IntegratedFilterModal from "@/components/IntegratedFilterModal";
 import BackButton from "@/components/BackButton";
 import { ALL_TAXONOMY } from "@/lib/constants/taxonomy";
 import { cleanCurationTag } from "@/lib/utils/curation-filter";
+import { PageLoader } from "@/components/ui/PageLoader";
 
 interface BooksPageClientProps {
     overrideCuration?: string;
@@ -65,30 +66,28 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         return { cleanTag: cleanCurationTag(rawCuration), extraAge: '', extraTag: '', extraSort: '' };
     };
 
-    const initialRawCuration = overrideCuration || searchParams.get('curation') || "";
-    const parsedInitialCuration = parseCurationParams(initialRawCuration);
+    const rawRouteCuration = overrideCuration || searchParams.get('curation') || "";
+    const parsedRouteCuration = parseCurationParams(rawRouteCuration);
+    const routeSearchQuery = searchParams.get('q') || "";
+    const routeAuthorFilter = searchParams.get('author') ? decodeURIComponent(searchParams.get('author')!) : "";
+    const routeAgeFilter = normalizeAge(overrideAge || searchParams.get('age') || parsedRouteCuration.extraAge || "");
+    const routeCurationFilter = parsedRouteCuration.cleanTag;
+    const rawRouteTag = searchParams.get('tag') ? decodeURIComponent(searchParams.get('tag')!) : parsedRouteCuration.extraTag;
+    const routeTagFilter = normalizeGradeTag(rawRouteTag);
+    const routeSortFilter = searchParams.get('sort') || parsedRouteCuration.extraSort || (routeCurationFilter && !NON_AI_CURATIONS.includes(routeCurationFilter) ? 'confidence_score_desc' : 'pangyo_callno');
 
-    const rawInitialTag = searchParams.get('tag') ? decodeURIComponent(searchParams.get('tag')!) : parsedInitialCuration.extraTag;
-    const initialTag = normalizeGradeTag(rawInitialTag);
-    const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "");
-    const [authorFilter, setAuthorFilter] = useState(searchParams.get('author') || "");
-    const [ageFilter, setAgeFilter] = useState(normalizeAge(overrideAge || searchParams.get('age') || parsedInitialCuration.extraAge || ""));
-    const [curationFilter, setCurationFilter] = useState(parsedInitialCuration.cleanTag);
-    const [tagFilter, setTagFilter] = useState(initialTag);
+    const [searchQuery, setSearchQuery] = useState(routeSearchQuery);
+    const [authorFilter, setAuthorFilter] = useState(routeAuthorFilter);
+    const [ageFilter, setAgeFilter] = useState(routeAgeFilter);
+    const [curationFilter, setCurationFilter] = useState(routeCurationFilter);
+    const [tagFilter, setTagFilter] = useState(routeTagFilter);
     const [isSearchVisible, setIsSearchVisible] = useState(() => {
         return !!searchQuery || (!overrideCuration && !searchParams.get('curation') && !searchParams.get('age') && !searchParams.get('author'));
     });
     
     // AI 큐레이션은 기본적으로 신뢰도(confidence_score) 높은 순으로 정렬하여 홈 화면과 동일한 순서를 유지
     const [sortFilter, setSortFilter] = useState(() => {
-        const urlSort = searchParams.get('sort') || parsedInitialCuration.extraSort;
-        if (urlSort) return urlSort;
-        
-        const curation = parsedInitialCuration.cleanTag;
-        if (curation && !NON_AI_CURATIONS.includes(curation)) {
-            return 'confidence_score_desc';
-        }
-        return 'pangyo_callno';
+        return routeSortFilter;
     });
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const { user, signOut } = useAuth();
@@ -118,30 +117,19 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
 
     // URL 파라미터 변경 시 상태 동기화 (브라우저 뒤로가기/앞으로가기 대응)
     useEffect(() => {
-        const q = searchParams.get('q') || "";
-        const author = searchParams.get('author') ? decodeURIComponent(searchParams.get('author')!) : "";
-        const rawCuration = overrideCuration || searchParams.get('curation') || "";
-        const parsed = parseCurationParams(rawCuration);
+        setSearchQuery(routeSearchQuery);
+        setAuthorFilter(routeAuthorFilter);
+        setAgeFilter(routeAgeFilter);
+        setCurationFilter(routeCurationFilter);
+        setTagFilter(routeTagFilter);
+        setSortFilter(routeSortFilter);
 
-        const age = normalizeAge(overrideAge || searchParams.get('age') || parsed.extraAge || "");
-        const curation = parsed.cleanTag;
-        const rawTag = searchParams.get('tag') ? decodeURIComponent(searchParams.get('tag')!) : parsed.extraTag;
-        const tag = normalizeGradeTag(rawTag);
-        const sort = searchParams.get('sort') || parsed.extraSort || (curation && !NON_AI_CURATIONS.includes(curation) ? 'confidence_score_desc' : 'pangyo_callno');
-
-        setSearchQuery(q);
-        setAuthorFilter(author);
-        setAgeFilter(age);
-        setCurationFilter(curation);
-        setTagFilter(tag);
-        setSortFilter(sort);
-
-        if (author || curation || age) {
+        if (routeAuthorFilter || routeCurationFilter || routeAgeFilter) {
             setIsSearchVisible(false);
-        } else if (q || (!curation && !age && !tag && !author)) {
+        } else if (routeSearchQuery || (!routeCurationFilter && !routeAgeFilter && !routeTagFilter && !routeAuthorFilter)) {
             setIsSearchVisible(true);
         }
-    }, [searchParams, overrideAge, overrideCuration]);
+    }, [routeSearchQuery, routeAuthorFilter, routeAgeFilter, routeCurationFilter, routeTagFilter, routeSortFilter]);
 
     const POPULAR_THEME_CHIPS = [
         { label: '잠자리', tag: '잠자리' },
@@ -277,7 +265,20 @@ const stripEmoji = (text: string): string =>
     }
 
     // initialBooks는 초기 진입 조건(큐레이션 일치, 추가 필터 미적용 상태)에서만 전달
-    const currentInitialBooks = (initialBooks && initialBooks.length > 0 && curationFilter === (overrideCuration || parsedInitialCuration.cleanTag) && !searchQuery && !authorFilter && !ageFilter && !tagFilter)
+    const isRouteStateSynced =
+        searchQuery === routeSearchQuery &&
+        authorFilter === routeAuthorFilter &&
+        ageFilter === routeAgeFilter &&
+        curationFilter === routeCurationFilter &&
+        tagFilter === routeTagFilter &&
+        sortFilter === routeSortFilter;
+
+    // 같은 클라이언트 컴포넌트에서 URL만 바뀌는 순간, 이전 큐레이션 캐시가 한 프레임 노출되는 것을 차단한다.
+    if (!isRouteStateSynced) {
+        return <PageLoader />;
+    }
+
+    const currentInitialBooks = (initialBooks && initialBooks.length > 0 && curationFilter === (overrideCuration || parsedRouteCuration.cleanTag) && !searchQuery && !authorFilter && !ageFilter && !tagFilter)
         ? initialBooks
         : undefined;
 

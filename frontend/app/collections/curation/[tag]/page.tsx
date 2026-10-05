@@ -203,7 +203,7 @@ export default async function CurationPage({ params }: Props) {
 
             {/* useSearchParams() 사용에 따른 Next.js CSR Bailout 에러 차단을 위해 Suspense Boundary로 감싸기 */}
             <Suspense fallback={<PageLoader />}>
-                <BooksPageClient overrideCuration={curationTag} initialBooks={initialBooks} />
+                <BooksPageClient key={targetSlug} overrideCuration={curationTag} initialBooks={initialBooks} />
             </Suspense>
         </>
     );

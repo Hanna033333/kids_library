@@ -150,10 +150,10 @@ export default function BookList({
     return [...recommendedBooks, ...filteredMainBooks];
   }, [books, recommendedBooks, shouldFetchRecommended]);
 
-  // SSR initialBooks가 없을 때만 추천 도서 로딩을 대기하여 첫 로드 레이아웃 흔들림 방지 및 SSR 성능 보존
+  // 추천 도서(상단 7권)가 필요한 경우 추천 도서 쿼리까지 동기화하여 첫 로드 순서 덜컹거림 및 플리커링 원천 차단
   const isListLoading = !isMounted || (isSearchWaitingState
     ? isSearchWaitingRecommendedLoading
-    : (loading || (!initialBooks && shouldFetchRecommended && isRecommendedLoading)));
+    : (loading || (shouldFetchRecommended && isRecommendedLoading)));
 
   // 폴백 추천 도서 활성화 조건
   const isFallbackEnabled = isMounted && !isListLoading && displayBooks.length === 0 && !isSearchWaitingState;
