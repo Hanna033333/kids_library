@@ -715,7 +715,7 @@ export default function BookDetailClient({
                                 <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
                                     {curationRecommended.map((b) => (
                                         <div key={`curation-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
-                                            <BookCard book={b} />
+                                            <BookCard key={b.id} book={b} />
                                         </div>
                                     ))}
                                     <div className="shrink-0 w-0" aria-hidden="true" />
@@ -758,7 +758,7 @@ export default function BookDetailClient({
                                 <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
                                     {ageRecommended.map((b) => (
                                         <div key={`age-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
-                                            <BookCard book={b} />
+                                            <BookCard key={b.id} book={b} />
                                         </div>
                                     ))}
                                     <div className="shrink-0 w-0" aria-hidden="true" />
@@ -804,7 +804,7 @@ export default function BookDetailClient({
                                 <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
                                     {topicRecommended.map((b) => (
                                         <div key={`topic-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
-                                            <BookCard book={b} />
+                                            <BookCard key={b.id} book={b} />
                                         </div>
                                     ))}
                                     <div className="shrink-0 w-0" aria-hidden="true" />
@@ -831,9 +831,10 @@ export default function BookDetailClient({
                         </div>
                         <div className="overflow-x-auto scrollbar-hide -mx-6">
                             <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
+                                <div className="shrink-0 w-0" aria-hidden="true" />
                                 {authorRecommended.map((b) => (
                                     <div key={`author-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
-                                        <BookCard book={b} />
+                                        <BookCard key={b.id} book={b} />
                                     </div>
                                 ))}
                                 <div className="shrink-0 w-0" aria-hidden="true" />

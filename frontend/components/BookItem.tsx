@@ -2,7 +2,7 @@ import { Book, LoanStatus } from "@/lib/types";
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getAgeDisplayLabel } from "@/lib/utils/age";
 import { useLibrary } from "@/context/LibraryContext";
 import { sendGAEvent } from "@/lib/analytics";
@@ -24,7 +24,27 @@ interface BookItemProps {
 export default function BookItem({ book, loanStatus, showLibraryInfo = false, priority = false, excludeTag }: BookItemProps) {
   const { user } = useAuth();
   const { selectedLibrary } = useLibrary();
-  const [imgError, setImgError] = useState(false);
+  const initialCoverUrl = getOptimizedImageUrl(book.image_url, 'list');
+  const [imgSrc, setImgSrc] = useState<string>(initialCoverUrl);
+  const [imgError, setImgError] = useState(!initialCoverUrl);
+
+  // book.id 또는 image_url 변경 시 이미지 에러 상태 및 src 리셋 (SPA 이동/재사용 시 이미지 증발 방지)
+  useEffect(() => {
+    const nextUrl = getOptimizedImageUrl(book.image_url, 'list');
+    setImgSrc(nextUrl);
+    setImgError(!nextUrl);
+  }, [book.id, book.image_url]);
+
+  const handleImageError = () => {
+    // 1단계: cover200 실패 시 원본 image_url로 폴백
+    const fallback = book.image_url?.trim() || '';
+    if (fallback && imgSrc !== fallback) {
+      setImgSrc(fallback);
+    } else {
+      // 2단계: 원본도 실패 시 플레이스홀더 표시
+      setImgError(true);
+    }
+  };
 
   // 1. 이미지 위 메타 뱃지 (구체적인 학년 태그가 있으면 학년으로, 없으면 연령 라벨)
   const rawCurationTags = parseCurationTags(book.curation_tag);
@@ -78,8 +98,6 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
     ? nonGradeTags.filter((t) => t !== excludeTag).slice(0, 2)
     : nonGradeTags.slice(0, 2);
 
-  const coverUrl = getOptimizedImageUrl(book.image_url, 'list');
-
   return (
     <Link
       href={`/book/${book.id}`}
@@ -89,16 +107,17 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
     >
       {/* 1. 이미지 영역 (상단) */}
       <div className="relative w-full aspect-[1/1.1] bg-[#F9FAFB] overflow-hidden flex items-center justify-center">
-        {coverUrl && !imgError ? (
+        {imgSrc && !imgError ? (
           <Image
-            src={coverUrl}
+            key={`${book.id}-${imgSrc}`}
+            src={imgSrc}
             alt={book.title}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover transition-transform duration-300 group-active:scale-105"
             loading={priority ? 'eager' : 'lazy'}
             priority={priority}
-            onError={() => setImgError(true)}
+            onError={handleImageError}
           />
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full text-gray-300">

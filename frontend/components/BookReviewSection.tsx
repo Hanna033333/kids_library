@@ -491,7 +491,7 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
               </p>
             </div>
             <a
-              href="/login"
+              href="/auth"
               className="flex items-center justify-center gap-2 w-full h-12 bg-brand-primary active:bg-brand-primary-dark text-white font-bold text-base rounded-xl transition-colors shadow-xs"
             >
               <LogIn className="w-5 h-5" />

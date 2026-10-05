@@ -21,12 +21,13 @@ import { cleanCurationTag } from "@/lib/utils/curation-filter";
 interface BooksPageClientProps {
     overrideCuration?: string;
     overrideAge?: string;
+    initialBooks?: BooksResponse['data'];
 }
 
 // AI 큐레이션이 아닌 정적/특수 큐레이션 목록 (AI 신뢰도순 정렬 제외)
 const NON_AI_CURATIONS = ['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott', 'textbook', '교과서수록'];
 
-export default function BooksPageClient({ overrideCuration, overrideAge }: BooksPageClientProps) {
+export default function BooksPageClient({ overrideCuration, overrideAge, initialBooks }: BooksPageClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -275,6 +276,11 @@ const stripEmoji = (text: string): string =>
         }
     }
 
+    // initialBooks는 초기 진입 조건(큐레이션 일치, 추가 필터 미적용 상태)에서만 전달
+    const currentInitialBooks = (initialBooks && initialBooks.length > 0 && curationFilter === (overrideCuration || parsedInitialCuration.cleanTag) && !searchQuery && !authorFilter && !ageFilter && !tagFilter)
+        ? initialBooks
+        : undefined;
+
     return (
         <main className="min-h-screen">
             {/* Header */}
@@ -352,6 +358,7 @@ const stripEmoji = (text: string): string =>
                     curationFilter={curationFilter || undefined}
                     tagFilter={tagFilter || undefined}
                     sortFilter={sortFilter}
+                    initialBooks={currentInitialBooks}
                 />
             </div>
 

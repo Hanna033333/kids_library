@@ -14,6 +14,18 @@ const nextConfig = {
                 destination: '/collections/age/teen',
                 permanent: true,
             },
+            // Redirect /login to /auth
+            {
+                source: '/login',
+                destination: '/auth',
+                permanent: false,
+            },
+            // Redirect /signup to /auth/signup
+            {
+                source: '/signup',
+                destination: '/auth/signup',
+                permanent: false,
+            },
         ]
     },
     async headers() {
@@ -104,4 +116,10 @@ const nextConfig = {
     },
 };
 
-module.exports = nextConfig;
+const { PHASE_DEVELOPMENT_SERVER } = require('next/constants');
+
+module.exports = (phase) => ({
+    ...nextConfig,
+    // Keep production builds from overwriting a running development server's chunks.
+    distDir: phase === PHASE_DEVELOPMENT_SERVER ? '.next-dev' : '.next',
+});

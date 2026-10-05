@@ -2,9 +2,11 @@ import BooksPageClient from "@/components/BooksPageClient";
 import { Metadata } from 'next'
 import { VALID_TAXONOMY, VALID_AI_TAGS } from '@/lib/constants/taxonomy'
 import { createClient } from '@/lib/supabase-server'
+import { getBooksFromServer } from '@/lib/books-api-server'
 import { Suspense } from 'react'
 import { PageLoader } from '@/components/ui/PageLoader'
 import { notFound } from 'next/navigation'
+import { Book } from '@/lib/types'
 
 interface Props {
     params: Promise<{ tag: string }>
@@ -120,63 +122,55 @@ export default async function CurationPage({ params }: Props) {
 
     let jsonLd = null;
 
-    // Supabase 직접 조회를 통해 구조화된 데이터(JSON-LD ItemList) 생성 -> 봇 수집 극대화
+    // Supabase 직접 조회를 통해 구조화된 데이터(JSON-LD ItemList) 및 초기 데이터 생성
     const isKnownCuration = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '여름방학2026', 'textbook', '교과서수록'].includes(curationTag) || 
                             VALID_AI_TAGS.includes(curationTag);
                              
     if (!isKnownCuration) {
         notFound();
     }
-    if (curationTag && isKnownCuration) {
-        const supabase = createClient()
-        let query = supabase
-            .from('childbook_items')
-            .select('id, title, author, isbn, image_url')
-            .or('is_hidden.is.null,is_hidden.eq.false')
 
-        const SPECIAL_TAGS = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '겨울방학2026', '여름방학2026', '어린이도서연구회', 'textbook', '교과서수록'];
-        if (SPECIAL_TAGS.includes(curationTag)) {
-            let tagValue = curationTag;
-            if (curationTag === 'summer-vacation') {
-                tagValue = '여름방학2026';
-            } else if (curationTag === 'winter-vacation') {
-                tagValue = '겨울방학2026';
-            } else if (curationTag === 'textbook') {
-                tagValue = '교과서수록';
-            }
-            query = query.ilike('curation_tag', `%${tagValue}%`);
-        } else {
-            const orFilter = `curation_tag.eq."${curationTag}",curation_tag.like."${curationTag},%",curation_tag.eq."#${curationTag}",curation_tag.like."#${curationTag},%"`;
-            query = query.or(orFilter);
-        }
+    const supabase = createClient();
+    const isAiCuration = !['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '여름방학2026', 'textbook', '교과서수록'].includes(curationTag);
+    const defaultSort = isAiCuration ? 'confidence_score_desc' : 'pangyo_callno';
 
-        const { data: books } = await query.order('title', { ascending: true })
+    let initialBooks: Book[] = [];
+    try {
+        const { data: rawBooks } = await getBooksFromServer({
+            page: 1,
+            limit: 24,
+            filters: { curation: curationTag, sort: defaultSort },
+            client: supabase
+        });
+        initialBooks = (rawBooks as unknown as Book[]) || [];
+    } catch (err) {
+        console.error('Error fetching initial books for curation:', err);
+    }
 
-        if (books && books.length > 0) {
-            jsonLd = {
-                '@context': 'https://schema.org',
-                '@type': 'ItemList',
-                name: `${curationTag} 추천 도서 큐레이션 - 책자리`,
-                description: `${curationTag} 맞춤 도서 및 그림책 추천 목록`,
-                url: `https://checkjari.com/collections/curation/${encodeURIComponent(targetSlug)}`,
-                numberOfItems: books.length,
-                itemListElement: books.map((book, index) => ({
-                    '@type': 'ListItem',
-                    position: index + 1,
-                    item: {
-                        '@type': 'Book',
-                        name: book.title,
-                        author: {
-                            '@type': 'Person',
-                            name: book.author || '저자 미상',
-                        },
-                        isbn: book.isbn || '',
-                        image: book.image_url || '',
-                        url: `https://checkjari.com/book/${book.id}`,
+    if (initialBooks.length > 0) {
+        jsonLd = {
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            name: `${curationTag} 추천 도서 큐레이션 - 책자리`,
+            description: `${curationTag} 맞춤 도서 및 그림책 추천 목록`,
+            url: `https://checkjari.com/collections/curation/${encodeURIComponent(targetSlug)}`,
+            numberOfItems: initialBooks.length,
+            itemListElement: initialBooks.slice(0, 10).map((book, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                item: {
+                    '@type': 'Book',
+                    name: book.title,
+                    author: {
+                        '@type': 'Person',
+                        name: book.author || '저자 미상',
                     },
-                })),
-            }
-        }
+                    isbn: book.isbn || '',
+                    image: book.image_url || '',
+                    url: `https://checkjari.com/book/${book.id}`,
+                },
+            })),
+        };
     }
 
     return (
@@ -209,7 +203,7 @@ export default async function CurationPage({ params }: Props) {
 
             {/* useSearchParams() 사용에 따른 Next.js CSR Bailout 에러 차단을 위해 Suspense Boundary로 감싸기 */}
             <Suspense fallback={<PageLoader />}>
-                <BooksPageClient overrideCuration={curationTag} />
+                <BooksPageClient overrideCuration={curationTag} initialBooks={initialBooks} />
             </Suspense>
         </>
     );
