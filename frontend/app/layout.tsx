@@ -64,6 +64,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
+      <head>
+        <link rel="preconnect" href="https://image.aladin.co.kr" />
+        <link rel="dns-prefetch" href="https://image.aladin.co.kr" />
+      </head>
       <body className="bg-[#F7F7F7] min-h-screen text-gray-900 overflow-x-hidden">
         {/* Google Analytics 차단 최우선 처리 스크립트 (동기식 실행하여 경쟁 상태 해결) */}
         <script
