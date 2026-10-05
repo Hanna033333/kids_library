@@ -1,29 +1,22 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-import { Search, Bookmark, LogOut, ChevronRight, Bell, Snowflake, BookOpen, User } from 'lucide-react'
-import { getBooksByAge, getResearchCouncilBooks, getWinterBooks, getSummerBooks } from '@/lib/home-api'
+import { Search, Bell, User } from 'lucide-react'
+import { getResearchCouncilBooks, getSummerBooks } from '@/lib/home-api'
 import { type Book } from '@/lib/types'
 import { useAuth } from '@/context/AuthContext'
-import LibrarySelector from '@/components/LibrarySelector'
-import { useLibrary } from '@/context/LibraryContext'
 import Footer from '@/components/Footer'
-import { getAgeDisplayLabel } from '@/lib/utils/age'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import { sendGAEvent } from '@/lib/analytics'
 import Toast from '@/components/ui/Toast'
 import UserAvatar from '@/components/UserAvatar'
-import Image from 'next/image'
-import { getOptimizedImageUrl } from '@/lib/utils/image'
-import { PageLoader } from '@/components/ui/PageLoader'
 import CurationSection from '@/components/home/CurationSection'
 import TextbookCurationShowcase from '@/components/home/TextbookCurationShowcase'
 import ThemeCurationShowcase from '@/components/home/ThemeCurationShowcase'
 import SpotlightBanner from '@/components/home/SpotlightBanner'
-import BookCard from '@/components/home/BookCard'
 import { isSummerCurationActive } from '@/lib/utils/curation-filter'
 import { getCurationMoreLink } from '@/lib/utils/curation-link'
 import latestNotice from '@/shared/latest_notice.json'
@@ -38,57 +31,25 @@ interface DynamicCuration {
 interface HomePageClientProps {
   initialCaldecottBooks?: Book[];
   initialResearchBooks?: Book[];
-  initialAgeBooks?: Book[];
   initialSummerBooks?: Book[];
   initialTextbookBooks?: Book[];
-  initialSelectedAge?: string;
+  initialThemeBooks?: Book[];
   dynamicCurations?: DynamicCuration[];
 }
 
 export default function HomePageClient({
   initialCaldecottBooks = [],
   initialResearchBooks = [],
-  initialAgeBooks = [],
   initialSummerBooks = [],
   initialTextbookBooks = [],
-  initialSelectedAge = '4-7',
+  initialThemeBooks = [],
   dynamicCurations = []
 }: HomePageClientProps) {
   const router = useRouter()
-  const { user, signOut } = useAuth()
-  const [searchQuery, setSearchQuery] = useState('')
-
-  // useState lazy initializer: 렌더링 전에 localStorage에서 연령을 복원하여
-  // useEffect에서의 상태 업데이트 → 재렌더링 → 재조회 race condition을 원천 차단
-  const [selectedAge, setSelectedAge] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('lastSelectedAge') || initialSelectedAge
-    }
-    return initialSelectedAge
-  })
-  const isInitialRender = useRef(true)
-
-  // ageBooks & loading도 lazy initializer로 동기화:
-  // localStorage 복원된 나이와 SSR 데이터 나이가 다르면 초기 데이터를 비워서 정상 조회 유도
-  const [ageBooks, setAgeBooks] = useState<Book[]>(() => {
-    if (typeof window !== 'undefined') {
-      const storedAge = localStorage.getItem('lastSelectedAge') || initialSelectedAge
-      return storedAge === initialSelectedAge ? initialAgeBooks : []
-    }
-    return initialAgeBooks
-  })
+  const { user } = useAuth()
   const [researchBooks, setResearchBooks] = useState<Book[]>(initialResearchBooks)
   const [caldecottBooks] = useState<Book[]>(initialCaldecottBooks)
   const [summerBooks, setSummerBooks] = useState<Book[]>(initialSummerBooks)
-
-  // 초기 데이터가 있으면 로딩 상태 false
-  const [loading, setLoading] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const storedAge = localStorage.getItem('lastSelectedAge') || initialSelectedAge
-      return storedAge !== initialSelectedAge || initialAgeBooks.length === 0
-    }
-    return initialAgeBooks.length === 0
-  })
 
   // 회원 탈퇴 팝업 상태
   const [isWithdrawnPopupOpen, setIsWithdrawnPopupOpen] = useState(false)
@@ -107,31 +68,6 @@ export default function HomePageClient({
       }
     }
   }, [])
-
-  // 연령별 책 로드 (초기 데이터가 있고 연령이 초기값과 같으면 스킵)
-  useEffect(() => {
-    // 첫 렌더링 시점에만 SSR 데이터가 있고 선택 연령이 초기 연령과 같으면 페칭 스킵
-    if (isInitialRender.current) {
-      isInitialRender.current = false
-      if (ageBooks.length > 0 && selectedAge === initialSelectedAge) {
-        setLoading(false)
-        return
-      }
-    }
-
-    setLoading(true)
-    getBooksByAge(selectedAge, 7).then(books => {
-      setAgeBooks(books)
-      setLoading(false)
-    })
-  }, [selectedAge, initialSelectedAge]) // ageBooks 의존성 제거 (무한 루프 방지)
-
-  // 연령 선택 시 localStorage에 저장
-  useEffect(() => {
-    if (selectedAge && typeof window !== 'undefined') {
-      localStorage.setItem('lastSelectedAge', selectedAge)
-    }
-  }, [selectedAge])
 
   // 도서 연구회 책 로드 (초기 데이터 없으면 로드)
   useEffect(() => {
@@ -155,17 +91,6 @@ export default function HomePageClient({
     }
   }, []) // winterBooks 의존성 제거
   */
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      sendGAEvent('home_search', { search_term: searchQuery, keyword: searchQuery })
-      sendGAEvent('search', { search_term: searchQuery, keyword: searchQuery })
-      router.push(`/books?q=${encodeURIComponent(searchQuery)}`)
-    } else {
-      router.push('/books')
-    }
-  }
 
   return (
     <main className="min-h-screen bg-muted-bg">
@@ -234,7 +159,7 @@ export default function HomePageClient({
       ))}
 
       {/* 2. 50+ 전문 테마 큐레이션 모음 (우리 아이 맞춤 그림책 처방전 쇼케이스) */}
-      <ThemeCurationShowcase bgColor={dynamicCurations.length % 2 === 0 ? 'bg-white' : 'bg-muted-bg'} />
+      <ThemeCurationShowcase initialBooks={initialThemeBooks} bgColor={dynamicCurations.length % 2 === 0 ? 'bg-white' : 'bg-muted-bg'} />
 
       {/* 3. 📖 2022 개정 교과서 수록도서 쇼케이스 (학년별 가로 스크롤 탭) */}
       <TextbookCurationShowcase initialBooks={initialTextbookBooks} bgColor={dynamicCurations.length % 2 === 0 ? 'bg-muted-bg' : 'bg-white'} />

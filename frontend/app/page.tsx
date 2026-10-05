@@ -1,9 +1,9 @@
 import { Metadata } from 'next'
 import HomePageClient from '@/components/HomePageClient'
-import { getResearchCouncilBooks, getBooksByAge, getBooksByTag, getSummerBooks, getTextbookBooks } from '@/lib/home-api'
+import { getResearchCouncilBooks, getBooksByTag, getSummerBooks, getTextbookBooks } from '@/lib/home-api'
 import { getCaldecottBooks } from '@/lib/caldecott-api'
 import { createClient } from '@/lib/supabase'
-import { VALID_TAXONOMY, CurationTag } from '@/lib/constants/taxonomy'
+import { CurationTag } from '@/lib/constants/taxonomy'
 import weeklySchedule from '../shared/weekly_schedule.json'
 
 import { isSummerCurationActive } from '@/lib/utils/curation-filter'
@@ -50,7 +50,6 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const supabase = createClient()
-  const defaultAge = '4-7'
 
   // KST (UTC+9) 날짜 구하기
   const now = new Date()
@@ -81,12 +80,12 @@ export default async function HomePage() {
   }
 
   // 서버 사이드 병렬 데이터 페칭 (홈 화면에서는 도서관 소장 정보 조인을 생략하여 TTFB 단축)
-  const [researchBooks, ageBooks, caldecottBooks, summerBooks, textbookBooks, ...dynamicBooks] = await Promise.all([
+  const [researchBooks, caldecottBooks, summerBooks, textbookBooks, themeBooks, ...dynamicBooks] = await Promise.all([
     getResearchCouncilBooks(7, supabase, false, true),
-    getBooksByAge(defaultAge, 7, supabase, false, true),
     getCaldecottBooks(supabase, false, true),
     isSummerCurationActive() ? getSummerBooks(7, supabase, false, true) : Promise.resolve([]),
     getTextbookBooks(undefined, 6, supabase, false, true),
+    getBooksByTag('환경보호', 7, supabase, false, true),
     ...selectedTags.map(t => getBooksByTag(t.tag, 7, supabase, false, true))
   ])
 
@@ -144,10 +143,9 @@ export default async function HomePage() {
       <HomePageClient
         initialCaldecottBooks={caldecottBooks.slice(0, 7)}
         initialResearchBooks={researchBooks}
-        initialAgeBooks={ageBooks}
         initialSummerBooks={summerBooks}
         initialTextbookBooks={textbookBooks}
-        initialSelectedAge={defaultAge}
+        initialThemeBooks={themeBooks}
         dynamicCurations={dynamicCurations}
       />
     </>
