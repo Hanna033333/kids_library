@@ -66,6 +66,7 @@
 @.agent/workflows/add_library.md
 @.agent/workflows/blog_naver.md
 @.agent/workflows/notice_notion.md
+@.agent/workflows/ga.md
 
 ---
 
@@ -84,5 +85,6 @@
 | `/add-library`, `/add_library` | `.agent/workflows/add_library.md` |
 | `/blog-naver`, `/blog_naver` | `.agent/workflows/blog_naver.md` |
 | `/notice` | `.agent/workflows/notice_notion.md` |
+| `/ga` | `.agent/workflows/ga.md` |
 
 워크플로우 호출 시에는 해당 파일을 먼저 읽고, 관련 Rules/Skills를 필요한 범위에서만 추가로 읽은 뒤 진행한다. `/learn`은 대화에서 합의된 내용을 `.agent/rules/` 또는 `.agent/skills/`에 영구 반영하는 요청으로 취급한다.
