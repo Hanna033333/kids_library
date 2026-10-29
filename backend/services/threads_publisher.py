@@ -38,6 +38,18 @@ async def poll_container_status(container_id: str, access_token: str, max_retrie
 
     raise TimeoutError(f"❌ 컨테이너 {container_id}가 {max_retries * interval}초 내에 FINISHED 상태가 되지 않았습니다.")
 
+def ensure_storage_bucket(bucket_name: str = "threads_assets") -> None:
+    """Supabase Storage 버킷이 존재하는지 확인하고 없으면 자동 생성합니다."""
+    try:
+        buckets = supabase.storage.list_buckets()
+        existing_names = [b.name for b in buckets] if buckets else []
+        if bucket_name not in existing_names:
+            print(f"📦 Storage 버킷 '{bucket_name}' 생성 중...")
+            supabase.storage.create_bucket(bucket_name, options={"public": True})
+            print(f"✅ Storage 버킷 '{bucket_name}' 생성 완료")
+    except Exception as e:
+        print(f"⚠️ Storage 버킷 확인/생성 중 예외 (무시 가능): {e}")
+
 async def upload_image_to_supabase(image: Image.Image, file_name: str) -> str:
     """
     Pillow 이미지를 Supabase Storage 'threads_assets' 버킷에 업로드하고 퍼블릭 URL을 획득합니다.
@@ -49,16 +61,26 @@ async def upload_image_to_supabase(image: Image.Image, file_name: str) -> str:
         img_byte_arr.seek(0)
         img_data = img_byte_arr.read()
         
-        # 파일 업로드 (동일 이름 파일이 있을 경우 overwrite 방지를 위해 upsert=True 설정)
         bucket_name = "threads_assets"
         
-        # storage 업로드 수행
+        # storage 업로드 수행 (실패 시 버킷 확인 후 1회 재시도)
         print(f"📤 Supabase Storage 업로드 중: {file_name}")
-        supabase.storage.from_(bucket_name).upload(
-            path=file_name,
-            file=img_data,
-            file_options={"content-type": "image/png", "x-upsert": "true"}
-        )
+        try:
+            supabase.storage.from_(bucket_name).upload(
+                path=file_name,
+                file=img_data,
+                file_options={"content-type": "image/png", "x-upsert": "true"}
+            )
+        except Exception as upload_err:
+            if "Bucket not found" in str(upload_err) or "404" in str(upload_err):
+                ensure_storage_bucket(bucket_name)
+                supabase.storage.from_(bucket_name).upload(
+                    path=file_name,
+                    file=img_data,
+                    file_options={"content-type": "image/png", "x-upsert": "true"}
+                )
+            else:
+                raise upload_err
         
         # 퍼블릭 URL 조회
         public_url = supabase.storage.from_(bucket_name).get_public_url(file_name)
