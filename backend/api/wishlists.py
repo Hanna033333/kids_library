@@ -20,8 +20,7 @@ class BookInfo(BaseModel):
     id: int
     title: str
     author: str
-    # DB 컬럼은 image_url / pangyo_callno 이며 select 별칭으로 매핑한다.
-    # 두 컬럼 모두 null 값이 존재하므로 Optional 로 둔다.
+    # DB 컬럼은 image_url 이며 select 별칭으로 매핑한다.
     cover_image: Optional[str] = None
     callno: Optional[str] = None
 
@@ -72,7 +71,7 @@ async def get_wishlists(
         
         # 찜 목록 조회 (책 정보 JOIN)
         response = supabase.table("wishlists").select(
-            "id, created_at, book:childbook_items(id, title, author, cover_image:image_url, callno:pangyo_callno)"
+            "id, created_at, book:childbook_items(id, title, author, cover_image:image_url)"
         ).eq("user_id", current_user.id).order("created_at", desc=True).range(offset, offset + limit - 1).execute()
         
         # 전체 개수 조회

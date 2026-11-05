@@ -295,6 +295,17 @@ trigger: always_on
     - **7-Book Rule 및 첫 번째 태그 정밀 매칭 엄수**: 각 계절 테마는 반드시 표지 이미지 및 도서관 청구기호가 존재하는 도서 7권 이상(권장 10권 이상)을 확보하여 첫 번째 태그(`curation_tag` 맨 앞)로 매칭해야 하며, 가을 큐레이션에 눈/겨울 도서가 혼입되는 등의 노이즈를 상시 차단한다.
     - **DB 마이그레이션 시 SUPABASE_SERVICE_KEY 사용**: 도서의 `curation_tag` 수정/정제 배치 스크립트 실행 시 RLS로 인한 무시/차단을 방지하기 위해 반드시 `SUPABASE_SERVICE_KEY`를 클라이언트에 주입하여 실행한다.
 
+54. **도서관 청구기호 단일 테이블(`book_library_info`) 아키텍처 및 정렬 표준 (절대 준수)**:
+    - **단일 테이블 참조 원칙**: 판교도서관을 포함한 전국 모든 연동 도서관의 청구기호 조회 및 대출 가능 여부 선검증(`BookItem.tsx`, `BookDetailClient.tsx`, `backend/api/books.py`)은 예외 분기 없이 오직 **`book_library_info` 테이블**만 참조한다.
+    - **`childbook_items.pangyo_callno` 의존 및 오염 금지**:
+      - 목록/홈 노출 쿼리(`visibleBooks`, `getBooksFromServer`, `search_books_service` 등)에서 `.not('pangyo_callno', 'is', null)` 필터를 사용하지 않으며, `is_hidden` 및 유효 표지 이미지(`image_url`) 기준으로 노출한다.
+      - 타 도서관 청구기호 수집 배치 스크립트 실행 시 `childbook_items.pangyo_callno`에 타 도서관 청구기호를 동기화(덮어쓰기)하는 코드를 작성해서는 안 된다.
+    - **도서관별 청구기호순 정렬(`sort=callno`) 및 기본 정렬 정책**:
+      - 미로그인 또는 도서관 미선택 상태에서 일반 목록의 기본 정렬은 **`제목순(title, ㄱㄴㄷ순)`** (AI 큐레이션은 `confidence_score_desc`)으로 제공한다.
+      - 사용자가 도서관 서가에서 책을 한꺼번에 찾기 위해 `'청구기호순(callno)'` 정렬을 선택하면, 프론트엔드(`useBooks.ts`)는 현재 선택된 도서관(`selectedLibrary`)을 백엔드(`library` 파라미터)로 전달하고, 백엔드(`search.py`)는 `book_library_info`에서 해당 도서관의 청구기호(`callno`) 오름차순(소장 도서 우선 노출, 미소장 도서 후순위 배치)으로 정렬하여 반환한다.
+    - **신규 도서관 추가 시 웹 표기 정합성 검증**: 정보나루 `itemSrch` API 수집 후 반드시 실제 도서관 웹사이트 검색 결과와 샘플 대조를 수행하여, 내부 전산 접두어(`E그` 등) 노출이나 `callNumbers` 빈 배열 누락이 없는지 검증한다.
+
+
 
 
 

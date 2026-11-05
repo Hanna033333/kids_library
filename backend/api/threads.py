@@ -287,7 +287,7 @@ async def process_telegram_feedback(feedback_text: str):
     id_map = {b["id"]: b for b in books_data}
     books = [id_map[bid] for bid in book_ids if bid in id_map]
     
-    new_content = await apply_feedback_with_gemini(
+    new_content, error_msg = await apply_feedback_with_gemini(
         feedback_text=feedback_text,
         old_caption=old_caption,
         old_descriptions=old_descriptions,
@@ -295,7 +295,16 @@ async def process_telegram_feedback(feedback_text: str):
     )
     
     if not new_content:
-        await send_telegram_message("❌ AI 수정 중 오류가 발생했습니다. 다시 시도해 주세요.")
+        if error_msg and ("depleted" in error_msg or "429" in error_msg):
+            alert_msg = (
+                "❌ <b>[AI 피드백 수정 실패: 크레딧 소진]</b>\n\n"
+                "Google Gemini API의 사전 충전 크레딧(Prepayment credits)이 소진되었습니다 (429 Resource Exhausted).\n"
+                "Google AI Studio(<a href='https://aistudio.google.com/'>aistudio.google.com</a>)에서 크레딧을 충전하시거나, 새 API 키를 발급해 설정해 주세요."
+            )
+        else:
+            err_detail = html.escape(error_msg) if error_msg else "알 수 없는 오류"
+            alert_msg = f"❌ AI 수정 중 오류가 발생했습니다: <code>{err_detail}</code>\n다시 시도해 주세요."
+        await send_telegram_message(alert_msg)
         return
         
     supabase.table("threads_feeds").update({
@@ -422,6 +431,12 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
         raise ValueError(f"큐레이션 도서가 부족합니다. 최소 5권의 도서가 필요합니다.")
         
     ai_content = generate_ai_threads_content(c_title, c_tag, books)
+    if ai_content.get("is_fallback"):
+        await send_telegram_message(
+            "⚠️ <b>[알림]</b> Gemini API 크레딧 소진 또는 연결 오류로 인해 AI 대신 기본 템플릿 텍스트로 시안이 생성되었습니다.\n"
+            "Google AI Studio 크레딧 충전 또는 API 키 갱신이 필요합니다."
+        )
+
     
     db_result = supabase.table("threads_feeds").insert({
         "title": c_title,
@@ -622,6 +637,61 @@ async def publish_approved_feed(feed_id: int):
         f"https://checkjari.com/collections/curation/{slug}"
     )
 
+async def process_card_generation_and_preview(feed_id: int):
+    """백그라운드에서 카드뉴스 이미지를 렌더링하고 업로드한 뒤 텔레그램으로 2차 검수 알림을 발송합니다."""
+    try:
+        feed_result = supabase.table("threads_feeds").select("*").eq("id", feed_id).execute()
+        if not feed_result.data:
+            print(f"❌ [process_card_generation] 피드 ID {feed_id}를 찾을 수 없습니다.")
+            await send_telegram_message(f"❌ <b>카드뉴스 생성 실패:</b> 피드 ID {feed_id}를 찾을 수 없습니다.")
+            return
+
+        feed = feed_result.data[0]
+        book_ids = feed.get("book_ids", []) or []
+        curation_title = feed.get("title", "")
+        caption = feed.get("content", "")
+        card_descriptions = feed.get("card_descriptions", []) or []
+
+        books_result = supabase.table("childbook_items").select("*").in_("id", book_ids).execute()
+        books_data = books_result.data if books_result.data else []
+        id_map = {b["id"]: b for b in books_data}
+        books = [id_map[bid] for bid in book_ids if bid in id_map]
+
+        image_urls = []
+        await send_telegram_message("🎨 <b>카드뉴스 이미지 생성 및 Supabase Storage 업로드를 시작합니다. (약 10~20초 소요)</b>")
+
+        for idx, b in enumerate(books):
+            desc = card_descriptions[idx] if idx < len(card_descriptions) else ""
+            card_img = generate_card_news(
+                title=b.get("title", "제목"),
+                author="",
+                publisher=b.get("publisher", "출판사"),
+                cover_url=b.get("image_url", ""),
+                description=desc,
+                curation_title=curation_title
+            )
+
+            file_name = f"threads_feeds/{feed_id}/{uuid.uuid4()}.png"
+            public_url = await upload_image_to_supabase(card_img, file_name)
+            image_urls.append(public_url)
+
+        supabase.table("threads_feeds").update({
+            "image_urls": image_urls
+        }).eq("id", feed_id).execute()
+
+        backend_url = get_backend_url()
+        confirm_url = _build_admin_url(backend_url, "/api/threads/approve", feed_id, sign_action("approve", feed_id))
+
+        await send_threads_preview(
+            caption=caption,
+            image_urls=image_urls,
+            confirm_url=confirm_url
+        )
+        print(f"✅ [process_card_generation] 피드 ID {feed_id} 카드뉴스 생성 및 2차 미리보기 전송 완료")
+    except Exception as e:
+        print(f"❌ [process_card_generation] 피드 ID {feed_id} 카드뉴스 생성 중 에러 발생: {e}")
+        await send_telegram_message(f"❌ <b>카드뉴스 이미지 생성 중 오류가 발생했습니다:</b>\n<code>{html.escape(str(e))}</code>")
+
 @router.get("/approve-text", response_class=HTMLResponse)
 async def approve_text_view(request: Request, feed_id: int, signature: str):
     """1단계 승인 확인 화면을 렌더링합니다. (봇 링크 크롤링에 무해함)"""
@@ -680,7 +750,7 @@ async def approve_text_view(request: Request, feed_id: int, signature: str):
             async function submitApprove() {{
                 const btn = document.getElementById("submit-btn");
                 btn.disabled = true;
-                btn.innerText = "처리 중...";
+                btn.innerText = "요청 처리 중...";
                 try {{
                     const res = await fetch("/api/threads/approve-text/submit", {{
                         method: "POST",
@@ -689,7 +759,8 @@ async def approve_text_view(request: Request, feed_id: int, signature: str):
                     }});
                     const data = await res.json();
                     if (res.ok) {{
-                        alert("승인이 완료되었습니다. 이미지 생성이 완료되면 텔레그램으로 2차 시안이 발송됩니다.");
+                        btn.innerText = "생성 진행 중 🎨";
+                        alert("승인이 접수되었습니다! 카드뉴스 이미지 생성이 백그라운드에서 진행되며, 약 10~20초 후 텔레그램으로 2차 시안이 도착합니다.");
                         window.close();
                     }} else {{
                         alert("오류 발생: " + (data.detail || "인증 실패"));
@@ -697,7 +768,7 @@ async def approve_text_view(request: Request, feed_id: int, signature: str):
                         btn.innerText = "승인하고 이미지 생성하기";
                     }}
                 }} catch (e) {{
-                    alert("네트워크 오류 발생");
+                    alert("네트워크 오류 발생: " + (e.message || e));
                     btn.disabled = false;
                     btn.innerText = "승인하고 이미지 생성하기";
                 }}
@@ -710,59 +781,18 @@ async def approve_text_view(request: Request, feed_id: int, signature: str):
 
 @router.post("/approve-text/submit")
 async def approve_text_submit(req: ApproveSubmitRequest):
-    """1단계 승인 처리: 실제 카드뉴스 이미지를 렌더링하고 업로드하여 2단계 검수 요청을 텔레그램으로 발송합니다."""
+    """1단계 승인 처리: 실제 카드뉴스 이미지를 백그라운드에서 렌더링/업로드하여 2단계 검수 요청을 텔레그램으로 발송합니다."""
     if not verify_action_signature("approve-text", req.feed_id, req.signature):
         raise HTTPException(status_code=401, detail="유효하지 않은 관리자 서명입니다.")
         
     feed_id = req.feed_id
-    feed_result = supabase.table("threads_feeds").select("*").eq("id", feed_id).execute()
+    feed_result = supabase.table("threads_feeds").select("id").eq("id", feed_id).execute()
     if not feed_result.data:
         raise HTTPException(status_code=404, detail="해당 피드 레코드를 찾을 수 없습니다.")
         
-    feed = feed_result.data[0]
-    book_ids = feed["book_ids"]
-    curation_title = feed["title"]
-    caption = feed["content"]
-    card_descriptions = feed.get("card_descriptions", []) or []
-    
-    books_result = supabase.table("childbook_items").select("*").in_("id", book_ids).execute()
-    books_data = books_result.data if books_result.data else []
-    id_map = {b["id"]: b for b in books_data}
-    books = [id_map[bid] for bid in book_ids if bid in id_map]
-    
-    image_urls = []
-    
-    # 텔레그램에 이미지 렌더링 시작 알림
-    await send_telegram_message("🎨 <b>카드뉴스 이미지 생성 및 Supabase Storage 업로드를 시작합니다. 약 10~20초 소요됩니다...</b>")
-    
-    for idx, b in enumerate(books):
-        desc = card_descriptions[idx] if idx < len(card_descriptions) else ""
-        card_img = generate_card_news(
-            title=b.get("title", "제목"),
-            author="",
-            publisher=b.get("publisher", "출판사"),
-            cover_url=b.get("image_url", ""),
-            description=desc,
-            curation_title=curation_title
-        )
-        
-        file_name = f"threads_feeds/{feed_id}/{uuid.uuid4()}.png"
-        public_url = await upload_image_to_supabase(card_img, file_name)
-        image_urls.append(public_url)
-        
-    supabase.table("threads_feeds").update({
-        "image_urls": image_urls
-    }).eq("id", feed_id).execute()
-    
-    backend_url = get_backend_url()
-    confirm_url = _build_admin_url(backend_url, "/api/threads/approve", feed_id, sign_action("approve", feed_id))
-    
-    await send_threads_preview(
-        caption=caption,
-        image_urls=image_urls,
-        confirm_url=confirm_url
-    )
-    return {"status": "success", "message": "카드뉴스 이미지 생성 및 2차 전송 완료"}
+    # 타임아웃 방지를 위해 비동기 백그라운드 작업으로 이미지 렌더링 및 2차 텔레그램 발송 실행
+    asyncio.create_task(process_card_generation_and_preview(feed_id))
+    return {"status": "success", "message": "카드뉴스 이미지 생성 작업을 시작했습니다. 잠시 후 텔레그램으로 2차 시안이 발송됩니다."}
 
 @router.get("/approve", response_class=HTMLResponse)
 async def approve_feed_view(request: Request, feed_id: int, signature: str):
@@ -839,7 +869,7 @@ async def approve_feed_view(request: Request, feed_id: int, signature: str):
                         btn.innerText = "최종 승인 및 발행 예약";
                     }}
                 }} catch (e) {{
-                    alert("네트워크 오류 발생");
+                    alert("네트워크 오류 발생: " + (e.message || e));
                     btn.disabled = false;
                     btn.innerText = "최종 승인 및 발행 예약";
                 }}

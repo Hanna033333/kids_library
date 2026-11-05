@@ -28,7 +28,7 @@ export default function AgeCollectionClient({ age, initialBooks }: AgeCollection
     const router = useRouter()
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedAge, setSelectedAge] = useState<string>(age === 'teen' ? '13+' : age)
-    const [sortBy, setSortBy] = useState<'pangyo_callno' | 'title'>('pangyo_callno')
+    const [sortBy, setSortBy] = useState<'callno' | 'title'>('title')
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
 
     // 탭 클릭 시 URL 이동 → 뒤로가기 UX 정상화 + GA 추적 정확도 향상
@@ -41,7 +41,7 @@ export default function AgeCollectionClient({ age, initialBooks }: AgeCollection
     }
 
     // initialBooks는 초기 로드 시 한 번만 사용됨. 필터가 변경되면 쿼리가 다시 실행됨.
-    const currentInitialBooks = selectedAge === age ? initialBooks : undefined;
+    const currentInitialBooks = selectedAge === age && sortBy === 'title' ? initialBooks : undefined;
 
     return (
         <div className="min-h-screen bg-[#F7F7F7]">
@@ -54,7 +54,7 @@ export default function AgeCollectionClient({ age, initialBooks }: AgeCollection
                     onAgeChange={handleAgeChange} onFilterClick={() => setIsFilterModalOpen(true)} />
                 <IntegratedFilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)}
                     selectedAge={selectedAge} selectedSort={sortBy} onAgeChange={setSelectedAge}
-                    onSortChange={(sort: string) => setSortBy(sort as 'pangyo_callno' | 'title')} />
+                    onSortChange={(sort: string) => setSortBy(sort as 'callno' | 'title')} />
                 <BookList
                     searchQuery={searchQuery}
                     ageFilter={selectedAge}

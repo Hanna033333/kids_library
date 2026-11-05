@@ -9,7 +9,7 @@ import { AGE_MAP } from './constants/age-map'
  * 개발 규칙 32번: `book_library_info` 조인은 1:N 오버헤드가 크므로
  * 로그인 상태에서만 `includeLibraryInfo`로 조건부 활성화한다.
  */
-const BOOK_FIELDS = 'id, title, author, publisher, category, age, pangyo_callno, image_url, curation_tag, national_loan_count'
+const BOOK_FIELDS = 'id, title, author, publisher, category, age, image_url, curation_tag, national_loan_count'
 const LIBRARY_JOIN = 'library_info:book_library_info(library_name, callno)'
 
 function bookSelect(includeLibraryInfo: boolean, extraFields?: string): string {
@@ -29,8 +29,6 @@ function visibleBooks(supabase: SupabaseClient, selectFields: string) {
         .not('image_url', 'is', null)
         .neq('image_url', '')
         .not('image_url', 'ilike', '%noimg%')
-        .not('pangyo_callno', 'is', null)
-        .neq('pangyo_callno', '없음')
 }
 
 function handleQueryError(context: string, error: unknown, failOnError: boolean): never | void {

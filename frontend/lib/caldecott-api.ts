@@ -10,8 +10,8 @@ export async function getCaldecottBooks(client?: SupabaseClient, includeLibraryI
     const supabase = client || createClient()
 
     const selectFields = includeLibraryInfo
-        ? 'id, title, author, publisher, category, age, pangyo_callno, image_url, isbn, curation_tag, library_info:book_library_info(library_name, callno)'
-        : 'id, title, author, publisher, category, age, pangyo_callno, image_url, isbn, curation_tag';
+        ? 'id, title, author, publisher, category, age, image_url, isbn, curation_tag, library_info:book_library_info(library_name, callno)'
+        : 'id, title, author, publisher, category, age, image_url, isbn, curation_tag';
 
     const { data, error } = await supabase
         .from('childbook_items')
@@ -21,8 +21,6 @@ export async function getCaldecottBooks(client?: SupabaseClient, includeLibraryI
         .not('image_url', 'is', null)
         .neq('image_url', '')
         .not('image_url', 'ilike', '%noimg%')
-        .not('pangyo_callno', 'is', null)
-        .neq('pangyo_callno', '없음')
         .order('title', { ascending: true })
 
     if (error) {

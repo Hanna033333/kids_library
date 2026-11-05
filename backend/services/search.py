@@ -20,25 +20,27 @@ def search_books_service(
     age: Optional[str] = None,
     category: Optional[str] = None,  # deprecated — 하위 호환용, 무시됨
     curation: Optional[str] = None,
-    sort: str = "pangyo_callno",
+    sort: str = "title",
     page: int = 1,
     limit: int = 20,
     include_library_info: bool = False,
-    tag: Optional[str] = None
+    tag: Optional[str] = None,
+    library: Optional[str] = None
 ):
     """
     책 검색 및 필터링 서비스
     """
     # 필요한 컬럼만 선택 (성능 최적화 및 다중 도서관 정보 조인)
-    columns = "id,title,author,publisher,pangyo_callno,vol,category,age,image_url,curation_tag,curation_note,confidence_score,national_loan_count"
+    columns = "id,title,author,publisher,vol,category,age,image_url,curation_tag,curation_note,confidence_score,national_loan_count"
     if include_library_info:
         columns += ",library_info:book_library_info(library_name, callno)"
     
     # 쿼리 빌드 - 정확한 개수 반환 및 PMF 지표 확보를 위해 count="exact" 복원
     query = supabase.table("childbook_items").select(columns, count="exact")
-    query = query.not_.is_("pangyo_callno", "null")
-    query = query.neq("pangyo_callno", "없음")
     query = query.or_("is_hidden.is.null,is_hidden.eq.false")
+    query = query.not_.is_("image_url", "null")
+    query = query.neq("image_url", "")
+    query = query.not_.ilike("image_url", "%noimg%")
     
     # category 필터링 제거됨 (큐레이션 태그 체계로 대체)
         
@@ -99,17 +101,53 @@ def search_books_service(
             query = query.in_("age", age_values)
     
     # 정렬
-    if sort == "pangyo_callno" and (age or curation in SPECIAL_CURATION_PARAMS):
+    is_callno_sort = sort in ("callno", "pangyo_callno")
+    if is_callno_sort and (age or curation in SPECIAL_CURATION_PARAMS) and not library:
+        is_callno_sort = False
         sort = "title"
 
-    if sort == "title":
-        query = query.order("title")
-    elif sort == "confidence_score_desc":
+    if is_callno_sort:
+        target_library = (library or "판교도서관").strip()
+        # 도서관별 청구기호순 정렬: book_library_info의 해당 도서관 callno 오름차순 (소장 도서 우선, 미소장 도서는 뒤로)
+        result = query.order("title").execute()
+        all_rows = result.data or []
+        total = len(all_rows)
+        if all_rows:
+            book_ids = [r["id"] for r in all_rows]
+            callno_map = {}
+            for i in range(0, len(book_ids), 500):
+                chunk = book_ids[i:i + 500]
+                lib_res = supabase.table("book_library_info") \
+                    .select("book_id, callno") \
+                    .eq("library_name", target_library) \
+                    .in_("book_id", chunk) \
+                    .execute()
+                for item in (lib_res.data or []):
+                    cn = (item.get("callno") or "").strip()
+                    if cn and cn != "없음":
+                        callno_map[item["book_id"]] = cn
+
+            all_rows.sort(key=lambda r: (
+                0 if r["id"] in callno_map else 1,
+                callno_map.get(r["id"], ""),
+                r.get("title") or ""
+            ))
+        offset = (page - 1) * limit
+        paged_data = all_rows[offset:offset + limit]
+        return {
+            "data": paged_data,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "total_pages": (total + limit - 1) // limit if total else 1
+        }
+
+    if sort == "confidence_score_desc":
         query = query.order("confidence_score", desc=True)
     elif sort in {"popular", "national_loan_count", "national_loan_count_desc"}:
         query = query.order("national_loan_count", desc=True, nullsfirst=False)
-    else:  # 기본값: pangyo_callno
-        query = query.order("pangyo_callno")
+    else:  # 기본값: title (ㄱㄴㄷ순)
+        query = query.order("title")
 
     # 페이지네이션
     offset = (page - 1) * limit

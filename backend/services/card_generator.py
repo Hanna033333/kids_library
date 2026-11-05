@@ -56,8 +56,13 @@ def clean_html_text(text: str) -> str:
 def download_image(url: str) -> Image.Image:
     """도서 표지 이미지 다운로드 (로컬 경로 및 HTTP 지원)"""
     try:
+        if not url:
+            raise ValueError("Empty image URL")
         if url.startswith("http://") or url.startswith("https://"):
-            response = requests.get(url, timeout=5)
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+            response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
             return Image.open(BytesIO(response.content))
         else:

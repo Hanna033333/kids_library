@@ -196,11 +196,53 @@ def search_suji_library(driver, title: str, author: str, publisher: str) -> Opti
         return None
 
 
+def search_jangdang_library(driver, title: str, author: str, publisher: str) -> Optional[str]:
+    """
+    [평택시립장당도서관] 검색 및 청구기호 추출
+    URL: https://www.ptlib.go.kr/jdlib/menu/11101/program/30015/plusSearchSimple.do
+    """
+    try:
+        search_url = "https://www.ptlib.go.kr/jdlib/menu/11101/program/30015/plusSearchSimple.do"
+        driver.get(search_url)
+        
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "searchKeyword"))
+        )
+        
+        driver.find_element(By.ID, "searchKeyword").send_keys(title)
+        driver.find_element(By.ID, "searchBtn").click()
+        
+        time.sleep(2)
+        
+        results = driver.find_elements(By.CSS_SELECTOR, "ul.resultList li")
+        if not results:
+            return None
+            
+        for item in results:
+            try:
+                all_text = item.text
+                if "장당도서관" not in all_text:
+                    continue
+                
+                match = re.search(r'청구기호\s*[:：]\s*([^\n]+?)(?:\s*위치출력|\s*$|\s*[|])', all_text)
+                if match:
+                    return match.group(1).strip()
+            except Exception:
+                continue
+                
+        return None
+            
+    except Exception as e:
+        print(f"      [장당] 검색 오류: {e}")
+        return None
+
+
 # 도서관별 검색 함수 매핑
 LIBRARY_SEARCH_FUNCS: Dict[str, Callable] = {
     "판교도서관": search_pangyo_library,
     "송파어린이도서관": search_songpa_library,
-    "수지도서관": search_suji_library
+    "수지도서관": search_suji_library,
+    "평택시립장당도서관": search_jangdang_library
 }
 
 

@@ -119,20 +119,15 @@ export default function BookDetailClient({
 
     // const supabase = createClient()  <-- 제거됨
 
-    // 청구기호 결정 로직
+    // 청구기호 결정 로직 (book_library_info 단일 테이블 기준)
     let displayCallNo = '청구기호 없음'
     if (!selectedLibrary) {
         displayCallNo = '도서관을 선택해주세요'
-    } else if (selectedLibrary === '판교도서관') {
-        if (book.pangyo_callno && book.pangyo_callno !== '없음') {
-            displayCallNo = book.pangyo_callno
-        } else {
-            const info = book.library_info?.find(l => l.library_name.includes('판교'))
-            if (info) displayCallNo = info.callno
-        }
     } else {
-        const info = book.library_info?.find(l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary))
-        if (info) {
+        const info = book.library_info?.find(
+            l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary)
+        )
+        if (info && info.callno && info.callno !== '없음') {
             displayCallNo = info.callno
         } else {
             displayCallNo = '보유 정보 없음'

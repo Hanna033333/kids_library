@@ -51,23 +51,16 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
   const gradeTag = rawCurationTags.find((t) => isGradeTag(t));
   const displayBadge = gradeTag ? formatCurationTag(gradeTag) : getAgeDisplayLabel(book.age);
 
-  // 청구기호 결정 로직 (showLibraryInfo이고 선호 도서관이 설정되었을 때만 연산)
+  // 청구기호 결정 로직 (showLibraryInfo이고 선호 도서관이 설정되었을 때만 연산 — book_library_info 단일 테이블 기준)
   let displayCallNo = '청구기호 없음';
   if (showLibraryInfo && selectedLibrary) {
-    if (selectedLibrary === '판교도서관') {
-      if (book.pangyo_callno && book.pangyo_callno !== '없음') {
-        displayCallNo = book.pangyo_callno;
-      } else {
-        const info = book.library_info?.find(l => l.library_name.includes('판교'));
-        if (info) displayCallNo = info.callno;
-      }
+    const info = book.library_info?.find(
+      (l) => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary)
+    );
+    if (info && info.callno && info.callno !== '없음') {
+      displayCallNo = info.callno;
     } else {
-      const info = book.library_info?.find(l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary));
-      if (info) {
-        displayCallNo = info.callno;
-      } else {
-        displayCallNo = '보유 정보 없음';
-      }
+      displayCallNo = '보유 정보 없음';
     }
   }
 

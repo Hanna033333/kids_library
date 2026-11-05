@@ -70,18 +70,14 @@ def normalize_caption_intro(caption: str) -> str:
     return caption.strip()
 
 
-def _get_gemini_model():
-    """사용 가능한 Gemini 모델 인스턴스를 반환합니다."""
-    genai.configure(api_key=GEMINI_API_KEY)
-    for model_name in ("gemini-2.5-flash", "gemini-2.0-flash"):
-        try:
-            return genai.GenerativeModel(
-                model_name,
-                generation_config={"response_mime_type": "application/json"},
-            )
-        except Exception:
-            continue
-    return None
+GEMINI_MODEL_CANDIDATES = ("gemini-3.5-flash", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-flash-latest")
+
+
+def _configure_gemini():
+    """Gemini API 설정을 초기화합니다."""
+    if GEMINI_API_KEY:
+        genai.configure(api_key=GEMINI_API_KEY)
+
 
 
 def generate_fallback_content(
@@ -106,6 +102,7 @@ def generate_fallback_content(
     return {
         "caption": caption,
         "card_descriptions": card_descriptions,
+        "is_fallback": True,
     }
 
 
@@ -117,10 +114,8 @@ def generate_ai_threads_content(
         print("⚠️ GEMINI_API_KEY가 존재하지 않아 스마트 폴백 메커니즘을 작동합니다.")
         return generate_fallback_content(curation_title, curation_tag, books)
 
-    model = _get_gemini_model()
-    if not model:
-        print("❌ GenerativeModel 생성 실패. 스마트 폴백을 작동합니다.")
-        return generate_fallback_content(curation_title, curation_tag, books)
+    _configure_gemini()
+
 
     books_info = [
         {
@@ -193,24 +188,35 @@ def generate_ai_threads_content(
 }}
 """
 
-    try:
-        response = model.generate_content(prompt)
-        res_data = json.loads(response.text)
-        if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 5:
-            raise ValueError("Invalid response structure")
+    last_error = None
+    for model_name in GEMINI_MODEL_CANDIDATES:
+        try:
+            model = genai.GenerativeModel(
+                model_name,
+                generation_config={"response_mime_type": "application/json"},
+            )
+            response = model.generate_content(prompt)
+            res_data = json.loads(response.text)
+            if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 5:
+                raise ValueError("Invalid response structure")
+                
+            caption = res_data["caption"].strip()
+            caption = remove_hashtags_and_clean(caption, curation_tag)
+            caption = normalize_caption_intro(caption)
+            res_data["caption"] = caption
             
-        caption = res_data["caption"].strip()
-        caption = remove_hashtags_and_clean(caption, curation_tag)
-        caption = normalize_caption_intro(caption)
-        res_data["caption"] = caption
-        
-        res_data["card_descriptions"] = [
-            force_trim_description(desc) for desc in res_data.get("card_descriptions", [])
-        ]
-        return res_data
-    except Exception as e:
-        print(f"❌ Gemini API 오류 발생: {e}. 스마트 폴백 메커니즘을 작동합니다.")
-        return generate_fallback_content(curation_title, curation_tag, books)
+            res_data["card_descriptions"] = [
+                force_trim_description(desc) for desc in res_data.get("card_descriptions", [])
+            ]
+            res_data["is_fallback"] = False
+            return res_data
+        except Exception as e:
+            last_error = e
+            print(f"❌ Gemini API ({model_name}) 오류 발생: {e}")
+            continue
+
+    print(f"❌ 모든 Gemini 모델 호출 실패: {last_error}. 스마트 폴백 메커니즘을 작동합니다.")
+    return generate_fallback_content(curation_title, curation_tag, books)
 
 
 async def apply_feedback_with_gemini(
@@ -218,14 +224,12 @@ async def apply_feedback_with_gemini(
     old_caption: str,
     old_descriptions: List[str],
     books: List[dict],
-) -> Optional[dict]:
+) -> tuple[Optional[dict], Optional[str]]:
     """Gemini API에 기존 텍스트 시안과 관리자의 피드백 내용을 전달하여 텍스트를 정교하게 재생성합니다."""
     if not GEMINI_API_KEY:
-        return None
+        return None, "GEMINI_API_KEY가 설정되어 있지 않습니다."
 
-    model = _get_gemini_model()
-    if not model:
-        return None
+    _configure_gemini()
 
     books_info = [
         {
@@ -274,22 +278,32 @@ async def apply_feedback_with_gemini(
 }}
 """
 
-    try:
-        response = model.generate_content(prompt)
-        res_data = json.loads(response.text)
-        if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 3:
-            raise ValueError("Invalid response structure")
+    last_error = None
+    for model_name in GEMINI_MODEL_CANDIDATES:
+        try:
+            model = genai.GenerativeModel(
+                model_name,
+                generation_config={"response_mime_type": "application/json"},
+            )
+            response = model.generate_content(prompt)
+            res_data = json.loads(response.text)
+            if not res_data.get("caption") or len(res_data.get("card_descriptions", [])) < 3:
+                raise ValueError("Invalid response structure")
+                
+            caption = res_data["caption"].strip()
+            caption = remove_hashtags_and_clean(caption)
+            caption = normalize_caption_intro(caption)
+            res_data["caption"] = caption
             
-        caption = res_data["caption"].strip()
-        caption = remove_hashtags_and_clean(caption)
-        caption = normalize_caption_intro(caption)
-        res_data["caption"] = caption
-        
-        res_data["card_descriptions"] = [
-            force_trim_description(desc) for desc in res_data.get("card_descriptions", [])
-        ]
-        return res_data
-    except Exception as e:
-        print(f"❌ Gemini 피드백 수정 중 오류: {e}")
-        return None
+            res_data["card_descriptions"] = [
+                force_trim_description(desc) for desc in res_data.get("card_descriptions", [])
+            ]
+            return res_data, None
+        except Exception as e:
+            last_error = e
+            print(f"❌ Gemini 피드백 수정 ({model_name}) 오류: {e}")
+            continue
+
+    return None, str(last_error) if last_error else "알 수 없는 오류"
+
 

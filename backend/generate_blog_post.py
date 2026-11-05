@@ -106,13 +106,14 @@ def generate_card_descriptions_ai(tag: str, books: List[dict]) -> List[str]:
         return [trim_text_fallback(b.get("description") or b.get("curation_note") or b.get("title")) for b in books]
         
     genai.configure(api_key=api_key)
-    try:
-        model = genai.GenerativeModel('gemini-2.5-flash', generation_config={"response_mime_type": "application/json"})
-    except Exception:
+    for model_name in ('gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-flash-latest'):
         try:
-            model = genai.GenerativeModel('gemini-2.0-flash', generation_config={"response_mime_type": "application/json"})
+            model = genai.GenerativeModel(model_name, generation_config={"response_mime_type": "application/json"})
+            break
         except Exception:
-            return [trim_text_fallback(b.get("description") or b.get("curation_note") or b.get("title")) for b in books]
+            continue
+    else:
+        return [trim_text_fallback(b.get("description") or b.get("curation_note") or b.get("title")) for b in books]
         
     books_summary_info = [
         {
@@ -215,14 +216,15 @@ def generate_blog_content(tag: str, books: List[dict], card_paths: List[str]) ->
     genai.configure(api_key=api_key)
     
     # 모델 정의
-    try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
-    except Exception:
+    for model_name in ('gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-flash-latest'):
         try:
-            model = genai.GenerativeModel('gemini-2.0-flash')
-        except Exception as e:
-            print(f"❌ GenerativeModel 초기화 에러: {e}")
-            sys.exit(1)
+            model = genai.GenerativeModel(model_name)
+            break
+        except Exception:
+            continue
+    else:
+        print("❌ GenerativeModel 초기화 에러: 사용 가능한 모델이 없습니다.")
+        sys.exit(1)
 
     # 도서 리스트 가공
     books_info = []
