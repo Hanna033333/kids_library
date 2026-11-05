@@ -13,7 +13,7 @@ export interface Book {
   author: string | null;
   publisher: string | null;
   isbn: string | null;
-  pangyo_callno: string | null;
+  pangyo_callno?: string | null;
   web_scraped_callno?: string | null;
   library_info?: LibraryInfo[];
   vol: string | null;

@@ -16,32 +16,34 @@ def search_books(
     age: Optional[str] = Query(None, description="연령대 구간 (예: '0-3', '4-7', '8-12' 등)"),
     category: Optional[str] = Query(None, description="카테고리 (예: '동화', '과학' 등)"),
     curation: Optional[str] = Query(None, description="큐레이션 테마 필터 (예: '가족사랑', 'caldecott' 등)"),
-    sort: Optional[str] = Query("pangyo_callno", description="정렬 기준 ('title' 또는 'pangyo_callno')"),
+    sort: Optional[str] = Query("title", description="정렬 기준 ('title', 'callno', 'confidence_score_desc', 'popular')"),
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
     include_library_info: bool = Query(False, description="도서관 소장 정보 포함 여부"),
-    tag: Optional[str] = Query(None, description="세부 태그 필터 (예: '초등1학년' 등)")
+    tag: Optional[str] = Query(None, description="세부 태그 필터 (예: '초등1학년' 등)"),
+    library: Optional[str] = Query(None, description="선택된 도서관 이름 (청구기호순 정렬 기준)")
 ):
     """
-    책 검색 및 필터링 (pangyo_callno가 있는 책만 표시)
+    책 검색 및 필터링
     """
-    return search_books_service(q=q, age=age, category=category, curation=curation, sort=sort, page=page, limit=limit, include_library_info=include_library_info, tag=tag)
+    return search_books_service(q=q, age=age, category=category, curation=curation, sort=sort, page=page, limit=limit, include_library_info=include_library_info, tag=tag, library=library)
 
 
 @router.get("/list")
 def get_books_list(
     age: Optional[str] = Query(None, description="연령대 구간 (예: '0-3', '4-7', '8-12' 등)"),
     category: Optional[str] = Query(None, description="카테고리 (예: '동화', '과학' 등)"),
-    sort: Optional[str] = Query("pangyo_callno", description="정렬 기준 ('title' 또는 'pangyo_callno')"),
+    sort: Optional[str] = Query("title", description="정렬 기준 ('title', 'callno', 'confidence_score_desc', 'popular')"),
     page: int = Query(1, ge=1, description="페이지 번호"),
     limit: int = Query(20, ge=1, le=100, description="페이지당 항목 수"),
     include_library_info: bool = Query(False, description="도서관 소장 정보 포함 여부"),
-    tag: Optional[str] = Query(None, description="세부 태그 필터 (예: '초등1학년' 등)")
+    tag: Optional[str] = Query(None, description="세부 태그 필터 (예: '초등1학년' 등)"),
+    library: Optional[str] = Query(None, description="선택된 도서관 이름 (청구기호순 정렬 기준)")
 ):
     """
-    전체 목록 조회 (pangyo_callno가 있는 책만 표시, 페이지네이션 포함)
+    전체 목록 조회 (페이지네이션 포함)
     """
-    return search_books_service(age=age, category=category, sort=sort, page=page, limit=limit, include_library_info=include_library_info, tag=tag)
+    return search_books_service(age=age, category=category, sort=sort, page=page, limit=limit, include_library_info=include_library_info, tag=tag, library=library)
 
 
 from pydantic import BaseModel
@@ -75,13 +77,13 @@ async def get_loan_status(req: Union[LoanStatusRequest, List[int]] = Body(..., d
             detail="한 번에 최대 50개의 도서 ID만 요청할 수 있습니다."
         )
 
-    # DB에서 책 정보 및 판교 청구기호 조회
-    books_data = supabase.table("childbook_items").select("id, isbn, pangyo_callno").in_("id", book_ids).execute()
+    # DB에서 책 정보 조회
+    books_data = supabase.table("childbook_items").select("id, isbn").in_("id", book_ids).execute()
     
     if not books_data.data:
         return {}
         
-    # 선택된 도서관의 청구기호 정보를 book_library_info에서 조회
+    # 선택된 도서관의 청구기호 정보를 book_library_info에서 단일 조회
     lib_infos = []
     if library_name:
         lib_data = supabase.table("book_library_info") \
@@ -91,27 +93,15 @@ async def get_loan_status(req: Union[LoanStatusRequest, List[int]] = Body(..., d
             .execute()
         lib_infos = lib_data.data if lib_data.data else []
         
-    # 각 도서별 청구기호 소유 여부 판별
+    # 각 도서별 청구기호 소유 여부 판별 (book_library_info 단일 테이블 기준)
     has_callno_map = {}
     for book in books_data.data:
         b_id = book['id']
         has_callno = False
-        
-        if library_name == "판교도서관" or not library_name:
-            p_call = book.get('pangyo_callno')
-            if p_call and p_call != '없음' and p_call.strip():
+        for info in lib_infos:
+            if info['book_id'] == b_id and info.get('callno') and info['callno'] != '없음' and info['callno'].strip():
                 has_callno = True
-            else:
-                for info in lib_infos:
-                    if info['book_id'] == b_id and ('판교' in info['library_name']) and info.get('callno') and info['callno'] != '없음' and info['callno'].strip():
-                        has_callno = True
-                        break
-        else:
-            for info in lib_infos:
-                if info['book_id'] == b_id and info.get('callno') and info['callno'] != '없음' and info['callno'].strip():
-                    has_callno = True
-                    break
-        
+                break
         has_callno_map[b_id] = has_callno
 
     # 청구기호가 존재하는 책들만 대출 현황 조회 대상으로 분류

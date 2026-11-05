@@ -143,10 +143,6 @@ async def collect_for_library(session: aiohttp.ClientSession, lib_name: str, lib
                 }
                 supabase.table("book_library_info").upsert(data, on_conflict="book_id, library_name").execute()
                 success_count += 1
-
-                # 메인 테이블 pangyo_callno가 비어있는 경우 동기화
-                if not book.get("pangyo_callno") or book.get("pangyo_callno") == "없음":
-                    supabase.table("childbook_items").update({"pangyo_callno": callno}).eq("id", book["id"]).execute()
             else:
                 not_found_count += 1
         except APIQuotaExceededError:

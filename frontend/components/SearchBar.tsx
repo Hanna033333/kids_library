@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, useRef, FormEvent } from "react";
 import { Search, X } from "lucide-react";
 
 interface SearchBarProps {
@@ -10,14 +10,19 @@ interface SearchBarProps {
 
 export default function SearchBar({ onSearch, initialQuery = "" }: SearchBarProps) {
   const [query, setQuery] = useState(initialQuery);
+  const lastEmittedQueryRef = useRef(initialQuery);
 
-  // initialQuery 변경 시 (인기 검색어 클릭 등) 동기화
+  // initialQuery 변경 시 (인기 검색어 클릭, URL 변경 등) 동기화
   useEffect(() => {
     setQuery(initialQuery);
+    lastEmittedQueryRef.current = initialQuery;
   }, [initialQuery]);
 
   useEffect(() => {
+    if (query === lastEmittedQueryRef.current) return;
+
     const timer = setTimeout(() => {
+      lastEmittedQueryRef.current = query;
       onSearch(query);
     }, 300);
 
@@ -26,6 +31,7 @@ export default function SearchBar({ onSearch, initialQuery = "" }: SearchBarProp
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    lastEmittedQueryRef.current = query;
     onSearch(query);
   };
 

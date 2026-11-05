@@ -17,6 +17,7 @@ interface UseBooksParams {
   initialBooks?: Book[];
   enabled?: boolean;
   includeLibraryInfo?: boolean;
+  selectedLibrary?: string | null;
 }
 
 export function useBooks({
@@ -24,12 +25,14 @@ export function useBooks({
   ageFilter,
   curationFilter,
   tagFilter,
-  sortFilter = "pangyo_callno",
+  sortFilter = "title",
   limit = 24,
   initialBooks,
   enabled = true,
   includeLibraryInfo = false,
+  selectedLibrary,
 }: UseBooksParams) {
+  const effectiveLibrary = (sortFilter === "callno" || sortFilter === "pangyo_callno") ? (selectedLibrary || undefined) : undefined;
   const {
     data,
     fetchNextPage,
@@ -38,7 +41,7 @@ export function useBooks({
     isLoading,
     error,
   } = useInfiniteQuery({
-    queryKey: ["books-infinite", searchQuery, ageFilter, curationFilter, tagFilter, sortFilter, includeLibraryInfo],
+    queryKey: ["books-infinite", searchQuery, ageFilter, curationFilter, tagFilter, sortFilter, includeLibraryInfo, effectiveLibrary],
     enabled,
     queryFn: async ({ pageParam }): Promise<BooksResponse> => {
       const page = pageParam as number;
@@ -51,7 +54,8 @@ export function useBooks({
         limit,
         curationFilter || undefined,
         includeLibraryInfo,
-        tagFilter || undefined
+        tagFilter || undefined,
+        effectiveLibrary
       );
     },
     getNextPageParam: (lastPage, allPages) => {

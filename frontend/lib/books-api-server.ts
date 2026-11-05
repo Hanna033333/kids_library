@@ -32,13 +32,12 @@ export async function getBooksFromServer({
         .from('childbook_items')
         .select('*', { count: 'exact' });
 
-    // is_hidden 필터 (컬럼이 있으면 적용)
-    // Note: On server side we assume column exists or Supabase handles it gracefully, 
-    // but .or syntax is safer to just apply always.
-    query = query.or('is_hidden.is.null,is_hidden.eq.false');
-
-    // 백엔드 목록 API와 동일하게 유효한 판교 청구기호가 있는 책만 표시
-    query = query.not('pangyo_callno', 'is', null).neq('pangyo_callno', '없음');
+    // is_hidden 및 표지 이미지 유효성 필터
+    query = query
+        .or('is_hidden.is.null,is_hidden.eq.false')
+        .not('image_url', 'is', null)
+        .neq('image_url', '')
+        .not('image_url', 'ilike', '%noimg%');
 
     if (filters?.age) {
         const dbAgeValues = AGE_MAP[filters.age];
@@ -67,7 +66,7 @@ export async function getBooksFromServer({
     // 정렬
     let sortField = resolveDefaultSortField(filters?.sort, filters?.curation, filters?.age);
 
-    if (sortField === 'title') {
+    if (sortField === 'title' || sortField === 'callno' || sortField === 'pangyo_callno') {
         query = query.order('title', { ascending: true });
     } else if (sortField === 'confidence_score_desc') {
         query = query.order('confidence_score', { ascending: false });

@@ -464,7 +464,6 @@ def get_my_reviews(current_user=Depends(get_current_user)):
                 "curation_tag": book.get("curation_tag"),
                 "description": book.get("description"),
                 "national_loan_count": book.get("national_loan_count"),
-                "pangyo_callno": None,
                 "vol": None,
             })
 

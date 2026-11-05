@@ -33,7 +33,7 @@ const TEXTBOOK_GRADE_OPTIONS = [
 ];
 
 const SORT_OPTIONS = [
-    { value: "pangyo_callno", label: "청구기호순" },
+    { value: "callno", label: "청구기호순" },
     { value: "title", label: "제목순" },
 ];
 
@@ -46,16 +46,17 @@ export default function IntegratedFilterModal({
     onTagChange
 }: IntegratedFilterModalProps) {
     const normalizeAge = (age: string) => age === "teen" ? "13+" : age;
+    const normalizeSort = (sort: string) => sort === "pangyo_callno" ? "callno" : sort;
     const [localAge, setLocalAge] = useState(normalizeAge(selectedAge));
     const [localTag, setLocalTag] = useState(selectedTag);
-    const [localSort, setLocalSort] = useState(selectedSort);
+    const [localSort, setLocalSort] = useState(normalizeSort(selectedSort));
 
     // Sync state when modal opens
     useEffect(() => {
         if (isOpen) {
             setLocalAge(normalizeAge(selectedAge));
             setLocalTag(selectedTag);
-            setLocalSort(selectedSort);
+            setLocalSort(normalizeSort(selectedSort));
         }
     }, [isOpen, selectedAge, selectedTag, selectedSort]);
 
@@ -171,7 +172,7 @@ export default function IntegratedFilterModal({
                         <Button
                             onClick={() => {
                                 setLocalAge("");
-                                setLocalSort("pangyo_callno");
+                                setLocalSort("title");
                             }}
                             variant="gray"
                             size="lg"

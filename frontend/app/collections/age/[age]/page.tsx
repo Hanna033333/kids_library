@@ -77,7 +77,7 @@ export default async function AgeCollectionPage({ params }: Props) {
 
     // 서버에서 두 데이터를 병렬 패치 → SSR 단계에서 올바른 순서 확정
     const [{ data: rawBooks }, recommendedBooks] = await Promise.all([
-        getBooksFromServer({ page: 1, limit: 24, filters: { age, sort: 'pangyo_callno' }, client: supabase }),
+        getBooksFromServer({ page: 1, limit: 24, filters: { age, sort: 'title' }, client: supabase }),
         getBooksByAge(age, 7)
     ])
 

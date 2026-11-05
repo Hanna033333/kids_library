@@ -132,7 +132,7 @@ export default async function CurationPage({ params }: Props) {
 
     const supabase = createClient();
     const isAiCuration = !['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '여름방학2026', 'textbook', '교과서수록'].includes(curationTag);
-    const defaultSort = isAiCuration ? 'confidence_score_desc' : 'pangyo_callno';
+    const defaultSort = isAiCuration ? 'confidence_score_desc' : 'title';
 
     let initialBooks: Book[] = [];
     try {

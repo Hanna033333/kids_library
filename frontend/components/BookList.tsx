@@ -31,7 +31,7 @@ export default function BookList({
   ageFilter,
   curationFilter,
   tagFilter,
-  sortFilter = "pangyo_callno",
+  sortFilter = "title",
   initialBooks,
 }: BookListProps) {
   const router = useRouter();
@@ -64,6 +64,7 @@ export default function BookList({
     initialBooks,
     enabled: !isSearchWaitingState,
     includeLibraryInfo: !!user,
+    selectedLibrary,
   });
 
   // 검색 대기 중 인기 도서 추천 쿼리

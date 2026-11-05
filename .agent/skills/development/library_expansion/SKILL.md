@@ -29,7 +29,9 @@ description: Guidelines and checklists for expanding/adding new libraries to the
 > [!IMPORTANT]
 > **Data4Library 청구기호 수집 API 엔드포인트 선택 규격**:
 > - ❌ **`srchDtlList` API 사용 금지**: `srchDtlList`는 공통 KDC 주제 분류번호(`class_no`)만 반환하며, 개별 도서관의 별치기호 및 저자기호를 제공하지 않습니다.
-> - ✅ **`itemSrch` API 사용 필수**: `http://data4library.kr/api/itemSrch` 엔드포인트를 사용하여 응답 JSON `docs[0].doc.callNumbers` 내의 `separate_shelf_code` (별치기호), `class_no` (분류번호), `book_code` (도서기호), `copy_code` (복본기호)를 조합(`f"{separate_shelf_code} {class_no}-{book_code}={copy_code}"`)해야 100% 진실된 실물 서가 청구기호가 완성됩니다.
+> - ✅ **`itemSrch` API 사용 필수**: `http://data4library.kr/api/itemSrch` 엔드포인트를 사용하여 응답 JSON `docs[0].doc.callNumbers` 내의 별치기호, `class_no` (분류번호), `book_code` (도서기호), `copy_code` (복본기호)를 조합(`f"{separate_shelf_code} {class_no}-{book_code}={copy_code}"`)해야 100% 진실된 실물 서가 청구기호가 완성됩니다.
+> - ⚠️ **별치기호(`separate_shelf_name` 우선) 및 내부 접두어 정제**: 평택시립장당도서관 등 일부 도서관은 `separate_shelf_code`에 내부 코드(`E그`, `E아`, `E유` 등)를 내려보내고 실제 웹사이트/서가 표기용 별치기호는 `separate_shelf_name`(`그`, `아`, `유`)에 반환합니다. 따라서 `cn.get("separate_shelf_name") or cn.get("separate_shelf_code", "")`를 우선 참조하고, `^E[가-힣]` 패턴의 내부 영문 접두어가 붙어 있는지 반드시 도서관 웹사이트 실제 검색 결과와 대조·정제해야 합니다.
+> - 🔄 **`callNumbers` 누락 시 도서관 웹 통합검색 하이브리드 폴백**: 정보나루 `itemSrch`에서 `docs`는 반환되나 `class_no`나 `callNumbers`가 빈 값으로 누락된 도서가 많을 경우, 도서관 웹사이트 통합검색 URL에 HTTP 요청을 보내 **ISBN 13자리 1:1 일치 도서**의 청구기호를 추출하는 폴백 함수를 함께 구성합니다.
 
 ---
 
@@ -148,6 +150,6 @@ description: Guidelines and checklists for expanding/adding new libraries to the
 4. **하이브리드 수집 파이프라인 워크플로우**:
    - **1단계**: 정보나루 API 기반 벌크 적재 (속도가 빠르고 부하가 적음).
    - **2단계**: API 상에서 미소장(Null)으로 식별된 도서들만 콕 집어, 대상 도서관 웹 검색페이지로 Selenium 크롤링 폴백 구동하여 90% 이상의 커버리지를 완비한다.
-5. **가상/임의 청구기호 생성 금지 및 실소장 도서 엄격 원칙**:
-   - 연동된 공공도서관에 소장되지 않은 도서에 대해 전국 표준 KDC 분류나 가상 청구기호를 임의로 생성하여 메인 테이블에 채워넣지 않는다.
-   - 연동 도서관 모두에서 미소장인 도서는 `childbook_items.pangyo_callno = NULL`을 유지하여 검색/목록에서 자연스럽게 제외되도록 한다. 실소장 청구기호가 확인된 도서만 대표 청구기호를 동기화한다.
+5. **`book_library_info` 단일 테이블 일원화 및 `pangyo_callno` 오염 절대 금지**:
+   - 판교도서관을 포함한 모든 도서관의 청구기호는 오직 **`book_library_info` 테이블(`book_id`, `library_name`, `callno`) 하나로만 저장 및 조회**한다.
+   - 신규 도서관 청구기호 수집 스크립트에서 `childbook_items.pangyo_callno`가 비어 있다고 하여 타 도서관의 청구기호를 `pangyo_callno`에 덮어쓰는 행위는 데이터 오염을 유발하므로 **절대 금지**한다.

@@ -74,7 +74,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
     const routeCurationFilter = parsedRouteCuration.cleanTag;
     const rawRouteTag = searchParams.get('tag') ? decodeURIComponent(searchParams.get('tag')!) : parsedRouteCuration.extraTag;
     const routeTagFilter = normalizeGradeTag(rawRouteTag);
-    const routeSortFilter = searchParams.get('sort') || parsedRouteCuration.extraSort || (routeCurationFilter && !NON_AI_CURATIONS.includes(routeCurationFilter) ? 'confidence_score_desc' : 'pangyo_callno');
+    const routeSortFilter = searchParams.get('sort') || parsedRouteCuration.extraSort || (routeCurationFilter && !NON_AI_CURATIONS.includes(routeCurationFilter) ? 'confidence_score_desc' : 'title');
 
     const [searchQuery, setSearchQuery] = useState(routeSearchQuery);
     const [authorFilter, setAuthorFilter] = useState(routeAuthorFilter);
@@ -84,7 +84,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
     const [isSearchVisible, setIsSearchVisible] = useState(() => {
         return !!searchQuery || (!overrideCuration && !searchParams.get('curation') && !searchParams.get('age') && !searchParams.get('author'));
     });
-    
+
     // AI 큐레이션은 기본적으로 신뢰도(confidence_score) 높은 순으로 정렬하여 홈 화면과 동일한 순서를 유지
     const [sortFilter, setSortFilter] = useState(() => {
         return routeSortFilter;
@@ -144,9 +144,9 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         { label: '가족사랑', tag: '가족사랑' },
     ];
 
-// 이모티콘 제거 헬퍼 함수
-const stripEmoji = (text: string): string =>
-    text.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF\uFE0F\u200D]/g, '').trim();
+    // 이모티콘 제거 헬퍼 함수
+    const stripEmoji = (text: string): string =>
+        text.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF\uFE0F\u200D]/g, '').trim();
 
     const handleCurationSelect = useCallback((tag: string) => {
         const nextCuration = curationFilter === tag ? "" : tag;
@@ -157,11 +157,15 @@ const stripEmoji = (text: string): string =>
     }, [curationFilter, searchQuery, ageFilter, sortFilter, authorFilter, updateURL]);
 
     const handleSearch = useCallback((query: string) => {
+        if (query === searchQuery) return;
         setSearchQuery(query);
         setAuthorFilter("");
-        sendGAEvent('search', { search_term: query, keyword: query });
+        const trimmed = query.trim();
+        if (trimmed) {
+            sendGAEvent('search', { search_term: trimmed, keyword: trimmed });
+        }
         updateURL({ q: query, age: ageFilter, curation: curationFilter, sort: sortFilter, tag: tagFilter, author: "" });
-    }, [ageFilter, curationFilter, sortFilter, tagFilter, updateURL]);
+    }, [searchQuery, ageFilter, curationFilter, sortFilter, tagFilter, updateURL]);
 
     const handleAgeChange = useCallback((age: string) => {
         setAgeFilter(age);
@@ -228,7 +232,7 @@ const stripEmoji = (text: string): string =>
         const curationTitle = getPageTitle();
         let shareUrl = '';
         let shareText = '';
-        
+
         if (curationFilter) {
             shareUrl = `${window.location.origin}${window.location.pathname}?curation=${encodeURIComponent(curationFilter)}&utm_source=share&utm_medium=social&utm_campaign=curation_${encodeURIComponent(curationFilter)}`;
             shareText = `우리 아이에게 딱 맞는 사서 추천 [${curationTitle}] 도서 리스트예요. 로그인 없이 대출 가능 여부까지 즉시 확인해 보세요!`;
@@ -239,7 +243,7 @@ const stripEmoji = (text: string): string =>
         } else {
             return;
         }
-        
+
         const shareData = {
             title: `책자리 - ${curationTitle}`,
             text: shareText,

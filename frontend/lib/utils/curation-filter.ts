@@ -48,12 +48,12 @@ export function resolveDefaultSortField(
   curation: string | undefined,
   age: string | undefined,
 ): string {
-  const sortField = currentSort || 'pangyo_callno'
+  const sortField = currentSort || 'title'
 
   const isSpecialCuration = !!curation &&
     (SPECIAL_CURATION_PARAMS as readonly string[]).includes(curation)
 
-  if ((sortField === 'pangyo_callno' || !currentSort) && (isSpecialCuration || age)) {
+  if ((sortField === 'callno' || sortField === 'pangyo_callno' || !currentSort) && (isSpecialCuration || age)) {
     return 'title'
   }
 

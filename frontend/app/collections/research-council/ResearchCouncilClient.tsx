@@ -9,7 +9,7 @@ import PageHeader from '@/components/PageHeader'
 export default function ResearchCouncilClient() {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedAge, setSelectedAge] = useState<string>('')
-    const [sortBy, setSortBy] = useState<'pangyo_callno' | 'title'>('pangyo_callno')
+    const [sortBy, setSortBy] = useState<'callno' | 'title'>('title')
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
 
     useEffect(() => {
@@ -35,7 +35,7 @@ export default function ResearchCouncilClient() {
                     onAgeChange={setSelectedAge} onFilterClick={() => setIsFilterModalOpen(true)} />
                 <IntegratedFilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)}
                     selectedAge={selectedAge} selectedSort={sortBy} onAgeChange={setSelectedAge}
-                    onSortChange={(sort: string) => setSortBy(sort as 'pangyo_callno' | 'title')} />
+                    onSortChange={(sort: string) => setSortBy(sort as 'callno' | 'title')} />
                 <BookList searchQuery={searchQuery} ageFilter={selectedAge}
                     curationFilter="어린이도서연구회" sortFilter={sortBy} />
             </div>
