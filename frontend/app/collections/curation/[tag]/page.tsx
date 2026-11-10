@@ -3,6 +3,7 @@ import { Metadata } from 'next'
 import { VALID_TAXONOMY, VALID_AI_TAGS } from '@/lib/constants/taxonomy'
 import { createClient } from '@/lib/supabase-server'
 import { getBooksFromServer } from '@/lib/books-api-server'
+import { getAvailableAgesForCuration } from '@/lib/home-api'
 import { Suspense } from 'react'
 import { PageLoader } from '@/components/ui/PageLoader'
 import { notFound } from 'next/navigation'
@@ -135,14 +136,19 @@ export default async function CurationPage({ params }: Props) {
     const defaultSort = isAiCuration ? 'confidence_score_desc' : 'title';
 
     let initialBooks: Book[] = [];
+    let initialAvailableAges: string[] | undefined = undefined;
     try {
-        const { data: rawBooks } = await getBooksFromServer({
-            page: 1,
-            limit: 24,
-            filters: { curation: curationTag, sort: defaultSort },
-            client: supabase
-        });
+        const [{ data: rawBooks }, availableAges] = await Promise.all([
+            getBooksFromServer({
+                page: 1,
+                limit: 24,
+                filters: { curation: curationTag, sort: defaultSort },
+                client: supabase
+            }),
+            getAvailableAgesForCuration(curationTag, supabase)
+        ]);
         initialBooks = (rawBooks as unknown as Book[]) || [];
+        initialAvailableAges = availableAges;
     } catch (err) {
         console.error('Error fetching initial books for curation:', err);
     }
@@ -203,7 +209,7 @@ export default async function CurationPage({ params }: Props) {
 
             {/* useSearchParams() 사용에 따른 Next.js CSR Bailout 에러 차단을 위해 Suspense Boundary로 감싸기 */}
             <Suspense fallback={<PageLoader />}>
-                <BooksPageClient key={targetSlug} overrideCuration={curationTag} initialBooks={initialBooks} />
+                <BooksPageClient key={targetSlug} overrideCuration={curationTag} initialBooks={initialBooks} initialAvailableAges={initialAvailableAges} />
             </Suspense>
         </>
     );
