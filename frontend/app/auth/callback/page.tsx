@@ -5,7 +5,7 @@ import { useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { PageLoader } from '@/components/ui/PageLoader'
-import { sendGAEvent, sendGAEventAndRedirect } from '@/lib/analytics'
+import { sendGAEvent } from '@/lib/analytics'
 
 const ADJECTIVES = [
     '지혜로운', '따스한', '포근한', '정겨운', '행복한', '다정한', '꿈꾸는', '다독이는', '슬기로운', '다복한', 
@@ -192,18 +192,16 @@ function AuthCallbackContent() {
 
                 // 등록에 성공한 '진짜 신규 계정'에만 축하 모달을 띄운다.
                 // 닉네임이 비어 뒤늦게 채워진 기존 회원에게는 띄우지 않는다.
-                if (registered && isBrandNewAccount) sessionStorage.setItem('showSignupComplete', 'true')
+                if (registered && isBrandNewAccount) {
+                    sessionStorage.setItem('showSignupComplete', 'true')
+                    sessionStorage.setItem('pendingSignupMethod', provider || 'unknown')
+                }
             }
 
             const returnUrl = sessionStorage.getItem('returnUrl')
             sessionStorage.removeItem('returnUrl')
 
-            if (isBrandNewAccount && registered) {
-                // 신규 가입 이벤트 전송 완료 후 리다이렉트 (즉시 이동 시 이벤트 유실 방지)
-                sendGAEventAndRedirect('sign_up', { method: provider || 'unknown' }, returnUrl || '/')
-            } else {
-                window.location.replace(returnUrl || '/')
-            }
+            window.location.replace(returnUrl || '/')
         }
 
         handleCallback()
