@@ -33,6 +33,10 @@ export function useBooks({
   selectedLibrary,
 }: UseBooksParams) {
   const effectiveLibrary = (sortFilter === "callno" || sortFilter === "pangyo_callno") ? (selectedLibrary || undefined) : undefined;
+  const canUseInitialData = Boolean(
+    initialBooks &&
+    (!includeLibraryInfo || initialBooks.every((b) => Array.isArray(b.library_info)))
+  );
   const {
     data,
     fetchNextPage,
@@ -64,7 +68,7 @@ export function useBooks({
       return currentPage < totalPages ? currentPage + 1 : undefined;
     },
     initialPageParam: 1,
-    initialData: initialBooks ? {
+    initialData: canUseInitialData && initialBooks ? {
       pages: [{
         data: initialBooks,
         total: initialBooks.length, // approximate for initial

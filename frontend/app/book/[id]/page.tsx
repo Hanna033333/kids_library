@@ -13,8 +13,8 @@ interface Props {
     params: Promise<{ id: string }>
 }
 
-// 24시간마다 백그라운드 재검증 (ISR)
-export const revalidate = 86400
+// 1시간마다 백그라운드 재검증 (ISR) — 신규 도서관 청구기호 적재 시 캐시 반영 지연 최소화
+export const revalidate = 3600
 export const dynamicParams = true
 
 // 빌드 타임에 상위 100개의 핵심 도서 상세 페이지를 정적 프리렌더링하여 초고속 응답 보장

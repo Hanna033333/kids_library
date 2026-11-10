@@ -119,12 +119,38 @@ export default function BookDetailClient({
 
     // const supabase = createClient()  <-- 제거됨
 
+    // ISR 캐시된 상세 페이지에 신규 추가 도서관(평택시립장당도서관 등)의 library_info가 누락된 경우를 대비해 클라이언트에서 최신 소장 정보 동기화
+    const hasInitialLibraryMatch = useMemo(() => {
+        if (!selectedLibrary || !book.library_info) return false
+        return book.library_info.some(
+            l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary)
+        )
+    }, [book.library_info, selectedLibrary])
+
+    const { data: liveLibraryInfo, isFetching: isLibraryInfoFetching } = useQuery({
+        queryKey: ['book-library-info', book.id],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('book_library_info')
+                .select('library_name, callno')
+                .eq('book_id', book.id)
+            if (error) throw error
+            return data || []
+        },
+        enabled: !!user && !!selectedLibrary,
+        staleTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    })
+
+    const effectiveLibraryInfo = liveLibraryInfo ?? book.library_info
+    const isCheckingLibraryInfo = !!user && !!selectedLibrary && !hasInitialLibraryMatch && !liveLibraryInfo && isLibraryInfoFetching
+
     // 청구기호 결정 로직 (book_library_info 단일 테이블 기준)
     let displayCallNo = '청구기호 없음'
     if (!selectedLibrary) {
         displayCallNo = '도서관을 선택해주세요'
     } else {
-        const info = book.library_info?.find(
+        const info = effectiveLibraryInfo?.find(
             l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary)
         )
         if (info && info.callno && info.callno !== '없음') {
@@ -141,7 +167,7 @@ export default function BookDetailClient({
             if (!selectedLibrary) return {};
             return await fetchLoanStatuses([book.id], selectedLibrary);
         },
-        enabled: !!selectedLibrary && !!displayCallNo && displayCallNo !== '청구기호 없음' && displayCallNo !== '보유 정보 없음' && displayCallNo !== '도서관을 선택해주세요',
+        enabled: !!selectedLibrary && !isCheckingLibraryInfo && !!displayCallNo && displayCallNo !== '청구기호 없음' && displayCallNo !== '보유 정보 없음' && displayCallNo !== '도서관을 선택해주세요',
         staleTime: 3 * 60 * 1000,
         retry: 1,
         refetchOnWindowFocus: false,
@@ -149,6 +175,9 @@ export default function BookDetailClient({
 
     // Derive final status
     const normalizedStatus = (() => {
+        if (isCheckingLibraryInfo) {
+            return undefined;
+        }
         // 1. 청구기호 없으면 무조건 '미소장'
         if (!selectedLibrary || !displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음' || displayCallNo === '도서관을 선택해주세요') {
             return { status: "미소장", available: null };
@@ -531,22 +560,28 @@ export default function BookDetailClient({
 
                                             {/* 2행: 청구기호 & 대출 상태 뱃지 */}
                                             <div className="flex items-center gap-3 flex-wrap pt-0.5">
-                                                <span className={`tracking-tight ${
-                                                    displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'font-black text-xl md:text-2xl text-gray-400' : 'font-black text-xl md:text-2xl text-gray-900'
-                                                }`}>
-                                                    {displayCallNo}{book.vol && selectedLibrary ? `-${book.vol}` : ''}
-                                                </span>
-                                                {normalizedStatus && normalizedStatus.status !== "확인중" && (
-                                                    <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
-                                                        ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
-                                                        : normalizedStatus.available === false
-                                                            ? "bg-red-50 text-red-600 border border-red-200"
-                                                            : normalizedStatus.status === "미소장"
-                                                                ? "bg-[#F3F4F6] text-[#6B7280]"
-                                                                : "bg-white text-gray-600 border border-gray-300"
+                                                {isCheckingLibraryInfo ? (
+                                                    <span className="inline-block w-36 h-7 bg-gray-100 rounded-md animate-pulse" />
+                                                ) : (
+                                                    <>
+                                                        <span className={`tracking-tight ${
+                                                            displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'font-black text-xl md:text-2xl text-gray-400' : 'font-black text-xl md:text-2xl text-gray-900'
                                                         }`}>
-                                                        {normalizedStatus.status}
-                                                    </span>
+                                                            {displayCallNo}{book.vol && selectedLibrary && !PLACEHOLDER_CALL_NOS.includes(displayCallNo) ? `-${book.vol}` : ''}
+                                                        </span>
+                                                        {normalizedStatus && normalizedStatus.status !== "확인중" && (
+                                                            <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
+                                                                ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
+                                                                : normalizedStatus.available === false
+                                                                    ? "bg-red-50 text-red-600 border border-red-200"
+                                                                    : normalizedStatus.status === "미소장"
+                                                                        ? "bg-[#F3F4F6] text-[#6B7280]"
+                                                                        : "bg-white text-gray-600 border border-gray-300"
+                                                                }`}>
+                                                                {normalizedStatus.status}
+                                                            </span>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         </>
