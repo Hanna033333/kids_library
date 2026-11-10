@@ -132,6 +132,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 import { createClient } from '@/lib/supabase-server'
+import { getAgeGroupKey } from '@/lib/utils/age'
 
 export const dynamic = 'force-dynamic';
 
@@ -140,6 +141,7 @@ export default async function BooksPage({ searchParams }: Props) {
     const curation = rawCuration ? decodeURIComponent(rawCuration) : undefined
     const tag = rawTag ? decodeURIComponent(rawTag) : undefined
     let jsonLd = null;
+    let initialAvailableAges: string[] | undefined = undefined;
 
     const searchEntries = Object.entries(searchParams).filter(([_, v]) => v !== undefined) as [string, string][]
     const queryString = new URLSearchParams(searchEntries).toString()
@@ -152,8 +154,11 @@ export default async function BooksPage({ searchParams }: Props) {
         const supabase = createClient()
         let query = supabase
             .from('childbook_items')
-            .select('id, title, author, isbn, image_url')
+            .select('id, title, author, isbn, image_url, age')
             .or('is_hidden.is.null,is_hidden.eq.false')
+            .not('image_url', 'is', null)
+            .neq('image_url', '')
+            .not('image_url', 'ilike', '%noimg%')
 
         const SPECIAL_TAGS = ['winter-vacation', 'summer-vacation', 'research-council', 'caldecott', '겨울방학2026', '여름방학2026', '어린이도서연구회', 'textbook', '교과서수록'];
         if (SPECIAL_TAGS.includes(curation)) {
@@ -173,6 +178,7 @@ export default async function BooksPage({ searchParams }: Props) {
         const { data: books } = await query.order('title', { ascending: true })
 
         if (books && books.length > 0) {
+            initialAvailableAges = Array.from(new Set(books.map((b: any) => b.age ? getAgeGroupKey(b.age) : '').filter(Boolean)));
             jsonLd = {
                 '@context': 'https://schema.org',
                 '@type': 'ItemList',
@@ -208,7 +214,7 @@ export default async function BooksPage({ searchParams }: Props) {
                 />
             )}
             <Suspense fallback={<PageLoader />}>
-                <BooksPageClient key={pageKey} />
+                <BooksPageClient key={pageKey} initialAvailableAges={initialAvailableAges} />
             </Suspense>
         </>
     );

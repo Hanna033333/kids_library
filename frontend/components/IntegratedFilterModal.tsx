@@ -14,6 +14,7 @@ interface IntegratedFilterModalProps {
     isTextbook?: boolean;
     selectedTag?: string;
     onTagChange?: (tag: string) => void;
+    disabledAges?: string[];
 }
 
 const AGE_OPTIONS = [
@@ -43,7 +44,8 @@ export default function IntegratedFilterModal({
     selectedSort, onSortChange,
     isTextbook = false,
     selectedTag = "",
-    onTagChange
+    onTagChange,
+    disabledAges = []
 }: IntegratedFilterModalProps) {
     const normalizeAge = (age: string) => age === "teen" ? "13+" : age;
     const normalizeSort = (sort: string) => sort === "pangyo_callno" ? "callno" : sort;
@@ -125,18 +127,30 @@ export default function IntegratedFilterModal({
                                     );
                                 })
                             ) : (
-                                AGE_OPTIONS.map((option) => (
-                                    <button
-                                        key={option.value}
-                                        onClick={() => handleAgeToggle(option.value)}
-                                        className={`px-4 py-2 rounded-lg text-[15px] font-medium transition-all duration-200 border ${localAge === option.value
-                                            ? "bg-brand-primary text-white border-brand-primary shadow-md shadow-gray-200 transform scale-[1.02]"
-                                            : "bg-white text-gray-600 border-gray-200"
-                                            }`}
-                                    >
-                                        {option.label}
-                                    </button>
-                                ))
+                                AGE_OPTIONS.map((option) => {
+                                    const isSelected = localAge === option.value;
+                                    const isDisabled = disabledAges.includes(option.value) && !isSelected;
+                                    return (
+                                        <button
+                                            key={option.value}
+                                            disabled={isDisabled}
+                                            aria-disabled={isDisabled}
+                                            onClick={() => {
+                                                if (isDisabled) return;
+                                                handleAgeToggle(option.value);
+                                            }}
+                                            className={`px-4 py-2 rounded-lg text-[15px] font-medium transition-all duration-200 border ${
+                                                isDisabled
+                                                    ? "bg-gray-100 text-gray-300 border-gray-200/60 cursor-not-allowed select-none"
+                                                    : isSelected
+                                                        ? "bg-brand-primary text-white border-brand-primary shadow-md shadow-gray-200 transform scale-[1.02]"
+                                                        : "bg-white text-gray-600 border-gray-200"
+                                                }`}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    );
+                                })
                             )}
                         </div>
                         <p className="text-xs text-gray-400 mt-2 ml-1">

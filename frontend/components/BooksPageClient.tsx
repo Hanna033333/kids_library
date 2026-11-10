@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import SearchBar from "@/components/SearchBar";
 import BookList from "@/components/BookList";
 import { BooksResponse } from "@/lib/types";
@@ -17,18 +18,22 @@ import IntegratedFilterModal from "@/components/IntegratedFilterModal";
 import BackButton from "@/components/BackButton";
 import { ALL_TAXONOMY } from "@/lib/constants/taxonomy";
 import { cleanCurationTag } from "@/lib/utils/curation-filter";
+import { getAgeGroupKey } from "@/lib/utils/age";
 import { PageLoader } from "@/components/ui/PageLoader";
 
 interface BooksPageClientProps {
     overrideCuration?: string;
     overrideAge?: string;
     initialBooks?: BooksResponse['data'];
+    initialAvailableAges?: string[];
 }
+
+const FILTERABLE_AGE_GROUPS = ['0-3', '4-7', '8-12'] as const;
 
 // AI 큐레이션이 아닌 정적/특수 큐레이션 목록 (AI 신뢰도순 정렬 제외)
 const NON_AI_CURATIONS = ['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott', 'textbook', '교과서수록'];
 
-export default function BooksPageClient({ overrideCuration, overrideAge, initialBooks }: BooksPageClientProps) {
+export default function BooksPageClient({ overrideCuration, overrideAge, initialBooks, initialAvailableAges }: BooksPageClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -98,6 +103,33 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
 
     // AI 큐레이션 태그 여부 (알려진 non-AI 큐레이션 제외)
     const isAiCuration = !!curationFilter && !NON_AI_CURATIONS.includes(curationFilter);
+
+    // 특정 큐레이션 진입 시 해당 큐레이션 내 연령대별 도서 존재 여부 조회 (0권인 연령 칩 비활성화용)
+    const initialCurationMatches = curationFilter === (overrideCuration || parsedRouteCuration.cleanTag);
+    const derivedInitialAges = useMemo(() => {
+        if (!initialCurationMatches) return undefined;
+        if (initialAvailableAges) return initialAvailableAges;
+        if (initialBooks && initialBooks.length > 0 && initialBooks.length < 24) {
+            return Array.from(new Set(initialBooks.map(b => b.age ? getAgeGroupKey(b.age) : '').filter(Boolean)));
+        }
+        return undefined;
+    }, [initialCurationMatches, initialAvailableAges, initialBooks]);
+
+    const { data: availableAgesForCuration } = useQuery<string[]>({
+        queryKey: ['curation-available-ages', curationFilter],
+        queryFn: async () => {
+            const { getAvailableAgesForCuration } = await import('@/lib/home-api');
+            return getAvailableAgesForCuration(curationFilter);
+        },
+        enabled: !!curationFilter && !isTextbook,
+        initialData: derivedInitialAges,
+        staleTime: 10 * 60 * 1000,
+    });
+
+    const disabledAges = useMemo(() => {
+        if (!curationFilter || isTextbook || !availableAgesForCuration) return [];
+        return FILTERABLE_AGE_GROUPS.filter(age => !availableAgesForCuration.includes(age));
+    }, [curationFilter, isTextbook, availableAgesForCuration]);
 
     // URL 업데이트 함수
     const updateURL = useCallback((params: Record<string, string>) => {
@@ -340,6 +372,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                 isTextbook={isTextbook}
                 selectedTag={tagFilter}
                 onTagChange={handleTagChange}
+                disabledAges={disabledAges}
             />
 
             {/* 통합 필터 모달 */}
@@ -353,6 +386,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                 isTextbook={isTextbook}
                 selectedTag={tagFilter}
                 onTagChange={handleTagChange}
+                disabledAges={disabledAges}
             />
 
             {/* 책 리스트 */}

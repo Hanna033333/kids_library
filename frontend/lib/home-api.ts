@@ -368,6 +368,45 @@ export async function getPopularBooksOverall(limit: number = 8, client?: Supabas
 }
 
 /**
+ * 특정 큐레이션 내에 존재하는 연령 그룹 키('0-3', '4-7', '8-12', '13+') 목록을 조회합니다.
+ * 해당 큐레이션에서 도서가 0권인 연령 필터 칩을 비활성화하기 위해 사용합니다.
+ */
+export async function getAvailableAgesForCuration(
+    curation: string,
+    client?: SupabaseClient
+): Promise<string[]> {
+    const clean = curation.replace(/^#/, '').split(/[?&]/)[0].trim()
+    if (!clean) return ['0-3', '4-7', '8-12']
+
+    const supabase = client || createClient()
+    const { resolveDbCurationTag, isSpecialTag, buildCurationOrFilter } = await import('./utils/curation-filter')
+    const { getAgeGroupKey } = await import('./utils/age')
+
+    const dbTag = resolveDbCurationTag(clean)
+    let query = visibleBooks(supabase, 'age')
+
+    query = isSpecialTag(dbTag)
+        ? query.ilike('curation_tag', `%${dbTag}%`)
+        : query.or(buildCurationOrFilter(dbTag))
+
+    const { data, error } = await query
+
+    if (error || !data) {
+        console.error(`Error fetching available ages for curation ${curation}:`, error)
+        return ['0-3', '4-7', '8-12']
+    }
+
+    const availableSet = new Set<string>()
+    for (const row of data as { age?: string | null }[]) {
+        if (row.age) {
+            availableSet.add(getAgeGroupKey(row.age))
+        }
+    }
+
+    return Array.from(availableSet)
+}
+
+/**
  * 저자 필드에서 주 저자명 정제 추출 헬퍼 (예: "백희나 글, 그림" -> "백희나")
  */
 export function cleanAuthorName(authorStr?: string | null): string {

@@ -6,6 +6,7 @@ interface FilterBarProps {
   isTextbook?: boolean;
   selectedTag?: string;
   onTagChange?: (tag: string) => void;
+  disabledAges?: string[];
 }
 
 const AGE_OPTIONS = [
@@ -31,7 +32,8 @@ export default function FilterBar({
   showFilterButton = true,
   isTextbook = false,
   selectedTag = "",
-  onTagChange
+  onTagChange,
+  disabledAges = []
 }: FilterBarProps) {
 
   const handleAgeToggle = (ageVal: string) => {
@@ -95,14 +97,22 @@ export default function FilterBar({
           ) : (
             AGE_OPTIONS.map((option) => {
               const isSelected = selectedAge === option.value;
+              const isDisabled = disabledAges.includes(option.value) && !isSelected;
               return (
                 <button
                   key={option.value}
-                  onClick={() => handleAgeToggle(option.value)}
-                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-[14px] transition-all cursor-pointer outline-none focus:outline-none active:scale-95 ${
-                    isSelected
-                      ? "bg-brand-primary text-white font-bold shadow-xs active:bg-brand-primary-dark"
-                      : "bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100"
+                  disabled={isDisabled}
+                  aria-disabled={isDisabled}
+                  onClick={() => {
+                    if (isDisabled) return;
+                    handleAgeToggle(option.value);
+                  }}
+                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-full text-[14px] transition-all outline-none focus:outline-none ${
+                    isDisabled
+                      ? "bg-gray-100 text-gray-300 font-medium border border-gray-200/60 cursor-not-allowed select-none"
+                      : isSelected
+                        ? "bg-brand-primary text-white font-bold shadow-xs active:bg-brand-primary-dark cursor-pointer active:scale-95"
+                        : "bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100 cursor-pointer active:scale-95"
                   }`}
                 >
                   {option.label}
