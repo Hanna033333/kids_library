@@ -93,22 +93,20 @@ export const sendGAEvent = (eventName: string, eventParams?: Record<string, any>
 
     if (typeof window !== "undefined" && window.gtag) {
         window.gtag("event", eventName, eventParams);
-    } else {
-        // Fallback if gtag is not initialized yet
-        if (typeof window !== "undefined") {
-            window.dataLayer = window.dataLayer || [];
-            window.dataLayer.push({
-                event: eventName,
-                ...eventParams,
-            });
+    } else if (typeof window !== "undefined") {
+        // Fallback if gtag is not initialized yet: must use arguments object (same as gtag function)
+        window.dataLayer = window.dataLayer || [];
+        function gtagFallback(..._args: any[]) {
+            window.dataLayer.push(arguments);
         }
+        gtagFallback("event", eventName, eventParams);
     }
 };
 
 /**
  * GA 이벤트 전송 후 페이지 이동 — OAuth 콜백처럼 이벤트 직후 리다이렉트하는 상황에서 사용.
  * gtag의 event_callback으로 전송 완료를 기다린 뒤 navigate하여 이벤트 유실을 방지한다.
- * gtag 미초기화 시 300ms 타임아웃 후 폴백 이동.
+ * gtag 미초기화 시 dataLayer 큐에 표준 arguments 형태로 적재 후 350ms 대기 뒤 이동.
  */
 export const sendGAEventAndRedirect = (
     eventName: string,
@@ -123,18 +121,35 @@ export const sendGAEventAndRedirect = (
 
     const doRedirect = () => window.location.replace(redirectUrl);
 
-    if (ignored || typeof window === "undefined" || !window.gtag) {
+    if (ignored || typeof window === "undefined") {
         doRedirect();
         return;
     }
 
-    // 전송 완료 콜백으로 리다이렉트, 300ms 타임아웃 안전장치
-    const timer = setTimeout(doRedirect, 300);
-    window.gtag("event", eventName, {
+    let redirected = false;
+    const safeRedirect = () => {
+        if (redirected) return;
+        redirected = true;
+        doRedirect();
+    };
+
+    // 전송 완료 콜백으로 리다이렉트, 350ms 타임아웃 안전장치
+    const timer = setTimeout(safeRedirect, 350);
+    const payload = {
         ...eventParams,
         event_callback: () => {
             clearTimeout(timer);
-            doRedirect();
+            safeRedirect();
         },
-    });
+    };
+
+    if (window.gtag) {
+        window.gtag("event", eventName, payload);
+    } else {
+        window.dataLayer = window.dataLayer || [];
+        function gtagQueue(..._args: any[]) {
+            window.dataLayer.push(arguments);
+        }
+        gtagQueue("event", eventName, payload);
+    }
 };

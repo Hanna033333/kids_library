@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { sendGAEvent } from '@/lib/analytics'
 
 const ADJECTIVES = ['지혜로운', '따스한', '포근한', '정겨운', '행복한', '다정한', '꿈꾸는', '다독이는', '슬기로운', '다복한', '마음넓은', '빛나는']
 const NOUNS = ['책벌레', '이야기꾼', '책부엉이', '파랑새', '독서가', '책요정', '글벗', '책탐험가', '책마을님']
@@ -23,6 +24,10 @@ export default function SignupWelcomeModal() {
         if (typeof window === 'undefined') return
         if (sessionStorage.getItem('showSignupComplete') === 'true') {
             sessionStorage.removeItem('showSignupComplete')
+            const signupMethod = sessionStorage.getItem('pendingSignupMethod') || localStorage.getItem('last_login_provider') || 'unknown'
+            sessionStorage.removeItem('pendingSignupMethod')
+            sendGAEvent('sign_up', { method: signupMethod })
+
             const loadInitialNickname = async () => {
                 const savedNickname = sessionStorage.getItem('generatedNickname')
                 sessionStorage.removeItem('generatedNickname')
