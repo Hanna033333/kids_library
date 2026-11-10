@@ -33,12 +33,14 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ revalidated: true, path, now: Date.now() })
         }
 
-        // 기본값: 큐레이션 동적 라우트 템플릿 전체 + 홈
+        // 기본값: 큐레이션/연령/도서상세 동적 라우트 템플릿 전체 + 홈
         revalidatePath('/collections/curation/[tag]', 'page')
+        revalidatePath('/collections/age/[age]', 'page')
+        revalidatePath('/book/[id]', 'page')
         revalidatePath('/')
         return NextResponse.json({
             revalidated: true,
-            paths: ['/collections/curation/[tag]', '/'],
+            paths: ['/collections/curation/[tag]', '/collections/age/[age]', '/book/[id]', '/'],
             now: Date.now(),
         })
     } catch (err) {

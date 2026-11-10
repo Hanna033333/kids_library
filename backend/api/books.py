@@ -138,7 +138,7 @@ async def get_books_by_ids(book_ids: List[int] = Body(..., description="책 ID �
             detail="한 번에 최대 50개의 도서 ID만 요청할 수 있습니다."
         )
 
-    data = supabase.table("childbook_items").select("*").in_("id", book_ids).execute()
+    data = supabase.table("childbook_items").select("*, library_info:book_library_info(library_name, callno)").in_("id", book_ids).execute()
 
     # 순서 유지 (입력받은 ID 순서대로)
     id_map = {book['id']: book for book in data.data}
