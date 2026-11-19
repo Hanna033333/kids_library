@@ -5,9 +5,11 @@ import SearchBar from '@/components/SearchBar'
 import FilterBar from '@/components/FilterBar'
 import IntegratedFilterModal from '@/components/IntegratedFilterModal'
 import PageHeader from '@/components/PageHeader'
+import { useAuth } from '@/context/AuthContext'
 import { sendGAEvent } from '@/lib/analytics'
 
 export default function ResearchCouncilClient() {
+    const { user, isLoading: authLoading, preferredChildAge } = useAuth()
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedAge, setSelectedAge] = useState<string>('')
     const [sortBy, setSortBy] = useState<'callno' | 'title'>('title')
@@ -15,16 +17,13 @@ export default function ResearchCouncilClient() {
     const initialAgeAppliedRef = useRef(false)
 
     useEffect(() => {
-        if (initialAgeAppliedRef.current) return
+        if (authLoading || initialAgeAppliedRef.current) return
         initialAgeAppliedRef.current = true
 
-        if (typeof window !== 'undefined') {
-            const preferredAge = localStorage.getItem('preferred_child_age')
-            if (preferredAge && ['0-3', '4-7', '8-12', '13+'].includes(preferredAge)) {
-                setSelectedAge(preferredAge)
-            }
+        if (user && preferredChildAge) {
+            setSelectedAge(preferredChildAge)
         }
-    }, [])
+    }, [authLoading, user, preferredChildAge])
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query)

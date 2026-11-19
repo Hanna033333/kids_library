@@ -97,7 +97,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         return routeSortFilter;
     });
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-    const { user, signOut } = useAuth();
+    const { user, isLoading: authLoading, preferredChildAge, signOut } = useAuth();
     const [toastMessage, setToastMessage] = useState("");
 
     // 교과서 수록도서 큐레이션 여부
@@ -165,22 +165,17 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         }
     }, [routeSearchQuery, routeAuthorFilter, routeAgeFilter, routeCurationFilter, routeTagFilter, routeSortFilter]);
 
-    // 도서 리스트 진입 시, 선호 연령대가 설정되어 있고 URL에 age가 없으면 해당 연령대 필터를 기본값으로 자동 선택
+    // 도서 리스트 진입 시, 로그인 유저의 선호 연령대가 설정되어 있고 URL에 age가 없으면 해당 연령대 필터를 기본값으로 자동 선택
     const initialAgeAppliedRef = useRef(false);
     useEffect(() => {
-        if (initialAgeAppliedRef.current) return;
+        if (authLoading || initialAgeAppliedRef.current) return;
         initialAgeAppliedRef.current = true;
 
-        if (!routeAgeFilter && !overrideAge && !searchParams.get('age') && !isTextbook) {
-            if (typeof window !== 'undefined') {
-                const preferredAge = localStorage.getItem('preferred_child_age');
-                if (preferredAge && ['0-3', '4-7', '8-12', '13+'].includes(preferredAge)) {
-                    setAgeFilter(preferredAge);
-                    updateURL({ age: preferredAge });
-                }
-            }
+        if (user && preferredChildAge && !routeAgeFilter && !overrideAge && !searchParams.get('age') && !isTextbook) {
+            setAgeFilter(preferredChildAge);
+            updateURL({ age: preferredChildAge });
         }
-    }, [routeAgeFilter, overrideAge, searchParams, isTextbook, updateURL]);
+    }, [authLoading, user, preferredChildAge, routeAgeFilter, overrideAge, searchParams, isTextbook, updateURL]);
 
     const POPULAR_THEME_CHIPS = [
         { label: '잠자리', tag: '잠자리' },

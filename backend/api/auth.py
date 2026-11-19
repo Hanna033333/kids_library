@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 # Pydantic 모델
 # ============================================
 
+VALID_CHILD_AGES = {"0-3", "4-7", "8-12", "13+"}
+
+
 class UserResponse(BaseModel):
     id: str
     email: str
@@ -28,6 +31,7 @@ class UserResponse(BaseModel):
     agreed_to_terms: bool
     agreed_to_privacy: bool
     agreed_to_marketing: bool
+    preferred_child_age: Optional[str] = None
     created_at: datetime
 
 
@@ -35,6 +39,7 @@ class UpdateProfileRequest(BaseModel):
     nickname: Optional[str] = None
     profile_image_url: Optional[str] = None
     agreed_to_marketing: Optional[bool] = None
+    preferred_child_age: Optional[str] = None
 
 
 class AgreementsRequest(BaseModel):
@@ -101,6 +106,7 @@ async def get_my_profile(current_user = Depends(get_current_user)):
             "agreed_to_terms": True,
             "agreed_to_privacy": True,
             "agreed_to_marketing": False,
+            "preferred_child_age": None,
             "created_at": datetime.now()
         }
 
@@ -188,7 +194,17 @@ async def update_my_profile(
         update_data = profile.dict(exclude_unset=True)
         if profile.nickname:
             update_data["nickname"] = profile.nickname.strip()
-        
+
+        if "preferred_child_age" in update_data:
+            raw_age = update_data["preferred_child_age"]
+            if raw_age is None or raw_age == "":
+                update_data["preferred_child_age"] = None
+            elif raw_age not in VALID_CHILD_AGES:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="유효하지 않은 아이 연령대 값입니다."
+                )
+
         # QA 전용 테스터는 모의 성공 데이터 반환
         if current_user.id == "00000000-0000-0000-0000-000000000000":
             return {
@@ -200,6 +216,7 @@ async def update_my_profile(
                 "agreed_to_terms": True,
                 "agreed_to_privacy": True,
                 "agreed_to_marketing": False,
+                "preferred_child_age": update_data.get("preferred_child_age"),
                 "created_at": datetime.now()
             }
 

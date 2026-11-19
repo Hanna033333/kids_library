@@ -91,12 +91,12 @@ export default function MyPageClient() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const isAutoOpenLibrary = searchParams?.get('action') === 'select-library'
-    const { user, isLoading: authLoading, signOut } = useAuth()
+    const { user, isLoading: authLoading, preferredChildAge, updatePreferredChildAge, signOut } = useAuth()
 
     const [currentView, setCurrentView] = useState<ViewState>('main')
 
-    // 우리 아이 연령대
-    const [childAge, setChildAge] = useState<string>('')
+    // 우리 아이 연령대 (AuthContext에서 DB 동기화 상태로 관리)
+    const childAge = preferredChildAge || ''
 
     // 회원탈퇴 STEP 1
     const [deleteAgreed, setDeleteAgreed] = useState(false)
@@ -127,27 +127,22 @@ export default function MyPageClient() {
     // 토스트
     const [toastMessage, setToastMessage] = useState('')
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const stored = localStorage.getItem('preferred_child_age')
-            if (stored && ['0-3', '4-7', '8-12', '13+'].includes(stored)) {
-                setChildAge(stored)
-            }
-        }
-    }, [])
-
-    const handleChildAgeSelect = (ageKey: string) => {
-        const nextAge = childAge === ageKey ? '' : ageKey
-        setChildAge(nextAge)
-        if (typeof window !== 'undefined') {
-            if (nextAge) {
-                localStorage.setItem('preferred_child_age', nextAge)
-                const opt = CHILD_AGE_OPTIONS.find(o => o.key === nextAge)
-                setToastMessage(`우리 아이 연령대가 ${opt?.label || ''}(으)로 설정되었어요`)
-            } else {
-                localStorage.removeItem('preferred_child_age')
-                setToastMessage('우리 아이 연령대 설정이 해제되었어요')
-            }
+    const handleChildAgeSelect = async (ageKey: string) => {
+        const nextAge = childAge === ageKey ? null : ageKey
+        const ok = await updatePreferredChildAge(nextAge)
+        if (nextAge) {
+            const opt = CHILD_AGE_OPTIONS.find(o => o.key === nextAge)
+            setToastMessage(
+                ok
+                    ? `우리 아이 연령대가 ${opt?.label || ''}(으)로 설정되었어요`
+                    : '연령대 저장에 실패했어요. 잠시 후 다시 시도해주세요.'
+            )
+        } else {
+            setToastMessage(
+                ok
+                    ? '우리 아이 연령대 설정이 해제되었어요'
+                    : '연령대 해제에 실패했어요. 잠시 후 다시 시도해주세요.'
+            )
         }
     }
 

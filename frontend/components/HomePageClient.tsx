@@ -47,21 +47,11 @@ export default function HomePageClient({
   dynamicCurations = []
 }: HomePageClientProps) {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, preferredChildAge } = useAuth()
   const [researchBooks, setResearchBooks] = useState<Book[]>(initialResearchBooks)
   const [caldecottBooks] = useState<Book[]>(initialCaldecottBooks)
   const [summerBooks, setSummerBooks] = useState<Book[]>(initialSummerBooks)
-  const [preferredAge, setPreferredAge] = useState<string | null>(null)
-
-  // 사용자가 설정한 우리 아이 선호 연령대 로드
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('preferred_child_age')
-      if (stored && ['0-3', '4-7', '8-12', '13+'].includes(stored)) {
-        setPreferredAge(stored)
-      }
-    }
-  }, [])
+  const preferredAge = user ? preferredChildAge : null
 
   // 교과서 수록 도서를 제외한 모든 큐레이션 서가에 선호 연령대 우선 맞춤 정렬 적용
   const displayedDynamicCurations = useMemo(() => {

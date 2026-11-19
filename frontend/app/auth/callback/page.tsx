@@ -140,7 +140,7 @@ function AuthCallbackContent() {
                 const token = sessionData?.session?.access_token || ''
 
                 // 백엔드 응답이 지연돼도 로더에 갇히지 않도록 8초 타임아웃을 건다
-                const registerMember = async (): Promise<{ ok: boolean; status: number; reason: string }> => {
+                const registerMember = async (targetNickname: string): Promise<{ ok: boolean; status: number; reason: string }> => {
                     const controller = new AbortController()
                     const timer = setTimeout(() => controller.abort(), 8000)
                     try {
@@ -154,7 +154,7 @@ function AuthCallbackContent() {
                                 agreed_to_terms: true,
                                 agreed_to_privacy: true,
                                 agreed_to_marketing: false,
-                                nickname
+                                nickname: targetNickname
                             }),
                             signal: controller.signal
                         })
@@ -173,9 +173,15 @@ function AuthCallbackContent() {
                     }
                 }
 
-                // 일시적인 네트워크 오류로 가입이 통째로 유실되지 않도록 1회 재시도
-                let result = await registerMember()
-                if (!result.ok) result = await registerMember()
+                // 일시적인 네트워크 오류 또는 닉네임 중복(409)으로 가입이 유실되지 않도록 1회 재시도
+                let result = await registerMember(nickname)
+                if (!result.ok) {
+                    const retryNickname = result.status === 409 ? generateRandomNickname() : nickname
+                    if (result.status === 409) {
+                        sessionStorage.setItem('generatedNickname', retryNickname)
+                    }
+                    result = await registerMember(retryNickname)
+                }
                 registered = result.ok
 
                 if (!result.ok) {

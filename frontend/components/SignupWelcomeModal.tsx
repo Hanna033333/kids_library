@@ -6,6 +6,7 @@ import { ChevronDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { sendGAEvent } from '@/lib/analytics'
 import { useLibrary, LibraryName } from '@/context/LibraryContext'
+import { useAuth } from '@/context/AuthContext'
 
 const ADJECTIVES = [
     '지혜로운', '따스한', '포근한', '정겨운', '행복한', '다정한', '꿈꾸는', '다독이는', '슬기로운', '다복한', 
@@ -54,6 +55,7 @@ export default function SignupWelcomeModal() {
     const [isSaving, setIsSaving] = useState(false)
     const router = useRouter()
     const { selectedLibrary, setSelectedLibrary, availableLibraries } = useLibrary()
+    const { preferredChildAge, updatePreferredChildAge } = useAuth()
 
     useEffect(() => {
         if (selectedLibrary) {
@@ -69,8 +71,7 @@ export default function SignupWelcomeModal() {
             sessionStorage.removeItem('pendingSignupMethod')
             sendGAEvent('sign_up', { method: signupMethod })
 
-            const storedAge = localStorage.getItem('preferred_child_age')
-            if (storedAge) setSelectedAge(storedAge)
+            if (preferredChildAge) setSelectedAge(preferredChildAge)
 
             const loadInitialNickname = async () => {
                 const savedNickname = sessionStorage.getItem('generatedNickname')
@@ -159,9 +160,6 @@ export default function SignupWelcomeModal() {
         setIsSaving(true)
 
         try {
-            if (selectedAge) {
-                localStorage.setItem('preferred_child_age', selectedAge)
-            }
             if (selectedLib) {
                 setSelectedLibrary(selectedLib as LibraryName)
                 if (sessionStorage.getItem('pendingAction') === 'open_library_selector') {
@@ -182,6 +180,7 @@ export default function SignupWelcomeModal() {
             if (isQaMode) {
                 // QA 모드: 실제 API 호출 없이 sessionStorage에만 저장
                 sessionStorage.setItem('qa_saved_nickname', nickname.trim())
+                await updatePreferredChildAge(selectedAge || null)
             } else {
                 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                 const API_BASE_URL = isLocal
@@ -197,13 +196,17 @@ export default function SignupWelcomeModal() {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ nickname: nickname.trim() })
+                    body: JSON.stringify({
+                        nickname: nickname.trim(),
+                        preferred_child_age: selectedAge || null,
+                    })
                 })
                 if (res.status === 409) {
                     setIsDuplicate(true)
                     return
                 }
                 if (!res.ok) throw new Error(`Nickname save failed: ${res.status}`)
+                await updatePreferredChildAge(selectedAge || null)
             }
             setIsOpen(false)
             if (

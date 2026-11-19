@@ -120,6 +120,7 @@ export default function RootLayout({
             if (!window['ga-disable-G-FG2WYB82L9']) {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
+              window.gtag = gtag;
               gtag('js', new Date());
               gtag('config', 'G-FG2WYB82L9');
               console.log("✅ [GA4] Tracking Enabled");
