@@ -22,9 +22,12 @@ export default function SearchBar({ onSearch, initialQuery = "" }: SearchBarProp
     if (query === lastEmittedQueryRef.current) return;
 
     const timer = setTimeout(() => {
+      // 한글 조합 중이거나 초성 단독 입력(예: 'ㄱ', 'ㅌ')인 경우 자동 검색 보류
+      const trimmed = query.trim();
+      if (trimmed && /^[ㄱ-ㅎㅏ-ㅣ]+$/.test(trimmed)) return;
       lastEmittedQueryRef.current = query;
       onSearch(query);
-    }, 300);
+    }, 600);
 
     return () => clearTimeout(timer);
   }, [query, onSearch]);

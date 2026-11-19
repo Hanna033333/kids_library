@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Modal from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { createClient } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { sendGAEvent } from '@/lib/analytics';
 
 interface LoginPromptModalProps {
@@ -22,7 +22,6 @@ export default function LoginPromptModal({
 }: LoginPromptModalProps) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
-    const supabase = createClient();
 
     // 외부 OAuth(카카오/구글) 창 이동 후 Back 키로 되돌아왔을 때 dimmed(disabled) 상태 해제
     useEffect(() => {
@@ -69,7 +68,7 @@ export default function LoginPromptModal({
                 <h3 className="text-[19px] font-bold text-gray-900 leading-snug mb-2 pr-6 tracking-tight break-keep">
                     {title}
                 </h3>
-                <p className="text-gray-600 text-[14px] mb-6 leading-relaxed tracking-tight break-keep font-normal">
+                <p className="text-gray-600 text-[14px] mb-6 leading-relaxed tracking-tight break-keep whitespace-pre-line font-normal">
                     {description}
                 </p>
 

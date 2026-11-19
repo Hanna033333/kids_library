@@ -86,6 +86,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const signOut = async () => {
         await supabase.auth.signOut()
         localStorage.removeItem('supabase.auth.token') // Clear mock token too
+        sessionStorage.removeItem('qa_mode')
+        sessionStorage.removeItem('qa_member_state')
+        sessionStorage.removeItem('qa_saved_nickname')
+        sessionStorage.removeItem('generatedNickname')
+        sessionStorage.removeItem('showSignupComplete')
         setUser(null)
         setSession(null)
     }

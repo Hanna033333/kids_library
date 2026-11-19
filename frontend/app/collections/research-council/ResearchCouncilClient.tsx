@@ -1,16 +1,43 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import BookList from '@/components/BookList'
 import SearchBar from '@/components/SearchBar'
 import FilterBar from '@/components/FilterBar'
 import IntegratedFilterModal from '@/components/IntegratedFilterModal'
 import PageHeader from '@/components/PageHeader'
+import { sendGAEvent } from '@/lib/analytics'
 
 export default function ResearchCouncilClient() {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedAge, setSelectedAge] = useState<string>('')
     const [sortBy, setSortBy] = useState<'callno' | 'title'>('title')
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+    const initialAgeAppliedRef = useRef(false)
+
+    useEffect(() => {
+        if (initialAgeAppliedRef.current) return
+        initialAgeAppliedRef.current = true
+
+        if (typeof window !== 'undefined') {
+            const preferredAge = localStorage.getItem('preferred_child_age')
+            if (preferredAge && ['0-3', '4-7', '8-12', '13+'].includes(preferredAge)) {
+                setSelectedAge(preferredAge)
+            }
+        }
+    }, [])
+
+    const handleSearch = useCallback((query: string) => {
+        setSearchQuery(query)
+        const trimmed = query.trim()
+        if (trimmed && !/^[ㄱ-ㅎㅏ-ㅣ]+$/.test(trimmed)) {
+            sendGAEvent('search', {
+                search_term: trimmed,
+                keyword: trimmed,
+                curation: '어린이도서연구회',
+                page_path: `/collections/research-council?q=${encodeURIComponent(trimmed)}`,
+            })
+        }
+    }, [])
 
     useEffect(() => {
         const jsonLd = {
@@ -29,7 +56,7 @@ export default function ResearchCouncilClient() {
             <PageHeader title="어린이도서연구회" showHome={true} />
             <div className="container mx-auto px-4 py-8 max-w-7xl">
                 <div className="mb-4">
-                    <SearchBar onSearch={setSearchQuery} />
+                    <SearchBar onSearch={handleSearch} />
                 </div>
                 <FilterBar selectedAge={selectedAge}
                     onAgeChange={setSelectedAge} onFilterClick={() => setIsFilterModalOpen(true)} />

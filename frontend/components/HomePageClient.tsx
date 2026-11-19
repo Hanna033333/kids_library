@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -19,6 +19,7 @@ import ThemeCurationShowcase from '@/components/home/ThemeCurationShowcase'
 import SpotlightBanner from '@/components/home/SpotlightBanner'
 import { isSummerCurationActive } from '@/lib/utils/curation-filter'
 import { getCurationMoreLink } from '@/lib/utils/curation-link'
+import { sortBooksByAgePreference } from '@/lib/utils/age'
 import latestNotice from '@/shared/latest_notice.json'
 
 interface DynamicCuration {
@@ -50,6 +51,37 @@ export default function HomePageClient({
   const [researchBooks, setResearchBooks] = useState<Book[]>(initialResearchBooks)
   const [caldecottBooks] = useState<Book[]>(initialCaldecottBooks)
   const [summerBooks, setSummerBooks] = useState<Book[]>(initialSummerBooks)
+  const [preferredAge, setPreferredAge] = useState<string | null>(null)
+
+  // 사용자가 설정한 우리 아이 선호 연령대 로드
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('preferred_child_age')
+      if (stored && ['0-3', '4-7', '8-12', '13+'].includes(stored)) {
+        setPreferredAge(stored)
+      }
+    }
+  }, [])
+
+  // 교과서 수록 도서를 제외한 모든 큐레이션 서가에 선호 연령대 우선 맞춤 정렬 적용
+  const displayedDynamicCurations = useMemo(() => {
+    return dynamicCurations.map(curation => ({
+      ...curation,
+      books: sortBooksByAgePreference(curation.books, preferredAge, 7)
+    }))
+  }, [dynamicCurations, preferredAge])
+
+  const displayedCaldecottBooks = useMemo(() => {
+    return sortBooksByAgePreference(caldecottBooks, preferredAge, 7)
+  }, [caldecottBooks, preferredAge])
+
+  const displayedSummerBooks = useMemo(() => {
+    return sortBooksByAgePreference(summerBooks, preferredAge, 7)
+  }, [summerBooks, preferredAge])
+
+  const displayedResearchBooks = useMemo(() => {
+    return sortBooksByAgePreference(researchBooks, preferredAge, 7)
+  }, [researchBooks, preferredAge])
 
   // 회원 탈퇴 팝업 상태
   const [isWithdrawnPopupOpen, setIsWithdrawnPopupOpen] = useState(false)
@@ -145,13 +177,13 @@ export default function HomePageClient({
       <SpotlightBanner />
 
       {/* 1. AI 주간 큐레이션 서가 */}
-      {dynamicCurations.map((curation, index) => (
+      {displayedDynamicCurations.map((curation, index) => (
         <CurationSection
           key={curation.tag}
           subtitle={curation.subtitle}
           title={curation.title}
           books={curation.books}
-          href={getCurationMoreLink({ curation: curation.tag })}
+          href={getCurationMoreLink({ curation: curation.tag, age: preferredAge })}
           onViewMore={() => sendGAEvent('click_view_more', { section: curation.tag })}
           bgColor={index % 2 === 0 ? 'bg-white' : 'bg-muted-bg'}
           sectionTag={curation.tag}
@@ -159,28 +191,32 @@ export default function HomePageClient({
       ))}
 
       {/* 2. 50+ 전문 테마 큐레이션 모음 (우리 아이 맞춤 그림책 처방전 쇼케이스) */}
-      <ThemeCurationShowcase initialBooks={initialThemeBooks} bgColor={dynamicCurations.length % 2 === 0 ? 'bg-white' : 'bg-muted-bg'} />
+      <ThemeCurationShowcase 
+        initialBooks={initialThemeBooks} 
+        preferredAge={preferredAge}
+        bgColor={displayedDynamicCurations.length % 2 === 0 ? 'bg-white' : 'bg-muted-bg'} 
+      />
 
       {/* 3. 📖 2022 개정 교과서 수록도서 쇼케이스 (학년별 가로 스크롤 탭) */}
-      <TextbookCurationShowcase initialBooks={initialTextbookBooks} bgColor={dynamicCurations.length % 2 === 0 ? 'bg-muted-bg' : 'bg-white'} />
+      <TextbookCurationShowcase initialBooks={initialTextbookBooks} bgColor={displayedDynamicCurations.length % 2 === 0 ? 'bg-muted-bg' : 'bg-white'} />
 
       {/* 4. 칼데콧 수상작 섹션 */}
       <CurationSection
         subtitle="미국 도서관 최고의 영예"
         title="칼데콧 수상작"
-        books={caldecottBooks}
+        books={displayedCaldecottBooks}
         href={getCurationMoreLink({ curation: 'caldecott' })}
         onViewMore={() => sendGAEvent('click_view_more', { section: 'caldecott' })}
-        bgColor={dynamicCurations.length % 2 === 0 ? 'bg-white' : 'bg-muted-bg'}
+        bgColor={displayedDynamicCurations.length % 2 === 0 ? 'bg-white' : 'bg-muted-bg'}
         sectionTag="caldecott"
       />
 
       {/* 5. 2026 여름방학 추천도서 섹션 (시즌 조건부) */}
-      {isSummerCurationActive() && summerBooks.length > 0 && (
+      {isSummerCurationActive() && displayedSummerBooks.length > 0 && (
         <CurationSection
           subtitle="교육청이 엄선한 학년별 필독서"
           title="여름방학 추천도서"
-          books={summerBooks}
+          books={displayedSummerBooks}
           href={getCurationMoreLink({ curation: 'summer-vacation' })}
           onViewMore={() => sendGAEvent('click_view_more', { section: 'summer_vacation' })}
           bgColor="bg-white"
@@ -192,10 +228,10 @@ export default function HomePageClient({
       <CurationSection
         subtitle="전문가가 엄선한 필독서"
         title="어린이도서연구회 추천"
-        books={researchBooks}
+        books={displayedResearchBooks}
         href={getCurationMoreLink({ curation: 'research-council' })}
         onViewMore={() => sendGAEvent('click_view_more', { section: 'research_council' })}
-        bgColor={dynamicCurations.length % 2 === 0 ? 'bg-muted-bg' : 'bg-white'}
+        bgColor={displayedDynamicCurations.length % 2 === 0 ? 'bg-muted-bg' : 'bg-white'}
         sectionTag="어린이도서연구회"
       />
 

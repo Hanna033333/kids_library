@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS public.members (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(provider, provider_id)
 );
+CREATE UNIQUE INDEX IF NOT EXISTS uix_members_nickname ON public.members (nickname) WHERE nickname IS NOT NULL;
 
 -- 7. wishlists (찜하기/북마크 테이블)
 CREATE TABLE IF NOT EXISTS public.wishlists (
@@ -191,11 +192,45 @@ CREATE POLICY "Users can delete own wishlists" ON public.wishlists FOR DELETE US
 CREATE POLICY "Service role full access for wishlists" ON public.wishlists TO service_role USING (true) WITH CHECK (true);
 
 -- ==============================================================================
+-- 닉네임 중복 검사용 RPC 함수
+-- ==============================================================================
+
+CREATE OR REPLACE FUNCTION public.is_nickname_available(p_nickname TEXT, p_user_id UUID DEFAULT NULL)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_clean TEXT := trim(p_nickname);
+  v_exists BOOLEAN;
+BEGIN
+  IF length(v_clean) < 2 OR length(v_clean) > 10 OR v_clean ~ '\s' THEN
+    RETURN FALSE;
+  END IF;
+
+  SELECT EXISTS(
+    SELECT 1 FROM public.members
+    WHERE nickname = v_clean
+      AND (p_user_id IS NULL OR id != p_user_id)
+  ) INTO v_exists;
+
+  RETURN NOT v_exists;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.is_nickname_available(TEXT, UUID) TO anon, authenticated, service_role;
+
+-- ==============================================================================
 -- 닉네임 자동 생성 & 신규 가입자 트리거 함수
 -- ==============================================================================
 
 CREATE OR REPLACE FUNCTION public.generate_random_nickname()
-RETURNS TEXT AS $$
+RETURNS TEXT 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 DECLARE
   adjectives TEXT[] := ARRAY[
     '지혜로운', '따스한', '포근한', '정겨운', '행복한', '다정한', '꿈꾸는', '다독이는', '슬기로운', '다복한', 
@@ -219,11 +254,25 @@ DECLARE
   ];
   adj_len INT := array_length(adjectives, 1);
   noun_len INT := array_length(nouns, 1);
-  rand_num INT := floor(100 + random() * 900)::int;
+  candidate TEXT;
+  tries INT := 0;
+  is_dup BOOLEAN;
 BEGIN
-  RETURN adjectives[1 + floor(random() * adj_len)::int] || nouns[1 + floor(random() * noun_len)::int] || rand_num::text;
+  LOOP
+    tries := tries + 1;
+    candidate := adjectives[1 + floor(random() * adj_len)::int] || nouns[1 + floor(random() * noun_len)::int];
+    
+    SELECT EXISTS(SELECT 1 FROM public.members WHERE nickname = candidate) INTO is_dup;
+    IF NOT is_dup THEN
+      RETURN candidate;
+    END IF;
+
+    IF tries >= 20 THEN
+      RETURN candidate || floor(10 + random() * 90)::int::text;
+    END IF;
+  END LOOP;
 END;
-$$ LANGUAGE plpgsql VOLATILE;
+$$;
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$

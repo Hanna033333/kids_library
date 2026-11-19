@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import BookItem from "./BookItem";
 import { useBooks } from "@/hooks/useBooks";
-import { Book } from "@/lib/types";
+import { Book, BooksResponse } from "@/lib/types";
 import { Spinner } from "@/components/ui/Spinner";
 import { PageLoader } from "@/components/ui/PageLoader";
 import { useLibrary } from "@/context/LibraryContext";
@@ -14,6 +14,8 @@ import { useAuth } from "@/context/AuthContext";
 import LoginPromptModal from "@/components/ui/LoginPromptModal";
 import { useRouter } from "next/navigation";
 import { MapPin, ChevronRight } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { saveBook, unsaveBook, getSavedBookIds } from "@/lib/supabase-api";
 
 const ITEMS_PER_PAGE = 24;
 
@@ -23,7 +25,7 @@ interface BookListProps {
   curationFilter?: string;
   tagFilter?: string;
   sortFilter?: string;
-  initialBooks?: Book[];
+  initialPage?: BooksResponse;
 }
 
 export default function BookList({
@@ -32,11 +34,18 @@ export default function BookList({
   curationFilter,
   tagFilter,
   sortFilter = "title",
-  initialBooks,
+  initialPage,
 }: BookListProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [loginModalConfig, setLoginModalConfig] = useState({
+    title: "도서관 헛걸음 끝! 대출 가능한 책만 1초 스캔",
+    description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요.",
+  });
+  const [shouldAutoOpenLibrary, setShouldAutoOpenLibrary] = useState(false);
+  const [savedBookIds, setSavedBookIds] = useState<Set<number>>(new Set());
   const { selectedLibrary } = useLibrary();
   const [isMobile, setIsMobile] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -51,6 +60,134 @@ export default function BookList({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // React Query를 통해 저장된 책 ID 목록 관리 (전역 캐시 동기화)
+  const { data: remoteSavedBookIds = [] } = useQuery<number[]>({
+    queryKey: ['saved-book-ids', user?.id],
+    queryFn: () => (user?.id ? getSavedBookIds(supabase, user.id) : Promise.resolve([])),
+    enabled: !!user?.id,
+    staleTime: 60 * 1000,
+  });
+
+  // 원격 캐시 데이터가 갱신되면 로컬 상태 동기화
+  useEffect(() => {
+    if (!user?.id) {
+      setSavedBookIds(new Set());
+    } else if (remoteSavedBookIds.length > 0) {
+      setSavedBookIds(new Set(remoteSavedBookIds));
+    }
+  }, [user?.id, remoteSavedBookIds]);
+
+  // 로그인 유저의 찜 목록 로드 및 로그인 복귀 후 pendingAction 자동 처리
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId) {
+      setSavedBookIds(new Set());
+      return;
+    }
+
+    let isCancelled = false;
+    const initUserActions = async () => {
+      try {
+        const ids = await getSavedBookIds(supabase, userId);
+        if (isCancelled) return;
+        const idSet = new Set<number>(ids);
+
+        if (typeof window !== "undefined") {
+          const pendingAction = sessionStorage.getItem("pendingAction");
+          const isNewSignupModalOpening = sessionStorage.getItem("showSignupComplete") === "true";
+
+          if (pendingAction === "open_library_selector") {
+            sessionStorage.removeItem("pendingAction");
+            sessionStorage.removeItem("returnUrl");
+            // 신규 가입 모달이 동시에 뜨는 경우에는 온보딩 모달 안에서 도서관을 선택하므로 중복 바텀시트 오픈 방지
+            if (!isNewSignupModalOpening) {
+              setShouldAutoOpenLibrary(true);
+            }
+          } else if (pendingAction && pendingAction.startsWith("like_book_")) {
+            const targetBookId = Number(pendingAction.replace("like_book_", ""));
+            sessionStorage.removeItem("pendingAction");
+            sessionStorage.removeItem("returnUrl");
+            if (targetBookId && !idSet.has(targetBookId)) {
+              try {
+                await saveBook(supabase, userId, targetBookId);
+                idSet.add(targetBookId);
+                queryClient.setQueryData<number[]>(['saved-book-ids', userId], Array.from(idSet));
+                queryClient.invalidateQueries({ queryKey: ['saved-books', userId] });
+              } catch (err) {
+                console.error("Failed auto save from list:", err);
+              }
+            }
+          }
+        }
+
+        if (!isCancelled) {
+          setSavedBookIds(new Set(idSet));
+        }
+      } catch (err) {
+        console.error("Failed to fetch saved book ids:", err);
+      }
+    };
+
+    initUserActions();
+    return () => {
+      isCancelled = true;
+    };
+  }, [user?.id, queryClient]);
+
+  const handleToggleBookSave = useCallback(async (book: Book) => {
+    if (!user) {
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("returnUrl", window.location.pathname + window.location.search);
+        sessionStorage.setItem("pendingAction", `like_book_${book.id}`);
+      }
+      sendGAEvent("click_bookmark_unauth", { book_id: book.id, source: "book_list" });
+      setLoginModalConfig({
+        title: "도서관 갈 때 까먹지 않게 내 책장에 쏙!",
+        description: "마음에 드는 책을 장바구니에 담아두면 도서관에서 청구기호와 대출 가능 여부를 1초 만에 꺼내볼 수 있어요.",
+      });
+      setIsLoginModalOpen(true);
+      return;
+    }
+
+    const currentlySaved = savedBookIds.has(book.id);
+    const nextSavedIds = new Set(savedBookIds);
+    if (currentlySaved) {
+      nextSavedIds.delete(book.id);
+    } else {
+      nextSavedIds.add(book.id);
+    }
+
+    // 낙관적 업데이트: 로컬 state와 React Query 캐시 동시 갱신
+    setSavedBookIds(nextSavedIds);
+    queryClient.setQueryData<number[]>(['saved-book-ids', user.id], Array.from(nextSavedIds));
+
+    try {
+      if (currentlySaved) {
+        await unsaveBook(supabase, user.id, book.id);
+      } else {
+        await saveBook(supabase, user.id, book.id);
+      }
+      queryClient.invalidateQueries({ queryKey: ['saved-books', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['saved-book-ids', user.id] });
+      sendGAEvent("toggle_save_book", {
+        book_id: book.id,
+        book_title: book.title,
+        state: currentlySaved ? "unsave" : "save",
+        source: "book_list",
+      });
+    } catch (err) {
+      console.error("Failed to toggle save in list:", err);
+      // 실패 시 롤백
+      setSavedBookIds((prev) => {
+        const rollback = new Set(prev);
+        if (currentlySaved) rollback.add(book.id);
+        else rollback.delete(book.id);
+        return rollback;
+      });
+      queryClient.invalidateQueries({ queryKey: ['saved-book-ids', user.id] });
+    }
+  }, [user, savedBookIds, queryClient]);
+
   const isSearchWaitingState = !searchQuery && !ageFilter && !curationFilter && !tagFilter;
 
   // Fetch data with infinite scroll
@@ -61,7 +198,7 @@ export default function BookList({
     tagFilter,
     sortFilter,
     limit: ITEMS_PER_PAGE,
-    initialBooks,
+    initialPage,
     enabled: !isSearchWaitingState,
     includeLibraryInfo: !!user,
     selectedLibrary,
@@ -88,42 +225,49 @@ export default function BookList({
   const { data: recommendedBooks = [], isLoading: isRecommendedLoading } = useQuery<Book[]>({
     queryKey: ['recommended-books', ageFilter, curationFilter, tagFilter, sortFilter, !!user],
     queryFn: async () => {
+      const { isBookMatchingAge } = await import("@/lib/utils/age");
+      const filterByAgeIfSet = (list: Book[], maxCount: number = 7) =>
+        ageFilter ? list.filter(b => isBookMatchingAge(b, ageFilter)).slice(0, maxCount) : list.slice(0, maxCount);
+
       // 1. 교과서 수록도서 (학년 태그 지원)
       if (curationFilter === '교과서수록' || curationFilter === 'textbook') {
         const { getTextbookBooks } = await import("@/lib/home-api");
         return getTextbookBooks(tagFilter, 8, undefined, !!user);
       }
-      // 2. 칼데콧 수상작
+      // 2. 칼데콧 수상작 (홈 화면과 동일한 풀 + 연령 필터 일치 시 해당 연령만 최상단 고정)
       if (curationFilter === "caldecott") {
         const { getCaldecottBooks } = await import("@/lib/caldecott-api");
         const books = await getCaldecottBooks(undefined, !!user);
-        return books.slice(0, 7);
+        return filterByAgeIfSet(books, 7);
       }
-      // 3. 어린이도서연구회
+      // 3. 어린이도서연구회 (홈 화면과 동일한 14권 풀 기준)
       if (curationFilter === "어린이도서연구회" || curationFilter === "research-council") {
         const { getResearchCouncilBooks } = await import("@/lib/home-api");
-        return getResearchCouncilBooks(7, undefined, !!user);
+        const books = await getResearchCouncilBooks(14, undefined, !!user);
+        return filterByAgeIfSet(books, 7);
       }
-      // 4. 겨울방학 / 여름방학
+      // 4. 겨울방학 / 여름방학 (홈 화면과 동일한 14권 풀 기준)
       if (curationFilter === "겨울방학" || curationFilter === "winter-vacation") {
         const { getWinterBooks } = await import("@/lib/home-api");
-        return getWinterBooks(7, undefined, !!user);
+        const books = await getWinterBooks(14, undefined, !!user);
+        return filterByAgeIfSet(books, 7);
       }
       if (curationFilter === "여름방학" || curationFilter === "summer-vacation" || curationFilter === "여름방학2026") {
         const { getSummerBooks } = await import("@/lib/home-api");
-        return getSummerBooks(7, undefined, !!user);
+        const books = await getSummerBooks(14, undefined, !!user);
+        return filterByAgeIfSet(books, 7);
       }
-      // 5. AI 순수 주제 큐레이션 (홈 화면 진입 vs 도서 상세 진입 분기)
+      // 5. AI 순수 주제 큐레이션
       if (curationFilter) {
-        if (ageFilter || tagFilter) {
-          // 도서 상세에서 연령/학년 타겟팅으로 넘어온 경우
+        if (tagFilter) {
+          // 도서 상세에서 학년 타겟팅(예: 초등2학년)으로 넘어온 경우
           const { getBooksByTopicTag } = await import("@/lib/home-api");
           return getBooksByTopicTag(curationFilter, 8, { age: ageFilter, gradeTag: tagFilter }, undefined, !!user);
-        } else {
-          // 홈 화면 큐레이션 더보기에서 넘어온 경우: 홈 노출 도서 7권과 1:1 일치
-          const { getBooksByTag } = await import("@/lib/home-api");
-          return getBooksByTag(curationFilter, 7, undefined, !!user);
         }
+        // 홈 화면(14권 풀 + 선호 연령 우선 정렬)과 1:1 시각적 연속성 유지
+        const { getBooksByTag } = await import("@/lib/home-api");
+        const books = await getBooksByTag(curationFilter, 14, undefined, !!user);
+        return filterByAgeIfSet(books, 7);
       }
       // 6. 연령별 추천도서 (인기순 vs 홈 화면 주간 로테이션 분기)
       if (ageFilter) {
@@ -177,10 +321,10 @@ export default function BookList({
   });
 
   // Batch fetch loan statuses for all visible books (including fallback books when list is empty)
-  const visibleBooksForLoan = displayBooks.length > 0 
-    ? displayBooks 
-    : isSearchWaitingState 
-      ? searchWaitingRecommendedBooks 
+  const visibleBooksForLoan = displayBooks.length > 0
+    ? displayBooks
+    : isSearchWaitingState
+      ? searchWaitingRecommendedBooks
       : fallbackBooks;
   const bookIds = visibleBooksForLoan.map(b => b.id).join(',');
 
@@ -226,8 +370,15 @@ export default function BookList({
   // Track no results — 실제 값이 있는 파라미터만 전송 (undefined → GA4 "(not set)" 방지)
   useEffect(() => {
     if (!isListLoading && books.length === 0 && (searchQuery || ageFilter || curationFilter)) {
+      const trimmed = searchQuery?.trim();
+      // 한글 조합 중 초성 단독 입력 상태에서는 search_no_results 중복 발생 방지
+      if (trimmed && /^[ㄱ-ㅎㅏ-ㅣ]+$/.test(trimmed)) return;
+
       const params: Record<string, string> = {};
-      if (searchQuery) params.keyword = searchQuery;
+      if (trimmed) {
+        params.keyword = trimmed;
+        params.search_term = trimmed;
+      }
       if (ageFilter) params.age = ageFilter;
       if (curationFilter) params.curation = curationFilter;
       sendGAEvent('search_no_results', params);
@@ -249,21 +400,89 @@ export default function BookList({
     <div className="w-full px-4">
       <div className="w-full max-w-[1200px] mx-auto">
         {!isSearchWaitingState && isMounted && (
-          <div className="flex justify-end mt-0 mb-6 px-2">
-            {user ? (
-              <LibrarySelector />
-            ) : (
-              <button
+          <div className="mt-1 mb-5">
+            {!user ? (
+              <div
                 onClick={() => {
-                  sendGAEvent('click_library_cta_unauth', { source: 'book_list' });
+                  if (typeof window !== "undefined") {
+                    sessionStorage.setItem("returnUrl", window.location.pathname + window.location.search);
+                    sessionStorage.setItem("pendingAction", "open_library_selector");
+                  }
+                  sendGAEvent("click_library_cta_unauth", { source: "book_list" });
+                  setLoginModalConfig({
+                    title: "도서관 헛걸음 끝! 대출 가능한 책만 1초 스캔",
+                    description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요.",
+                  });
                   setIsLoginModalOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 text-sm sm:text-base font-bold text-gray-800 active:text-gray-900 bg-gray-100/80 hover:bg-gray-200/80 border border-gray-200/80 rounded-xl py-2.5 px-3.5 transition-all shadow-2xs group"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.currentTarget.click();
+                  }
+                }}
+                className="w-full bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-3.5 sm:p-4 flex items-center justify-between gap-2.5 sm:gap-3 cursor-pointer active:scale-[0.99] transition-transform"
               >
-                <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
-                <span>우리 동네 도서관 대출 가능 여부 3초 확인</span>
-                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 shrink-0 transition-colors" />
-              </button>
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-amber-600 mb-0.5 truncate">
+                      {selectedLibrary || "우리 동네 도서관 대출 조회"}
+                    </p>
+                    <p className="text-sm sm:text-base font-bold text-gray-900 leading-snug break-keep">
+                      {selectedLibrary
+                        ? "로그인하고 대출 가능 여부 확인"
+                        : "지금 대출 가능한 책 바로 확인"}
+                    </p>
+                  </div>
+                </div>
+                <span className="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-brand-primary text-white text-xs sm:text-sm font-bold shrink-0 active:bg-brand-primary-dark transition-colors">
+                  1초 대출 조회
+                </span>
+              </div>
+            ) : !selectedLibrary ? (
+              <LibrarySelector
+                autoOpen={shouldAutoOpenLibrary}
+                customTrigger={(open) => (
+                  <div
+                    onClick={open}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        open();
+                      }
+                    }}
+                    className="w-full bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-3.5 sm:p-4 flex items-center justify-between gap-2.5 sm:gap-3 cursor-pointer active:scale-[0.99] transition-transform"
+                  >
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                        <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-amber-600 mb-0.5 truncate">
+                          내 도서관 설정
+                        </p>
+                        <p className="text-sm sm:text-base font-bold text-gray-900 leading-snug break-keep">
+                          도서관 선택하고 대출 상태 확인
+                        </p>
+                      </div>
+                    </div>
+                    <span className="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-brand-primary text-white text-xs sm:text-sm font-bold shrink-0 active:bg-brand-primary-dark transition-colors">
+                      도서관 선택
+                    </span>
+                  </div>
+                )}
+              />
+            ) : (
+              <div className="flex items-center justify-end px-2 py-1">
+                <LibrarySelector autoOpen={shouldAutoOpenLibrary} />
+              </div>
             )}
           </div>
         )}
@@ -300,7 +519,13 @@ export default function BookList({
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
                   {searchWaitingRecommendedBooks.map((book) => (
                     <div key={book.id}>
-                      <BookItem book={book} loanStatus={loanStatuses?.[book.id]} showLibraryInfo />
+                      <BookItem
+                        book={book}
+                        loanStatus={loanStatuses?.[book.id]}
+                        showLibraryInfo
+                        isSaved={savedBookIds.has(book.id)}
+                        onToggleSave={handleToggleBookSave}
+                      />
                     </div>
                   ))}
                 </div>
@@ -332,7 +557,13 @@ export default function BookList({
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
                   {fallbackBooks.map((book) => (
                     <div key={book.id}>
-                      <BookItem book={book} loanStatus={loanStatuses?.[book.id]} showLibraryInfo />
+                      <BookItem
+                        book={book}
+                        loanStatus={loanStatuses?.[book.id]}
+                        showLibraryInfo
+                        isSaved={savedBookIds.has(book.id)}
+                        onToggleSave={handleToggleBookSave}
+                      />
                     </div>
                   ))}
                 </div>
@@ -345,7 +576,13 @@ export default function BookList({
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
               {displayBooks.map((book) => (
                 <div key={book.id}>
-                  <BookItem book={book} loanStatus={loanStatuses?.[book.id]} showLibraryInfo />
+                  <BookItem
+                    book={book}
+                    loanStatus={loanStatuses?.[book.id]}
+                    showLibraryInfo
+                    isSaved={savedBookIds.has(book.id)}
+                    onToggleSave={handleToggleBookSave}
+                  />
                 </div>
               ))}
             </div>
@@ -363,8 +600,8 @@ export default function BookList({
         <LoginPromptModal
           isOpen={isLoginModalOpen}
           onClose={() => setIsLoginModalOpen(false)}
-          title="우리 동네 도서관에 이 책 지금 있는지 3초 만에 확인하기 🔍"
-          description="자주 가는 도서관 1곳만 선택하면 실시간 대출 가능 여부와 청구기호를 바로 확인할 수 있어요."
+          title={loginModalConfig.title}
+          description={loginModalConfig.description}
         />
       </div>
     </div>

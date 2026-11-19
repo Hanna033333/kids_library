@@ -1,17 +1,18 @@
 'use client'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import BookList from '@/components/BookList'
 import SearchBar from '@/components/SearchBar'
 import FilterBar from '@/components/FilterBar'
 import IntegratedFilterModal from '@/components/IntegratedFilterModal'
 import PageHeader from '@/components/PageHeader'
+import { sendGAEvent } from '@/lib/analytics'
 
-import { Book } from '@/lib/types'
+import { BooksResponse } from '@/lib/types'
 
 interface AgeCollectionClientProps {
     age: string;
-    initialBooks?: Book[];
+    initialPage?: BooksResponse;
 }
 
 const ageDisplayNames: Record<string, string> = {
@@ -24,31 +25,45 @@ const ageDescriptions: Record<string, string> = {
     'teen': '사고력을 키우는 청소년 권장도서'
 }
 
-export default function AgeCollectionClient({ age, initialBooks }: AgeCollectionClientProps) {
+export default function AgeCollectionClient({ age, initialPage }: AgeCollectionClientProps) {
     const router = useRouter()
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedAge, setSelectedAge] = useState<string>(age === 'teen' ? '13+' : age)
     const [sortBy, setSortBy] = useState<'callno' | 'title'>('title')
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
 
+    const handleSearch = useCallback((query: string) => {
+        setSearchQuery(query)
+        const trimmed = query.trim()
+        if (trimmed && !/^[ㄱ-ㅎㅏ-ㅣ]+$/.test(trimmed)) {
+            sendGAEvent('search', {
+                search_term: trimmed,
+                keyword: trimmed,
+                age: selectedAge,
+                page_path: `/collections/age/${age}?q=${encodeURIComponent(trimmed)}`,
+            })
+        }
+    }, [selectedAge, age])
+
     // 탭 클릭 시 URL 이동 → 뒤로가기 UX 정상화 + GA 추적 정확도 향상
     const handleAgeChange = (newAge: string) => {
         setSelectedAge(newAge)
+        sendGAEvent('filter_change', { type: 'age', value: newAge || 'all' })
         const urlAge = newAge === '13+' ? 'teen' : newAge
         if (urlAge !== age) {
             router.push(`/collections/age/${urlAge}`)
         }
     }
 
-    // initialBooks는 초기 로드 시 한 번만 사용됨. 필터가 변경되면 쿼리가 다시 실행됨.
-    const currentInitialBooks = selectedAge === age && sortBy === 'title' ? initialBooks : undefined;
+    // 서버가 조회한 연령·검색·정렬 조건이 같을 때만 첫 페이지를 재사용한다.
+    const currentInitialPage = selectedAge === (age === 'teen' ? '13+' : age) && !searchQuery && sortBy === 'title' ? initialPage : undefined;
 
     return (
         <div className="min-h-screen bg-[#F7F7F7]">
             <PageHeader title={`${ageDisplayNames[age]} 추천 도서`} showHome={true} />
             <div className="container mx-auto px-4 py-8 max-w-7xl">
                 <div className="mb-4">
-                    <SearchBar onSearch={setSearchQuery} />
+                    <SearchBar onSearch={handleSearch} />
                 </div>
                 <FilterBar selectedAge={selectedAge}
                     onAgeChange={handleAgeChange} onFilterClick={() => setIsFilterModalOpen(true)} />
@@ -59,7 +74,7 @@ export default function AgeCollectionClient({ age, initialBooks }: AgeCollection
                     searchQuery={searchQuery}
                     ageFilter={selectedAge}
                     sortFilter={sortBy}
-                    initialBooks={currentInitialBooks}
+                    initialPage={currentInitialPage}
                 />
             </div>
         </div>

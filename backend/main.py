@@ -90,13 +90,13 @@ async def validation_exception_handler(request, exc):
         content={"detail": error_summaries},
     )
 
-# 라우터 등록
+# 라우터 등록 (정적 경로인 /api/books/my-reviews 등이 /api/books/{book_id}에 가려지지 않도록 reviews_router를 먼저 등록)
+app.include_router(reviews_router)
 app.include_router(books_router)
 app.include_router(sync_router)
 app.include_router(auth_router)
 app.include_router(wishlists_router)
 app.include_router(threads_router)
-app.include_router(reviews_router)
 
 @app.get("/")
 def read_root():

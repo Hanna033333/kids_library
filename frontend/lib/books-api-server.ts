@@ -1,5 +1,5 @@
 import { createClient } from './supabase-server'
-import { Book } from './types'
+import { Book, BooksResponse } from './types'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { AGE_MAP } from './constants/age-map'
 import { resolveDbCurationTag, isSpecialTag, buildCurationOrFilter, resolveDefaultSortField } from './utils/curation-filter'
@@ -25,7 +25,7 @@ export async function getBooksFromServer({
     limit = 24,
     filters,
     client
-}: FetchBooksParams) {
+}: FetchBooksParams): Promise<BooksResponse> {
     const supabase = client || createClient()
 
     let query = supabase
@@ -88,7 +88,7 @@ export async function getBooksFromServer({
     }
 
     return {
-        data: (data as any[]) || [],
+        data: (data as Book[]) || [],
         total: count || 0,
         total_pages: Math.ceil((count || 0) / limit),
         page,

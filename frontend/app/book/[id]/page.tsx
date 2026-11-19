@@ -229,12 +229,8 @@ export default async function BookDetailPage({ params }: Props) {
         const isTextbook = book.curation_tag?.includes('교과서수록') || book.curation_tag?.includes('textbook')
 
         // Schema.org 구조화 데이터 (JSON-LD)
-        const generateKyoboUrl = (isbn: string) => {
-            const targetUrl = `https://search.kyobobook.co.kr/search?keyword=${isbn}&gbCode=TOT&target=total`
-            const encodedUrl = encodeURIComponent(targetUrl)
-            return `https://linkmoa.kr/click.php?m=kbbook&a=A100702199&l=9999&l_cd1=3&l_cd2=0&tu=${encodedUrl}`
-        }
-
+        // 크롤러 봇이 JSON-LD 내 URL을 호출하여 어필리에이트(LinkPrice) 허수 클릭이 발생하는 것을 방지하기 위해
+        // 정적 HTML 스키마에서는 제휴 트래킹 링크를 제외하고, 실제 유저 클릭 시(BookDetailClient.tsx)에만 호출되도록 함
         const jsonLd: Record<string, unknown> = {
             '@context': 'https://schema.org',
             '@type': 'Book',
@@ -260,13 +256,6 @@ export default async function BookDetailPage({ params }: Props) {
 
         if (isCaldecott) {
             jsonLd['award'] = 'Caldecott Medal'
-        }
-
-        if (book.isbn) {
-            jsonLd['potentialAction'] = {
-                '@type': 'BuyAction',
-                'target': generateKyoboUrl(book.isbn)
-            }
         }
 
         return (

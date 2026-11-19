@@ -104,19 +104,22 @@ def query_ga4(start_date, end_date, dimensions, metrics, dimension_filter=None, 
 1. **신규 회원가입 수 추출**:
    - `eventName = 'sign_up'` 이벤트 수(`eventCount`)를 쿼리하거나, 필요 시 Supabase `profiles` 테이블의 신규 유저 생성 수와 교차 검증합니다.
 2. **CSR 실시간 검색어 파싱**:
-   - React SPA 검색 특성상 기본 `searchTerm` 대신 `pagePath`에서 `q=` 쿼리 파라미터를 추출하고 `urllib.parse.unquote()`로 디코딩하여 빈도수를 집계합니다:
+   - GA4의 `pagePath` 디멘션은 쿼리스트링을 자동 제거하므로, 반드시 **`customEvent:keyword`**, **`searchTerm`**, 그리고 **`pagePathPlusQueryString`**(또는 `pageLocation`) 디멘션을 함께 조회하여 검색어를 파싱합니다:
      ```python
-     # 검색어 파싱 예시
-     search_pages = query_ga4(start_date, end_date, ["pagePath"], ["screenPageViews", "activeUsers"])
+     # 1) 커스텀 이벤트 파라미터(customEvent:keyword) 및 searchTerm 조회 (가장 정확)
+     kw_rows = query_ga4(start_date, end_date, ["eventName", "customEvent:keyword"], ["eventCount", "totalUsers"])
+     
+     # 2) URL 쿼리 파라미터(pagePathPlusQueryString)에서 q= 및 curation= 파싱
+     search_pages = query_ga4(start_date, end_date, ["pagePathPlusQueryString"], ["eventCount", "activeUsers"])
      search_counts = Counter()
      for row in search_pages:
-         path = row["pagePath"]
+         path = row["pagePathPlusQueryString"]
          if "q=" in path:
              parsed = urllib.parse.urlparse(path)
              params = urllib.parse.parse_qs(parsed.query)
              if "q" in params and params["q"][0].strip():
                  keyword = urllib.parse.unquote(params["q"][0].strip())
-                 search_counts[keyword] += int(row["screenPageViews"])
+                 search_counts[keyword] += int(row["eventCount"])
      ```
 3. **개발 트래픽 분리**:
    - 성남/용인 Desktop 트래픽의 비정상적 긴 체류 시간이나 다량 PV는 내부 테스트용이므로 일반 모바일/외부 유입과 분리하여 해석합니다.

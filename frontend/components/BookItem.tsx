@@ -1,5 +1,5 @@
 import { Book, LoanStatus } from "@/lib/types";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Heart } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
@@ -19,9 +19,13 @@ interface BookItemProps {
   priority?: boolean;
   /** 섹션 타이틀과 중복되는 태그를 카드에서 제외 (예: 잠자리 섹션이면 '#잠자리' 제거) */
   excludeTag?: string;
+  /** 도서 찜 여부 (목록 카드에서 하트 표시용) */
+  isSaved?: boolean;
+  /** 도서 찜 토글 핸들러 (제공 시 표지 우상단에 하트 버튼 노출) */
+  onToggleSave?: (book: Book, e: React.MouseEvent) => void;
 }
 
-export default function BookItem({ book, loanStatus, showLibraryInfo = false, priority = false, excludeTag }: BookItemProps) {
+export default function BookItem({ book, loanStatus, showLibraryInfo = false, priority = false, excludeTag, isSaved = false, onToggleSave }: BookItemProps) {
   const { user } = useAuth();
   const { selectedLibrary } = useLibrary();
   const initialCoverUrl = getOptimizedImageUrl(book.image_url, 'list');
@@ -126,6 +130,26 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
             </span>
           )}
         </div>
+
+        {/* 찜하기(장바구니) 하트 버튼 (우측 상단 오버레이) */}
+        {onToggleSave && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleSave(book, e);
+            }}
+            aria-label={isSaved ? "내 책장에서 빼기" : "내 책장에 담기"}
+            className="absolute top-2.5 right-2.5 z-10 w-10 h-10 rounded-full bg-white/90 backdrop-blur-xs shadow-sm flex items-center justify-center active:scale-95 transition-transform outline-none focus:outline-none"
+          >
+            <Heart
+              className={`w-5 h-5 transition-colors ${
+                isSaved ? "fill-[#F59E0B] text-[#F59E0B]" : "text-gray-400"
+              }`}
+            />
+          </button>
+        )}
       </div>
 
       {/* 2. 정보 영역 (하단) */}

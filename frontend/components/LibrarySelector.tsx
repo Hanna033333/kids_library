@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useLibrary, LibraryName } from '@/context/LibraryContext'
 import { ChevronDown, MapPin, Check, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
+import { sendGAEvent } from '@/lib/analytics'
 
 export default function LibrarySelector({ 
     whiteMode = false, 
@@ -39,6 +40,7 @@ export default function LibrarySelector({
 
     const handleSelect = (lib: string) => {
         setSelectedLibrary(lib as LibraryName)
+        sendGAEvent('select_library', { library: lib })
         setIsOpen(false)
     }
 

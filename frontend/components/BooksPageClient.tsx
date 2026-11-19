@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import SearchBar from "@/components/SearchBar";
@@ -24,7 +24,8 @@ import { PageLoader } from "@/components/ui/PageLoader";
 interface BooksPageClientProps {
     overrideCuration?: string;
     overrideAge?: string;
-    initialBooks?: BooksResponse['data'];
+    initialPage?: BooksResponse;
+    initialSort?: string;
     initialAvailableAges?: string[];
 }
 
@@ -33,7 +34,8 @@ const FILTERABLE_AGE_GROUPS = ['0-3', '4-7', '8-12'] as const;
 // AI 큐레이션이 아닌 정적/특수 큐레이션 목록 (AI 신뢰도순 정렬 제외)
 const NON_AI_CURATIONS = ['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott', 'textbook', '교과서수록'];
 
-export default function BooksPageClient({ overrideCuration, overrideAge, initialBooks, initialAvailableAges }: BooksPageClientProps) {
+export default function BooksPageClient({ overrideCuration, overrideAge, initialPage, initialSort, initialAvailableAges }: BooksPageClientProps) {
+    const initialBooks = initialPage?.data;
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -163,6 +165,23 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         }
     }, [routeSearchQuery, routeAuthorFilter, routeAgeFilter, routeCurationFilter, routeTagFilter, routeSortFilter]);
 
+    // 도서 리스트 진입 시, 선호 연령대가 설정되어 있고 URL에 age가 없으면 해당 연령대 필터를 기본값으로 자동 선택
+    const initialAgeAppliedRef = useRef(false);
+    useEffect(() => {
+        if (initialAgeAppliedRef.current) return;
+        initialAgeAppliedRef.current = true;
+
+        if (!routeAgeFilter && !overrideAge && !searchParams.get('age') && !isTextbook) {
+            if (typeof window !== 'undefined') {
+                const preferredAge = localStorage.getItem('preferred_child_age');
+                if (preferredAge && ['0-3', '4-7', '8-12', '13+'].includes(preferredAge)) {
+                    setAgeFilter(preferredAge);
+                    updateURL({ age: preferredAge });
+                }
+            }
+        }
+    }, [routeAgeFilter, overrideAge, searchParams, isTextbook, updateURL]);
+
     const POPULAR_THEME_CHIPS = [
         { label: '잠자리', tag: '잠자리' },
         { label: '자존감', tag: '자존감' },
@@ -193,8 +212,12 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         setSearchQuery(query);
         setAuthorFilter("");
         const trimmed = query.trim();
-        if (trimmed) {
-            sendGAEvent('search', { search_term: trimmed, keyword: trimmed });
+        if (trimmed && !/^[ㄱ-ㅎㅏ-ㅣ]+$/.test(trimmed)) {
+            sendGAEvent('search', {
+                search_term: trimmed,
+                keyword: trimmed,
+                page_path: typeof window !== 'undefined' ? `${window.location.pathname}?q=${encodeURIComponent(trimmed)}` : `/books?q=${encodeURIComponent(trimmed)}`
+            });
         }
         updateURL({ q: query, age: ageFilter, curation: curationFilter, sort: sortFilter, tag: tagFilter, author: "" });
     }, [searchQuery, ageFilter, curationFilter, sortFilter, tagFilter, updateURL]);
@@ -300,7 +323,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         }
     }
 
-    // initialBooks는 초기 진입 조건(큐레이션 일치, 추가 필터 미적용 상태)에서만 전달
+    // 서버 첫 페이지는 큐레이션·정렬이 같고 추가 필터가 없을 때만 전달한다.
     const isRouteStateSynced =
         searchQuery === routeSearchQuery &&
         authorFilter === routeAuthorFilter &&
@@ -314,8 +337,8 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         return <PageLoader />;
     }
 
-    const currentInitialBooks = (initialBooks && initialBooks.length > 0 && curationFilter === (overrideCuration || parsedRouteCuration.cleanTag) && !searchQuery && !authorFilter && !ageFilter && !tagFilter)
-        ? initialBooks
+    const currentInitialPage = (initialPage && sortFilter === initialSort && curationFilter === overrideCuration && !searchQuery && !authorFilter && !ageFilter && !tagFilter)
+        ? initialPage
         : undefined;
 
     return (
@@ -397,7 +420,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                     curationFilter={curationFilter || undefined}
                     tagFilter={tagFilter || undefined}
                     sortFilter={sortFilter}
-                    initialBooks={currentInitialBooks}
+                    initialPage={currentInitialPage}
                 />
             </div>
 

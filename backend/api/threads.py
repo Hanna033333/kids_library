@@ -430,6 +430,16 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
     if len(books) < 5:
         raise ValueError(f"큐레이션 도서가 부족합니다. 최소 5권의 도서가 필요합니다.")
         
+    # 다중 워커 레이스 컨디션 방지: AI 호출 직전 및 직후 중복 생성 재검증
+    today_str = now_date.strftime("%Y-%m-%d")
+    existing_dup = supabase.table("threads_feeds").select("id")\
+        .eq("curation_tag", c_tag)\
+        .gte("created_at", f"{today_str}T00:00:00+09:00")\
+        .limit(1).execute()
+    if existing_dup.data:
+        print(f"⚠️ [스레드 발행] 이미 오늘 생성된 피드(ID: {existing_dup.data[0]['id']})가 존재하여 중복 생성을 건너뜁니다.")
+        return existing_dup.data[0]["id"]
+
     ai_content = generate_ai_threads_content(c_title, c_tag, books)
     if ai_content.get("is_fallback"):
         await send_telegram_message(
@@ -437,7 +447,15 @@ async def execute_weekly_threads_generation(index: int, curation_tag: Optional[s
             "Google AI Studio 크레딧 충전 또는 API 키 갱신이 필요합니다."
         )
 
-    
+    # INSERT 직전 2차 중복 검증
+    final_dup = supabase.table("threads_feeds").select("id")\
+        .eq("curation_tag", c_tag)\
+        .gte("created_at", f"{today_str}T00:00:00+09:00")\
+        .limit(1).execute()
+    if final_dup.data:
+        print(f"⚠️ [스레드 발행] 병렬 생성 감지: 이미 생성된 피드(ID: {final_dup.data[0]['id']})를 재사용합니다.")
+        return final_dup.data[0]["id"]
+
     db_result = supabase.table("threads_feeds").insert({
         "title": c_title,
         "content": ai_content["caption"],
@@ -590,7 +608,7 @@ async def publish_approved_feed(feed_id: int):
     tag_clean = curation_tag.lstrip("#")
     slug = get_slug_by_tag(tag_clean)
     reply_text = (
-        f"우리 동네 도서관에 이 책들 지금 남아있는지 실시간 대출 상태랑 더 많은 연령별 추천 도서는 책자리에서 바로 확인해봐! 👇\n\n"
+        f"도서관 갈 때 까먹지 않게 [내 책장]에 담아두고, 우리 동네 도서관 실시간 대출 가능 여부랑 청구기호까지 1초 만에 확인해 봐! 👇\n\n"
         f"🔗 https://checkjari.com/c/{slug}"
     )
 
@@ -760,7 +778,7 @@ async def approve_text_view(request: Request, feed_id: int, signature: str):
                     const data = await res.json();
                     if (res.ok) {{
                         btn.innerText = "생성 진행 중 🎨";
-                        alert("승인이 접수되었습니다! 카드뉴스 이미지 생성이 백그라운드에서 진행되며, 약 10~20초 후 텔레그램으로 2차 시안이 도착합니다.");
+                        alert("1단계 텍스트 승인이 접수되었습니다!\\n\\n카드뉴스 이미지 5장이 생성되는 중이며, 약 10~20초 후 텔레그램으로 2차 시안(이미지 앨범)이 전송됩니다.\\n\\n⚠️ 중요: 텔레그램으로 도착한 2차 시안 아래의 [발행 승인 완료하기] 버튼을 꼭 눌러주셔야 오늘 밤 9시 30분 자동 발행 예약이 최종 확정됩니다!");
                         window.close();
                     }} else {{
                         alert("오류 발생: " + (data.detail || "인증 실패"));
@@ -952,11 +970,12 @@ async def weekly_threads_scheduler():
                     last_trigger_date_930pm = today_date  # 실패 여부와 무관하게 1일 1회만 시도 (매분 재시도 스팸 방지)
                     print(f"📡 [스케줄러] 밤 9시 30분 감지. 요일: {weekday}, 날짜: {today_date} -> 최종 배포 스캔")
                     try:
-                        today_str = today_date.strftime("%Y-%m-%d")
+                        # 오늘뿐만 아니라 최근 7일 이내에 최종 승인 완료되었으나 아직 발행되지 않은 최신 피드를 스캔
+                        seven_days_ago = (now_kst - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
                         approved_result = supabase.table("threads_feeds").select("*")\
                             .eq("is_approved", True)\
                             .is_("published_at", "null")\
-                            .gte("created_at", f"{today_str}T00:00:00+09:00")\
+                            .gte("created_at", f"{seven_days_ago}T00:00:00+09:00")\
                             .order("id", desc=True)\
                             .limit(1).execute()
                             
@@ -982,7 +1001,7 @@ async def weekly_threads_scheduler():
                                 tag_clean = curation_tag.lstrip("#")
                                 slug = get_slug_by_tag(tag_clean)
                                 reply_text = (
-                                    f"우리 동네 도서관에 이 책들 지금 남아있는지 실시간 대출 상태랑 더 많은 연령별 추천 도서는 책자리에서 바로 확인해봐! 👇\n\n"
+                                    f"도서관 갈 때 까먹지 않게 [내 책장]에 담아두고, 우리 동네 도서관 실시간 대출 가능 여부랑 청구기호까지 1초 만에 확인해 봐! 👇\n\n"
                                     f"🔗 https://checkjari.com/c/{slug}"
                                 )
 
@@ -1037,8 +1056,34 @@ async def weekly_threads_scheduler():
                                 print(f"⚠️ [스케줄러] 피드({feed_id})가 승인되었으나 이미지 URL이 존재하지 않아 배포를 생략합니다.")
                                 await send_telegram_message(f"⚠️ [스케줄러 경고] 피드({feed_id})가 승인되었으나 이미지 URL이 없어 배포되지 못했습니다.")
                         else:
-                            print("ℹ️ [스케줄러] 오늘 승인된 예약 발행용 피드가 발견되지 않았습니다. 발행을 건너뜁니다.")
-                            await send_telegram_message("ℹ️ <b>[스케줄러 알림]</b> 오늘 정규 발행 예약 건 중 승인 완료된(Okay) 피드가 없어 발행이 생략되었습니다.")
+                            print("ℹ️ [스케줄러] 승인 완료된 예약 발행용 피드가 발견되지 않았습니다. 발행을 건너뜁니다.")
+                            # 혹시 1단계만 진행되고 2단계 최종 승인이 누락되었는지 확인
+                            pending_check = supabase.table("threads_feeds").select("id, curation_tag, image_urls")\
+                                .eq("is_approved", False)\
+                                .is_("published_at", "null")\
+                                .gte("created_at", f"{seven_days_ago}T00:00:00+09:00")\
+                                .order("id", desc=True)\
+                                .limit(1).execute()
+                            if pending_check.data:
+                                p_feed = pending_check.data[0]
+                                p_id = p_feed["id"]
+                                p_imgs = len(p_feed.get("image_urls") or [])
+                                if p_imgs > 0:
+                                    guide_msg = (
+                                        f"ℹ️ <b>[스케줄러 알림: 최종 승인 누락]</b>\n\n"
+                                        f"피드 #{p_id}({p_feed.get('curation_tag')})의 카드뉴스 이미지({p_imgs}장)는 정상 생성되었으나, "
+                                        f"<b>2단계 [발행 승인 완료하기]</b>가 아직 확정되지 않아 정규 발행이 생략되었습니다.\n\n"
+                                        f"지금이라도 텔레그램의 <b>[발행 승인 완료하기]</b> 버튼을 누르시면 즉시 Threads로 발행됩니다."
+                                    )
+                                else:
+                                    guide_msg = (
+                                        f"ℹ️ <b>[스케줄러 알림: 1단계 승인 대기]</b>\n\n"
+                                        f"피드 #{p_id}({p_feed.get('curation_tag')})가 1단계 텍스트 시안 상태(이미지 미생성)로 대기 중입니다.\n"
+                                        f"텔레그램 시안 메시지 아래의 <b>[카드뉴스 이미지 생성 및 2차 검증하기]</b>를 진행해 주세요."
+                                    )
+                                await send_telegram_message(guide_msg)
+                            else:
+                                await send_telegram_message("ℹ️ <b>[스케줄러 알림]</b> 최근 승인 완료된 발행 예약 건이 없어 오늘 밤 정규 발행이 생략되었습니다.")
                     except Exception as e:
                         print(f"❌ [스케줄러] 밤 9시 30분 최종 배포 에러: {e}")
                         await send_telegram_message(f"❌ [스케줄러 오류] 밤 9시 30분 최종 발행 중 에러 발생: {e}")

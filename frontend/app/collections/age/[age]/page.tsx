@@ -76,14 +76,14 @@ export default async function AgeCollectionPage({ params }: Props) {
     const supabase = createClient()
 
     // 서버에서 두 데이터를 병렬 패치 → SSR 단계에서 올바른 순서 확정
-    const [{ data: rawBooks }, recommendedBooks] = await Promise.all([
+    const [initialPage, recommendedBooks] = await Promise.all([
         getBooksFromServer({ page: 1, limit: 24, filters: { age, sort: 'title' }, client: supabase }),
         getBooksByAge(age, 7)
     ])
 
     // 연령별 캔메넘 7권을 앞으로, 나머지는 포함되지 않은 쿽(ㄱㄴㄷ)순 유지
     const recIds = new Set(recommendedBooks.map((b: { id: number }) => b.id))
-    const restBooks = (rawBooks ?? []).filter(b => !recIds.has(b.id))
+    const restBooks = initialPage.data.filter(b => !recIds.has(b.id))
     const initialBooks = [...recommendedBooks, ...restBooks]
 
     // ✅ 서버 컴포넌트에서 JSON-LD 생성
@@ -114,7 +114,7 @@ export default async function AgeCollectionPage({ params }: Props) {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
-            <AgeCollectionClient age={age} initialBooks={initialBooks} />
+            <AgeCollectionClient age={age} initialPage={initialPage} />
         </>
     )
 }

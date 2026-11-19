@@ -7,7 +7,7 @@ import { getAvailableAgesForCuration } from '@/lib/home-api'
 import { Suspense } from 'react'
 import { PageLoader } from '@/components/ui/PageLoader'
 import { notFound } from 'next/navigation'
-import { Book } from '@/lib/types'
+import { Book, BooksResponse } from '@/lib/types'
 
 interface Props {
     params: Promise<{ tag: string }>
@@ -136,9 +136,10 @@ export default async function CurationPage({ params }: Props) {
     const defaultSort = isAiCuration ? 'confidence_score_desc' : 'title';
 
     let initialBooks: Book[] = [];
+    let initialPage: BooksResponse | undefined;
     let initialAvailableAges: string[] | undefined = undefined;
     try {
-        const [{ data: rawBooks }, availableAges] = await Promise.all([
+        const [booksPage, availableAges] = await Promise.all([
             getBooksFromServer({
                 page: 1,
                 limit: 24,
@@ -147,7 +148,8 @@ export default async function CurationPage({ params }: Props) {
             }),
             getAvailableAgesForCuration(curationTag, supabase)
         ]);
-        initialBooks = (rawBooks as unknown as Book[]) || [];
+        initialPage = booksPage;
+        initialBooks = booksPage.data;
         initialAvailableAges = availableAges;
     } catch (err) {
         console.error('Error fetching initial books for curation:', err);
@@ -209,7 +211,7 @@ export default async function CurationPage({ params }: Props) {
 
             {/* useSearchParams() 사용에 따른 Next.js CSR Bailout 에러 차단을 위해 Suspense Boundary로 감싸기 */}
             <Suspense fallback={<PageLoader />}>
-                <BooksPageClient key={targetSlug} overrideCuration={curationTag} initialBooks={initialBooks} initialAvailableAges={initialAvailableAges} />
+                <BooksPageClient key={targetSlug} overrideCuration={curationTag} initialPage={initialPage} initialSort={defaultSort} initialAvailableAges={initialAvailableAges} />
             </Suspense>
         </>
     );

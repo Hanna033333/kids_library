@@ -147,3 +147,28 @@ def test_review_nickname_no_space_validation():
     )
     assert response.status_code == 400
     assert "닉네임에 띄어쓰기를 포함할 수 없습니다." in response.json()["detail"]
+
+def test_check_nickname_availability():
+    """닉네임 검사 엔드포인트 테스트"""
+    # 1. 공백 포함
+    res = client.get("/api/auth/check-nickname?nickname=동화 작가")
+    assert res.status_code == 200
+    assert res.json()["available"] is False
+    assert "공백" in res.json()["message"]
+
+    # 2. 1자 (길이 미달)
+    res = client.get("/api/auth/check-nickname?nickname=책")
+    assert res.status_code == 200
+    assert res.json()["available"] is False
+    assert "2자 이상" in res.json()["message"]
+
+    # 3. 11자 (길이 초과)
+    res = client.get("/api/auth/check-nickname?nickname=동화나라책벌레친구들모여라")
+    assert res.status_code == 200
+    assert res.json()["available"] is False
+
+    # 4. 특수문자
+    res = client.get("/api/auth/check-nickname?nickname=동화작가!!")
+    assert res.status_code == 200
+    assert res.json()["available"] is False
+

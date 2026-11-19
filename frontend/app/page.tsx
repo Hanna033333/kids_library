@@ -80,13 +80,14 @@ export default async function HomePage() {
   }
 
   // 서버 사이드 병렬 데이터 페칭 (홈 화면에서는 도서관 소장 정보 조인을 생략하여 TTFB 단축)
+  // 클라이언트에서 유저의 선호 연령대에 맞춰 우선 재정렬할 수 있도록 서가별로 14권씩 페칭합니다.
   const [researchBooks, caldecottBooks, summerBooks, textbookBooks, themeBooks, ...dynamicBooks] = await Promise.all([
-    getResearchCouncilBooks(7, supabase, false, true),
+    getResearchCouncilBooks(14, supabase, false, true),
     getCaldecottBooks(supabase, false, true),
-    isSummerCurationActive() ? getSummerBooks(7, supabase, false, true) : Promise.resolve([]),
+    isSummerCurationActive() ? getSummerBooks(14, supabase, false, true) : Promise.resolve([]),
     getTextbookBooks(undefined, 6, supabase, false, true),
-    getBooksByTag('환경보호', 7, supabase, false, true),
-    ...selectedTags.map(t => getBooksByTag(t.tag, 7, supabase, false, true))
+    getBooksByTag('환경보호', 14, supabase, false, true),
+    ...selectedTags.map(t => getBooksByTag(t.tag, 14, supabase, false, true))
   ])
 
   // HomePageClient에 전달할 동적 큐레이션 데이터 구성

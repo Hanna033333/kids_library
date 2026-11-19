@@ -31,8 +31,7 @@ const NOUNS = [
 function generateRandomNickname() {
     const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
     const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
-    const randNum = Math.floor(100 + Math.random() * 900)
-    return `${adj}${noun}${randNum}`
+    return `${adj}${noun}`
 }
 
 function AuthCallbackContent() {

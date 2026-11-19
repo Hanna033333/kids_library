@@ -77,35 +77,38 @@ async def get_loan_status(req: Union[LoanStatusRequest, List[int]] = Body(..., d
             detail="한 번에 최대 50개의 도서 ID만 요청할 수 있습니다."
         )
 
-    # DB에서 책 정보 조회
-    books_data = supabase.table("childbook_items").select("id, isbn").in_("id", book_ids).execute()
-    
+    # DB에서 책 정보 및 청구기호 정보를 단일 쿼리로 비동기(스레드풀) 조회
+    import asyncio
+
+    def _fetch_books_and_callnos():
+        return (
+            supabase.table("childbook_items")
+            .select("id, isbn, book_library_info(library_name, callno)")
+            .in_("id", book_ids)
+            .execute()
+        )
+
+    books_data = await asyncio.to_thread(_fetch_books_and_callnos)
+
     if not books_data.data:
         return {}
-        
-    # 선택된 도서관의 청구기호 정보를 book_library_info에서 단일 조회
-    lib_infos = []
-    if library_name:
-        lib_data = supabase.table("book_library_info") \
-            .select("book_id, library_name, callno") \
-            .in_("book_id", book_ids) \
-            .ilike("library_name", f"%{library_name}%") \
-            .execute()
-        lib_infos = lib_data.data if lib_data.data else []
-        
-    # 각 도서별 청구기호 소유 여부 판별 (book_library_info 단일 테이블 기준)
+
+    # 각 도서별 선택 도서관 청구기호 소유 여부 판별 (book_library_info 단일 테이블 기준)
     has_callno_map = {}
     for book in books_data.data:
-        b_id = book['id']
+        b_id = book["id"]
         has_callno = False
-        for info in lib_infos:
-            if info['book_id'] == b_id and info.get('callno') and info['callno'] != '없음' and info['callno'].strip():
-                has_callno = True
-                break
+        if library_name:
+            for info in (book.get("book_library_info") or []):
+                lib_name = info.get("library_name") or ""
+                callno = info.get("callno") or ""
+                if library_name.lower() in lib_name.lower() and callno and callno != "없음" and callno.strip():
+                    has_callno = True
+                    break
         has_callno_map[b_id] = has_callno
 
     # 청구기호가 존재하는 책들만 대출 현황 조회 대상으로 분류
-    books_to_fetch = [b for b in books_data.data if has_callno_map.get(b['id'])]
+    books_to_fetch = [{"id": b["id"], "isbn": b.get("isbn")} for b in books_data.data if has_callno_map.get(b["id"])]
     
     loan_statuses = {}
     if books_to_fetch:
@@ -125,9 +128,9 @@ async def get_loan_status(req: Union[LoanStatusRequest, List[int]] = Body(..., d
 
 
 @router.post("/by-ids")
-async def get_books_by_ids(book_ids: List[int] = Body(..., description="책 ID 리스트")):
+def get_books_by_ids(book_ids: List[int] = Body(..., description="책 ID 리스트")):
     """
-    여러 책의 상세 정보를 ID로 조회
+    여러 책의 상세 정보를 ID로 조회 (FastAPI 스레드풀 실행으로 이벤트 루프 블로킹 방지)
     """
     if not book_ids:
         return []

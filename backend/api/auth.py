@@ -115,20 +115,79 @@ async def get_my_profile(current_user = Depends(get_current_user)):
         )
 
 
+@router.get("/check-nickname")
+async def check_nickname_availability(
+    nickname: str,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))
+):
+    """닉네임 중복 및 사용 가능 여부 확인"""
+    cleaned = nickname.strip()
+    if not cleaned:
+        return {"available": False, "message": "닉네임을 입력해주세요."}
+    if len(cleaned) < 2 or len(cleaned) > 10:
+        return {"available": False, "message": "2자 이상 10자 이하로 입력해주세요."}
+    if re.search(r'\s', cleaned) or not re.match(r'^[가-힣a-zA-Z0-9]+$', cleaned):
+        return {"available": False, "message": "특수문자나 공백은 사용할 수 없어요."}
+    
+    current_user_id = None
+    if credentials:
+        try:
+            user_response = supabase.auth.get_user(credentials.credentials)
+            if user_response and user_response.user:
+                current_user_id = user_response.user.id
+        except Exception:
+            pass
+
+    try:
+        query = supabase.table("members").select("id").eq("nickname", cleaned)
+        if current_user_id:
+            query = query.neq("id", current_user_id)
+        res = query.execute()
+        if res.data and len(res.data) > 0:
+            return {"available": False, "message": "이미 사용 중인 닉네임이에요."}
+        return {"available": True, "message": "사용 가능한 닉네임이에요."}
+    except Exception as e:
+        logger.error(f"Nickname check error: {str(e)}")
+        return {"available": True, "message": "사용 가능한 닉네임이에요."}
+
+
 @router.patch("/me", response_model=UserResponse)
 async def update_my_profile(
     profile: UpdateProfileRequest,
     current_user = Depends(get_current_user)
 ):
     """내 정보 수정"""
-    if profile.nickname and re.search(r'\s', profile.nickname):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="닉네임에 띄어쓰기를 포함할 수 없습니다."
-        )
+    if profile.nickname:
+        cleaned_nickname = profile.nickname.strip()
+        if re.search(r'\s', profile.nickname):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="닉네임에 띄어쓰기를 포함할 수 없습니다."
+            )
+        if not re.match(r'^[가-힣a-zA-Z0-9]+$', cleaned_nickname):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="닉네임에 특수문자를 포함할 수 없습니다."
+            )
+        if len(cleaned_nickname) < 2 or len(cleaned_nickname) > 10:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="닉네임은 2자 이상 10자 이하로 입력해주세요."
+            )
+
+        # 닉네임 중복 검사 (본인 제외)
+        if current_user.id != "00000000-0000-0000-0000-000000000000":
+            existing = supabase.table("members").select("id").eq("nickname", cleaned_nickname).neq("id", current_user.id).execute()
+            if existing.data and len(existing.data) > 0:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="이미 사용 중인 닉네임입니다."
+                )
 
     try:
         update_data = profile.dict(exclude_unset=True)
+        if profile.nickname:
+            update_data["nickname"] = profile.nickname.strip()
         
         # QA 전용 테스터는 모의 성공 데이터 반환
         if current_user.id == "00000000-0000-0000-0000-000000000000":
@@ -197,7 +256,15 @@ async def update_agreements(
             "updated_at": "now()"
         }
         if agreements.nickname is not None:
-            data["nickname"] = agreements.nickname
+            cleaned_nickname = agreements.nickname.strip()
+            if current_user.id != "00000000-0000-0000-0000-000000000000":
+                existing = supabase.table("members").select("id").eq("nickname", cleaned_nickname).neq("id", current_user.id).execute()
+                if existing.data and len(existing.data) > 0:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="이미 사용 중인 닉네임입니다."
+                    )
+            data["nickname"] = cleaned_nickname
         
         # QA 전용 테스터는 실제 DB 저장을 스킵하여 외래키 제약조건 위반 방지
         if current_user.id == "00000000-0000-0000-0000-000000000000":
