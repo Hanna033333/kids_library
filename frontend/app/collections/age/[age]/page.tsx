@@ -36,7 +36,7 @@ const ageMetadata: Record<string, { title: string; description: string; keywords
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { age } = await params
     if (!ageMetadata[age]) {
-        return { title: '책자리 - 연령별 추천 도서' }
+        return { title: '연령별 추천 도서' }
     }
     const meta = ageMetadata[age]
     return {

@@ -194,12 +194,18 @@ function AuthCallbackContent() {
                         has_token: token ? 'yes' : 'no'
                     })
                 }
+            }
 
-                // 등록에 성공한 '진짜 신규 계정'에만 축하 모달을 띄운다.
-                // 닉네임이 비어 뒤늦게 채워진 기존 회원에게는 띄우지 않는다.
-                if (registered && isBrandNewAccount) {
-                    sessionStorage.setItem('showSignupComplete', 'true')
-                    sessionStorage.setItem('pendingSignupMethod', provider || 'unknown')
+            // DB 트리거(024)가 auth.users 생성 시 members 행과 nickname까지 자동 생성하므로
+            // needsProfile이 false여도 방금 생성된 신규 계정이면 축하 모달과 sign_up 이벤트를 정상 트리거한다.
+            const hasRegisteredMember = !needsProfile || registered
+            const welcomeKey = `signup_welcomed_${user.id}`
+            if (hasRegisteredMember && isBrandNewAccount && !localStorage.getItem(welcomeKey)) {
+                localStorage.setItem(welcomeKey, 'true')
+                sessionStorage.setItem('showSignupComplete', 'true')
+                sessionStorage.setItem('pendingSignupMethod', provider || 'unknown')
+                if (!needsProfile && member?.nickname) {
+                    sessionStorage.setItem('generatedNickname', member.nickname)
                 }
             }
 

@@ -55,7 +55,7 @@ export default function FilterBar({
   };
 
   return (
-    <div className="w-full px-4 pt-2 pb-2 mb-4">
+    <div className="w-full px-4 pt-1.5 pb-1.5 mb-2">
       <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between gap-3">
 
         {/* Left Side: Scrollable Filters (Horizontal scroll under the thumb) */}

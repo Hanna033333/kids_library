@@ -61,7 +61,7 @@ export default function BookList({
   }, []);
 
   // React Query를 통해 저장된 책 ID 목록 관리 (전역 캐시 동기화)
-  const { data: remoteSavedBookIds = [] } = useQuery<number[]>({
+  const { data: remoteSavedBookIds } = useQuery<number[]>({
     queryKey: ['saved-book-ids', user?.id],
     queryFn: () => (user?.id ? getSavedBookIds(supabase, user.id) : Promise.resolve([])),
     enabled: !!user?.id,
@@ -71,8 +71,8 @@ export default function BookList({
   // 원격 캐시 데이터가 갱신되면 로컬 상태 동기화
   useEffect(() => {
     if (!user?.id) {
-      setSavedBookIds(new Set());
-    } else if (remoteSavedBookIds.length > 0) {
+      setSavedBookIds((prev) => (prev.size === 0 ? prev : new Set()));
+    } else if (remoteSavedBookIds) {
       setSavedBookIds(new Set(remoteSavedBookIds));
     }
   }, [user?.id, remoteSavedBookIds]);
@@ -81,7 +81,7 @@ export default function BookList({
   useEffect(() => {
     const userId = user?.id;
     if (!userId) {
-      setSavedBookIds(new Set());
+      setSavedBookIds((prev) => (prev.size === 0 ? prev : new Set()));
       return;
     }
 
@@ -399,8 +399,8 @@ export default function BookList({
   return (
     <div className="w-full px-4">
       <div className="w-full max-w-[1200px] mx-auto">
-        {!isSearchWaitingState && isMounted && (
-          <div className="mt-1 mb-5">
+        {!isSearchWaitingState && (
+          <div className="mt-0 mb-3">
             {!user ? (
               <div
                 onClick={() => {
@@ -423,7 +423,7 @@ export default function BookList({
                     e.currentTarget.click();
                   }
                 }}
-                className="w-full bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-3.5 sm:p-4 flex items-center justify-between gap-2.5 sm:gap-3 cursor-pointer active:scale-[0.99] transition-transform"
+                className="w-full bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-3 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 cursor-pointer active:scale-[0.99] transition-transform"
               >
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
@@ -431,10 +431,10 @@ export default function BookList({
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-amber-600 mb-0.5 truncate">
-                      {selectedLibrary || "우리 동네 도서관 대출 조회"}
+                      {(isMounted && selectedLibrary) || "우리 동네 도서관 대출 조회"}
                     </p>
                     <p className="text-sm sm:text-base font-bold text-gray-900 leading-snug break-keep">
-                      {selectedLibrary
+                      {(isMounted && selectedLibrary)
                         ? "로그인하고 대출 가능 여부 확인"
                         : "지금 대출 가능한 책 바로 확인"}
                     </p>

@@ -38,36 +38,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const matchedTaxonomy = VALID_TAXONOMY.find(item => item.slug === curation || item.tag === curation);
     const curationTag = matchedTaxonomy ? matchedTaxonomy.tag : curation;
 
-    let title = '책자리 - 우리 아이 상황별 맞춤 도서 큐레이션'
+    let title = '우리 아이 상황별 맞춤 도서 큐레이션'
     let description = '어떤 책을 읽혀야 할지 고민되는 부모님을 위해! 아이의 연령과 정서적 상황(잠자리, 사회성, 감정 발달 등)에 딱 맞는 전문가 엄선 도서 큐레이션 목록과 전국 도서관 소장 정보 및 바로 구매를 확인해 보세요.'
     let keywords = '어린이 도서 추천, 아동 도서 검색, 도서 큐레이션, 어린이 정서 발달, 상황별 그림책, 도서 대출 확인'
 
     if (curationTag === 'winter-vacation' || curationTag === '겨울방학' || curationTag === '겨울방학2026') {
-        title = '스마트폰만 보는 아이, 방학 때 뭐 읽힐까요? | 책자리 겨울방학 추천도서'
+        title = '스마트폰만 보는 아이, 방학 때 뭐 읽힐까요? | 겨울방학 추천도서'
         description = '사서가 직접 뽑았다! 실패 없는 겨울방학 추천도서 리스트를 도서관에서 바로 대출하세요. 초등학생 필독서부터 인기 베스트까지 한눈에 확인하세요.'
         keywords = '겨울방학 독서 숙제, 초등 겨울방학 추천도서, 문해력 향상 도서, 독서록 쓰기 좋은 책, 학년별 추천 도서, 사서 추천'
     } else if (curationTag === 'summer-vacation' || curationTag === '여름방학' || curationTag === '여름방학2026') {
-        title = '2026 여름방학 사서 추천도서 목록 & 도서관 대출 | 책자리'
+        title = '2026 여름방학 사서 추천도서 목록 & 도서관 대출'
         description = '여름방학 독서 걱정 끝! 교육청과 현직 사서가 엄선한 초등/유아 학년별 여름방학 필수 도서 목록을 확인하고, 내 주변 도서관에서 바로 대출하거나 소장 상태를 조회해 보세요.'
         keywords = '여름방학 추천도서, 초등 여름방학 필독서, 사서 추천 도서 목록, 방학 독서록 쓰기 좋은 책, 학년별 권장 도서, 책자리'
     } else if (curationTag === 'research-council' || curationTag === '어린이도서연구회') {
-        title = "전문가가 보증하는 '찐' 필독서 모음 | 어린이도서연구회 추천도서 - 책자리"
+        title = "전문가가 보증하는 '찐' 필독서 모음 | 어린이도서연구회 추천도서"
         description = '엄마표 독서 고민 끝! 어린이 도서 연구회가 엄선한 필독서를 도서관에서 바로 대출하세요. 전문가 추천 베스트 어린이 책 리스트를 지금 확인하세요.'
         keywords = '어린이 도서 연구회, 전문가 추천 도서, 사서 추천, 어린이 필독서, 베스트 어린이 책, 권장도서'
     } else if (curationTag === 'caldecott') {
-        title = "2000-2026 칼데콧 수상작 | 세계 최고의 어린이 그림책 리스트 - 책자리"
+        title = "2000-2026 칼데콧 수상작 | 세계 최고의 어린이 그림책 리스트"
         description = '2000년부터 2026년까지 칼데콧 메달을 수상한 세계 최고의 어린이 그림책 목록입니다. 전국 도서관 소장 여부와 실시간 대출 정보를 확인하고 바로 읽혀보세요.'
         keywords = '칼데콧상, Caldecott Medal, 어린이 그림책, 수상작, 추천 도서, 전국 도서관 대출, 그림책 노벨상'
     } else if (curationTag === 'textbook' || curationTag === '교과서수록') {
-        title = '초등 국어 교과서 수록도서 (1~6학년 전학년 필독서) & 도서관 대출 | 책자리'
+        title = '초등 국어 교과서 수록도서 (1~6학년 전학년 필독서) & 도서관 대출'
         description = '초등학교 국어 교과서에 실제로 실린 1학년부터 6학년까지의 전학년 교과서 수록도서 및 필독서 목록! 전집 살 필요 없이 내 주변 도서관 실시간 소장 및 대출 가능 여부와 청구기호를 즉시 확인하세요.'
         keywords = '초등 교과서 수록도서, 초등 1학년 국어 교과서 수록도서, 초등 2학년 교과서 수록도서, 초등 3학년 필독서, 초등 국어 교과서 책, 초등학교 교과서 수록도서, 초등 필독서, 초등 권장도서, 도서관 대출, 주변 도서관 책 검색, 책자리'
     } else if (matchedTaxonomy) {
-        title = `[${matchedTaxonomy.tag} 그림책 추천] ${matchedTaxonomy.subtitle} | ${matchedTaxonomy.title} - 책자리`
+        title = `[${matchedTaxonomy.tag} 그림책 추천] ${matchedTaxonomy.subtitle} | ${matchedTaxonomy.title}`
         description = `"${matchedTaxonomy.subtitle}" 우리 아이의 마음과 정서에 꼭 맞는 '${matchedTaxonomy.tag}' 엄선 그림책 리스트! 주변 도서관 소장 상태, 대출 정보 및 교보문고 바로 구매 링크를 만나보세요.`
         keywords = `${matchedTaxonomy.tag}, ${matchedTaxonomy.title}, 그림책 큐레이션, 그림책 추천, 어린이 도서, 책자리, 부모 필독서, 정서 발달`
     }
 
+    const fullTitle = `${title} | 책자리`
     const targetSlug = matchedTaxonomy ? matchedTaxonomy.slug : curation;
 
     return {
@@ -80,7 +81,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             canonical: `/collections/curation/${encodeURIComponent(targetSlug)}`
         },
         openGraph: {
-            title,
+            title: fullTitle,
             description,
             type: 'website',
             siteName: '책자리',
@@ -91,13 +92,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                     url: '/logo.png',
                     width: 1200,
                     height: 630,
-                    alt: title
+                    alt: fullTitle
                 }
             ]
         },
         twitter: {
             card: 'summary_large_image',
-            title,
+            title: fullTitle,
             description,
             images: ['/logo.png']
         },

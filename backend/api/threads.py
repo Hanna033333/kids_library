@@ -1,5 +1,6 @@
 import os
 import re
+import html
 import json
 import uuid
 import time
@@ -924,14 +925,94 @@ async def approve_feed_submit(req: ApproveSubmitRequest):
     await send_telegram_message("🚀 <b>주간 큐레이션 발행 승인이 최종 완료되었습니다!</b> 오늘 밤 9시 30분 정규 스케줄(육퇴 골든타임)에 자동으로 Threads로 최종 발행됩니다.")
     return {"status": "success", "message": "발행 예약 확정 완료"}
 
+async def send_unapproved_threads_reminder(today_date: datetime.date) -> bool:
+    """오후 6시 기준 오늘자 스레드 승인 내역이 없으면 텔레그램 리마인더를 1회 발송합니다.
+    실제로 리마인더를 발송한 경우 True, 이미 승인되어 생략한 경우 False를 반환합니다.
+    """
+    today_str = today_date.strftime("%Y-%m-%d")
+    today_start_iso = f"{today_str}T00:00:00+09:00"
+
+    # 1. 오늘 생성된 피드 중 이미 최종 승인 완료된 건이 있으면 리마인더 불필요
+    approved_today = supabase.table("threads_feeds").select("id")\
+        .eq("is_approved", True)\
+        .gte("created_at", today_start_iso)\
+        .limit(1).execute()
+    if approved_today.data:
+        print(f"ℹ️ [스케줄러 18시 리마인더] 오늘자 피드(ID: {approved_today.data[0]['id']})가 이미 승인 완료되어 알림을 생략합니다.")
+        return False
+
+    # 2. 오늘 생성된 미승인 피드 확인
+    pending_today = supabase.table("threads_feeds").select("id, title, curation_tag, image_urls")\
+        .eq("is_approved", False)\
+        .is_("published_at", "null")\
+        .gte("created_at", today_start_iso)\
+        .order("id", desc=True)\
+        .limit(1).execute()
+
+    backend_url = get_backend_url()
+
+    if pending_today.data:
+        p_feed = pending_today.data[0]
+        p_id = p_feed["id"]
+        p_title = html.escape(p_feed.get("title") or p_feed.get("curation_tag") or "주간 큐레이션")
+        p_imgs = p_feed.get("image_urls") or []
+
+        if p_imgs:
+            confirm_url = _build_admin_url(backend_url, "/api/threads/approve", p_id, sign_action("approve", p_id))
+            reminder_msg = (
+                f"⏰ <b>[스레드 승인 리마인더]</b>\n\n"
+                f"오후 6시 기준 오늘 스레드(<b>{p_title}</b>, #{p_id})의 <b>최종 발행 승인</b>이 아직 완료되지 않았습니다.\n"
+                f"카드뉴스 이미지({len(p_imgs)}장)는 준비되어 있으니, 밤 9시 30분 자동 발행을 원하시면 아래 버튼을 눌러 승인해 주세요!"
+            )
+            await send_telegram_message(
+                reminder_msg,
+                button_text="✅ 발행 승인 완료하기",
+                button_url=confirm_url,
+            )
+        else:
+            confirm_url = _build_admin_url(backend_url, "/api/threads/approve-text", p_id, sign_action("approve-text", p_id))
+            reminder_msg = (
+                f"⏰ <b>[스레드 승인 리마인더]</b>\n\n"
+                f"오후 6시 기준 오늘 스레드(<b>{p_title}</b>, #{p_id})의 <b>1단계 텍스트 승인</b>이 아직 완료되지 않았습니다.\n"
+                f"밤 9시 30분 자동 발행을 위해 아래 버튼을 눌러 카드뉴스 이미지를 생성하고 최종 승인까지 진행해 주세요!"
+            )
+            await send_telegram_message(
+                reminder_msg,
+                button_text="🎨 카드뉴스 이미지 생성 및 2차 검증하기",
+                button_url=confirm_url,
+            )
+        print(f"📣 [스케줄러 18시 리마인더] 미승인 피드(#{p_id}) 텔레그램 리마인더 발송 완료")
+        return True
+
+    # 3. 오늘자 피드 자체가 없는 경우: 최근 7일 내 미발행 승인 예약 건이 있는지 확인 후 없으면 안내 발송
+    seven_days_ago = (today_date - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+    approved_recent = supabase.table("threads_feeds").select("id")\
+        .eq("is_approved", True)\
+        .is_("published_at", "null")\
+        .gte("created_at", f"{seven_days_ago}T00:00:00+09:00")\
+        .limit(1).execute()
+    if approved_recent.data:
+        print(f"ℹ️ [스케줄러 18시 리마인더] 최근 승인된 미발행 피드(ID: {approved_recent.data[0]['id']})가 있어 알림을 생략합니다.")
+        return False
+
+    await send_telegram_message(
+        "⏰ <b>[스레드 승인 리마인더]</b>\n\n"
+        "오후 6시 기준 오늘 생성되거나 승인된 스레드 시안이 없습니다.\n"
+        "오늘 밤 9시 30분 발행을 진행하려면 시안 생성 상태를 확인해 주세요."
+    )
+    print("📣 [스케줄러 18시 리마인더] 오늘자 시안/승인 내역 없음 안내 발송 완료")
+    return True
+
+
 async def weekly_threads_scheduler():
-    """매분마다 시간을 감지하여 월/수/금 오후 1시(13:00)에는 텍스트 시안을 자동 빌드하고, 밤 9시 30분(육퇴 골든타임)에는 최종 승인된 피드를 발행합니다."""
+    """매분마다 시간을 감지하여 월/수/금 오후 1시(13:00)에는 텍스트 시안을 자동 빌드하고, 오후 6시(18:00)에는 미승인 리마인더를 발송하며, 밤 9시 30분(육퇴 골든타임)에는 최종 승인된 피드를 발행합니다."""
     print("⏰ [Weekly Threads Scheduler] 스케줄러 태스크 가동 시작...")
     
     tz_kst = datetime.timezone(datetime.timedelta(hours=9))
     
     # 중복 실행 방지용 메모리 락 (당일 한 번만 실행)
     last_trigger_date_1pm = None
+    last_trigger_date_6pm = None
     last_trigger_date_930pm = None
     
     while True:
@@ -963,6 +1044,17 @@ async def weekly_threads_scheduler():
                     except Exception as e:
                         print(f"❌ [스케줄러] 1시 1단계 생성 중 에러: {e}")
                         await send_telegram_message(f"❌ [스케줄러 경고] 오후 1시 1단계 시안 생성 실패: {e}")
+
+            # 1.5. 월/수/금요일 오후 6시 (18:00) -> 승인 내역 없을 시 텔레그램 리마인더 1회 재발송
+            if weekday in (0, 2, 4) and now_kst.hour == 18:
+                if last_trigger_date_6pm != today_date:
+                    last_trigger_date_6pm = today_date  # 실패 여부와 무관하게 1일 1회만 시도 (매분 재시도 스팸 방지)
+                    print(f"📡 [스케줄러] 오후 6시 감지. 요일: {weekday}, 날짜: {today_date} -> 미승인 리마인더 체크")
+                    try:
+                        await send_unapproved_threads_reminder(today_date)
+                    except Exception as e:
+                        print(f"❌ [스케줄러] 오후 6시 리마인더 체크 중 에러: {e}")
+                        await send_telegram_message(f"❌ [스케줄러 경고] 오후 6시 승인 리마인더 확인 실패: {e}")
                         
             # 2. 월/수/금요일 밤 9시 30분 (21:30~21:59) -> 승인된 카드뉴스 최종 배포 (육퇴 골든타임)
             if weekday in (0, 2, 4) and now_kst.hour == 21 and now_kst.minute >= 30:

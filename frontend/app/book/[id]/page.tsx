@@ -80,7 +80,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
         if (!book) {
             return {
-                title: '책을 찾을 수 없습니다 – 책자리'
+                title: '책을 찾을 수 없습니다'
             }
         }
 
@@ -140,7 +140,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     } catch (error) {
         console.error('Metadata generation failed:', error);
         return {
-            title: '책자리 - 우리 아이를 위한 정서 맞춤 도서 큐레이션',
+            title: '우리 아이를 위한 정서 맞춤 도서 큐레이션',
             description: '우리 아이의 연령과 정서 발달 단계에 꼭 맞는 도서를 발견하고 도서관 대출 현황을 확인하세요.',
         }
     }

@@ -259,7 +259,7 @@ export default function BookDetailClient({
     }, [book.id, normalizedStatus, displayCallNo]);
 
     // 전역 찜 ID 캐시 연동
-    const { data: savedBookIds = [] } = useQuery<number[]>({
+    const { data: savedBookIds } = useQuery<number[]>({
         queryKey: ['saved-book-ids', user?.id],
         queryFn: () => (user?.id ? getSavedBookIds(supabase, user.id) : Promise.resolve([])),
         enabled: !!user?.id,
@@ -268,7 +268,7 @@ export default function BookDetailClient({
 
     // 전역 캐시에 현재 도서가 있는지 동기화
     useEffect(() => {
-        if (user && savedBookIds.length > 0) {
+        if (user && savedBookIds) {
             setIsSaved(savedBookIds.includes(Number(book.id)))
         }
     }, [user, savedBookIds, book.id])
