@@ -157,7 +157,7 @@ trigger: always_on
 - 폰트 로드: `SUIT Variable`
 - **Display**: 36px, 700, -0.5px
 - **Title 1~4**: 28px/22px/18px/16px, 700, -0.3px
-- **Book Detail Title (도서 상세 제목)**: `text-2xl sm:text-3xl` (24px~30px, `font-black text-gray-900`) 모바일 시원한 제목 강세
+- **Book Detail Title (도서 상세 제목)**: `text-2xl sm:text-3xl` (24px~30px, `font-extrabold text-gray-900`) 모바일 시원한 제목 강세
 - **Body 1**: 16px/15px, 400~500, 0 / **Body 2**: 14px, 400, 0
 - **Caption 1**: 13px, 400~700, -0.2px / **Caption 2**: 12px, 500~700, -0.2px
 - **📱 모바일 폰트 가독성 보장 원칙 (Mobile Legibility Rules)**:

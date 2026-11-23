@@ -65,8 +65,6 @@ export default function AgeCollectionClient({ age, initialPage }: AgeCollectionC
                 <div className="mb-4">
                     <SearchBar onSearch={handleSearch} />
                 </div>
-                <FilterBar selectedAge={selectedAge}
-                    onAgeChange={handleAgeChange} onFilterClick={() => setIsFilterModalOpen(true)} />
                 <IntegratedFilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)}
                     selectedAge={selectedAge} selectedSort={sortBy} onAgeChange={setSelectedAge}
                     onSortChange={(sort: string) => setSortBy(sort as 'callno' | 'title')} />
@@ -75,6 +73,14 @@ export default function AgeCollectionClient({ age, initialPage }: AgeCollectionC
                     ageFilter={selectedAge}
                     sortFilter={sortBy}
                     initialPage={currentInitialPage}
+                    filterBar={
+                        <FilterBar
+                            embedded={true}
+                            selectedAge={selectedAge}
+                            onAgeChange={handleAgeChange}
+                            onFilterClick={() => setIsFilterModalOpen(true)}
+                        />
+                    }
                 />
             </div>
         </div>

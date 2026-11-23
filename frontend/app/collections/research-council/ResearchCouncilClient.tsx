@@ -57,13 +57,23 @@ export default function ResearchCouncilClient() {
                 <div className="mb-4">
                     <SearchBar onSearch={handleSearch} />
                 </div>
-                <FilterBar selectedAge={selectedAge}
-                    onAgeChange={setSelectedAge} onFilterClick={() => setIsFilterModalOpen(true)} />
                 <IntegratedFilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)}
                     selectedAge={selectedAge} selectedSort={sortBy} onAgeChange={setSelectedAge}
                     onSortChange={(sort: string) => setSortBy(sort as 'callno' | 'title')} />
-                <BookList searchQuery={searchQuery} ageFilter={selectedAge}
-                    curationFilter="어린이도서연구회" sortFilter={sortBy} />
+                <BookList
+                    searchQuery={searchQuery}
+                    ageFilter={selectedAge}
+                    curationFilter="어린이도서연구회"
+                    sortFilter={sortBy}
+                    filterBar={
+                        <FilterBar
+                            embedded={true}
+                            selectedAge={selectedAge}
+                            onAgeChange={setSelectedAge}
+                            onFilterClick={() => setIsFilterModalOpen(true)}
+                        />
+                    }
+                />
             </div>
         </div>
     )

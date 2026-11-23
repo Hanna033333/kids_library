@@ -184,14 +184,16 @@ def main():
 
     # 2. 향후 6주 weekly_schedule 태그 (기준: 7권 이상 — 미달 시 홈 섹션 숨김)
     # 홈 캐러셀(getBooksByTag)은 pangyo_callno를 필터링하지 않으므로 raw 카운트로 판정한다.
-    print("\n[2] weekly_schedule 향후 6주 태그  ← 기준: 7권 이상 (미달 = 홈 섹션 자동 숨김)")
+    print("\n[2] weekly_schedule 향후 6주 및 전체 스케줄 태그  ← 기준: 7권 이상 (미달 = 홈 섹션 자동 숨김)")
     schedule = load_weekly_schedule()
     upcoming = get_upcoming_tags(schedule, weeks=6)
+    checked_tags = {}
     if not upcoming:
         print("  ⚠️  weekly_schedule 파싱 실패 또는 향후 일정 없음")
     for t in upcoming:
         raw_cnt = count_books_by_tag_raw(t['tag'])
         page_cnt = count_books_by_tag(t['tag'])
+        checked_tags[t['tag']] = (raw_cnt, page_cnt)
         ok = raw_cnt >= MIN_HOME
         if not ok:
             all_ok = False
@@ -199,6 +201,29 @@ def main():
         icon = "✅" if ok else "❌"
         gap_str = f" (목록/SEO 페이지는 {page_cnt}권만 노출 — 청구기호 미확보 {raw_cnt - page_cnt}권)" if page_cnt < raw_cnt else ""
         print(f"  {icon} {raw_cnt:>3}권  {t['tag']:<15} [{t['period']}] {t['title']}{gap_str}")
+
+    # 2-b. 전체 스케줄(과거/미래 포함) 전수 검증 — 스케줄 종료 후 LCG 폴백 재사용 시 7권 미만 노출 방지
+    all_schedule_issues = []
+    for item in schedule:
+        period = f"{item['start']}~{item['end']}"
+        for c in item.get('curations', []):
+            tag = c.get('tag', '')
+            if not tag:
+                continue
+            if tag not in checked_tags:
+                checked_tags[tag] = (count_books_by_tag_raw(tag), count_books_by_tag(tag))
+            raw_cnt, _ = checked_tags[tag]
+            if raw_cnt < MIN_HOME:
+                all_schedule_issues.append((tag, period, raw_cnt, c.get('title', '')))
+    if all_schedule_issues:
+        for tag, period, raw_cnt, title in all_schedule_issues:
+            msg = f"schedule(전체) '{tag}' ({period}): {raw_cnt}권 — 7권 미만!"
+            if msg not in errors:
+                all_ok = False
+                errors.append(msg)
+            print(f"  ❌ {raw_cnt:>3}권  {tag:<15} [{period}] {title} (전체 스케줄 검증 실패)")
+    else:
+        print(f"  ✅ 전체 스케줄({len(schedule)}주, 고유 태그 {len(checked_tags)}개) 모두 {MIN_HOME}권 이상 통과")
 
     # 3. 특수 고정 큐레이션 (기준: 7권 이상)
     # Section 2와 동일하게 홈 캐러셀(getCaldecottBooks/getResearchCouncilBooks) 기준 raw 카운트로 판정한다.

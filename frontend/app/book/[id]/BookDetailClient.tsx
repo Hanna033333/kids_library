@@ -23,7 +23,7 @@ import Link from 'next/link'
 import BookCard from '@/components/home/BookCard'
 import LibrarySelector from '@/components/LibrarySelector'
 import BackButton from '@/components/BackButton'
-import { useLibrary } from '@/context/LibraryContext'
+import { useLibrary, LibraryName } from '@/context/LibraryContext'
 import { sendGAEvent } from '@/lib/analytics'
 import LoginPromptModal from '@/components/ui/LoginPromptModal'
 import ProfileDropdown from '@/components/ProfileDropdown'
@@ -59,7 +59,7 @@ export default function BookDetailClient({
     const queryClient = useQueryClient()
     const hasTrackedView = useRef<string | null>(null)
     const hasTrackedCallNumber = useRef<string | null>(null)
-    const { user } = useAuth()
+    const { user, isLoading: isAuthLoading } = useAuth()
     const [book, setBook] = useState<Book>(initialBook)
     const [isSaved, setIsSaved] = useState(false)
     const [saveCount, setSaveCount] = useState(initialBook.save_count || 0)
@@ -69,6 +69,10 @@ export default function BookDetailClient({
     )
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
     const { selectedLibrary } = useLibrary()
+    // 미로그인 상태에서는 특정 도서관을 강제 노출하지 않고, 내 도서관 확인 CTA를 노출한다
+    const effectiveLibrary: LibraryName | null = isAuthLoading
+        ? selectedLibrary
+        : (user ? selectedLibrary : null)
 
     // Handle book navigation
     useEffect(() => {
@@ -124,11 +128,11 @@ export default function BookDetailClient({
 
     // ISR 캐시된 상세 페이지에 신규 추가 도서관(평택시립장당도서관 등)의 library_info가 누락된 경우를 대비해 클라이언트에서 최신 소장 정보 동기화
     const hasInitialLibraryMatch = useMemo(() => {
-        if (!selectedLibrary || !book.library_info) return false
+        if (!effectiveLibrary || !book.library_info) return false
         return book.library_info.some(
-            l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary)
+            l => l.library_name === effectiveLibrary || l.library_name.includes(effectiveLibrary)
         )
-    }, [book.library_info, selectedLibrary])
+    }, [book.library_info, effectiveLibrary])
 
     const { data: liveLibraryInfo, isFetching: isLibraryInfoFetching } = useQuery({
         queryKey: ['book-library-info', book.id],
@@ -140,21 +144,32 @@ export default function BookDetailClient({
             if (error) throw error
             return data || []
         },
-        enabled: !!selectedLibrary,
+        enabled: !!effectiveLibrary,
         staleTime: 5 * 60 * 1000,
         refetchOnWindowFocus: false,
     })
 
     const effectiveLibraryInfo = liveLibraryInfo ?? book.library_info
-    const isCheckingLibraryInfo = !!selectedLibrary && !hasInitialLibraryMatch && !liveLibraryInfo && isLibraryInfoFetching
+    const isCheckingLibraryInfo = !!effectiveLibrary && !hasInitialLibraryMatch && !liveLibraryInfo && isLibraryInfoFetching
+
+    // 소장 중인 고유 도서관 수 (미로그인/도서관 미선택 CTA 힌트용)
+    const holdingLibraryCount = useMemo(() => {
+        if (!effectiveLibraryInfo || effectiveLibraryInfo.length === 0) return 0
+        const uniqueLibraries = new Set(
+            effectiveLibraryInfo
+                .filter(l => l.callno && l.callno !== '없음')
+                .map(l => l.library_name)
+        )
+        return uniqueLibraries.size
+    }, [effectiveLibraryInfo])
 
     // 청구기호 결정 로직 (book_library_info 단일 테이블 기준)
     let displayCallNo = '청구기호 없음'
-    if (!selectedLibrary) {
+    if (!effectiveLibrary) {
         displayCallNo = '도서관을 선택해주세요'
     } else {
         const info = effectiveLibraryInfo?.find(
-            l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary)
+            l => l.library_name === effectiveLibrary || l.library_name.includes(effectiveLibrary)
         )
         if (info && info.callno && info.callno !== '없음') {
             displayCallNo = info.callno
@@ -165,12 +180,12 @@ export default function BookDetailClient({
 
     // React Query for Loan Status
     const { data: loanStatuses, isError: isLoanError } = useQuery({
-        queryKey: ['book-loan-status', book.id, selectedLibrary],
+        queryKey: ['book-loan-status', book.id, effectiveLibrary],
         queryFn: async () => {
-            if (!selectedLibrary) return {};
-            return await fetchLoanStatuses([book.id], selectedLibrary);
+            if (!effectiveLibrary) return {};
+            return await fetchLoanStatuses([book.id], effectiveLibrary);
         },
-        enabled: !!selectedLibrary && !isCheckingLibraryInfo && !!displayCallNo && displayCallNo !== '청구기호 없음' && displayCallNo !== '보유 정보 없음' && displayCallNo !== '도서관을 선택해주세요',
+        enabled: !!effectiveLibrary && !isCheckingLibraryInfo && !!displayCallNo && displayCallNo !== '청구기호 없음' && displayCallNo !== '보유 정보 없음' && displayCallNo !== '도서관을 선택해주세요',
         staleTime: 3 * 60 * 1000,
         retry: 1,
         refetchOnWindowFocus: false,
@@ -182,7 +197,7 @@ export default function BookDetailClient({
             return undefined;
         }
         // 1. 청구기호 없으면 무조건 '미소장'
-        if (!selectedLibrary || !displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음' || displayCallNo === '도서관을 선택해주세요') {
+        if (!effectiveLibrary || !displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음' || displayCallNo === '도서관을 선택해주세요') {
             return { status: "미소장", available: null };
         }
 
@@ -220,24 +235,24 @@ export default function BookDetailClient({
     // 청구기호 실제 노출 이벤트 — 유저(로그인/비로그인 프리뷰 포함)가 실제 청구기호를 봤을 때 발송
     const PLACEHOLDER_CALL_NOS = ['청구기호 없음', '보유 정보 없음', '도서관을 선택해주세요']
     useEffect(() => {
-        if (!selectedLibrary) return;
+        if (!effectiveLibrary) return;
         if (PLACEHOLDER_CALL_NOS.includes(displayCallNo)) return;
         if (normalizedStatus === undefined) return; // 대출 상태 아직 로딩 중
 
-        const trackKey = `${book.id}_${selectedLibrary}_${displayCallNo}_${!!user}`
+        const trackKey = `${book.id}_${effectiveLibrary}_${displayCallNo}_${!!user}`
         if (hasTrackedCallNumber.current === trackKey) return;
 
         sendGAEvent('view_call_number', {
             book_id: book.id,
             book_title: book.title,
-            library: selectedLibrary,
+            library: effectiveLibrary,
             call_number: displayCallNo,
             loan_status: normalizedStatus.status,
             loan_available: normalizedStatus.available,
             is_logged_in: !!user,
         });
         hasTrackedCallNumber.current = trackKey;
-    }, [user, selectedLibrary, displayCallNo, normalizedStatus, book.id, book.title]);
+    }, [user, effectiveLibrary, displayCallNo, normalizedStatus, book.id, book.title]);
 
     // Send GA event when book detail page is viewed (waits for loan status to resolve to send accurate data)
     useEffect(() => {
@@ -303,6 +318,21 @@ export default function BookDetailClient({
         title: "도서관 헛걸음 끝! 대출 가능한 책만 1초 스캔",
         description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요."
     })
+
+    const handleGuestLibraryChange = () => {
+        sessionStorage.setItem('returnUrl', window.location.pathname + window.location.search)
+        sessionStorage.setItem('pendingAction', 'open_library_selector')
+        sendGAEvent('click_library_cta_unauth', {
+            book_id: book.id,
+            source: 'book_detail_unauth_cta',
+            holding_library_count: holdingLibraryCount,
+        })
+        setLoginModalProps({
+            title: "도서관 헛걸음 끝! 대출 가능한 책만 1초 스캔",
+            description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요."
+        })
+        setIsLoginModalOpen(true)
+    }
 
     const handleToggleSave = async () => {
         if (!user) {
@@ -563,13 +593,18 @@ export default function BookDetailClient({
                                 ))}
                             </div>
 
-                            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight mb-2.5 tracking-tight line-clamp-3">
+                            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight mb-2.5 tracking-tight line-clamp-3">
                                 {book.title}
                             </h1>
 
+                            <div className="flex flex-col gap-0.5 text-gray-600 font-medium text-base mb-5">
+                                <span>{book.author || '정보 없음'}</span>
+                                <span className="text-gray-400 text-sm">{book.publisher || '정보 없음'}</span>
+                            </div>
+
                             {/* AI Curation Note */}
                             {book.curation_note && (
-                                <div className="mt-4 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100 relative">
+                                <div className="mt-6 mb-5 p-4 bg-gray-50 rounded-2xl border border-gray-100 relative">
                                     <div className="absolute top-0 right-4 -translate-y-1/2 px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium rounded-full shadow-sm">
                                         전문 사서의 추천 포인트
                                     </div>
@@ -579,18 +614,17 @@ export default function BookDetailClient({
                                 </div>
                             )}
 
-                            <div className="flex flex-col gap-0.5 text-gray-600 font-medium text-base mb-5">
-                                <span>{book.author || '정보 없음'}</span>
-                                <span className="text-gray-400 text-sm">{book.publisher || '정보 없음'}</span>
-                            </div>
-
-                            {/* 🏛️ Library Info Section (Flat & Minimal Line — 비로그인 프리뷰 허용 및 Value Wall 2단계 배치) */}
-                            <div className="pt-4 pb-1 border-t border-gray-100 flex flex-col gap-2.5">
-                                {selectedLibrary ? (
+                            {/* 🏛️ Library Info Section (Flat & Minimal Line — 로그인+도서관 설정 시 청구기호/대출 상태, 미로그인/미선택 시 내 도서관 확인 CTA) */}
+                            <div className={`${effectiveLibrary ? 'pt-4 pb-1' : 'py-2'} border-t border-gray-100 flex flex-col gap-2.5`}>
+                                {effectiveLibrary ? (
                                     <>
                                         {/* 1행: 설정한 도서관 선택기 & 제보 버튼 */}
                                         <div className="flex items-center justify-between gap-2">
-                                            <LibrarySelector autoOpen={shouldAutoOpenLibrary} />
+                                            <LibrarySelector
+                                                autoOpen={shouldAutoOpenLibrary}
+                                                displayLibrary={effectiveLibrary}
+                                                onTriggerClick={!user ? handleGuestLibraryChange : undefined}
+                                            />
                                             <button
                                                 onClick={() => {
                                                     sendGAEvent('click_report_error', { book_id: book.id });
@@ -611,7 +645,7 @@ export default function BookDetailClient({
                                                 <>
                                                     <span className={`tracking-tight ${displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'font-black text-xl md:text-2xl text-gray-400' : 'font-black text-xl md:text-2xl text-gray-900'
                                                         }`}>
-                                                        {displayCallNo}{book.vol && selectedLibrary && !PLACEHOLDER_CALL_NOS.includes(displayCallNo) ? `-${book.vol}` : ''}
+                                                        {displayCallNo}{book.vol && effectiveLibrary && !PLACEHOLDER_CALL_NOS.includes(displayCallNo) ? `-${book.vol}` : ''}
                                                     </span>
                                                     {normalizedStatus && normalizedStatus.status !== "확인중" && (
                                                         <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
@@ -630,7 +664,7 @@ export default function BookDetailClient({
                                         </div>
                                     </>
                                 ) : (
-                                    /* 도서관 미선택 상태 -> 로그인 여부와 무관하게 즉시 도서관 선택 바텀시트 오픈 */
+                                    /* 미로그인 또는 도서관 미선택 상태 -> 플랫 리스트 행 + 우측 미니 액션 필 */
                                     <LibrarySelector
                                         autoOpen={shouldAutoOpenLibrary}
                                         customTrigger={(open) => (
@@ -638,31 +672,27 @@ export default function BookDetailClient({
                                                 type="button"
                                                 onClick={() => {
                                                     if (!user) {
-                                                        sendGAEvent('click_library_cta_unauth', {
-                                                            book_id: book.id,
-                                                            source: 'book_detail_preview_open',
-                                                        });
+                                                        handleGuestLibraryChange();
+                                                        return;
                                                     }
                                                     open();
                                                 }}
-                                                className="w-full text-left flex items-center justify-between py-1.5 active:opacity-75 transition-opacity cursor-pointer outline-none focus:outline-none"
+                                                className="-mx-2 px-2 py-2.5 w-[calc(100%+1rem)] min-h-[52px] text-left flex items-center justify-between rounded-xl active:bg-gray-50 active:scale-[0.99] transition-all cursor-pointer outline-none focus:outline-none"
                                             >
-                                                <div className="flex items-center gap-3.5">
-                                                    <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                                                        <MapPin className="w-5 h-5" />
-                                                    </div>
-                                                    <div className="flex flex-col gap-0.5">
-                                                        <div className="text-base sm:text-[17px] font-bold text-gray-900 leading-snug break-keep">
-                                                            이 책, 우리 동네 도서관에 지금 있을까?
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <MapPin className="w-[18px] h-[18px] text-gray-500 shrink-0" />
+                                                    <div className="flex flex-col gap-0.5 min-w-0">
+                                                        <div className="text-sm font-semibold text-gray-800 leading-snug break-keep">
+                                                            우리 동네 도서관에 지금 있을까?
                                                         </div>
-                                                        <p className="text-xs sm:text-sm text-gray-500 font-medium leading-snug break-keep">
-                                                            지금 빌릴 수 있는 책과 책장 위치가 바로 보여요.
+                                                        <p className="text-xs text-gray-500 font-normal leading-snug break-keep">
+                                                            내 도서관 대출 여부 확인하기
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="w-7 h-7 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 ml-3">
-                                                    <ChevronRight className="w-4 h-4" />
-                                                </div>
+                                                <span className="inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-white border border-gray-200 text-xs font-semibold text-gray-700 shrink-0 ml-2">
+                                                    확인하기
+                                                </span>
                                             </button>
                                         )}
                                     />

@@ -9,13 +9,18 @@ import { sendGAEvent } from '@/lib/analytics'
 export default function LibrarySelector({ 
     whiteMode = false, 
     autoOpen = false,
-    customTrigger
+    customTrigger,
+    displayLibrary,
+    onTriggerClick,
 }: { 
     whiteMode?: boolean
     autoOpen?: boolean 
     customTrigger?: (open: () => void) => React.ReactNode
+    displayLibrary?: LibraryName | null
+    onTriggerClick?: () => void
 }) {
     const { selectedLibrary, setSelectedLibrary, availableLibraries } = useLibrary()
+    const activeLibrary = displayLibrary !== undefined ? displayLibrary : selectedLibrary
     const [isOpen, setIsOpen] = useState(autoOpen)
     const [isAnimating, setIsAnimating] = useState(false)
 
@@ -44,26 +49,38 @@ export default function LibrarySelector({
         setIsOpen(false)
     }
 
-    const displayLibraryName = selectedLibrary
-        ? (selectedLibrary.length > 15 ? `${selectedLibrary.slice(0, 15)}...` : selectedLibrary)
+    const displayLibraryName = activeLibrary
+        ? (activeLibrary.length > 15 ? `${activeLibrary.slice(0, 15)}...` : activeLibrary)
         : '도서관을 선택해주세요'
 
     return (
         <>
             {/* Trigger Button */}
             {customTrigger ? (
-                customTrigger(() => setIsOpen(true))
+                customTrigger(() => {
+                    if (onTriggerClick) {
+                        onTriggerClick()
+                    } else {
+                        setIsOpen(true)
+                    }
+                })
             ) : (
                 <button
-                    onClick={() => setIsOpen(true)}
+                    onClick={() => {
+                        if (onTriggerClick) {
+                            onTriggerClick()
+                        } else {
+                            setIsOpen(true)
+                        }
+                    }}
                     className={`flex items-center gap-1.5 text-sm sm:text-base font-bold py-1 px-0.5 transition-colors shrink-0 max-w-full ${whiteMode
                         ? 'text-white hover:text-white/80'
-                        : selectedLibrary 
+                        : activeLibrary 
                             ? 'text-gray-900 hover:text-gray-700 font-black' 
                             : 'text-gray-400 hover:text-gray-600 font-medium'
                         }`}
                 >
-                    <MapPin className={`w-4 h-4 shrink-0 ${whiteMode ? 'text-white' : selectedLibrary ? 'text-amber-500' : 'text-gray-400'}`} />
+                    <MapPin className={`w-4 h-4 shrink-0 ${whiteMode ? 'text-white' : activeLibrary ? 'text-amber-500' : 'text-gray-400'}`} />
                     <span className="truncate underline decoration-gray-300 underline-offset-4">
                         {displayLibraryName}
                     </span>

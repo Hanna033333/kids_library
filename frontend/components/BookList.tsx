@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, type ReactNode } from "react";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import BookItem from "./BookItem";
 import { useBooks } from "@/hooks/useBooks";
@@ -26,6 +26,7 @@ interface BookListProps {
   tagFilter?: string;
   sortFilter?: string;
   initialPage?: BooksResponse;
+  filterBar?: ReactNode;
 }
 
 export default function BookList({
@@ -35,6 +36,7 @@ export default function BookList({
   tagFilter,
   sortFilter = "title",
   initialPage,
+  filterBar,
 }: BookListProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -396,95 +398,75 @@ export default function BookList({
     );
   }
 
+  const libraryControl = !user ? (
+    <button
+      type="button"
+      onClick={() => {
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("returnUrl", window.location.pathname + window.location.search);
+          sessionStorage.setItem("pendingAction", "open_library_selector");
+        }
+        sendGAEvent("click_library_cta_unauth", { source: "book_list" });
+        setLoginModalConfig({
+          title: "도서관 헛걸음 끝! 대출 가능한 책만 1초 스캔",
+          description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요.",
+        });
+        setIsLoginModalOpen(true);
+      }}
+      className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-full bg-white border border-amber-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-[13px] font-bold text-gray-900 active:bg-amber-50 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none shrink-0"
+    >
+      <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0" />
+      <span className="sm:hidden">대출 조회</span>
+      <span className="hidden sm:inline">우리 동네 도서관 대출 확인</span>
+      <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+    </button>
+  ) : !selectedLibrary ? (
+    <LibrarySelector
+      autoOpen={shouldAutoOpenLibrary}
+      customTrigger={(open) => (
+        <button
+          type="button"
+          onClick={open}
+          className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-full bg-white border border-amber-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-[13px] font-bold text-gray-900 active:bg-amber-50 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none shrink-0"
+        >
+          <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0" />
+          <span className="sm:hidden">도서관 선택</span>
+          <span className="hidden sm:inline">내 도서관 설정하기</span>
+          <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+        </button>
+      )}
+    />
+  ) : (
+    <div className="max-w-[135px] sm:max-w-none flex items-center">
+      <LibrarySelector autoOpen={shouldAutoOpenLibrary} />
+    </div>
+  );
+
   return (
     <div className="w-full px-4">
       <div className="w-full max-w-[1200px] mx-auto">
-        {!isSearchWaitingState && (
-          <div className="mt-0 mb-3">
-            {!user ? (
-              <div
-                onClick={() => {
-                  if (typeof window !== "undefined") {
-                    sessionStorage.setItem("returnUrl", window.location.pathname + window.location.search);
-                    sessionStorage.setItem("pendingAction", "open_library_selector");
-                  }
-                  sendGAEvent("click_library_cta_unauth", { source: "book_list" });
-                  setLoginModalConfig({
-                    title: "도서관 헛걸음 끝! 대출 가능한 책만 1초 스캔",
-                    description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요.",
-                  });
-                  setIsLoginModalOpen(true);
-                }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    e.currentTarget.click();
-                  }
-                }}
-                className="w-full bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-3 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 cursor-pointer active:scale-[0.99] transition-transform"
-              >
-                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-amber-600 mb-0.5 truncate">
-                      {(isMounted && selectedLibrary) || "우리 동네 도서관 대출 조회"}
-                    </p>
-                    <p className="text-sm sm:text-base font-bold text-gray-900 leading-snug break-keep">
-                      {(isMounted && selectedLibrary)
-                        ? "로그인하고 대출 가능 여부 확인"
-                        : "지금 대출 가능한 책 바로 확인"}
-                    </p>
-                  </div>
-                </div>
-                <span className="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-brand-primary text-white text-xs sm:text-sm font-bold shrink-0 active:bg-brand-primary-dark transition-colors">
-                  1초 대출 조회
-                </span>
-              </div>
-            ) : !selectedLibrary ? (
-              <LibrarySelector
-                autoOpen={shouldAutoOpenLibrary}
-                customTrigger={(open) => (
-                  <div
-                    onClick={open}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        open();
-                      }
-                    }}
-                    className="w-full bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-3.5 sm:p-4 flex items-center justify-between gap-2.5 sm:gap-3 cursor-pointer active:scale-[0.99] transition-transform"
-                  >
-                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                        <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-amber-600 mb-0.5 truncate">
-                          내 도서관 설정
-                        </p>
-                        <p className="text-sm sm:text-base font-bold text-gray-900 leading-snug break-keep">
-                          도서관 선택하고 대출 상태 확인
-                        </p>
-                      </div>
-                    </div>
-                    <span className="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-brand-primary text-white text-xs sm:text-sm font-bold shrink-0 active:bg-brand-primary-dark transition-colors">
-                      도서관 선택
-                    </span>
-                  </div>
-                )}
-              />
-            ) : (
-              <div className="flex items-center justify-end px-2 py-1">
-                <LibrarySelector autoOpen={shouldAutoOpenLibrary} />
+        {!isSearchWaitingState && filterBar ? (
+          <div className="flex items-center justify-between gap-2 pt-0.5 pb-1.5 mb-2">
+            <div className="min-w-0 flex-1">
+              {filterBar}
+            </div>
+            <div className="shrink-0 flex items-center pl-1">
+              {libraryControl}
+            </div>
+          </div>
+        ) : (
+          <>
+            {!isSearchWaitingState && (
+              <div className="flex items-center justify-end mt-0 mb-2.5 px-1">
+                {libraryControl}
               </div>
             )}
-          </div>
+            {filterBar && (
+              <div className="pt-0.5 pb-1.5 mb-2">
+                {filterBar}
+              </div>
+            )}
+          </>
         )}
         {/* Loading (first page only) */}
         {isListLoading ? (

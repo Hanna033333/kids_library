@@ -294,28 +294,6 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         return '도서 검색';
     };
 
-    // 큐레이션 컨텍스트 한 줄 설명 (스레드/외부 랜딩 시 테마 맥락 즉시 전달)
-    const curationSubtitle = useMemo(() => {
-        if (!curationFilter) return "";
-        if (curationFilter === 'textbook' || curationFilter === '교과서수록') {
-            return '초등학교 국어 교과서에 실린 학년별 필독 도서';
-        }
-        if (curationFilter === 'research-council' || curationFilter === '어린이도서연구회') {
-            return '어린이도서연구회가 엄선한 전문가 추천 필독서';
-        }
-        if (curationFilter === 'caldecott') {
-            return '2000~2026 칼데콧 메달 수상 세계 최고 그림책';
-        }
-        if (curationFilter === 'winter-vacation' || curationFilter === '겨울방학' || curationFilter === '겨울방학2026') {
-            return '사서가 엄선한 실패 없는 겨울방학 추천 도서';
-        }
-        if (curationFilter === 'summer-vacation' || curationFilter === '여름방학' || curationFilter === '여름방학2026') {
-            return '교육청과 사서가 엄선한 여름방학 추천 도서';
-        }
-        const matched = ALL_TAXONOMY.find(item => item.tag === curationFilter || item.slug === curationFilter);
-        return matched ? stripEmoji(matched.subtitle) : "";
-    }, [curationFilter]);
-
     const handleShareCuration = async () => {
         const curationTitle = getPageTitle();
         let shareUrl = '';
@@ -385,13 +363,25 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                 showHome={true}
                 rightSlot={
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => setIsSearchVisible(!isSearchVisible)}
-                            className="text-gray-500 hover:text-gray-900 transition-colors p-1"
-                            aria-label="검색 열기"
-                        >
-                            <Search className="w-6 h-6" />
-                        </button>
+                        {curationFilter ? (
+                            <button
+                                type="button"
+                                onClick={handleShareCuration}
+                                className="text-gray-500 active:text-gray-900 active:scale-95 transition-all p-1 cursor-pointer outline-none focus:outline-none"
+                                aria-label="큐레이션 리스트 공유하기"
+                            >
+                                <Share2 className="w-[22px] h-[22px]" />
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setIsSearchVisible(!isSearchVisible)}
+                                className="text-gray-500 active:text-gray-900 active:scale-95 transition-all p-1 cursor-pointer outline-none focus:outline-none"
+                                aria-label="검색 열기"
+                            >
+                                <Search className="w-6 h-6" />
+                            </button>
+                        )}
                         {user ? (
                             <button
                                 onClick={() => router.push('/my-page')}
@@ -422,38 +412,6 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                 />
             </div>
 
-            {/* 큐레이션 컨텍스트 바 (스레드 등 외부 랜딩 시 테마 맥락 전달 + 공유 버튼) */}
-            {curationSubtitle && !isSearchVisible && (
-                <div className="w-full px-4 pt-2 pb-0.5">
-                    <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between gap-2">
-                        <p className="text-[13px] font-medium text-gray-600 leading-snug line-clamp-1">
-                            {curationSubtitle}
-                        </p>
-                        <button
-                            type="button"
-                            onClick={handleShareCuration}
-                            className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white border border-gray-200/80 text-[12px] font-semibold text-gray-700 active:bg-gray-100 active:scale-95 transition-all outline-none focus:outline-none"
-                            aria-label="큐레이션 리스트 공유하기"
-                        >
-                            <Share2 className="w-3.5 h-3.5 text-gray-500" />
-                            <span>공유</span>
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* 필터 바 (교과서 수록도서: 초등 1~6학년 필터 / 일반: 연령대 필터) */}
-            <FilterBar
-                selectedAge={ageFilter}
-                onAgeChange={handleAgeChange}
-                onFilterClick={openIntegratedFilter}
-                showFilterButton={!!searchQuery || !!authorFilter}
-                isTextbook={isTextbook}
-                selectedTag={tagFilter}
-                onTagChange={handleTagChange}
-                disabledAges={disabledAges}
-            />
-
             {/* 통합 필터 모달 */}
             <IntegratedFilterModal
                 isOpen={isFilterModalOpen}
@@ -468,8 +426,8 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                 disabledAges={disabledAges}
             />
 
-            {/* 책 리스트 */}
-            <div className="w-full max-w-7xl mx-auto pb-4 md:pb-6 pt-0.5">
+            {/* 책 리스트 (대출 배너/인라인 도서관 선택기 + 필터 바 → 도서 목록) */}
+            <div className="w-full max-w-7xl mx-auto pb-4 md:pb-6 pt-3">
                 <BookList
                     searchQuery={searchQuery || authorFilter || undefined}
                     ageFilter={ageFilter || undefined}
@@ -477,6 +435,19 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                     tagFilter={tagFilter || undefined}
                     sortFilter={sortFilter}
                     initialPage={currentInitialPage}
+                    filterBar={
+                        <FilterBar
+                            embedded={true}
+                            selectedAge={ageFilter}
+                            onAgeChange={handleAgeChange}
+                            onFilterClick={openIntegratedFilter}
+                            showFilterButton={!!searchQuery || !!authorFilter}
+                            isTextbook={isTextbook}
+                            selectedTag={tagFilter}
+                            onTagChange={handleTagChange}
+                            disabledAges={disabledAges}
+                        />
+                    }
                 />
             </div>
 
