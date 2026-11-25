@@ -473,11 +473,10 @@ export default function BookList({
         });
         setIsLoginModalOpen(true);
       }}
-      className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-full bg-white border border-amber-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-[13px] font-bold text-gray-900 active:bg-amber-50 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none shrink-0"
+      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white border border-amber-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-[13px] font-bold text-gray-900 active:bg-amber-50 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none shrink-0"
     >
-      <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0" />
-      <span className="sm:hidden">대출 조회</span>
-      <span className="hidden sm:inline">우리 동네 도서관 대출 확인</span>
+      <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
+      <span>우리 동네 도서관 대출 확인</span>
       <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
     </button>
   ) : !selectedLibrary ? (
@@ -487,17 +486,16 @@ export default function BookList({
         <button
           type="button"
           onClick={open}
-          className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-full bg-white border border-amber-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-[13px] font-bold text-gray-900 active:bg-amber-50 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none shrink-0"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white border border-amber-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-[13px] font-bold text-gray-900 active:bg-amber-50 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none shrink-0"
         >
-          <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0" />
-          <span className="sm:hidden">도서관 선택</span>
-          <span className="hidden sm:inline">내 도서관 설정하기</span>
+          <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
+          <span>내 도서관 설정하기</span>
           <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
         </button>
       )}
     />
   ) : (
-    <div className="max-w-[135px] sm:max-w-none flex items-center">
+    <div className="max-w-full flex items-center">
       <LibrarySelector autoOpen={shouldAutoOpenLibrary} />
     </div>
   );
@@ -506,11 +504,11 @@ export default function BookList({
     <div className="w-full px-4">
       <div className="w-full max-w-[1200px] mx-auto">
         {!isSearchWaitingState && filterBar ? (
-          <div className="flex items-center justify-between gap-2 pt-0.5 pb-1.5 mb-2">
-            <div className="min-w-0 flex-1">
+          <div className="flex flex-col-reverse md:flex-row md:items-center md:justify-between gap-2 md:gap-3 pt-0.5 pb-1.5 mb-2">
+            <div className="w-full md:w-auto min-w-0 md:flex-1">
               {filterBar}
             </div>
-            <div className="shrink-0 flex items-center pl-1">
+            <div className="w-full md:w-auto shrink-0 flex items-center justify-start md:justify-end md:pl-1">
               {libraryControl}
             </div>
           </div>
