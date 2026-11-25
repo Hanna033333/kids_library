@@ -190,11 +190,11 @@ export default function TextbookCurationShowcase({
         ) : bookPairs.length > 0 ? (
           <div>
             <div className="overflow-x-auto scrollbar-hide -mx-4">
-              <div className="flex gap-4 pb-4 pl-6 w-max min-w-full">
+              <div className="flex gap-2.5 sm:gap-4 pb-4 pl-6 w-max min-w-full">
                 {bookPairs.map((pair, colIndex) => (
                   <div
                     key={`col-${colIndex}`}
-                    className="flex flex-col gap-4 w-[310px] sm:w-[370px] lg:w-[455px] shrink-0"
+                    className="flex flex-col gap-3 sm:gap-4 w-[288px] sm:w-[370px] lg:w-[455px] shrink-0"
                   >
                     {pair.map((book) => {
                       const displayTags = getTextbookCardTags(book, currentTab.tag === 'all')
@@ -210,10 +210,10 @@ export default function TextbookCurationShowcase({
                               tab_id: currentTab.id
                             })
                           }}
-                          className="flex items-center p-3.5 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] active:scale-[0.98] transition-all group"
+                          className="flex items-center p-3 sm:p-3.5 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] active:scale-[0.98] transition-all group"
                         >
-                          {/* 표지 썸네일 (130% 확대) */}
-                          <div className="relative w-[110px] h-[150px] sm:w-[120px] sm:h-[164px] lg:w-[125px] lg:h-[172px] shrink-0 rounded-xl overflow-hidden bg-gray-100 shadow-sm flex items-center justify-center">
+                          {/* 표지 썸네일 */}
+                          <div className="relative w-[96px] h-[132px] sm:w-[120px] sm:h-[164px] lg:w-[125px] lg:h-[172px] shrink-0 rounded-xl overflow-hidden bg-gray-100 shadow-sm flex items-center justify-center">
                             {coverSrc ? (
                               <Image
                                 src={coverSrc}
@@ -253,8 +253,8 @@ export default function TextbookCurationShowcase({
                     })}
                   </div>
                 ))}
-                {/* 2단 슬라이더 우측 끝 스크롤 마진 확보용 스페이서 (gap-4: 16px 유지) */}
-                <div className="shrink-0 w-0" aria-hidden="true" />
+                {/* 2단 슬라이더 우측 끝 스크롤 마진 확보용 스페이서 */}
+                <div className="shrink-0 w-2 sm:w-0" aria-hidden="true" />
               </div>
             </div>
 

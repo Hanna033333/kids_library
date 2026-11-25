@@ -13,7 +13,7 @@ import { parseCurationTags, formatCurationTag, isGradeTag } from "@/lib/utils/cu
 interface BookItemProps {
   book: Book;
   loanStatus?: LoanStatus;
-  /** true이면 청구기호·대출 상태를 표시 (목록/검색 페이지), false면 깔끔 모드 (홈/추천 카드) */
+  /** true이면 대출 가능 상태 배지를 표시 (목록/검색 페이지), false면 깔끔 모드 (홈/추천 카드) */
   showLibraryInfo?: boolean;
   /** true이면 next/image priority 활성화 (첫 뷰포트 LCP 최적화용) */
   priority?: boolean;
@@ -55,24 +55,20 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
   const gradeTag = rawCurationTags.find((t) => isGradeTag(t));
   const displayBadge = gradeTag ? formatCurationTag(gradeTag) : getAgeDisplayLabel(book.age);
 
-  // 청구기호 결정 로직 (showLibraryInfo이고 선호 도서관이 설정되었을 때만 연산 — book_library_info 단일 테이블 기준)
-  let displayCallNo = '청구기호 없음';
-  if (showLibraryInfo && selectedLibrary) {
+  // 선호 도서관 소장 여부 판별 (showLibraryInfo이고 선호 도서관이 설정되었을 때만 연산 — book_library_info 단일 테이블 기준)
+  const hasHolding = (() => {
+    if (!showLibraryInfo || !selectedLibrary) return false;
     const info = book.library_info?.find(
       (l) => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary)
     );
-    if (info && info.callno && info.callno !== '없음') {
-      displayCallNo = info.callno;
-    } else {
-      displayCallNo = '보유 정보 없음';
-    }
-  }
+    return Boolean(info && info.callno && info.callno !== '없음');
+  })();
 
   // Normalize loan status (showLibraryInfo 및 selectedLibrary 존재 시에만 사용)
   const normalizedStatus = (() => {
     if (!showLibraryInfo || !selectedLibrary) return null;
 
-    if (!displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음') {
+    if (!hasHolding) {
       return { status: "미소장", available: null };
     }
 
@@ -123,7 +119,7 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
         )}
 
         {/* 태그 (이미지 위에 오버레이 — 학년 우선, 없으면 연령 단독 노출) */}
-        <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
+        <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 flex gap-1.5 flex-wrap">
           {displayBadge && (
             <span className="text-xs px-2.5 py-1 rounded-full bg-black/65 text-white font-bold shadow-sm backdrop-blur-sm">
               {displayBadge}
@@ -144,25 +140,24 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
             className="absolute top-2.5 right-2.5 z-10 w-10 h-10 rounded-full bg-white/90 backdrop-blur-xs shadow-sm flex items-center justify-center active:scale-95 transition-transform outline-none focus:outline-none"
           >
             <Heart
-              className={`w-5 h-5 transition-colors ${
-                isSaved ? "fill-[#F59E0B] text-[#F59E0B]" : "text-gray-400"
-              }`}
+              className={`w-5 h-5 transition-colors ${isSaved ? "fill-[#F59E0B] text-[#F59E0B]" : "text-gray-400"
+                }`}
             />
           </button>
         )}
       </div>
 
       {/* 2. 정보 영역 (하단) */}
-      <div className="flex-1 p-4 flex flex-col justify-between bg-white">
-        <h3 className="text-base font-bold text-gray-900 leading-[1.4] line-clamp-2 tracking-tight">
+      <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between bg-white">
+        <h3 className="text-[15px] sm:text-base font-bold text-gray-900 leading-[1.35] sm:leading-[1.4] line-clamp-2 tracking-tight">
           {book.title}
         </h3>
 
-        {/* 바닥 영역 (여유 있는 mt-auto pt-3) */}
-        <div className="mt-auto pt-3 flex flex-col gap-2.5 w-full">
+        {/* 바닥 영역 (여유 있는 mt-auto pt-2.5 sm:pt-3) */}
+        <div className="mt-auto pt-2.5 sm:pt-3 flex flex-col gap-2 sm:gap-2.5 w-full">
           {/* 태그 (박스 테두리 제거로 깔끔하고 여유로운 텍스트 톤) */}
           {tags.length > 0 && (
-            <div className="flex items-center gap-2 text-[13px] font-medium text-gray-500 flex-wrap">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[12.5px] sm:text-[13px] font-medium text-gray-500 flex-wrap">
               {tags.map((tag, idx) => (
                 <span key={idx} className="text-gray-500">
                   #{formatCurationTag(tag)}
@@ -171,25 +166,19 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
             </div>
           )}
 
-          {/* 청구기호 & 대출 가능 상태 배지 (선호 도서관 설정 시에만 노출) */}
-          {showLibraryInfo && user && selectedLibrary && (
-            <div className="flex items-center justify-between gap-2 pt-0.5">
-              <p className="text-[14px] font-extrabold text-[#F59E0B] tracking-tight truncate flex-1 min-w-0">
-                {displayCallNo}
-                {book.vol && `-${book.vol}`}
-              </p>
-              {normalizedStatus && normalizedStatus.status !== "확인중" && (
-                <span className={`shrink-0 inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
-                  ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
-                  : normalizedStatus.available === false
-                    ? "bg-red-50 text-red-600 border border-red-200"
-                    : normalizedStatus.status === "미소장"
-                      ? "bg-[#F3F4F6] text-[#6B7280]"
-                      : "bg-white text-gray-600 border border-gray-300"
-                  }`}>
-                  {normalizedStatus.status}
-                </span>
-              )}
+          {/* 대출 가능 상태 배지 (선호 도서관 설정 시에만 노출 — 청구기호는 도서 상세에서 제공) */}
+          {showLibraryInfo && user && selectedLibrary && normalizedStatus && normalizedStatus.status !== "확인중" && (
+            <div className="flex items-center pt-0.5">
+              <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
+                ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
+                : normalizedStatus.available === false
+                  ? "bg-red-50 text-red-600 border border-red-200"
+                  : normalizedStatus.status === "미소장"
+                    ? "bg-[#F3F4F6] text-[#6B7280]"
+                    : "bg-white text-gray-600 border border-gray-300"
+                }`}>
+                {normalizedStatus.status}
+              </span>
             </div>
           )}
         </div>

@@ -189,11 +189,11 @@ export default function ThemeCurationShowcase({
                 ref={sliderRef}
                 className="overflow-x-auto scrollbar-hide -mx-4 scroll-smooth"
               >
-                <div className="flex gap-4 pb-4 items-stretch pl-6 w-max min-w-full">
+                <div className="flex gap-2.5 sm:gap-4 pb-4 items-stretch pl-6 w-max min-w-full">
                   {currentBooks.map((book) => (
                     <div
                       key={book.id}
-                      className="flex-shrink-0 w-[165px] sm:w-[190px]"
+                      className="flex-shrink-0 w-[140px] sm:w-[190px]"
                     >
                       <BookCard
                         book={book}
@@ -201,8 +201,8 @@ export default function ThemeCurationShowcase({
                       />
                     </div>
                   ))}
-                  {/* 우측 끝 스크롤 마진 확보용 스페이서 (gap-4: 16px 유지) */}
-                  <div className="shrink-0 w-0" aria-hidden="true" />
+                  {/* 우측 끝 스크롤 마진 확보용 스페이서 */}
+                  <div className="shrink-0 w-2 sm:w-0" aria-hidden="true" />
                 </div>
               </div>
 
