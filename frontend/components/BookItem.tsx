@@ -153,23 +153,23 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
           {book.title}
         </h3>
 
-        {/* 바닥 영역 (여유 있는 mt-auto pt-2.5 sm:pt-3) */}
-        <div className="mt-auto pt-2.5 sm:pt-3 flex flex-col gap-2 sm:gap-2.5 w-full">
-          {/* 태그 (박스 테두리 제거로 깔끔하고 여유로운 텍스트 톤) */}
-          {tags.length > 0 && (
-            <div className="flex items-center gap-1.5 sm:gap-2 text-[12.5px] sm:text-[13px] font-medium text-gray-500 flex-wrap">
-              {tags.map((tag, idx) => (
-                <span key={idx} className="text-gray-500">
-                  #{formatCurationTag(tag)}
-                </span>
-              ))}
-            </div>
-          )}
+        {/* 바닥 영역: 큐레이션 태그(좌) + 대출 가능 상태 배지(우) */}
+        {(tags.length > 0 || (showLibraryInfo && user && selectedLibrary && normalizedStatus && normalizedStatus.status !== "확인중")) && (
+          <div className={`mt-auto pt-2.5 sm:pt-3 flex items-center gap-2 w-full ${tags.length > 0 ? "justify-between" : "justify-start"}`}>
+            {/* 태그 (공간이 좁으면 자연스럽게 2줄로 줄바꿈) */}
+            {tags.length > 0 && (
+              <div className="flex items-center gap-x-1.5 gap-y-0.5 sm:gap-x-2 text-[12.5px] sm:text-[13px] font-medium text-gray-500 flex-wrap flex-1 min-w-0 leading-[1.35]">
+                {tags.map((tag, idx) => (
+                  <span key={idx} className="text-gray-500">
+                    #{formatCurationTag(tag)}
+                  </span>
+                ))}
+              </div>
+            )}
 
-          {/* 대출 가능 상태 배지 (선호 도서관 설정 시에만 노출 — 청구기호는 도서 상세에서 제공) */}
-          {showLibraryInfo && user && selectedLibrary && normalizedStatus && normalizedStatus.status !== "확인중" && (
-            <div className="flex items-center pt-0.5">
-              <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
+            {/* 대출 가능 상태 배지 (선호 도서관 설정 시에만 노출 — 청구기호는 도서 상세에서 제공) */}
+            {showLibraryInfo && user && selectedLibrary && normalizedStatus && normalizedStatus.status !== "확인중" && (
+              <span className={`shrink-0 inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
                 ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
                 : normalizedStatus.available === false
                   ? "bg-red-50 text-red-600 border border-red-200"
@@ -179,9 +179,9 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
                 }`}>
                 {normalizedStatus.status}
               </span>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </Link>
   );

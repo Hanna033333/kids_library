@@ -13,16 +13,24 @@ import { sendGAEvent } from "@/lib/analytics";
 import { useAuth } from "@/context/AuthContext";
 import LoginPromptModal from "@/components/ui/LoginPromptModal";
 import { useRouter } from "next/navigation";
-import { MapPin, ChevronRight } from "lucide-react";
+import { MapPin, ChevronRight, Info } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { saveBook, unsaveBook, getSavedBookIds } from "@/lib/supabase-api";
 
 const ITEMS_PER_PAGE = 24;
 
+const AGE_LABELS: Record<string, string> = {
+  '0-3': '0~3세',
+  '4-7': '4~7세',
+  '8-12': '8~12세',
+  '13+': '13세 이상',
+};
+
 interface BookListProps {
   searchQuery?: string;
   ageFilter?: string;
   curationFilter?: string;
+  curationTitle?: string;
   tagFilter?: string;
   sortFilter?: string;
   initialPage?: BooksResponse;
@@ -33,6 +41,7 @@ export default function BookList({
   searchQuery,
   ageFilter,
   curationFilter,
+  curationTitle,
   tagFilter,
   sortFilter = "title",
   initialPage,
@@ -302,14 +311,53 @@ export default function BookList({
     ? isSearchWaitingRecommendedLoading
     : (loading || (shouldFetchRecommended && isRecommendedLoading)));
 
-  // 폴백 추천 도서 활성화 조건
-  const isFallbackEnabled = isMounted && !isListLoading && displayBooks.length === 0 && !isSearchWaitingState;
+  // 큐레이션 + 연령 필터 결과가 소수(1~6권)일 때 하단에 같은 테마의 다른 연령대 책 섹션 노출
+  const isSparseCurationAge = isMounted &&
+    !isListLoading &&
+    !isSearchWaitingState &&
+    !!curationFilter &&
+    !!ageFilter &&
+    !searchQuery &&
+    !hasNextPage &&
+    displayBooks.length > 0 &&
+    displayBooks.length <= 6;
+
+  // 폴백 추천 도서 활성화 조건 (0건이거나 큐레이션+연령 필터 결과가 6권 이하일 때)
+  const isFallbackEnabled = isMounted && !isListLoading && !isSearchWaitingState && (displayBooks.length === 0 || isSparseCurationAge);
 
 
   // 폴백 추천 도서 fetch 쿼리
+  // 큐레이션 진입 중 연령 필터 등으로 0건 또는 소수 건인 경우, 해당 큐레이션의 다른 연령대 도서를 우선 노출
   const { data: fallbackBooks = [] } = useQuery<Book[]>({
-    queryKey: ['fallback-books', ageFilter, searchQuery, !!user],
+    queryKey: ['fallback-books', curationFilter, ageFilter, searchQuery, !!user],
     queryFn: async () => {
+      if (curationFilter) {
+        let curationFallback: Book[] = [];
+        if (curationFilter === '교과서수록' || curationFilter === 'textbook') {
+          const { getTextbookBooks } = await import("@/lib/home-api");
+          curationFallback = await getTextbookBooks(undefined, 14, undefined, !!user);
+        } else if (curationFilter === "caldecott") {
+          const { getCaldecottBooks } = await import("@/lib/caldecott-api");
+          const books = await getCaldecottBooks(undefined, !!user);
+          curationFallback = books.slice(0, 14);
+        } else if (curationFilter === "어린이도서연구회" || curationFilter === "research-council") {
+          const { getResearchCouncilBooks } = await import("@/lib/home-api");
+          curationFallback = await getResearchCouncilBooks(14, undefined, !!user);
+        } else if (curationFilter === "겨울방학" || curationFilter === "winter-vacation") {
+          const { getWinterBooks } = await import("@/lib/home-api");
+          curationFallback = await getWinterBooks(14, undefined, !!user);
+        } else if (curationFilter === "여름방학" || curationFilter === "summer-vacation" || curationFilter === "여름방학2026") {
+          const { getSummerBooks } = await import("@/lib/home-api");
+          curationFallback = await getSummerBooks(14, undefined, !!user);
+        } else {
+          const { getBooksByTag } = await import("@/lib/home-api");
+          curationFallback = await getBooksByTag(curationFilter, 14, undefined, !!user);
+        }
+        if (curationFallback.length > 0) {
+          return curationFallback;
+        }
+      }
+
       if (ageFilter) {
         const { getPopularBooksByAge } = await import("@/lib/home-api");
         return getPopularBooksByAge(ageFilter, 8, undefined, !!user);
@@ -322,12 +370,24 @@ export default function BookList({
     staleTime: 5 * 60 * 1000, // 5분 캐싱
   });
 
-  // Batch fetch loan statuses for all visible books (including fallback books when list is empty)
-  const visibleBooksForLoan = displayBooks.length > 0
-    ? displayBooks
-    : isSearchWaitingState
+  // 상단에 이미 노출된 도서는 제외한 다른 연령대 폴백 도서 (최대 8권)
+  const displayFallbackBooks = useMemo(() => {
+    if (displayBooks.length === 0) return fallbackBooks.slice(0, 8);
+    const shownIds = new Set(displayBooks.map(b => b.id));
+    return fallbackBooks.filter(b => !shownIds.has(b.id)).slice(0, 8);
+  }, [fallbackBooks, displayBooks]);
+
+  // Batch fetch loan statuses for all visible books (including fallback books)
+  const visibleBooksForLoan = useMemo(() => {
+    if (displayBooks.length > 0) {
+      return isSparseCurationAge && displayFallbackBooks.length > 0
+        ? [...displayBooks, ...displayFallbackBooks]
+        : displayBooks;
+    }
+    return isSearchWaitingState
       ? searchWaitingRecommendedBooks
-      : fallbackBooks;
+      : displayFallbackBooks;
+  }, [displayBooks, isSparseCurationAge, displayFallbackBooks, isSearchWaitingState, searchWaitingRecommendedBooks]);
   const bookIds = visibleBooksForLoan.map(b => b.id).join(',');
 
   const { data: loanStatuses } = useQuery({
@@ -515,43 +575,74 @@ export default function BookList({
             )}
           </div>
         ) : !isListLoading && displayBooks.length === 0 ? (
-          <div className="space-y-8 w-full">
-            {/* Empty State Box - Level 1 shadow, no borders */}
-            <div className="py-16 text-center bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] flex flex-col items-center justify-center">
-              <div className="text-gray-600 font-bold text-lg mb-1">검색 결과가 없습니다.</div>
-              <div className="text-gray-400 text-sm">다른 검색어나 필터로 시도해보세요.</div>
-            </div>
+          (() => {
+            const ageLabel = ageFilter ? (AGE_LABELS[ageFilter] ?? ageFilter) : '';
+            const isCurationAgeEmpty = !!curationFilter && !!ageFilter;
+            const emptyTitle = ageFilter
+              ? (searchQuery ? `${ageLabel}에 해당하는 검색 결과가 없어요` : `${ageLabel}에 해당하는 책이 없어요`)
+              : '검색 결과가 없습니다';
+            const emptySubtitle = ageFilter
+              ? (searchQuery ? '다른 검색어나 연령 필터로 시도해 보세요' : '')
+              : '다른 검색어나 필터로 시도해 보세요';
 
-            {/* Fallback Recommendation Box - Level 1 shadow, no borders */}
-            {fallbackBooks.length > 0 && (
-              <div className="p-6 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-                {/* 2단 타이틀 구조 (서브 타이틀 위, 메인 타이틀 아래) */}
-                <div className="mb-6">
-                  <span className="text-[13px] text-gray-500 font-semibold block mb-1">
-                    조건에 맞는 책이 없지만 이 책은 어떨까요?
-                  </span>
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">
-                    {ageFilter ? `${({ '0-3': '0~3세', '4-7': '4~7세', '8-12': '8~12세', '13+': '13세 이상' } as Record<string, string>)[ageFilter] ?? ageFilter} 추천 도서` : "인기 도서 추천"}
-                  </h3>
-                </div>
-
-                {/* 도서 그리드 */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-                  {fallbackBooks.map((book) => (
-                    <div key={book.id}>
-                      <BookItem
-                        book={book}
-                        loanStatus={loanStatuses?.[book.id]}
-                        showLibraryInfo
-                        isSaved={savedBookIds.has(book.id)}
-                        onToggleSave={handleToggleBookSave}
-                      />
+            return (
+              <div className="space-y-3 w-full">
+                {/* Empty State - 폴백 도서가 있으면 슬림 인라인 알림 바, 없으면 중앙 빈 화면 */}
+                {displayFallbackBooks.length > 0 ? (
+                  <div className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+                    <Info className="w-4 h-4 text-gray-400 shrink-0" />
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-left">
+                      <span className="text-[14px] font-semibold text-gray-700 break-keep">{emptyTitle}</span>
+                      {emptySubtitle && (
+                        <span className="text-[13px] text-gray-500 break-keep">{emptySubtitle}</span>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className="py-16 px-4 text-center flex flex-col items-center justify-center">
+                    <p className="text-[15px] font-semibold text-gray-600 break-keep">{emptyTitle}</p>
+                    {emptySubtitle && (
+                      <p className="mt-1 text-[13px] text-gray-400 break-keep">{emptySubtitle}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Fallback Recommendation Box - Level 1 shadow, no borders */}
+                {displayFallbackBooks.length > 0 && (
+                  <div className="p-6 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+                    {/* 2단 타이틀 구조 (서브 타이틀 위, 메인 타이틀 아래) */}
+                    <div className="mb-6">
+                      <span className="text-[13px] text-gray-500 font-semibold block mb-1">
+                        {isCurationAgeEmpty ? '다른 연령대의 책은 어떨까요?' : '조건에 맞는 책이 없지만 이 책은 어떨까요?'}
+                      </span>
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight break-keep">
+                        {isCurationAgeEmpty
+                          ? (curationTitle || '이 테마의 전체 도서')
+                          : ageFilter
+                            ? `${ageLabel} 추천 도서`
+                            : '인기 도서 추천'}
+                      </h3>
+                    </div>
+
+                    {/* 도서 그리드 */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+                      {displayFallbackBooks.map((book) => (
+                        <div key={book.id}>
+                          <BookItem
+                            book={book}
+                            loanStatus={loanStatuses?.[book.id]}
+                            showLibraryInfo
+                            isSaved={savedBookIds.has(book.id)}
+                            onToggleSave={handleToggleBookSave}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()
         ) : (
           <>
             {/* Book grid */}
@@ -569,8 +660,36 @@ export default function BookList({
               ))}
             </div>
 
+            {/* 큐레이션 + 연령 필터 결과가 소수(1~6권)일 때 같은 테마의 다른 연령대 책 섹션 추가 노출 */}
+            {isSparseCurationAge && displayFallbackBooks.length > 0 && (
+              <div className="mt-8 p-6 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+                <div className="mb-6">
+                  <span className="text-[13px] text-gray-500 font-semibold block mb-1">
+                    다른 연령대의 책은 어떨까요?
+                  </span>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight break-keep">
+                    {curationTitle || '이 테마의 전체 도서'}
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+                  {displayFallbackBooks.map((book) => (
+                    <div key={book.id}>
+                      <BookItem
+                        book={book}
+                        loanStatus={loanStatuses?.[book.id]}
+                        showLibraryInfo
+                        isSaved={savedBookIds.has(book.id)}
+                        onToggleSave={handleToggleBookSave}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Infinite scroll sentinel (mobile only) */}
-            {isMobile && displayBooks.length > 0 && !error && (
+            {isMobile && displayBooks.length > 0 && !error && !isSparseCurationAge && (
               <div ref={observerTarget} className="py-8 flex justify-center">
                 {isFetchingNextPage && (
                   <Spinner size="md" variant="primary" />

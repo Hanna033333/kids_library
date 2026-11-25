@@ -31,6 +31,13 @@ interface BooksPageClientProps {
 
 const FILTERABLE_AGE_GROUPS = ['0-3', '4-7', '8-12'] as const;
 
+const AGE_LABELS: Record<string, string> = {
+    '0-3': '0~3세',
+    '4-7': '4~7세',
+    '8-12': '8~12세',
+    '13+': '13세 이상',
+};
+
 // AI 큐레이션이 아닌 정적/특수 큐레이션 목록 (AI 신뢰도순 정렬 제외)
 const NON_AI_CURATIONS = ['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott', 'textbook', '교과서수록'];
 
@@ -166,16 +173,28 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
     }, [routeSearchQuery, routeAuthorFilter, routeAgeFilter, routeCurationFilter, routeTagFilter, routeSortFilter]);
 
     // 도서 리스트 진입 시, 로그인 유저의 선호 연령대가 설정되어 있고 URL에 age가 없으면 해당 연령대 필터를 기본값으로 자동 선택
+    // 단, 큐레이션 진입 시 해당 큐레이션에 선호 연령대 도서가 0권이면 필터를 걸지 않고 전체 연령으로 노출 + 토스트 안내
     const initialAgeAppliedRef = useRef(false);
     useEffect(() => {
         if (authLoading || initialAgeAppliedRef.current) return;
+
+        // 큐레이션 진입 시 가용 연령대 목록 로딩이 완료될 때까지 대기
+        if (curationFilter && !isTextbook && availableAgesForCuration === undefined) {
+            return;
+        }
+
         initialAgeAppliedRef.current = true;
 
         if (user && preferredChildAge && !routeAgeFilter && !overrideAge && !searchParams.get('age') && !isTextbook) {
+            if (curationFilter && availableAgesForCuration && !availableAgesForCuration.includes(preferredChildAge)) {
+                const ageLabel = AGE_LABELS[preferredChildAge] ?? preferredChildAge;
+                setToastMessage(`${ageLabel} 도서가 없어 전체 연령으로 보여드려요`);
+                return;
+            }
             setAgeFilter(preferredChildAge);
             updateURL({ age: preferredChildAge });
         }
-    }, [authLoading, user, preferredChildAge, routeAgeFilter, overrideAge, searchParams, isTextbook, updateURL]);
+    }, [authLoading, user, preferredChildAge, routeAgeFilter, overrideAge, searchParams, isTextbook, curationFilter, availableAgesForCuration, updateURL]);
 
     const POPULAR_THEME_CHIPS = [
         { label: '잠자리', tag: '잠자리' },
@@ -432,6 +451,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                     searchQuery={searchQuery || authorFilter || undefined}
                     ageFilter={ageFilter || undefined}
                     curationFilter={curationFilter || undefined}
+                    curationTitle={curationFilter ? getPageTitle() : undefined}
                     tagFilter={tagFilter || undefined}
                     sortFilter={sortFilter}
                     initialPage={currentInitialPage}
