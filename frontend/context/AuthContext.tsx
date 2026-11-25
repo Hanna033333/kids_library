@@ -197,6 +197,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         sessionStorage.removeItem('qa_preferred_child_age')
         sessionStorage.removeItem('generatedNickname')
         sessionStorage.removeItem('showSignupComplete')
+        sessionStorage.removeItem('pendingAction')
+        sessionStorage.removeItem('returnUrl')
         setUser(null)
         setSession(null)
         setPreferredChildAge(null)
