@@ -618,55 +618,59 @@ export default function BookDetailClient({
                             <div className={`${effectiveLibrary ? 'pt-4 pb-1' : 'py-2'} border-t border-gray-100 flex flex-col gap-2.5`}>
                                 {effectiveLibrary ? (
                                     <>
-                                        {/* 1행: 설정한 도서관 선택기 & 제보 버튼 */}
-                                        <div className="flex items-center justify-between gap-2">
+                                        {/* 1행: 설정한 도서관 선택기 */}
+                                        <div className="flex items-center min-w-0">
                                             <LibrarySelector
                                                 autoOpen={shouldAutoOpenLibrary}
                                                 displayLibrary={effectiveLibrary}
                                                 onTriggerClick={!user ? handleGuestLibraryChange : undefined}
+                                                onClose={() => setShouldAutoOpenLibrary(false)}
                                             />
+                                        </div>
+
+                                        {/* 2행: 청구기호 & 대출 상태 뱃지 (모바일: 하단 제보 버튼, PC: 우측 제보 버튼) */}
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:flex-wrap gap-2 pt-0.5">
+                                            <div className="flex items-center gap-3 flex-wrap">
+                                                {isCheckingLibraryInfo ? (
+                                                    <span className="inline-block w-36 h-7 bg-gray-100 rounded-md animate-pulse" />
+                                                ) : (
+                                                    <>
+                                                        <span className={`tracking-tight ${displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'font-black text-xl md:text-2xl text-gray-400' : 'font-black text-xl md:text-2xl text-gray-900'
+                                                            }`}>
+                                                            {displayCallNo}{book.vol && effectiveLibrary && !PLACEHOLDER_CALL_NOS.includes(displayCallNo) ? `-${book.vol}` : ''}
+                                                        </span>
+                                                        {normalizedStatus && normalizedStatus.status !== "확인중" && (
+                                                            <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
+                                                                ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
+                                                                : normalizedStatus.available === false
+                                                                    ? "bg-red-50 text-red-600 border border-red-200"
+                                                                    : normalizedStatus.status === "미소장"
+                                                                        ? "bg-[#F3F4F6] text-[#6B7280]"
+                                                                        : "bg-white text-gray-600 border border-gray-300"
+                                                                }`}>
+                                                                {normalizedStatus.status}
+                                                            </span>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
                                             <button
                                                 onClick={() => {
                                                     sendGAEvent('click_report_error', { book_id: book.id });
                                                     window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
                                                 }}
-                                                className="flex items-center gap-1 text-gray-400 hover:text-gray-600 text-xs font-medium transition-colors shrink-0"
+                                                className="flex items-center gap-1 text-gray-400 hover:text-gray-600 active:text-gray-600 text-xs font-medium transition-colors shrink-0 self-start sm:self-auto"
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z" /><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9" /><path d="M12 22v-4" /></svg>
                                                 정보가 다른가요? 제보하기
                                             </button>
-                                        </div>
-
-                                        {/* 2행: 청구기호 & 대출 상태 뱃지 */}
-                                        <div className="flex items-center gap-3 flex-wrap pt-0.5">
-                                            {isCheckingLibraryInfo ? (
-                                                <span className="inline-block w-36 h-7 bg-gray-100 rounded-md animate-pulse" />
-                                            ) : (
-                                                <>
-                                                    <span className={`tracking-tight ${displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'font-black text-xl md:text-2xl text-gray-400' : 'font-black text-xl md:text-2xl text-gray-900'
-                                                        }`}>
-                                                        {displayCallNo}{book.vol && effectiveLibrary && !PLACEHOLDER_CALL_NOS.includes(displayCallNo) ? `-${book.vol}` : ''}
-                                                    </span>
-                                                    {normalizedStatus && normalizedStatus.status !== "확인중" && (
-                                                        <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
-                                                            ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
-                                                            : normalizedStatus.available === false
-                                                                ? "bg-red-50 text-red-600 border border-red-200"
-                                                                : normalizedStatus.status === "미소장"
-                                                                    ? "bg-[#F3F4F6] text-[#6B7280]"
-                                                                    : "bg-white text-gray-600 border border-gray-300"
-                                                            }`}>
-                                                            {normalizedStatus.status}
-                                                        </span>
-                                                    )}
-                                                </>
-                                            )}
                                         </div>
                                     </>
                                 ) : (
                                     /* 미로그인 또는 도서관 미선택 상태 -> 플랫 리스트 행 + 우측 미니 액션 필 */
                                     <LibrarySelector
                                         autoOpen={shouldAutoOpenLibrary}
+                                        onClose={() => setShouldAutoOpenLibrary(false)}
                                         customTrigger={(open) => (
                                             <button
                                                 type="button"

@@ -482,6 +482,7 @@ export default function BookList({
   ) : !selectedLibrary ? (
     <LibrarySelector
       autoOpen={shouldAutoOpenLibrary}
+      onClose={() => setShouldAutoOpenLibrary(false)}
       customTrigger={(open) => (
         <button
           type="button"
@@ -496,7 +497,10 @@ export default function BookList({
     />
   ) : (
     <div className="max-w-full flex items-center">
-      <LibrarySelector autoOpen={shouldAutoOpenLibrary} />
+      <LibrarySelector
+        autoOpen={shouldAutoOpenLibrary}
+        onClose={() => setShouldAutoOpenLibrary(false)}
+      />
     </div>
   );
 

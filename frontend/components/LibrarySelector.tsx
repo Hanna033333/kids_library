@@ -12,12 +12,14 @@ export default function LibrarySelector({
     customTrigger,
     displayLibrary,
     onTriggerClick,
+    onClose,
 }: { 
     whiteMode?: boolean
     autoOpen?: boolean 
     customTrigger?: (open: () => void) => React.ReactNode
     displayLibrary?: LibraryName | null
     onTriggerClick?: () => void
+    onClose?: () => void
 }) {
     const { selectedLibrary, setSelectedLibrary, availableLibraries } = useLibrary()
     const activeLibrary = displayLibrary !== undefined ? displayLibrary : selectedLibrary
@@ -36,6 +38,9 @@ export default function LibrarySelector({
         if (isOpen) {
             setIsAnimating(true)
             document.body.style.overflow = 'hidden' // 스크롤 방지
+            return () => {
+                document.body.style.overflow = ''
+            }
         } else {
             const timer = setTimeout(() => setIsAnimating(false), 300) // 애니메이션 시간 대기
             document.body.style.overflow = ''
@@ -43,10 +48,15 @@ export default function LibrarySelector({
         }
     }, [isOpen])
 
+    const handleClose = () => {
+        setIsOpen(false)
+        onClose?.()
+    }
+
     const handleSelect = (lib: string) => {
         setSelectedLibrary(lib as LibraryName)
         sendGAEvent('select_library', { library: lib })
-        setIsOpen(false)
+        handleClose()
     }
 
     const displayLibraryName = activeLibrary
@@ -94,7 +104,7 @@ export default function LibrarySelector({
                     {/* Overlay */}
                     <div
                         className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto ${isOpen ? 'opacity-100' : 'opacity-0'}`}
-                        onClick={() => setIsOpen(false)}
+                        onClick={handleClose}
                     />
 
                     {/* Sheet */}
@@ -105,7 +115,7 @@ export default function LibrarySelector({
                         <div className="p-6 pb-7 relative">
                             {/* 우상단 X 닫기 버튼 */}
                             <button
-                                onClick={() => setIsOpen(false)}
+                                onClick={handleClose}
                                 aria-label="닫기"
                                 className="absolute top-5 right-5 p-2 text-gray-400 hover:text-gray-600 active:scale-95 rounded-full hover:bg-gray-100 transition-all"
                             >
