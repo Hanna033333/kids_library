@@ -153,6 +153,7 @@ def get_weekly_curations(now_date: datetime.date = None) -> list:
             f"해결: scp로 backend/core/weekly_schedule.json 을 서버에 전송 후 서비스 재시작"
         )
             
+    is_explicit_date = now_date is not None
     if now_date is None:
         # KST 기준 현재 날짜 계산
         now_utc = datetime.datetime.now(datetime.timezone.utc)
@@ -164,8 +165,23 @@ def get_weekly_curations(now_date: datetime.date = None) -> list:
         if item["start"] <= now_str <= item["end"]:
             return item["curations"]
 
-    # 매칭되는 주간 일정이 없는 경우 (스케줄 공백 기간)
-    raise RuntimeError(
-        f"[get_weekly_curations] {now_str} 날짜에 해당하는 주간 스케줄이 없습니다.\n"
-        f"weekly_schedule.json에 해당 날짜 범위를 추가해주세요."
-    )
+    if not schedule_table:
+        raise RuntimeError(
+            f"[get_weekly_curations] weekly_schedule.json이 비어 있습니다.\n경로: {schedule_path}"
+        )
+
+    # 매칭되는 주간 일정이 없는 경우 (스케줄 만료 이후):
+    # frontend/app/page.tsx와 동일한 7일 단위 UTC 시드 기반 LCG로 검증된 스케줄 세트를 결정적 선택
+    if not is_explicit_date:
+        days_since_epoch = int(time.time() // 86400)
+    else:
+        days_since_epoch = (now_date - datetime.date(1970, 1, 1)).days
+
+    seed = days_since_epoch // 7
+    lcg_state = (seed * 1664525 + 1013904223) & 0xFFFFFFFF
+    lcg_state = (lcg_state * 1664525 + 1013904223) & 0xFFFFFFFF
+    seeded_random = lcg_state / 0x100000000
+
+    target_idx = int(seeded_random * len(schedule_table))
+    safe_idx = max(0, min(target_idx, len(schedule_table) - 1))
+    return schedule_table[safe_idx]["curations"]
