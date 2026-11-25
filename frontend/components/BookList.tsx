@@ -504,11 +504,11 @@ export default function BookList({
     <div className="w-full px-4">
       <div className="w-full max-w-[1200px] mx-auto">
         {!isSearchWaitingState && filterBar ? (
-          <div className="flex flex-col-reverse md:flex-row md:items-center md:justify-between gap-2 md:gap-3 pt-0.5 pb-1.5 mb-2">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3 pt-0.5 pb-1.5 mb-2">
             <div className="w-full md:w-auto min-w-0 md:flex-1">
               {filterBar}
             </div>
-            <div className="w-full md:w-auto shrink-0 flex items-center justify-start md:justify-end md:pl-1">
+            <div className="w-full md:w-auto shrink-0 flex items-center justify-end md:pl-1">
               {libraryControl}
             </div>
           </div>
