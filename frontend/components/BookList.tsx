@@ -7,7 +7,7 @@ import { useBooks } from "@/hooks/useBooks";
 import { Book, BooksResponse } from "@/lib/types";
 import { Spinner } from "@/components/ui/Spinner";
 import { PageLoader } from "@/components/ui/PageLoader";
-import { useLibrary } from "@/context/LibraryContext";
+import { useLibrary, getStoredPreferredLibrary } from "@/context/LibraryContext";
 import LibrarySelector from "@/components/LibrarySelector";
 import { sendGAEvent } from "@/lib/analytics";
 import { useAuth } from "@/context/AuthContext";
@@ -110,8 +110,9 @@ export default function BookList({
           if (pendingAction === "open_library_selector") {
             sessionStorage.removeItem("pendingAction");
             sessionStorage.removeItem("returnUrl");
-            // 신규 가입 모달이 동시에 뜨는 경우에는 온보딩 모달 안에서 도서관을 선택하므로 중복 바텀시트 오픈 방지
-            if (!isNewSignupModalOpening) {
+            // 신규 가입 모달이 동시에 뜨거나 이미 선호 도서관이 설정된 경우 중복 바텀시트 오픈 방지
+            const hasPreferredLibrary = Boolean(selectedLibrary || getStoredPreferredLibrary());
+            if (!isNewSignupModalOpening && !hasPreferredLibrary) {
               setShouldAutoOpenLibrary(true);
             }
           } else if (pendingAction && pendingAction.startsWith("like_book_")) {
@@ -702,7 +703,13 @@ export default function BookList({
         )}
         <LoginPromptModal
           isOpen={isLoginModalOpen}
-          onClose={() => setIsLoginModalOpen(false)}
+          onClose={() => {
+            setIsLoginModalOpen(false);
+            if (typeof window !== "undefined") {
+              sessionStorage.removeItem("pendingAction");
+              sessionStorage.removeItem("returnUrl");
+            }
+          }}
           title={loginModalConfig.title}
           description={loginModalConfig.description}
         />

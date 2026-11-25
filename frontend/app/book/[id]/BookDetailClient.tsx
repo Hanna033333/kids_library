@@ -23,7 +23,7 @@ import Link from 'next/link'
 import BookCard from '@/components/home/BookCard'
 import LibrarySelector from '@/components/LibrarySelector'
 import BackButton from '@/components/BackButton'
-import { useLibrary, LibraryName } from '@/context/LibraryContext'
+import { useLibrary, LibraryName, getStoredPreferredLibrary } from '@/context/LibraryContext'
 import { sendGAEvent } from '@/lib/analytics'
 import LoginPromptModal from '@/components/ui/LoginPromptModal'
 import ProfileDropdown from '@/components/ProfileDropdown'
@@ -397,7 +397,8 @@ export default function BookDetailClient({
         if (pendingAction === 'open_library_selector') {
             sessionStorage.removeItem('pendingAction')
             sessionStorage.removeItem('returnUrl')
-            if (sessionStorage.getItem('showSignupComplete') !== 'true') {
+            const hasPreferredLibrary = Boolean(selectedLibrary || getStoredPreferredLibrary())
+            if (sessionStorage.getItem('showSignupComplete') !== 'true' && !hasPreferredLibrary) {
                 setShouldAutoOpenLibrary(true)
             }
             return
@@ -932,7 +933,13 @@ export default function BookDetailClient({
 
             <LoginPromptModal
                 isOpen={isLoginModalOpen}
-                onClose={() => setIsLoginModalOpen(false)}
+                onClose={() => {
+                    setIsLoginModalOpen(false)
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.removeItem('pendingAction')
+                        sessionStorage.removeItem('returnUrl')
+                    }
+                }}
                 title={loginModalProps.title}
                 description={loginModalProps.description}
             />

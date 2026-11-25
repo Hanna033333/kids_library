@@ -19,6 +19,15 @@ const AVAILABLE_LIBRARIES = [
 ] as const
 export type LibraryName = typeof AVAILABLE_LIBRARIES[number]
 
+export function getStoredPreferredLibrary(): LibraryName | null {
+    if (typeof window === 'undefined') return null
+    const stored = localStorage.getItem('preferred_library')
+    if (stored && AVAILABLE_LIBRARIES.includes(stored as LibraryName)) {
+        return stored as LibraryName
+    }
+    return null
+}
+
 interface LibraryContextType {
     selectedLibrary: LibraryName | null
     setSelectedLibrary: (library: LibraryName) => void
@@ -34,9 +43,9 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         // 클라이언트 사이드에서만 실행
-        const stored = localStorage.getItem('preferred_library')
-        if (stored && AVAILABLE_LIBRARIES.includes(stored as any)) {
-            setSelectedLibraryState(stored as LibraryName)
+        const stored = getStoredPreferredLibrary()
+        if (stored) {
+            setSelectedLibraryState(stored)
         }
         setIsLoaded(true)
     }, [])
