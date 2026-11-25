@@ -106,7 +106,7 @@ function generateRandomNickname() {
 // ─────────────────────────────────────────────────
 export default function BookReviewSection({ bookId, bookTitle }: BookReviewSectionProps) {
   const queryClient = useQueryClient()
-  const { user } = useAuth()
+  const { user, session: authSession } = useAuth()
   const [showWriteModal, setShowWriteModal] = useState(false)
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [showAllReviews, setShowAllReviews] = useState(false)
@@ -210,11 +210,38 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
     setShowWriteModal(false)
   }
 
-  // access token 헬퍼
+  const isQaMockMode = () =>
+    typeof window !== 'undefined' && (
+      localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN' ||
+      sessionStorage.getItem('qa_mode') === 'true'
+    )
+
+  // access token 헬퍼 (모바일 세션 만료 자동 갱신 + AuthContext 폴백)
   const getAccessToken = async (): Promise<string> => {
+    if (isQaMockMode()) {
+      return 'TEST_QA_TOKEN'
+    }
+
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) throw new Error('로그인이 필요합니다.')
-    return session.access_token
+    const isExpiringSoon = session?.expires_at
+      ? session.expires_at * 1000 <= Date.now() + 30_000
+      : false
+
+    if (session?.access_token && !isExpiringSoon) {
+      return session.access_token
+    }
+
+    // 토큰이 없거나 만료 임박이면 세션 갱신 시도
+    const { data: refreshed } = await supabase.auth.refreshSession()
+    if (refreshed?.session?.access_token) {
+      return refreshed.session.access_token
+    }
+
+    if (authSession?.access_token) {
+      return authSession.access_token
+    }
+
+    throw new Error('로그인 세션이 만료되었어요. 다시 로그인해 주세요.')
   }
 
   // 별점 클릭 시 팝업 열기 (비로그인이면 로그인 유도, 기존 리뷰 있으면 수정 모달)
@@ -323,6 +350,15 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
     setFormError('')
 
     try {
+      if (isQaMockMode()) {
+        const isLocalHost = typeof window !== 'undefined' && (
+          window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        )
+        if (!isLocalHost) {
+          throw new Error('테스트 계정에서는 리뷰를 등록할 수 없어요. 실제 계정으로 로그인해 주세요.')
+        }
+      }
+
       const token = await getAccessToken()
 
       if (isEditingExisting && myExistingReview) {
@@ -368,10 +404,17 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
       resetForm()
     } catch (err) {
       console.error('Failed to submit review:', err)
-      setFormError(isEditingExisting
+      const fallbackMsg = isEditingExisting
         ? '리뷰 수정 중 오류가 발생했습니다. 다시 시도해 주세요.'
         : '리뷰 등록 중 오류가 발생했습니다. 다시 시도해 주세요.'
-      )
+      const rawMsg = err instanceof Error ? err.message : ''
+      if (!rawMsg || rawMsg === 'Failed to create review' || rawMsg === 'Failed to update review') {
+        setFormError(fallbackMsg)
+      } else if (rawMsg === 'Failed to fetch' || rawMsg.includes('NetworkError') || rawMsg.includes('AbortError')) {
+        setFormError('네트워크 연결이 불안정합니다. 잠시 후 다시 시도해 주세요.')
+      } else {
+        setFormError(rawMsg)
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -528,7 +571,7 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
               </div>
             </div>
 
-            {/* 키워드 뱃지 선택 (2단 카테고리) */}
+            {/* 키워드 뱃지 선택 (모바일 1열 배열로 텍스트 잘림 방지) */}
             <div className="bg-gray-50/80 rounded-2xl p-4 my-4 border border-gray-100/80">
               <div className="flex items-center gap-2 mb-1">
                 <h4 className="text-base font-extrabold text-gray-900">어떤 점이 좋았나요?</h4>
@@ -538,35 +581,33 @@ export default function BookReviewSection({ bookId, bookTitle }: BookReviewSecti
                 이 책에 어울리는 키워드를 골라주세요. (1~5개)
               </p>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="flex flex-col gap-3">
                 {BADGE_CATEGORIES.map((cat) => {
                   const catBadges = BADGES.filter((b) => b.category === cat)
                   return (
-                    <div key={cat} className="bg-white rounded-2xl p-2.5 border border-gray-100 shadow-2xs flex flex-col justify-between">
-                      <div>
-                        <h5 className="text-xs sm:text-sm font-black text-gray-800 mb-2 px-0.5">
-                          {cat}
-                        </h5>
-                        <div className="flex flex-col gap-1.5">
-                          {catBadges.map((badge) => {
-                            const isSelected = selectedBadges.includes(badge.full)
-                            return (
-                              <button
-                                key={badge.full}
-                                type="button"
-                                onClick={() => handleBadgeToggle(badge.full)}
-                                className={`w-full flex items-center justify-start gap-1 px-2.5 py-2.5 rounded-xl text-[13px] font-bold border transition-all active:scale-[0.97] text-left leading-tight ${
-                                  isSelected
-                                    ? 'bg-brand-primary text-white border-brand-primary shadow-2xs font-extrabold'
-                                    : 'bg-gray-50/70 text-gray-700 border-gray-100 hover:bg-gray-100/80 hover:border-gray-200'
-                                }`}
-                              >
-                                <span className="text-sm shrink-0">{badge.emoji}</span>
-                                <span className="truncate">{badge.label}</span>
-                              </button>
-                            )
-                          })}
-                        </div>
+                    <div key={cat} className="bg-white rounded-2xl p-3 border border-gray-100">
+                      <h5 className="text-xs sm:text-sm font-black text-gray-800 mb-2 px-0.5">
+                        {cat}
+                      </h5>
+                      <div className="flex flex-col gap-1.5">
+                        {catBadges.map((badge) => {
+                          const isSelected = selectedBadges.includes(badge.full)
+                          return (
+                            <button
+                              key={badge.full}
+                              type="button"
+                              onClick={() => handleBadgeToggle(badge.full)}
+                              className={`w-full flex items-center justify-start gap-2 px-3.5 py-2.5 min-h-[44px] rounded-xl text-[14px] font-bold border transition-all active:scale-[0.98] outline-none focus:outline-none text-left leading-snug ${
+                                isSelected
+                                  ? 'bg-brand-primary text-white border-brand-primary shadow-2xs font-extrabold active:bg-brand-primary-dark'
+                                  : 'bg-gray-50/70 text-gray-700 border-gray-100 active:bg-gray-100'
+                              }`}
+                            >
+                              <span className="text-base shrink-0">{badge.emoji}</span>
+                              <span>{badge.label}</span>
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
                   )

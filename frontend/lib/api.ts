@@ -61,8 +61,11 @@ async function apiFetch(path: string, options: ApiFetchOptions): Promise<Respons
 
     if (!response.ok && !allowStatus.includes(response.status)) {
       if (useServerDetail) {
-        const errorData = await response.json().catch(() => ({} as { detail?: string }));
-        throw new Error(errorData.detail || errorMessage);
+        const errorData = await response.json().catch(() => ({} as { detail?: unknown }));
+        const serverDetail = typeof errorData.detail === "string" && errorData.detail.trim()
+          ? errorData.detail
+          : null;
+        throw new Error(serverDetail || errorMessage);
       }
       throw new Error(errorMessage);
     }
