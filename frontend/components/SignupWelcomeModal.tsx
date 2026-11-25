@@ -2,11 +2,41 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { ChevronDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { sendGAEvent } from '@/lib/analytics'
+import { useLibrary, LibraryName } from '@/context/LibraryContext'
+import { useAuth } from '@/context/AuthContext'
 
-const ADJECTIVES = ['지혜로운', '따스한', '포근한', '정겨운', '행복한', '다정한', '꿈꾸는', '다독이는', '슬기로운', '다복한', '마음넓은', '빛나는']
-const NOUNS = ['책벌레', '이야기꾼', '책부엉이', '파랑새', '독서가', '책요정', '글벗', '책탐험가', '책마을님']
+const ADJECTIVES = [
+    '지혜로운', '따스한', '포근한', '정겨운', '행복한', '다정한', '꿈꾸는', '다독이는', '슬기로운', '다복한', 
+    '마음넓은', '빛나는', '즐거운', '상냥한', '반짝이는', '용감한', '푸른', '희망찬', '해맑은', '고마운', 
+    '포근포근', '싱그러운', '너그러운', '새싹같은', '옹달샘', '보드라운', '초롱초롱', '알록달록', '은은한', '산뜻한',
+    '사랑스런', '명랑한', '슬기찬', '어질고', '호기심찬', '눈부신', '도란도란', '달콤한', '미소짓는', '소담한',
+    '재치있는', '기운찬', '활기찬', '따사로운', '아늑한', '별처럼', '구름같은', '무지개빛', '정다운', '온화한',
+    '단단한', '자유로운', '맑고밝은', '조잘조잘', '살가운', '도란대는', '생글생글', '두근두근', '소복소복', '풍성한',
+    '향기로운', '든든한', '기쁨가득', '마음고운', '생각깊은', '지혜가득', '꿈이많은', '찬란한', '싱글벙글', '방긋웃는',
+    '풋풋한', '순수한', '맑은눈의', '꿈꾸듯', '솔솔부는', '똘똘한', '야무진', '의젓한', '씩씩한', '반듯한'
+]
+const NOUNS = [
+    '책벌레', '이야기꾼', '책부엉이', '파랑새', '독서가', '책요정', '글벗', '책탐험가', '책마을님', '도토리',
+    '꿈나무', '독서왕', '별나무', '책친구', '아기도깨비', '책다람쥐', '토끼', '작은새', '어린사자', '꼬마곰',
+    '책박사', '길잡이', '책마법사', '글마루', '책지기', '동화작가', '숲속요정', '별똥별', '새싹', '햇살이',
+    '달팽이', '꽃사슴', '아기호랑이', '책누리', '글꽃', '책별', '은하수', '숲속친구', '이야기샘', '책방주인',
+    '글타래', '책등대', '지혜샘', '달맞이', '별지기', '숲지기', '꿈꾸미', '도서관지기', '글동무', '책풍경',
+    '호기심대장', '상상왕', '생각나무', '독서대장', '마음상자', '이야기별', '책바다', '단풍잎', '은행잎', '솔방울',
+    '아기참새', '책정원', '글나라', '동화나무', '책소리', '글소리', '달빛요정', '별빛마을', '작은여우', '아기달님',
+    '숲속곰돌이', '꼬마별', '책마중', '글나래', '꿈나래', '새싹지기', '솔바람', '들꽃', '책보따리', '이야기꽃'
+]
+
+const AGE_OPTIONS = [
+    { key: '0-3', label: '0~3세' },
+    { key: '4-7', label: '4~7세' },
+    { key: '8-12', label: '8~12세' },
+    { key: '13+', label: '13세 이상' },
+] as const
+
+const DEFAULT_LIBRARY: LibraryName = '서울특별시교육청서울시립어린이도서관'
 
 function generateRandomNickname() {
     const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
@@ -17,8 +47,21 @@ function generateRandomNickname() {
 export default function SignupWelcomeModal() {
     const [isOpen, setIsOpen] = useState(false)
     const [nickname, setNickname] = useState('')
+    const [isUserEdited, setIsUserEdited] = useState(false)
+    const [isDuplicate, setIsDuplicate] = useState(false)
+    const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false)
+    const [selectedAge, setSelectedAge] = useState<string>('')
+    const [selectedLib, setSelectedLib] = useState<string>(DEFAULT_LIBRARY)
     const [isSaving, setIsSaving] = useState(false)
     const router = useRouter()
+    const { selectedLibrary, setSelectedLibrary, availableLibraries } = useLibrary()
+    const { preferredChildAge, updatePreferredChildAge } = useAuth()
+
+    useEffect(() => {
+        if (selectedLibrary) {
+            setSelectedLib(selectedLibrary)
+        }
+    }, [selectedLibrary])
 
     useEffect(() => {
         if (typeof window === 'undefined') return
@@ -27,6 +70,8 @@ export default function SignupWelcomeModal() {
             const signupMethod = sessionStorage.getItem('pendingSignupMethod') || localStorage.getItem('last_login_provider') || 'unknown'
             sessionStorage.removeItem('pendingSignupMethod')
             sendGAEvent('sign_up', { method: signupMethod })
+
+            if (preferredChildAge) setSelectedAge(preferredChildAge)
 
             const loadInitialNickname = async () => {
                 const savedNickname = sessionStorage.getItem('generatedNickname')
@@ -64,16 +109,78 @@ export default function SignupWelcomeModal() {
 
     const isNicknameValid = nicknameValidation.isLengthValid && nicknameValidation.isFormatValid
 
+    // 실시간 닉네임 중복 검사 (디바운스 300ms)
+    useEffect(() => {
+        const trimmed = nickname.trim()
+        if (!trimmed || !nicknameValidation.isLengthValid || !nicknameValidation.isFormatValid) {
+            setIsDuplicate(false)
+            setIsCheckingDuplicate(false)
+            return
+        }
+
+        let isCancelled = false
+        setIsCheckingDuplicate(true)
+
+        const timer = setTimeout(async () => {
+            try {
+                const isLocal = typeof window !== 'undefined' && (
+                    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                )
+                const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://127.0.0.1:8000' : 'https://api.checkjari.com')
+                
+                const { data: sessionData } = await supabase.auth.getSession()
+                const token = sessionData?.session?.access_token || ''
+
+                const res = await fetch(`${API_BASE_URL}/api/auth/check-nickname?nickname=${encodeURIComponent(trimmed)}`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                })
+                if (res.ok) {
+                    const data = await res.json()
+                    if (!isCancelled) {
+                        setIsDuplicate(!data.available)
+                    }
+                }
+            } catch {
+                // 네트워크 오류 시 조용히 통과
+            } finally {
+                if (!isCancelled) {
+                    setIsCheckingDuplicate(false)
+                }
+            }
+        }, 300)
+
+        return () => {
+            isCancelled = true
+            clearTimeout(timer)
+        }
+    }, [nickname, nicknameValidation])
+
     const handleSave = async () => {
-        if (!isNicknameValid || isSaving) return
+        if (!isNicknameValid || isDuplicate || isCheckingDuplicate || isSaving) return
         setIsSaving(true)
 
         try {
+            if (selectedLib) {
+                setSelectedLibrary(selectedLib as LibraryName)
+                if (sessionStorage.getItem('pendingAction') === 'open_library_selector') {
+                    sessionStorage.removeItem('pendingAction')
+                    sessionStorage.removeItem('returnUrl')
+                }
+            }
+
+            sendGAEvent('complete_onboarding', {
+                has_age: !!selectedAge,
+                has_library: !!selectedLib,
+                age: selectedAge || 'none',
+                library: selectedLib || 'none',
+            })
+
             const isQaMode = localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN'
 
             if (isQaMode) {
                 // QA 모드: 실제 API 호출 없이 sessionStorage에만 저장
                 sessionStorage.setItem('qa_saved_nickname', nickname.trim())
+                await updatePreferredChildAge(selectedAge || null)
             } else {
                 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                 const API_BASE_URL = isLocal
@@ -89,16 +196,31 @@ export default function SignupWelcomeModal() {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ nickname: nickname.trim() })
+                    body: JSON.stringify({
+                        nickname: nickname.trim(),
+                        preferred_child_age: selectedAge || null,
+                    })
                 })
+                if (res.status === 409) {
+                    setIsDuplicate(true)
+                    return
+                }
                 if (!res.ok) throw new Error(`Nickname save failed: ${res.status}`)
+                await updatePreferredChildAge(selectedAge || null)
+            }
+            setIsOpen(false)
+            if (
+                typeof window !== 'undefined' &&
+                (window.location.pathname.startsWith('/auth') ||
+                    window.location.pathname === '/login' ||
+                    window.location.pathname === '/signup')
+            ) {
+                router.push('/')
             }
         } catch (e) {
             console.error('Nickname save failed:', e)
         } finally {
             setIsSaving(false)
-            setIsOpen(false)
-            router.push('/')
         }
     }
 
@@ -107,13 +229,12 @@ export default function SignupWelcomeModal() {
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
-            {/* 딤 배경 없음 (기존 스타일 유지) */}
-            <div className="relative w-full max-w-[340px] bg-white rounded-2xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.12)]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6 bg-black/40 backdrop-blur-[1px]">
+            <div className="relative w-full max-w-[360px] bg-white rounded-2xl p-6 shadow-[0_4px_24px_rgba(0,0,0,0.12)]">
                 {/* 닫기 버튼 */}
                 <button
                     onClick={handleClose}
-                    className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-gray-400 active:text-gray-600 transition-colors"
+                    className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-gray-400 active:text-gray-600 transition-colors outline-none focus:outline-none"
                     aria-label="닫기"
                 >
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -123,40 +244,107 @@ export default function SignupWelcomeModal() {
 
                 {/* 헤더 */}
                 <div className="mb-5">
-                    <p className="text-[13px] text-gray-400 font-medium mb-1">책자리에 오신 걸 환영해요</p>
+                    <p className="text-[13px] text-amber-600 font-bold mb-1">책자리에 오신 걸 환영해요</p>
                     <h2 className="text-[20px] font-bold text-gray-900 leading-snug">
-                        이 닉네임으로 시작해 볼까요?
+                        우리 아이 맞춤 책장을 준비할게요
                     </h2>
                 </div>
 
-                {/* 닉네임 입력 */}
-                <div className="mb-2">
+                {/* 1. 닉네임 입력 (필수) */}
+                <div className="mb-4">
+                    <label className="block text-[13px] font-bold text-gray-700 mb-1.5">
+                        닉네임<span className="text-red-500 ml-0.5">*</span>
+                    </label>
                     <input
                         type="text"
                         value={nickname}
-                        onChange={(e) => setNickname(e.target.value.replace(/\s/g, ''))}
+                        onChange={(e) => {
+                            setNickname(e.target.value.replace(/\s/g, ''))
+                            setIsUserEdited(true)
+                            setIsDuplicate(false)
+                        }}
                         maxLength={10}
                         autoFocus
-                        className="w-full h-[50px] px-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-gray-900 focus:bg-white transition-all text-[16px] text-gray-900"
+                        className={`w-full h-[46px] px-4 bg-gray-50 border rounded-xl focus:outline-none transition-all text-[15px] text-gray-900 ${
+                            isDuplicate
+                                ? 'border-red-400 focus:border-red-500 focus:bg-white'
+                                : 'border-gray-200 focus:border-brand-primary focus:bg-white'
+                        }`}
                         placeholder="2~10자, 한글·영문·숫자"
                     />
-                    <p className="mt-2 text-[12px] text-gray-400 px-1">
-                        마음에 드는 다른 닉네임으로 바꿀 수도 있어요
+                    <p className={`text-[12px] px-1 mt-1.5 h-4 leading-4 ${
+                        nickname.length === 0 || (!isUserEdited && !isDuplicate) ? 'text-transparent' :
+                        !nicknameValidation.isFormatValid || !nicknameValidation.isLengthValid || isDuplicate ? 'text-red-500 font-medium' :
+                        'text-[#10B981] font-medium'
+                    }`}>
+                        {!nicknameValidation.isFormatValid ? '특수문자나 공백은 사용할 수 없어요' :
+                         !nicknameValidation.isLengthValid ? '2자 이상 10자 이하로 입력해주세요' :
+                         isCheckingDuplicate ? '중복 확인 중...' :
+                         isDuplicate ? '이미 사용 중인 닉네임이에요' :
+                         isUserEdited ? '사용 가능한 닉네임이에요' : ''}
                     </p>
                 </div>
 
+                {/* 2. 우리 아이 연령대 */}
+                <div className="mb-4">
+                    <label className="block text-[13px] font-bold text-gray-700 mb-1.5">
+                        우리 아이 연령대
+                    </label>
+                    <div className="grid grid-cols-4 gap-1.5">
+                        {AGE_OPTIONS.map((opt) => {
+                            const isSelected = selectedAge === opt.key
+                            return (
+                                <button
+                                    key={opt.key}
+                                    type="button"
+                                    onClick={() => setSelectedAge(isSelected ? '' : opt.key)}
+                                    className={`h-10 rounded-xl text-xs transition-all outline-none focus:outline-none ${
+                                        isSelected
+                                            ? 'bg-brand-primary text-white font-bold shadow-xs active:bg-brand-primary-dark'
+                                            : 'bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                {/* 3. 자주 가는 도서관 */}
+                <div className="mb-5">
+                    <label className="block text-[13px] font-bold text-gray-700 mb-1.5">
+                        자주 가는 도서관
+                    </label>
+                    <div className="relative">
+                        <select
+                            value={selectedLib}
+                            onChange={(e) => setSelectedLib(e.target.value)}
+                            className="w-full h-[46px] pl-4 pr-10 bg-gray-50 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:border-brand-primary focus:bg-white transition-all text-[14px] text-gray-900 cursor-pointer"
+                        >
+                            <option value="">나중에 선택할게요</option>
+                            {availableLibraries.map((lib) => (
+                                <option key={lib} value={lib}>
+                                    {lib}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                </div>
+
                 {/* 하단 버튼 */}
-                <div className="mt-5">
+                <div>
                     <button
                         onClick={handleSave}
-                        disabled={!isNicknameValid || isSaving}
-                        className={`w-full h-[50px] rounded-xl text-[16px] font-bold transition-all active:scale-[0.98]
-                            ${isNicknameValid && !isSaving
-                                ? 'bg-brand-primary text-white active:bg-brand-primary-active'
+                        disabled={!isNicknameValid || isDuplicate || isCheckingDuplicate || isSaving}
+                        className={`w-full h-[50px] rounded-xl text-[16px] font-bold transition-all active:scale-[0.98] outline-none focus:outline-none
+                            ${isNicknameValid && !isDuplicate && !isCheckingDuplicate && !isSaving
+                                ? 'bg-brand-primary text-white active:bg-brand-primary-dark'
                                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                             }`}
                     >
-                        {isSaving ? '저장 중...' : '시작하기'}
+                        {isSaving ? '저장 중...' : '맞춤 책장 시작하기'}
                     </button>
                 </div>
             </div>

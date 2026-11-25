@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { saveBook, unsaveBook } from '@/lib/supabase-api'
+import { saveBook, unsaveBook, getSavedBookIds } from '@/lib/supabase-api'
 import { fetchLoanStatuses } from '@/lib/api'
 import { Book, LoanStatus } from '@/lib/types'
 import {
@@ -23,7 +23,7 @@ import Link from 'next/link'
 import BookCard from '@/components/home/BookCard'
 import LibrarySelector from '@/components/LibrarySelector'
 import BackButton from '@/components/BackButton'
-import { useLibrary } from '@/context/LibraryContext'
+import { useLibrary, LibraryName } from '@/context/LibraryContext'
 import { sendGAEvent } from '@/lib/analytics'
 import LoginPromptModal from '@/components/ui/LoginPromptModal'
 import ProfileDropdown from '@/components/ProfileDropdown'
@@ -37,9 +37,8 @@ import { getOptimizedImageUrl } from '@/lib/utils/image'
 import UserAvatar from '@/components/UserAvatar'
 import BookPreviewModal from '@/components/BookPreviewModal'
 import { cleanAuthorName } from '@/lib/home-api'
-import { parseCurationTags, getFirstCurationTag, getPrimaryCurationTag, getTopicCurationTag, extractGradeTag, formatCurationTag, isGradeTag, isSpecialTag } from '@/lib/utils/curation-filter'
+import { parseCurationTags, getPrimaryCurationTag, getTopicCurationTag, extractGradeTag, formatCurationTag, isGradeTag } from '@/lib/utils/curation-filter'
 import { getAgeGroupKey } from '@/lib/utils/age'
-import { findCurationByTag } from '@/lib/constants/curation-categories'
 import { getCurationMoreLink } from '@/lib/utils/curation-link'
 
 interface BookDetailClientProps {
@@ -49,7 +48,7 @@ interface BookDetailClientProps {
     topicRecommended?: Book[]
     authorRecommended?: Book[]
 }
-export default function BookDetailClient({ 
+export default function BookDetailClient({
     book: initialBook,
     curationRecommended,
     ageRecommended,
@@ -57,9 +56,10 @@ export default function BookDetailClient({
     authorRecommended = []
 }: BookDetailClientProps) {
     const router = useRouter()
+    const queryClient = useQueryClient()
     const hasTrackedView = useRef<string | null>(null)
     const hasTrackedCallNumber = useRef<string | null>(null)
-    const { user } = useAuth()
+    const { user, isLoading: isAuthLoading } = useAuth()
     const [book, setBook] = useState<Book>(initialBook)
     const [isSaved, setIsSaved] = useState(false)
     const [saveCount, setSaveCount] = useState(initialBook.save_count || 0)
@@ -69,6 +69,10 @@ export default function BookDetailClient({
     )
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
     const { selectedLibrary } = useLibrary()
+    // 미로그인 상태에서는 특정 도서관을 강제 노출하지 않고, 내 도서관 확인 CTA를 노출한다
+    const effectiveLibrary: LibraryName | null = isAuthLoading
+        ? selectedLibrary
+        : (user ? selectedLibrary : null)
 
     // Handle book navigation
     useEffect(() => {
@@ -89,15 +93,17 @@ export default function BookDetailClient({
         const metaTag = gradeTag
             ? {
                 type: 'grade' as const,
+                rawTag: gradeTag,
                 text: formatCurationTag(gradeTag),
                 href: getCurationMoreLink({ curation: '교과서수록', tag: gradeTag }),
-              }
+            }
             : (book.age
                 ? {
                     type: 'age' as const,
+                    rawTag: getAgeGroupKey(book.age),
                     text: getAgeDisplayLabel(book.age).replace(/^#/, ''),
                     href: getCurationMoreLink({ age: getAgeGroupKey(book.age) }),
-                  }
+                }
                 : null);
 
         // 2. 큐레이션/주제 태그 슬롯 (최대 3개)
@@ -105,6 +111,7 @@ export default function BookDetailClient({
             const cleanTag = tag.replace(/^#/, '');
             return {
                 type: 'curation' as const,
+                rawTag: cleanTag,
                 text: formatCurationTag(cleanTag),
                 href: getCurationMoreLink({ curation: cleanTag }),
             };
@@ -121,11 +128,11 @@ export default function BookDetailClient({
 
     // ISR 캐시된 상세 페이지에 신규 추가 도서관(평택시립장당도서관 등)의 library_info가 누락된 경우를 대비해 클라이언트에서 최신 소장 정보 동기화
     const hasInitialLibraryMatch = useMemo(() => {
-        if (!selectedLibrary || !book.library_info) return false
+        if (!effectiveLibrary || !book.library_info) return false
         return book.library_info.some(
-            l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary)
+            l => l.library_name === effectiveLibrary || l.library_name.includes(effectiveLibrary)
         )
-    }, [book.library_info, selectedLibrary])
+    }, [book.library_info, effectiveLibrary])
 
     const { data: liveLibraryInfo, isFetching: isLibraryInfoFetching } = useQuery({
         queryKey: ['book-library-info', book.id],
@@ -137,21 +144,32 @@ export default function BookDetailClient({
             if (error) throw error
             return data || []
         },
-        enabled: !!user && !!selectedLibrary,
+        enabled: !!effectiveLibrary,
         staleTime: 5 * 60 * 1000,
         refetchOnWindowFocus: false,
     })
 
     const effectiveLibraryInfo = liveLibraryInfo ?? book.library_info
-    const isCheckingLibraryInfo = !!user && !!selectedLibrary && !hasInitialLibraryMatch && !liveLibraryInfo && isLibraryInfoFetching
+    const isCheckingLibraryInfo = !!effectiveLibrary && !hasInitialLibraryMatch && !liveLibraryInfo && isLibraryInfoFetching
+
+    // 소장 중인 고유 도서관 수 (미로그인/도서관 미선택 CTA 힌트용)
+    const holdingLibraryCount = useMemo(() => {
+        if (!effectiveLibraryInfo || effectiveLibraryInfo.length === 0) return 0
+        const uniqueLibraries = new Set(
+            effectiveLibraryInfo
+                .filter(l => l.callno && l.callno !== '없음')
+                .map(l => l.library_name)
+        )
+        return uniqueLibraries.size
+    }, [effectiveLibraryInfo])
 
     // 청구기호 결정 로직 (book_library_info 단일 테이블 기준)
     let displayCallNo = '청구기호 없음'
-    if (!selectedLibrary) {
+    if (!effectiveLibrary) {
         displayCallNo = '도서관을 선택해주세요'
     } else {
         const info = effectiveLibraryInfo?.find(
-            l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary)
+            l => l.library_name === effectiveLibrary || l.library_name.includes(effectiveLibrary)
         )
         if (info && info.callno && info.callno !== '없음') {
             displayCallNo = info.callno
@@ -162,12 +180,12 @@ export default function BookDetailClient({
 
     // React Query for Loan Status
     const { data: loanStatuses, isError: isLoanError } = useQuery({
-        queryKey: ['book-loan-status', book.id, selectedLibrary],
+        queryKey: ['book-loan-status', book.id, effectiveLibrary],
         queryFn: async () => {
-            if (!selectedLibrary) return {};
-            return await fetchLoanStatuses([book.id], selectedLibrary);
+            if (!effectiveLibrary) return {};
+            return await fetchLoanStatuses([book.id], effectiveLibrary);
         },
-        enabled: !!selectedLibrary && !isCheckingLibraryInfo && !!displayCallNo && displayCallNo !== '청구기호 없음' && displayCallNo !== '보유 정보 없음' && displayCallNo !== '도서관을 선택해주세요',
+        enabled: !!effectiveLibrary && !isCheckingLibraryInfo && !!displayCallNo && displayCallNo !== '청구기호 없음' && displayCallNo !== '보유 정보 없음' && displayCallNo !== '도서관을 선택해주세요',
         staleTime: 3 * 60 * 1000,
         retry: 1,
         refetchOnWindowFocus: false,
@@ -179,7 +197,7 @@ export default function BookDetailClient({
             return undefined;
         }
         // 1. 청구기호 없으면 무조건 '미소장'
-        if (!selectedLibrary || !displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음' || displayCallNo === '도서관을 선택해주세요') {
+        if (!effectiveLibrary || !displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음' || displayCallNo === '도서관을 선택해주세요') {
             return { status: "미소장", available: null };
         }
 
@@ -214,32 +232,32 @@ export default function BookDetailClient({
 
     const ctaProps = getPurchaseButtonProps();
 
-    // 청구기호 실제 노출 이벤트 — 로그인 유저가 실제 청구기호를 봤을 때만 발송
+    // 청구기호 실제 노출 이벤트 — 유저(로그인/비로그인 프리뷰 포함)가 실제 청구기호를 봤을 때 발송
     const PLACEHOLDER_CALL_NOS = ['청구기호 없음', '보유 정보 없음', '도서관을 선택해주세요']
     useEffect(() => {
-        if (!user) return;
-        if (!selectedLibrary) return;
+        if (!effectiveLibrary) return;
         if (PLACEHOLDER_CALL_NOS.includes(displayCallNo)) return;
         if (normalizedStatus === undefined) return; // 대출 상태 아직 로딩 중
 
-        const trackKey = `${book.id}_${selectedLibrary}_${displayCallNo}`
+        const trackKey = `${book.id}_${effectiveLibrary}_${displayCallNo}_${!!user}`
         if (hasTrackedCallNumber.current === trackKey) return;
 
         sendGAEvent('view_call_number', {
             book_id: book.id,
             book_title: book.title,
-            library: selectedLibrary,
+            library: effectiveLibrary,
             call_number: displayCallNo,
             loan_status: normalizedStatus.status,
             loan_available: normalizedStatus.available,
+            is_logged_in: !!user,
         });
         hasTrackedCallNumber.current = trackKey;
-    }, [user, selectedLibrary, displayCallNo, normalizedStatus, book.id, book.title]);
+    }, [user, effectiveLibrary, displayCallNo, normalizedStatus, book.id, book.title]);
 
     // Send GA event when book detail page is viewed (waits for loan status to resolve to send accurate data)
     useEffect(() => {
         if (normalizedStatus === undefined) return;
-        
+
         const trackKey = `${book.id}_${normalizedStatus.status}`;
         if (hasTrackedView.current === trackKey) return;
 
@@ -255,17 +273,39 @@ export default function BookDetailClient({
         hasTrackedView.current = trackKey;
     }, [book.id, normalizedStatus, displayCallNo]);
 
-    // Check if book is saved
+    // 전역 찜 ID 캐시 연동
+    const { data: savedBookIds } = useQuery<number[]>({
+        queryKey: ['saved-book-ids', user?.id],
+        queryFn: () => (user?.id ? getSavedBookIds(supabase, user.id) : Promise.resolve([])),
+        enabled: !!user?.id,
+        staleTime: 60 * 1000,
+    })
+
+    // 전역 캐시에 현재 도서가 있는지 동기화
+    useEffect(() => {
+        if (user && savedBookIds) {
+            setIsSaved(savedBookIds.includes(Number(book.id)))
+        }
+    }, [user, savedBookIds, book.id])
+
+    // Check if book is saved (DB 직접 확인 및 상태 갱신)
     useEffect(() => {
         const checkSaved = async () => {
             if (user) {
+                if (user.id === '00000000-0000-0000-0000-000000000000') {
+                    const ids = await getSavedBookIds(supabase, user.id)
+                    setIsSaved(ids.includes(Number(book.id)))
+                    return
+                }
                 const { data: savedData } = await supabase
                     .from('wishlists')
                     .select('id')
-                    .match({ user_id: user.id, book_id: book.id })
+                    .match({ user_id: user.id, book_id: Number(book.id) })
                     .maybeSingle()
 
-                if (savedData) setIsSaved(true)
+                setIsSaved(Boolean(savedData))
+            } else {
+                setIsSaved(false)
             }
         }
         checkSaved()
@@ -273,10 +313,26 @@ export default function BookDetailClient({
     }, [user, book.id])
 
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+    const [shouldAutoOpenLibrary, setShouldAutoOpenLibrary] = useState(false)
     const [loginModalProps, setLoginModalProps] = useState({
-        title: "좋은 책, 놓치지 않게!",
-        description: "전문가가 엄선한 추천작들을 책장에 담아두세요."
+        title: "도서관 헛걸음 끝! 대출 가능한 책만 1초 스캔",
+        description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요."
     })
+
+    const handleGuestLibraryChange = () => {
+        sessionStorage.setItem('returnUrl', window.location.pathname + window.location.search)
+        sessionStorage.setItem('pendingAction', 'open_library_selector')
+        sendGAEvent('click_library_cta_unauth', {
+            book_id: book.id,
+            source: 'book_detail_unauth_cta',
+            holding_library_count: holdingLibraryCount,
+        })
+        setLoginModalProps({
+            title: "도서관 헛걸음 끝! 대출 가능한 책만 1초 스캔",
+            description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요."
+        })
+        setIsLoginModalOpen(true)
+    }
 
     const handleToggleSave = async () => {
         if (!user) {
@@ -284,8 +340,8 @@ export default function BookDetailClient({
             sessionStorage.setItem('pendingAction', `like_book_${book.id}`)
             sendGAEvent('click_bookmark_unauth', { book_id: book.id })
             setLoginModalProps({
-                title: "마음에 드는 책, 책장에 쏙! 📚",
-                description: "3초 간편 로그인으로 내 책장에 모아두고 언제든 꺼내 보세요."
+                title: "도서관 갈 때 까먹지 않게 내 책장에 쏙!",
+                description: "3초 간편 로그인으로 내 책장에 모아두고, 대출 가능 여부까지 한눈에 관리해 보세요."
             })
             setIsLoginModalOpen(true)
             return
@@ -301,12 +357,20 @@ export default function BookDetailClient({
         setSaveCount(prev => isSaved ? Math.max(0, prev - 1) : prev + 1)
         setIsToggling(true)
 
+        if (nextSaved) {
+            queryClient.setQueryData<number[]>(['saved-book-ids', user.id], (old = []) => [...new Set([...old, Number(book.id)])])
+        } else {
+            queryClient.setQueryData<number[]>(['saved-book-ids', user.id], (old = []) => old.filter(id => id !== Number(book.id)))
+        }
+
         try {
             if (prevSaved) {
                 await unsaveBook(supabase, user.id, book.id)
             } else {
                 await saveBook(supabase, user.id, book.id)
             }
+            queryClient.invalidateQueries({ queryKey: ['saved-books', user.id] })
+            queryClient.invalidateQueries({ queryKey: ['saved-book-ids', user.id] })
             sendGAEvent('toggle_save_book', {
                 book_id: book.id,
                 book_title: book.title,
@@ -322,11 +386,23 @@ export default function BookDetailClient({
         }
     }
 
-    // Auto-Action: 로그인/가입 후 방금 페이지로 돌아오면 찜하기 자동 실행
+    // Auto-Action: 로그인/가입 후 방금 페이지로 돌아오면 도서관 선택기 오픈 또는 찜하기 자동 실행
     useEffect(() => {
-        if (!user) return
+        const userId = user?.id
+        if (!userId || typeof window === 'undefined') return
 
         const pendingAction = sessionStorage.getItem('pendingAction')
+        if (!pendingAction) return
+
+        if (pendingAction === 'open_library_selector') {
+            sessionStorage.removeItem('pendingAction')
+            sessionStorage.removeItem('returnUrl')
+            if (sessionStorage.getItem('showSignupComplete') !== 'true') {
+                setShouldAutoOpenLibrary(true)
+            }
+            return
+        }
+
         if (pendingAction !== `like_book_${book.id}`) return
 
         // isSaved는 checkSaved가 비동기로 체크하므로 잠시 대기 후 실행
@@ -335,7 +411,7 @@ export default function BookDetailClient({
             const { data: savedData } = await supabase
                 .from('wishlists')
                 .select('id')
-                .match({ user_id: user.id, book_id: book.id })
+                .match({ user_id: userId, book_id: book.id })
                 .maybeSingle()
 
             if (savedData) {
@@ -348,7 +424,7 @@ export default function BookDetailClient({
 
             setIsToggling(true)
             try {
-                await saveBook(supabase, user.id, book.id)
+                await saveBook(supabase, userId, book.id)
                 setIsSaved(true)
                 setSaveCount(prev => prev + 1)
                 sessionStorage.removeItem('pendingAction')
@@ -361,7 +437,7 @@ export default function BookDetailClient({
         }, 600)
         return () => clearTimeout(timer)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user, book.id])
+    }, [user?.id, book.id])
 
     const handleShare = async () => {
         const shareData = {
@@ -425,8 +501,8 @@ export default function BookDetailClient({
     return (
         <main className="min-h-screen bg-white pb-6">
             {/* Top Header */}
-            <PageHeader 
-                title="도서 정보" 
+            <PageHeader
+                title="도서 정보"
                 showHome={true}
                 rightSlot={
                     <div className="flex items-center">
@@ -517,13 +593,18 @@ export default function BookDetailClient({
                                 ))}
                             </div>
 
-                            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight mb-2.5 tracking-tight line-clamp-3">
+                            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight mb-2.5 tracking-tight line-clamp-3">
                                 {book.title}
                             </h1>
 
+                            <div className="flex flex-col gap-0.5 text-gray-600 font-medium text-base mb-5">
+                                <span>{book.author || '정보 없음'}</span>
+                                <span className="text-gray-400 text-sm">{book.publisher || '정보 없음'}</span>
+                            </div>
+
                             {/* AI Curation Note */}
                             {book.curation_note && (
-                                <div className="mt-4 mb-6 p-4 bg-gray-50 rounded-2xl border border-gray-100 relative">
+                                <div className="mt-6 mb-5 p-4 bg-gray-50 rounded-2xl border border-gray-100 relative">
                                     <div className="absolute top-0 right-4 -translate-y-1/2 px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium rounded-full shadow-sm">
                                         전문 사서의 추천 포인트
                                     </div>
@@ -533,41 +614,30 @@ export default function BookDetailClient({
                                 </div>
                             )}
 
-                            <div className="flex flex-col gap-0.5 text-gray-600 font-medium text-base mb-8">
-                                <span>{book.author || '정보 없음'}</span>
-                                <span className="text-gray-400 text-sm">{book.publisher || '정보 없음'}</span>
-                            </div>
+                            {/* 🏛️ Library Info Section (Flat & Minimal Line — 로그인+도서관 설정 시 청구기호/대출 상태, 미로그인/미선택 시 내 도서관 확인 CTA) */}
+                            <div className={`${effectiveLibrary ? 'pt-4 pb-1' : 'py-2'} border-t border-gray-100 flex flex-col gap-2.5`}>
+                                {effectiveLibrary ? (
+                                    <>
+                                        {/* 1행: 설정한 도서관 선택기 */}
+                                        <div className="flex items-center min-w-0">
+                                            <LibrarySelector
+                                                autoOpen={shouldAutoOpenLibrary}
+                                                displayLibrary={effectiveLibrary}
+                                                onTriggerClick={!user ? handleGuestLibraryChange : undefined}
+                                                onClose={() => setShouldAutoOpenLibrary(false)}
+                                            />
+                                        </div>
 
-                            {/* 🏛️ Library Info Section (Flat & Minimal Line) */}
-                            <div className="my-5 py-4 border-y border-gray-100 flex flex-col gap-2.5">
-                                {user ? (
-                                    selectedLibrary ? (
-                                        <>
-                                            {/* 1행: 설정한 도서관 선택기 & 제보 버튼 */}
-                                            <div className="flex items-center justify-between gap-2">
-                                                <LibrarySelector />
-                                                <button
-                                                    onClick={() => {
-                                                        sendGAEvent('click_report_error', { book_id: book.id });
-                                                        window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
-                                                    }}
-                                                    className="flex items-center gap-1 text-gray-400 hover:text-gray-600 text-xs font-medium transition-colors shrink-0"
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z"/><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9"/><path d="M12 22v-4"/></svg>
-                                                    정보가 다른가요? 제보하기
-                                                </button>
-                                            </div>
-
-                                            {/* 2행: 청구기호 & 대출 상태 뱃지 */}
-                                            <div className="flex items-center gap-3 flex-wrap pt-0.5">
+                                        {/* 2행: 청구기호 & 대출 상태 뱃지 (모바일: 하단 제보 버튼, PC: 우측 제보 버튼) */}
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:flex-wrap gap-2 pt-0.5">
+                                            <div className="flex items-center gap-3 flex-wrap">
                                                 {isCheckingLibraryInfo ? (
                                                     <span className="inline-block w-36 h-7 bg-gray-100 rounded-md animate-pulse" />
                                                 ) : (
                                                     <>
-                                                        <span className={`tracking-tight ${
-                                                            displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'font-black text-xl md:text-2xl text-gray-400' : 'font-black text-xl md:text-2xl text-gray-900'
-                                                        }`}>
-                                                            {displayCallNo}{book.vol && selectedLibrary && !PLACEHOLDER_CALL_NOS.includes(displayCallNo) ? `-${book.vol}` : ''}
+                                                        <span className={`tracking-tight ${displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'font-black text-xl md:text-2xl text-gray-400' : 'font-black text-xl md:text-2xl text-gray-900'
+                                                            }`}>
+                                                            {displayCallNo}{book.vol && effectiveLibrary && !PLACEHOLDER_CALL_NOS.includes(displayCallNo) ? `-${book.vol}` : ''}
                                                         </span>
                                                         {normalizedStatus && normalizedStatus.status !== "확인중" && (
                                                             <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
@@ -584,67 +654,52 @@ export default function BookDetailClient({
                                                     </>
                                                 )}
                                             </div>
-                                        </>
-                                    ) : (
-                                        /* 도서관 미선택 상태 -> 단일 CTA 버튼 */
-                                        <LibrarySelector
-                                            customTrigger={(open) => (
-                                                <button
-                                                    onClick={open}
-                                                    className="w-full text-left flex items-center justify-between py-1.5 active:opacity-75 transition-opacity"
-                                                >
-                                                    <div className="flex items-center gap-3.5">
-                                                        <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                                                            <MapPin className="w-5 h-5" />
-                                                        </div>
-                                                        <div className="flex flex-col gap-0.5">
-                                                            <div className="text-base sm:text-[17px] font-bold text-gray-900 leading-snug">
-                                                                자주 가는 도서관을 선택해 주세요
-                                                            </div>
-                                                            <p className="text-xs sm:text-sm text-gray-500 font-medium leading-snug">
-                                                                선택한 도서관의 청구기호와 대출 상태를 바로 확인할 수 있어요
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="w-7 h-7 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 ml-3">
-                                                        <ChevronRight className="w-4 h-4" />
-                                                    </div>
-                                                </button>
-                                            )}
-                                        />
-                                    )
+                                            <button
+                                                onClick={() => {
+                                                    sendGAEvent('click_report_error', { book_id: book.id });
+                                                    window.open('https://docs.google.com/forms/d/e/1FAIpQLSflKo4QGT_7DUZiwq-w_5lo2ubEDQtJqVsGeX2fsp5P778vhQ/viewform?usp=dialog', '_blank');
+                                                }}
+                                                className="flex items-center gap-1 text-gray-400 hover:text-gray-600 active:text-gray-600 text-xs font-medium transition-colors shrink-0 self-start sm:self-auto"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 2 2 2-7 7H9v-2l7-7Z" /><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9" /><path d="M12 22v-4" /></svg>
+                                                정보가 다른가요? 제보하기
+                                            </button>
+                                        </div>
+                                    </>
                                 ) : (
-                                    <button
-                                        onClick={() => {
-                                            sendGAEvent('click_library_cta_unauth', { book_id: book.id });
-                                            if (typeof window !== 'undefined') {
-                                                sessionStorage.setItem('returnUrl', window.location.pathname);
-                                            }
-                                            setLoginModalProps({
-                                                title: "우리 동네 도서관에 이 책 지금 있는지 3초 만에 확인하기 🔍",
-                                                description: "자주 가는 도서관 1곳만 선택하면 실시간 대출 가능 여부와 청구기호를 바로 확인할 수 있어요."
-                                            });
-                                            setIsLoginModalOpen(true);
-                                        }}
-                                        className="w-full text-left flex items-center justify-between py-1.5 active:opacity-75 transition-opacity"
-                                    >
-                                        <div className="flex items-center gap-3.5">
-                                            <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                                                <MapPin className="w-5 h-5" />
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <div className="text-base sm:text-[17px] font-bold text-gray-900 leading-snug">
-                                                    이 책, 우리 동네 도서관에 지금 있을까?
+                                    /* 미로그인 또는 도서관 미선택 상태 -> 플랫 리스트 행 + 우측 미니 액션 필 */
+                                    <LibrarySelector
+                                        autoOpen={shouldAutoOpenLibrary}
+                                        onClose={() => setShouldAutoOpenLibrary(false)}
+                                        customTrigger={(open) => (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (!user) {
+                                                        handleGuestLibraryChange();
+                                                        return;
+                                                    }
+                                                    open();
+                                                }}
+                                                className="-mx-2 px-2 py-2.5 w-[calc(100%+1rem)] min-h-[52px] text-left flex items-center justify-between rounded-xl active:bg-gray-50 active:scale-[0.99] transition-all cursor-pointer outline-none focus:outline-none"
+                                            >
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <MapPin className="w-[18px] h-[18px] text-gray-500 shrink-0" />
+                                                    <div className="flex flex-col gap-0.5 min-w-0">
+                                                        <div className="text-sm font-semibold text-gray-800 leading-snug break-keep">
+                                                            우리 동네 도서관에 지금 있을까?
+                                                        </div>
+                                                        <p className="text-xs text-gray-500 font-normal leading-snug break-keep">
+                                                            내 도서관 대출 여부 확인하기
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <p className="text-xs sm:text-sm text-gray-500 font-medium leading-snug">
-                                                    자주 가는 도서관을 설정하고 대출 상태와 청구기호를 확인해 보세요
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="w-7 h-7 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 ml-3">
-                                            <ChevronRight className="w-4 h-4" />
-                                        </div>
-                                    </button>
+                                                <span className="inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-white border border-gray-200 text-xs font-semibold text-gray-700 shrink-0 ml-2">
+                                                    확인하기
+                                                </span>
+                                            </button>
+                                        )}
+                                    />
                                 )}
                             </div>
                         </div>
@@ -686,6 +741,8 @@ export default function BookDetailClient({
                                 </div>
                             </Button>
                         </div>
+
+                        {/* 🎯 소속 큐레이션 전체 보기 배너 제거됨 (하단 추천 섹션 및 상단 태그 칩과 중복 해소) */}
                     </div>
                 </div>
             </div>
@@ -733,8 +790,8 @@ export default function BookDetailClient({
                                         {formatCurationTag(primaryTag) || '추천'} 책 추천 리스트
                                     </h3>
                                 </div>
-                                <Link 
-                                    href={primaryHref} 
+                                <Link
+                                    href={primaryHref}
                                     className="text-gray-950 p-1 mb-0.5"
                                     aria-label="더보기"
                                 >
@@ -742,13 +799,13 @@ export default function BookDetailClient({
                                 </Link>
                             </div>
                             <div className="overflow-x-auto scrollbar-hide -mx-6">
-                                <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
+                                <div className="flex gap-2.5 sm:gap-4 pb-2 pl-6 w-max min-w-full">
                                     {curationRecommended.map((b) => (
-                                        <div key={`curation-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
+                                        <div key={`curation-rec-${b.id}`} className="flex-shrink-0 w-[140px] sm:w-[190px]">
                                             <BookCard key={b.id} book={b} />
                                         </div>
                                     ))}
-                                    <div className="shrink-0 w-0" aria-hidden="true" />
+                                    <div className="shrink-0 w-2 sm:w-0" aria-hidden="true" />
                                 </div>
                             </div>
                         </div>
@@ -776,8 +833,8 @@ export default function BookDetailClient({
                                         {getAgeDisplayLabel(book.age)} 책 추천 리스트
                                     </h3>
                                 </div>
-                                <Link 
-                                    href={ageHref} 
+                                <Link
+                                    href={ageHref}
                                     className="text-gray-950 p-1 mb-0.5"
                                     aria-label="더보기"
                                 >
@@ -785,13 +842,13 @@ export default function BookDetailClient({
                                 </Link>
                             </div>
                             <div className="overflow-x-auto scrollbar-hide -mx-6">
-                                <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
+                                <div className="flex gap-2.5 sm:gap-4 pb-2 pl-6 w-max min-w-full">
                                     {ageRecommended.map((b) => (
-                                        <div key={`age-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
+                                        <div key={`age-rec-${b.id}`} className="flex-shrink-0 w-[140px] sm:w-[190px]">
                                             <BookCard key={b.id} book={b} />
                                         </div>
                                     ))}
-                                    <div className="shrink-0 w-0" aria-hidden="true" />
+                                    <div className="shrink-0 w-2 sm:w-0" aria-hidden="true" />
                                 </div>
                             </div>
                         </div>
@@ -822,8 +879,8 @@ export default function BookDetailClient({
                                         {formatCurationTag(topicTag) || '주제별'} 책 추천 리스트
                                     </h3>
                                 </div>
-                                <Link 
-                                    href={topicHref} 
+                                <Link
+                                    href={topicHref}
                                     className="text-gray-950 p-1 mb-0.5"
                                     aria-label="더보기"
                                 >
@@ -831,13 +888,13 @@ export default function BookDetailClient({
                                 </Link>
                             </div>
                             <div className="overflow-x-auto scrollbar-hide -mx-6">
-                                <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
+                                <div className="flex gap-2.5 sm:gap-4 pb-2 pl-6 w-max min-w-full">
                                     {topicRecommended.map((b) => (
-                                        <div key={`topic-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
+                                        <div key={`topic-rec-${b.id}`} className="flex-shrink-0 w-[140px] sm:w-[190px]">
                                             <BookCard key={b.id} book={b} />
                                         </div>
                                     ))}
-                                    <div className="shrink-0 w-0" aria-hidden="true" />
+                                    <div className="shrink-0 w-2 sm:w-0" aria-hidden="true" />
                                 </div>
                             </div>
                         </div>
@@ -860,14 +917,13 @@ export default function BookDetailClient({
                             </div>
                         </div>
                         <div className="overflow-x-auto scrollbar-hide -mx-6">
-                            <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
-                                <div className="shrink-0 w-0" aria-hidden="true" />
+                            <div className="flex gap-2.5 sm:gap-4 pb-2 pl-6 w-max min-w-full">
                                 {authorRecommended.map((b) => (
-                                    <div key={`author-rec-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
+                                    <div key={`author-rec-${b.id}`} className="flex-shrink-0 w-[140px] sm:w-[190px]">
                                         <BookCard key={b.id} book={b} />
                                     </div>
                                 ))}
-                                <div className="shrink-0 w-0" aria-hidden="true" />
+                                <div className="shrink-0 w-2 sm:w-0" aria-hidden="true" />
                             </div>
                         </div>
                     </div>

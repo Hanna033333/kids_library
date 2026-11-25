@@ -61,7 +61,7 @@ def generate_reviews_for_book(book: dict, count: int = 4) -> Optional[List[dict]
     import google.generativeai as genai
     
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-2.5-flash")
+    model = genai.GenerativeModel("gemini-3.8-flash")
 
     title = book.get("title", "")
     author = book.get("author", "")

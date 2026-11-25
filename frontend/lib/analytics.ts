@@ -91,15 +91,27 @@ export const sendGAEvent = (eventName: string, eventParams?: Record<string, any>
 
     if (ignored) return;
 
-    if (typeof window !== "undefined" && window.gtag) {
+    if (typeof window !== "undefined" && typeof window.gtag === "function") {
         window.gtag("event", eventName, eventParams);
     } else if (typeof window !== "undefined") {
-        // Fallback if gtag is not initialized yet: must use arguments object (same as gtag function)
-        window.dataLayer = window.dataLayer || [];
-        function gtagFallback(..._args: any[]) {
-            window.dataLayer.push(arguments);
-        }
-        gtagFallback("event", eventName, eventParams);
+        // gtag('config', ...) 실행 전 dataLayer에 event가 먼저 들어가면 GA4가 드롭하므로
+        // afterInteractive 스크립트가 window.gtag를 초기화할 때까지 잠시 대기 후 전송
+        let attempts = 0;
+        const maxAttempts = 30; // 최대 3초 대기 (100ms * 30)
+        const timer = setInterval(() => {
+            attempts += 1;
+            if (typeof window.gtag === "function") {
+                clearInterval(timer);
+                window.gtag("event", eventName, eventParams);
+            } else if (attempts >= maxAttempts) {
+                clearInterval(timer);
+                window.dataLayer = window.dataLayer || [];
+                function gtagFallback(..._args: any[]) {
+                    window.dataLayer.push(arguments);
+                }
+                gtagFallback("event", eventName, { ...eventParams, send_to: GA_TRACKING_ID });
+            }
+        }, 100);
     }
 };
 

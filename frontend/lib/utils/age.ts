@@ -119,3 +119,61 @@ export function getAgeGroupKey(dbAge: string | null): string {
     return '0-3'; // fallback
 }
 
+/**
+ * 주어진 연령 키('0-3', '4-7', '8-12', '13+')와 도서의 연령이 일치하는지 판별합니다.
+ */
+export function isBookMatchingAge(book: { age?: string | null; curation_tag?: string | null }, targetAgeKey: string): boolean {
+    if (!targetAgeKey) return false;
+
+    // 1. 도서 age 컬럼 매칭
+    if (book.age) {
+        const bookAgeKey = getAgeGroupKey(book.age);
+        if (bookAgeKey === targetAgeKey) return true;
+    }
+
+    // 2. curation_tag에 연령 태그 포함 여부 (#0~3세, #4~7세, #8~12세, #13세 이상 등)
+    if (book.curation_tag) {
+        const displayLabel = getAgeDisplayLabel(targetAgeKey);
+        if (displayLabel && book.curation_tag.includes(displayLabel)) return true;
+        if (book.curation_tag.includes(targetAgeKey)) return true;
+
+        // 초등 학년 태그 매칭 (8~12세인 경우 초등 1~6학년 매칭)
+        if (targetAgeKey === '8-12' && /초등\s*[1-6]학년/.test(book.curation_tag)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * 도서 리스트에서 사용자의 선호 연령대에 맞는 도서를 맨 앞으로 우선 배치합니다.
+ * @param books 원본 도서 목록
+ * @param preferredAge 선호 연령 키 ('0-3' | '4-7' | '8-12' | '13+')
+ * @param limit 반환할 최대 권수 (기본값: 원본 길이 또는 7)
+ */
+export function sortBooksByAgePreference<T extends { age?: string | null; curation_tag?: string | null }>(
+    books: T[],
+    preferredAge: string | null | undefined,
+    limit?: number
+): T[] {
+    if (!books || books.length === 0) return [];
+    if (!preferredAge || !['0-3', '4-7', '8-12', '13+'].includes(preferredAge)) {
+        return typeof limit === 'number' ? books.slice(0, limit) : books;
+    }
+
+    const matched: T[] = [];
+    const others: T[] = [];
+
+    for (const book of books) {
+        if (isBookMatchingAge(book, preferredAge)) {
+            matched.push(book);
+        } else {
+            others.push(book);
+        }
+    }
+
+    const combined = [...matched, ...others];
+    return typeof limit === 'number' ? combined.slice(0, limit) : combined;
+}
+

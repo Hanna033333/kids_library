@@ -28,7 +28,7 @@ interface RecommendationSliderProps {
  * - 상단 패딩 `pt-8`로 섹션 간 타이틀 시작 높이 정렬
  * - 래퍼에 `w-full px-6`로 모바일 좌우 24px 패딩 유지,
  *   스크롤 컨테이너에만 `-mx-6 px-6`을 적용해 카드가 화면 양끝으로 흐르게 한다
- * - 카드 너비는 홈 큐레이션과 1:1로 일치하는 `w-[165px] sm:w-[190px]`
+ * - 카드 너비는 홈 큐레이션과 1:1로 일치하는 `w-[140px] sm:w-[190px]`
  */
 export default function RecommendationSlider({
     books,
@@ -63,14 +63,14 @@ export default function RecommendationSlider({
                     )}
                 </div>
                 <div className="overflow-x-auto scrollbar-hide -mx-6">
-                    <div className="flex gap-4 pb-2 pl-6 w-max min-w-full">
+                    <div className="flex gap-2.5 sm:gap-4 pb-2 pl-6 w-max min-w-full">
                         {books.map((b) => (
-                            <div key={`${keyPrefix}-${b.id}`} className="flex-shrink-0 w-[165px] sm:w-[190px]">
+                            <div key={`${keyPrefix}-${b.id}`} className="flex-shrink-0 w-[140px] sm:w-[190px]">
                                 <BookCard book={b} />
                             </div>
                         ))}
-                        {/* 우측 끝 스크롤 마진 확보용 스페이서 (gap-4: 16px 유지) */}
-                        <div className="shrink-0 w-0" aria-hidden="true" />
+                        {/* 우측 끝 스크롤 마진 확보용 스페이서 */}
+                        <div className="shrink-0 w-2 sm:w-0" aria-hidden="true" />
                     </div>
                 </div>
             </div>

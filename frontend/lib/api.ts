@@ -4,7 +4,9 @@ const isLocal = typeof window !== 'undefined'
   ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   : process.env.NODE_ENV === 'development';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (isLocal ? "http://127.0.0.1:8000" : "https://api.checkjari.com");
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || (isLocal ? "http://127.0.0.1:8000" : "https://api.checkjari.com");
+// macOS에서 localhost가 IPv6(::1)로 먼저 해석되어 IPv4 전용 로컬 백엔드(127.0.0.1:8000) 연결 지연이 발생하는 현상 방지
+const API_BASE_URL = rawApiUrl.replace("://localhost:", "://127.0.0.1:");
 
 /** 외부 API 응답 지연 시 무한 대기를 막기 위한 공통 타임아웃 (project_plan 타임아웃 처리 원칙) */
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -59,8 +61,11 @@ async function apiFetch(path: string, options: ApiFetchOptions): Promise<Respons
 
     if (!response.ok && !allowStatus.includes(response.status)) {
       if (useServerDetail) {
-        const errorData = await response.json().catch(() => ({} as { detail?: string }));
-        throw new Error(errorData.detail || errorMessage);
+        const errorData = await response.json().catch(() => ({} as { detail?: unknown }));
+        const serverDetail = typeof errorData.detail === "string" && errorData.detail.trim()
+          ? errorData.detail
+          : null;
+        throw new Error(serverDetail || errorMessage);
       }
       throw new Error(errorMessage);
     }
@@ -123,29 +128,99 @@ export async function getBooks(
   return response.json();
 }
 
+const MAX_BATCH_BOOK_IDS = 50;
+const BATCH_CONCURRENCY = 3;
+
+function dedupeAndChunkIds(bookIds: number[], chunkSize: number = MAX_BATCH_BOOK_IDS): number[][] {
+  const uniqueIds = Array.from(new Set(bookIds.filter((id) => Number.isFinite(id))));
+  const chunks: number[][] = [];
+  for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+    chunks.push(uniqueIds.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T) => Promise<R>
+): Promise<R[]> {
+  if (items.length === 0) return [];
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+
+  const runWorker = async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex++;
+      results[currentIndex] = await worker(items[currentIndex]);
+    }
+  };
+
+  const workerCount = Math.min(concurrency, items.length);
+  await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
+  return results;
+}
+
 export async function fetchLoanStatuses(
   bookIds: number[],
   libraryName?: string
 ): Promise<Record<number, LoanStatus>> {
-  const response = await apiFetch("/api/books/loan-status", {
-    method: "POST",
-    body: {
-      book_ids: bookIds,
-      library_name: libraryName || "판교도서관",
-    },
-    errorMessage: "Failed to fetch loan statuses",
-  });
-  return response.json();
+  const chunks = dedupeAndChunkIds(bookIds);
+  if (chunks.length === 0) return {};
+
+  const targetLibrary = libraryName || "판교도서관";
+  const chunkResults = await mapWithConcurrency(
+    chunks,
+    BATCH_CONCURRENCY,
+    async (chunk) => {
+      const response = await apiFetch("/api/books/loan-status", {
+        method: "POST",
+        body: {
+          book_ids: chunk,
+          library_name: targetLibrary,
+        },
+        errorMessage: "Failed to fetch loan statuses",
+      });
+      return response.json() as Promise<Record<number, LoanStatus>>;
+    }
+  );
+
+  return Object.assign({}, ...chunkResults);
 }
 
 export async function getBooksByIds(bookIds: number[]): Promise<Book[]> {
-  if (bookIds.length === 0) return [];
-  const response = await apiFetch("/api/books/by-ids", {
-    method: "POST",
-    body: bookIds,
-    errorMessage: "Failed to fetch books by ids",
-  });
-  return response.json();
+  const chunks = dedupeAndChunkIds(bookIds);
+  if (chunks.length === 0) return [];
+
+  const chunkResults = await mapWithConcurrency(
+    chunks,
+    BATCH_CONCURRENCY,
+    async (chunk) => {
+      const response = await apiFetch("/api/books/by-ids", {
+        method: "POST",
+        body: chunk,
+        errorMessage: "Failed to fetch books by ids",
+      });
+      return response.json() as Promise<Book[]>;
+    }
+  );
+
+  const bookMap = new Map<number, Book>();
+  for (const books of chunkResults) {
+    for (const book of books) {
+      bookMap.set(book.id, book);
+    }
+  }
+
+  const seen = new Set<number>();
+  const orderedBooks: Book[] = [];
+  for (const id of bookIds) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const book = bookMap.get(id);
+    if (book) orderedBooks.push(book);
+  }
+  return orderedBooks;
 }
 
 export async function getBookById(id: number): Promise<Book | null> {

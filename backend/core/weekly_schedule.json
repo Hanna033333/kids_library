@@ -126,11 +126,11 @@
         "slug": "science"
       },
       {
-        "id": 38,
-        "subtitle": "꿈틀꿈틀 작은 곤충들의 신비롭고 위대한 한살이",
-        "title": "꿈틀꿈틀 곤충 나라",
-        "tag": "곤충",
-        "slug": "bugs"
+        "id": 81,
+        "subtitle": "푸른 파도와 시원한 바람이 가득한 싱그러운 여름",
+        "title": "싱그러운 여름 그림책",
+        "tag": "여름",
+        "slug": "summer"
       }
     ]
   },
@@ -193,11 +193,11 @@
     "end": "2026-08-09",
     "curations": [
       {
-        "id": 78,
-        "subtitle": "미지의 행성과 신비한 외계 생명체를 만나는 SF 모험",
-        "title": "상상 속 외계인과 UFO",
-        "tag": "미래상상",
-        "slug": "future-imagination"
+        "id": 65,
+        "subtitle": "틀에 갇히지 않은 엉뚱함이 자라는 무한한 상상력",
+        "title": "상상의 날개를 활짝",
+        "tag": "상상력",
+        "slug": "imagination"
       },
       {
         "id": 4,
@@ -288,11 +288,11 @@
         "slug": "art"
       },
       {
-        "id": 54,
-        "subtitle": "피라미드부터 에펠탑까지 방구석 세계 역사 여행",
-        "title": "세계 역사와 문화",
-        "tag": "세계역사",
-        "slug": "world-history"
+        "id": 49,
+        "subtitle": "타임머신 타고 떠나는 흥미진진한 한국사 대모험",
+        "title": "지혜로운 역사 이야기",
+        "tag": "역사이야기",
+        "slug": "history"
       }
     ]
   },
@@ -362,11 +362,11 @@
         "slug": "holiday"
       },
       {
-        "id": 54,
-        "subtitle": "피라미드부터 에펠탑까지 방구석 세계 역사 여행",
-        "title": "세계 역사와 문화",
-        "tag": "세계역사",
-        "slug": "world-history"
+        "id": 6,
+        "subtitle": "세상에서 가장 포근한 엄마 아빠의 무조건적인 사랑",
+        "title": "따뜻한 가족 사랑",
+        "tag": "가족사랑",
+        "slug": "family"
       },
       {
         "id": 60,
@@ -625,11 +625,11 @@
     "end": "2026-11-29",
     "curations": [
       {
-        "id": 38,
-        "subtitle": "꿈틀꿈틀 작은 곤충들의 신비롭고 위대한 한살이",
-        "title": "꿈틀꿈틀 곤충 나라",
-        "tag": "곤충",
-        "slug": "bugs"
+        "id": 83,
+        "subtitle": "하얀 눈 내리는 날, 마음까지 훈훈해지는 포근한 겨울",
+        "title": "포근한 겨울 감성 그림책",
+        "tag": "겨울",
+        "slug": "winter"
       },
       {
         "id": 39,

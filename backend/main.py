@@ -68,7 +68,7 @@ app.add_middleware(
     # allow_credentials=True 상태에서 자격증명 포함 CORS 요청이 통과할 수 있었습니다.
     # 이 프로젝트(kids-library)의 실제 팀(hannas-projects) 소속 프리뷰 URL만 매치하도록
     # 두 조건을 하나의 패턴으로 결합해 범위를 좁혔습니다.
-    allow_origin_regex=r"^(https://kids-library-git-[a-z0-9-]+-hannas-projects-[a-z0-9]+\.vercel\.app|https://(www\.)?checkjari\.com)$",
+    allow_origin_regex=r"^(https://kids-library-[a-z0-9-]+-hannas-projects-[a-z0-9]+\.vercel\.app|https://(www\.)?checkjari\.com)$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -90,13 +90,13 @@ async def validation_exception_handler(request, exc):
         content={"detail": error_summaries},
     )
 
-# 라우터 등록
+# 라우터 등록 (정적 경로인 /api/books/my-reviews 등이 /api/books/{book_id}에 가려지지 않도록 reviews_router를 먼저 등록)
+app.include_router(reviews_router)
 app.include_router(books_router)
 app.include_router(sync_router)
 app.include_router(auth_router)
 app.include_router(wishlists_router)
 app.include_router(threads_router)
-app.include_router(reviews_router)
 
 @app.get("/")
 def read_root():

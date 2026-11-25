@@ -9,8 +9,7 @@ import LibrarySelector from '@/components/LibrarySelector'
 import PageHeader from '@/components/PageHeader'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { getSavedBookIds } from '@/lib/supabase-api'
-import { getBooksByIds } from '@/lib/api'
+import { getSavedBooks, getSavedBookIds } from '@/lib/supabase-api'
 import { Book } from '@/lib/types'
 import { getOptimizedImageUrl } from '@/lib/utils/image'
 import ConfirmModal from '@/components/ui/ConfirmModal'
@@ -68,8 +67,7 @@ const NOUNS = [
 function generateRandomNickname() {
     const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
     const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
-    const randNum = Math.floor(100 + Math.random() * 900)
-    return `${adj}${noun}${randNum}`
+    return `${adj}${noun}`
 }
 
 const DELETE_REASONS = [
@@ -82,13 +80,23 @@ const DELETE_REASONS = [
     '기타(직접 작성)',
 ]
 
+const CHILD_AGE_OPTIONS = [
+    { key: '0-3', label: '0~3세' },
+    { key: '4-7', label: '4~7세' },
+    { key: '8-12', label: '8~12세' },
+    { key: '13+', label: '13세 이상' },
+] as const
+
 export default function MyPageClient() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const isAutoOpenLibrary = searchParams?.get('action') === 'select-library'
-    const { user, isLoading: authLoading, signOut } = useAuth()
+    const { user, isLoading: authLoading, preferredChildAge, updatePreferredChildAge, signOut } = useAuth()
 
     const [currentView, setCurrentView] = useState<ViewState>('main')
+
+    // 우리 아이 연령대 (AuthContext에서 DB 동기화 상태로 관리)
+    const childAge = preferredChildAge || ''
 
     // 회원탈퇴 STEP 1
     const [deleteAgreed, setDeleteAgreed] = useState(false)
@@ -109,6 +117,8 @@ export default function MyPageClient() {
     const [editNickname, setEditNickname] = useState('')
     const [isSavingNickname, setIsSavingNickname] = useState(false)
     const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false)
+    const [isDuplicateNickname, setIsDuplicateNickname] = useState(false)
+    const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false)
 
     // 오류 모달
     const [errorMessage, setErrorMessage] = useState('')
@@ -116,6 +126,25 @@ export default function MyPageClient() {
 
     // 토스트
     const [toastMessage, setToastMessage] = useState('')
+
+    const handleChildAgeSelect = async (ageKey: string) => {
+        const nextAge = childAge === ageKey ? null : ageKey
+        const ok = await updatePreferredChildAge(nextAge)
+        if (nextAge) {
+            const opt = CHILD_AGE_OPTIONS.find(o => o.key === nextAge)
+            setToastMessage(
+                ok
+                    ? `우리 아이 연령대가 ${opt?.label || ''}(으)로 설정되었어요`
+                    : '연령대 저장에 실패했어요. 잠시 후 다시 시도해주세요.'
+            )
+        } else {
+            setToastMessage(
+                ok
+                    ? '우리 아이 연령대 설정이 해제되었어요'
+                    : '연령대 해제에 실패했어요. 잠시 후 다시 시도해주세요.'
+            )
+        }
+    }
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -133,12 +162,9 @@ export default function MyPageClient() {
             if (!user) return
             setIsPreviewLoading(true)
             try {
-                const savedIds = await withTimeout(getSavedBookIds(supabase, user.id), 6000, [] as number[])
-                setSavedCount(savedIds.length)
-                if (savedIds.length > 0) {
-                    const books = await withTimeout(getBooksByIds(savedIds.slice(0, 6)), 6000, [] as Book[])
-                    setPreviewBooks(books)
-                }
+                const books = await withTimeout(getSavedBooks(supabase, user.id), 6000, [] as Book[])
+                setSavedCount(books.length)
+                setPreviewBooks(books.slice(0, 6))
             } catch (err) {
                 console.error('내 책장 미리보기 로드 실패:', err)
             } finally {
@@ -203,6 +229,63 @@ export default function MyPageClient() {
         }
         fetchSettings()
     }, [user])
+
+    // 닉네임 유효성
+    const nicknameValidation = (() => {
+        const trimmed = editNickname.trim()
+        return {
+            isLengthValid: trimmed.length >= 2 && trimmed.length <= 10,
+            isFormatValid: trimmed.length === 0 || /^[가-힣a-zA-Z0-9]+$/.test(trimmed),
+        }
+    })()
+    const isNicknameValid = nicknameValidation.isLengthValid && nicknameValidation.isFormatValid
+    const isNicknameChanged = editNickname.trim() !== (nickname ?? '')
+
+    // 실시간 닉네임 중복 검사 (디바운스 300ms)
+    useEffect(() => {
+        const trimmed = editNickname.trim()
+        if (!isNicknameModalOpen || !trimmed || !isNicknameValid || !isNicknameChanged) {
+            setIsDuplicateNickname(false)
+            setIsCheckingDuplicate(false)
+            return
+        }
+
+        let isCancelled = false
+        setIsCheckingDuplicate(true)
+
+        const timer = setTimeout(async () => {
+            try {
+                const isLocal = typeof window !== 'undefined' && (
+                    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                )
+                const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://127.0.0.1:8000' : 'https://api.checkjari.com')
+                
+                const { data: sessionData } = await supabase.auth.getSession()
+                const token = sessionData?.session?.access_token || ''
+
+                const res = await fetch(`${API_BASE_URL}/api/auth/check-nickname?nickname=${encodeURIComponent(trimmed)}`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                })
+                if (res.ok) {
+                    const data = await res.json()
+                    if (!isCancelled) {
+                        setIsDuplicateNickname(!data.available)
+                    }
+                }
+            } catch {
+                // 실패 시 조용히 통과
+            } finally {
+                if (!isCancelled) {
+                    setIsCheckingDuplicate(false)
+                }
+            }
+        }, 300)
+
+        return () => {
+            isCancelled = true
+            clearTimeout(timer)
+        }
+    }, [editNickname, isNicknameModalOpen, isNicknameValid, isNicknameChanged])
 
     if (authLoading || !user) {
         return <PageLoader />
@@ -269,6 +352,11 @@ export default function MyPageClient() {
 
     const fetchWishlistCount = async () => {
         if (!user) return
+        if (user.id === '00000000-0000-0000-0000-000000000000') {
+            const ids = await getSavedBookIds(supabase, user.id)
+            setWishlistCount(ids.length)
+            return
+        }
         const { count } = await supabase
             .from('wishlists')
             .select('*', { count: 'exact', head: true })
@@ -282,19 +370,8 @@ export default function MyPageClient() {
         setDeleteReasonText('')
     }
 
-    // 닉네임 유효성
-    const nicknameValidation = (() => {
-        const trimmed = editNickname.trim()
-        return {
-            isLengthValid: trimmed.length >= 2 && trimmed.length <= 10,
-            isFormatValid: trimmed.length === 0 || /^[가-힣a-zA-Z0-9]+$/.test(trimmed),
-        }
-    })()
-    const isNicknameValid = nicknameValidation.isLengthValid && nicknameValidation.isFormatValid
-    const isNicknameChanged = editNickname.trim() !== (nickname ?? '')
-
     const handleSaveNickname = async () => {
-        if (!isNicknameValid || isSavingNickname) return
+        if (!isNicknameValid || !isNicknameChanged || isDuplicateNickname || isCheckingDuplicate || isSavingNickname) return
         setIsSavingNickname(true)
         try {
             const isQaMode = typeof window !== 'undefined' && (
@@ -318,6 +395,10 @@ export default function MyPageClient() {
                     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                     body: JSON.stringify({ nickname: editNickname.trim() }),
                 })
+                if (res.status === 409) {
+                    setIsDuplicateNickname(true)
+                    return
+                }
                 if (!res.ok) throw new Error('Failed')
             }
 
@@ -350,6 +431,7 @@ export default function MyPageClient() {
                 <PageHeader
                     title={getTitle()}
                     backOnClick={getBackHandler()}
+                    showHome={true}
                 />
                 <div className="flex-1 w-full max-w-2xl mx-auto p-4 sm:p-6 pb-12 space-y-4">
 
@@ -386,6 +468,33 @@ export default function MyPageClient() {
                                     <div className="min-w-0 shrink flex justify-end">
                                         <LibrarySelector autoOpen={isAutoOpenLibrary} />
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* 우리 아이 연령대 */}
+                            <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] p-5">
+                                <div className="mb-3">
+                                    <span className="font-bold text-gray-900 text-[15px]">우리 아이 연령대</span>
+                                    <p className="text-[12px] text-gray-400 mt-0.5">홈 화면 큐레이션과 도서 목록에 맞춤 적용돼요</p>
+                                </div>
+                                <div className="grid grid-cols-4 gap-1.5">
+                                    {CHILD_AGE_OPTIONS.map((opt) => {
+                                        const isSelected = childAge === opt.key
+                                        return (
+                                            <button
+                                                key={opt.key}
+                                                type="button"
+                                                onClick={() => handleChildAgeSelect(opt.key)}
+                                                className={`h-10 rounded-xl text-xs transition-all outline-none focus:outline-none ${
+                                                    isSelected
+                                                        ? 'bg-brand-primary text-white font-bold shadow-xs active:bg-brand-primary-dark'
+                                                        : 'bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100'
+                                                }`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        )
+                                    })}
                                 </div>
                             </div>
 
@@ -581,32 +690,45 @@ export default function MyPageClient() {
                             <input
                                 type="text"
                                 value={editNickname}
-                                onChange={(e) => setEditNickname(e.target.value.replace(/\s/g, ''))}
+                                onChange={(e) => {
+                                    setEditNickname(e.target.value.replace(/\s/g, ''))
+                                    setIsDuplicateNickname(false)
+                                }}
                                 maxLength={10}
                                 autoFocus
-                                className="w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-gray-900 focus:bg-white transition-all text-[16px] text-gray-900 mb-2"
+                                className={`w-full h-12 px-4 bg-gray-50 border rounded-xl focus:outline-none transition-all text-[16px] text-gray-900 mb-2 ${
+                                    isDuplicateNickname
+                                        ? 'border-red-400 focus:border-red-500 focus:bg-white'
+                                        : 'border-gray-200 focus:border-gray-900 focus:bg-white'
+                                }`}
                                 placeholder="닉네임 입력"
                             />
                             <p className={`text-[12px] px-0.5 mb-5 h-4 leading-4 ${
                                 editNickname.length === 0 ? 'text-transparent' :
-                                isNicknameValid ? 'text-[#10B981]' : 'text-red-400'
+                                !nicknameValidation.isFormatValid || !nicknameValidation.isLengthValid || isDuplicateNickname ? 'text-red-500 font-medium' :
+                                isNicknameChanged ? 'text-[#10B981] font-medium' : 'text-gray-400 font-medium'
                             }`}>
                                 {!nicknameValidation.isFormatValid ? '특수문자나 공백은 사용할 수 없어요' :
                                  !nicknameValidation.isLengthValid ? '2자 이상 10자 이하로 입력해주세요' :
-                                 isNicknameChanged ? '사용 가능한 닉네임이에요' : '현재 닉네임이에요'}
+                                 !isNicknameChanged ? '현재 닉네임이에요' :
+                                 isCheckingDuplicate ? '중복 확인 중...' :
+                                 isDuplicateNickname ? '이미 사용 중인 닉네임이에요' : '사용 가능한 닉네임이에요'}
                             </p>
                             <div className="flex gap-2">
                                 <button
-                                    onClick={() => setIsNicknameModalOpen(false)}
+                                    onClick={() => {
+                                        setIsNicknameModalOpen(false)
+                                        setIsDuplicateNickname(false)
+                                    }}
                                     className="flex-1 h-12 rounded-xl text-[15px] font-bold bg-gray-100 text-gray-600 active:bg-gray-200 transition-colors"
                                 >
                                     취소
                                 </button>
                                 <button
                                     onClick={handleSaveNickname}
-                                    disabled={!isNicknameValid || !isNicknameChanged || isSavingNickname}
+                                    disabled={!isNicknameValid || !isNicknameChanged || isDuplicateNickname || isCheckingDuplicate || isSavingNickname}
                                     className={`flex-1 h-12 rounded-xl text-[15px] font-bold transition-all active:scale-[0.98] ${
-                                        isNicknameValid && isNicknameChanged && !isSavingNickname
+                                        isNicknameValid && isNicknameChanged && !isDuplicateNickname && !isCheckingDuplicate && !isSavingNickname
                                             ? 'bg-brand-primary text-white active:bg-brand-primary-active'
                                             : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                     }`}

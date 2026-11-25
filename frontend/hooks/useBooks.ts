@@ -4,7 +4,7 @@
 "use client";
 
 import { useInfiniteQuery, InfiniteData } from "@tanstack/react-query";
-import { BooksResponse, Book } from "@/lib/types";
+import { BooksResponse } from "@/lib/types";
 import { searchBooks } from "@/lib/api";
 
 interface UseBooksParams {
@@ -14,7 +14,7 @@ interface UseBooksParams {
   tagFilter?: string;
   sortFilter?: string;
   limit?: number;
-  initialBooks?: Book[];
+  initialPage?: BooksResponse;
   enabled?: boolean;
   includeLibraryInfo?: boolean;
   selectedLibrary?: string | null;
@@ -27,15 +27,15 @@ export function useBooks({
   tagFilter,
   sortFilter = "title",
   limit = 24,
-  initialBooks,
+  initialPage,
   enabled = true,
   includeLibraryInfo = false,
   selectedLibrary,
 }: UseBooksParams) {
   const effectiveLibrary = (sortFilter === "callno" || sortFilter === "pangyo_callno") ? (selectedLibrary || undefined) : undefined;
   const canUseInitialData = Boolean(
-    initialBooks &&
-    (!includeLibraryInfo || initialBooks.every((b) => Array.isArray(b.library_info)))
+    initialPage && initialPage.page === 1 && initialPage.limit === limit &&
+    (!includeLibraryInfo || initialPage.data.every((b) => Array.isArray(b.library_info)))
   );
   const {
     data,
@@ -45,7 +45,7 @@ export function useBooks({
     isLoading,
     error,
   } = useInfiniteQuery({
-    queryKey: ["books-infinite", searchQuery, ageFilter, curationFilter, tagFilter, sortFilter, includeLibraryInfo, effectiveLibrary],
+    queryKey: ["books-infinite", searchQuery, ageFilter, curationFilter, tagFilter, sortFilter, includeLibraryInfo, effectiveLibrary, limit],
     enabled,
     queryFn: async ({ pageParam }): Promise<BooksResponse> => {
       const page = pageParam as number;
@@ -62,19 +62,14 @@ export function useBooks({
         effectiveLibrary
       );
     },
-    getNextPageParam: (lastPage, allPages) => {
-      const currentPage = allPages.length;
+    getNextPageParam: (lastPage) => {
+      const currentPage = lastPage.page;
       const totalPages = lastPage.total_pages || 0;
       return currentPage < totalPages ? currentPage + 1 : undefined;
     },
     initialPageParam: 1,
-    initialData: canUseInitialData && initialBooks ? {
-      pages: [{
-        data: initialBooks,
-        total: initialBooks.length, // approximate for initial
-        page: 1,
-        total_pages: 1 // fetching next page will resolve real total
-      }],
+    initialData: canUseInitialData && initialPage ? {
+      pages: [initialPage],
       pageParams: [1]
     } as InfiniteData<BooksResponse> : undefined,
     staleTime: 30 * 1000,

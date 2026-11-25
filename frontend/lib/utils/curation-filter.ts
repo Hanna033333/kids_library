@@ -85,8 +85,14 @@ export function isSummerCurationActive(targetDate: Date = new Date()): boolean {
 /**
  * 도서 카드/상세에서 UI에 노출하지 않는 특수 태그 목록 (SSOT)
  * BookItem, BookDetailClient 등 모든 UI 컴포넌트가 이 목록을 공유합니다.
+ * 연도별 시의성(Seasonal) 기획 태그(여름방학 등)는 상세 페이지 추천/배너/태그에서 제외하고
+ * 홈 화면 특별 섹션 및 전용 기획전 페이지에서만 독립적으로 소비되도록 차단합니다.
  */
-export const HIDDEN_UI_TAGS = new Set<string>([])
+export const HIDDEN_UI_TAGS = new Set<string>([
+  '여름방학2026',
+  '여름방학',
+  'summer-vacation',
+])
 
 /**
  * UI 표시용 큐레이션 태그 한글 변환 매핑

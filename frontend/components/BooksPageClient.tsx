@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import SearchBar from "@/components/SearchBar";
@@ -24,16 +24,25 @@ import { PageLoader } from "@/components/ui/PageLoader";
 interface BooksPageClientProps {
     overrideCuration?: string;
     overrideAge?: string;
-    initialBooks?: BooksResponse['data'];
+    initialPage?: BooksResponse;
+    initialSort?: string;
     initialAvailableAges?: string[];
 }
 
 const FILTERABLE_AGE_GROUPS = ['0-3', '4-7', '8-12'] as const;
 
+const AGE_LABELS: Record<string, string> = {
+    '0-3': '0~3세',
+    '4-7': '4~7세',
+    '8-12': '8~12세',
+    '13+': '13세 이상',
+};
+
 // AI 큐레이션이 아닌 정적/특수 큐레이션 목록 (AI 신뢰도순 정렬 제외)
 const NON_AI_CURATIONS = ['겨울방학', 'winter-vacation', '여름방학', 'summer-vacation', '여름방학2026', '어린이도서연구회', 'research-council', 'caldecott', 'textbook', '교과서수록'];
 
-export default function BooksPageClient({ overrideCuration, overrideAge, initialBooks, initialAvailableAges }: BooksPageClientProps) {
+export default function BooksPageClient({ overrideCuration, overrideAge, initialPage, initialSort, initialAvailableAges }: BooksPageClientProps) {
+    const initialBooks = initialPage?.data;
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -95,7 +104,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         return routeSortFilter;
     });
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-    const { user, signOut } = useAuth();
+    const { user, isLoading: authLoading, preferredChildAge, signOut } = useAuth();
     const [toastMessage, setToastMessage] = useState("");
 
     // 교과서 수록도서 큐레이션 여부
@@ -163,6 +172,30 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         }
     }, [routeSearchQuery, routeAuthorFilter, routeAgeFilter, routeCurationFilter, routeTagFilter, routeSortFilter]);
 
+    // 도서 리스트 진입 시, 로그인 유저의 선호 연령대가 설정되어 있고 URL에 age가 없으면 해당 연령대 필터를 기본값으로 자동 선택
+    // 단, 큐레이션 진입 시 해당 큐레이션에 선호 연령대 도서가 0권이면 필터를 걸지 않고 전체 연령으로 노출 + 토스트 안내
+    const initialAgeAppliedRef = useRef(false);
+    useEffect(() => {
+        if (authLoading || initialAgeAppliedRef.current) return;
+
+        // 큐레이션 진입 시 가용 연령대 목록 로딩이 완료될 때까지 대기
+        if (curationFilter && !isTextbook && availableAgesForCuration === undefined) {
+            return;
+        }
+
+        initialAgeAppliedRef.current = true;
+
+        if (user && preferredChildAge && !routeAgeFilter && !overrideAge && !searchParams.get('age') && !isTextbook) {
+            if (curationFilter && availableAgesForCuration && !availableAgesForCuration.includes(preferredChildAge)) {
+                const ageLabel = AGE_LABELS[preferredChildAge] ?? preferredChildAge;
+                setToastMessage(`${ageLabel} 도서가 없어 전체 연령으로 보여드려요`);
+                return;
+            }
+            setAgeFilter(preferredChildAge);
+            updateURL({ age: preferredChildAge });
+        }
+    }, [authLoading, user, preferredChildAge, routeAgeFilter, overrideAge, searchParams, isTextbook, curationFilter, availableAgesForCuration, updateURL]);
+
     const POPULAR_THEME_CHIPS = [
         { label: '잠자리', tag: '잠자리' },
         { label: '자존감', tag: '자존감' },
@@ -188,13 +221,33 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         updateURL({ q: searchQuery, age: ageFilter, curation: nextCuration, sort: sortFilter, tag: "", author: authorFilter });
     }, [curationFilter, searchQuery, ageFilter, sortFilter, authorFilter, updateURL]);
 
+    const lastTrackedSearchRef = useRef<string>("");
+
+    // URL 직접 진입(/books?q=...) 또는 SearchDiscoveryHub 키워드 클릭 진입 시에도 search 이벤트 누락 방지
+    useEffect(() => {
+        const trimmed = routeSearchQuery.trim();
+        if (!trimmed || /^[ㄱ-ㅎㅏ-ㅣ]+$/.test(trimmed)) return;
+        if (lastTrackedSearchRef.current === trimmed) return;
+        lastTrackedSearchRef.current = trimmed;
+        sendGAEvent('search', {
+            search_term: trimmed,
+            keyword: trimmed,
+            page_path: typeof window !== 'undefined' ? `${window.location.pathname}?q=${encodeURIComponent(trimmed)}` : `/books?q=${encodeURIComponent(trimmed)}`
+        });
+    }, [routeSearchQuery]);
+
     const handleSearch = useCallback((query: string) => {
         if (query === searchQuery) return;
         setSearchQuery(query);
         setAuthorFilter("");
         const trimmed = query.trim();
-        if (trimmed) {
-            sendGAEvent('search', { search_term: trimmed, keyword: trimmed });
+        if (trimmed && !/^[ㄱ-ㅎㅏ-ㅣ]+$/.test(trimmed)) {
+            lastTrackedSearchRef.current = trimmed;
+            sendGAEvent('search', {
+                search_term: trimmed,
+                keyword: trimmed,
+                page_path: typeof window !== 'undefined' ? `${window.location.pathname}?q=${encodeURIComponent(trimmed)}` : `/books?q=${encodeURIComponent(trimmed)}`
+            });
         }
         updateURL({ q: query, age: ageFilter, curation: curationFilter, sort: sortFilter, tag: tagFilter, author: "" });
     }, [searchQuery, ageFilter, curationFilter, sortFilter, tagFilter, updateURL]);
@@ -266,12 +319,15 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         let shareText = '';
 
         if (curationFilter) {
-            shareUrl = `${window.location.origin}${window.location.pathname}?curation=${encodeURIComponent(curationFilter)}&utm_source=share&utm_medium=social&utm_campaign=curation_${encodeURIComponent(curationFilter)}`;
-            shareText = `우리 아이에게 딱 맞는 사서 추천 [${curationTitle}] 도서 리스트예요. 로그인 없이 대출 가능 여부까지 즉시 확인해 보세요!`;
+            const isSlugPath = window.location.pathname.startsWith('/collections/curation/');
+            const baseQuery = isSlugPath ? '' : `curation=${encodeURIComponent(curationFilter)}&`;
+            shareUrl = `${window.location.origin}${window.location.pathname}?${baseQuery}utm_source=share&utm_medium=social&utm_campaign=curation_${encodeURIComponent(curationFilter)}`;
+            shareText = `우리 아이에게 딱 맞는 [${curationTitle}] 도서 리스트예요. 내 주변 도서관 대출 가능 여부까지 바로 확인해 보세요!`;
         } else if (ageFilter) {
-            // 연령별 상세 큐레이션 공유 대응
-            shareUrl = `${window.location.origin}${window.location.pathname}?age=${encodeURIComponent(ageFilter)}&utm_source=share&utm_medium=social&utm_campaign=age_${encodeURIComponent(ageFilter)}`;
-            shareText = `우리 아이 나이에 딱 맞는 [${curationTitle}] 리스트예요. 로그인 없이 대출 가능 여부까지 즉시 확인해 보세요!`;
+            const isAgePath = window.location.pathname.startsWith('/collections/age/');
+            const baseQuery = isAgePath ? '' : `age=${encodeURIComponent(ageFilter)}&`;
+            shareUrl = `${window.location.origin}${window.location.pathname}?${baseQuery}utm_source=share&utm_medium=social&utm_campaign=age_${encodeURIComponent(ageFilter)}`;
+            shareText = `우리 아이 나이에 딱 맞는 [${curationTitle}] 리스트예요. 내 주변 도서관 대출 가능 여부까지 바로 확인해 보세요!`;
         } else {
             return;
         }
@@ -300,7 +356,7 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         }
     }
 
-    // initialBooks는 초기 진입 조건(큐레이션 일치, 추가 필터 미적용 상태)에서만 전달
+    // 서버 첫 페이지는 큐레이션·정렬이 같고 추가 필터가 없을 때만 전달한다.
     const isRouteStateSynced =
         searchQuery === routeSearchQuery &&
         authorFilter === routeAuthorFilter &&
@@ -314,8 +370,8 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
         return <PageLoader />;
     }
 
-    const currentInitialBooks = (initialBooks && initialBooks.length > 0 && curationFilter === (overrideCuration || parsedRouteCuration.cleanTag) && !searchQuery && !authorFilter && !ageFilter && !tagFilter)
-        ? initialBooks
+    const currentInitialPage = (initialPage && sortFilter === initialSort && curationFilter === overrideCuration && !searchQuery && !authorFilter && !ageFilter && !tagFilter)
+        ? initialPage
         : undefined;
 
     return (
@@ -326,13 +382,25 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                 showHome={true}
                 rightSlot={
                     <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => setIsSearchVisible(!isSearchVisible)}
-                            className="text-gray-500 hover:text-gray-900 transition-colors p-1"
-                            aria-label="검색 열기"
-                        >
-                            <Search className="w-6 h-6" />
-                        </button>
+                        {curationFilter ? (
+                            <button
+                                type="button"
+                                onClick={handleShareCuration}
+                                className="text-gray-500 active:text-gray-900 active:scale-95 transition-all p-1 cursor-pointer outline-none focus:outline-none"
+                                aria-label="큐레이션 리스트 공유하기"
+                            >
+                                <Share2 className="w-[22px] h-[22px]" />
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setIsSearchVisible(!isSearchVisible)}
+                                className="text-gray-500 active:text-gray-900 active:scale-95 transition-all p-1 cursor-pointer outline-none focus:outline-none"
+                                aria-label="검색 열기"
+                            >
+                                <Search className="w-6 h-6" />
+                            </button>
+                        )}
                         {user ? (
                             <button
                                 onClick={() => router.push('/my-page')}
@@ -363,18 +431,6 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                 />
             </div>
 
-            {/* 필터 바 (교과서 수록도서: 초등 1~6학년 필터 / 일반: 연령대 필터) */}
-            <FilterBar
-                selectedAge={ageFilter}
-                onAgeChange={handleAgeChange}
-                onFilterClick={openIntegratedFilter}
-                showFilterButton={!!searchQuery || !!authorFilter}
-                isTextbook={isTextbook}
-                selectedTag={tagFilter}
-                onTagChange={handleTagChange}
-                disabledAges={disabledAges}
-            />
-
             {/* 통합 필터 모달 */}
             <IntegratedFilterModal
                 isOpen={isFilterModalOpen}
@@ -389,15 +445,29 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                 disabledAges={disabledAges}
             />
 
-            {/* 책 리스트 */}
-            <div className="w-full max-w-7xl mx-auto pb-4 md:pb-6 pt-2">
+            {/* 책 리스트 (대출 배너/인라인 도서관 선택기 + 필터 바 → 도서 목록) */}
+            <div className="w-full max-w-7xl mx-auto pb-4 md:pb-6 pt-3">
                 <BookList
                     searchQuery={searchQuery || authorFilter || undefined}
                     ageFilter={ageFilter || undefined}
                     curationFilter={curationFilter || undefined}
+                    curationTitle={curationFilter ? getPageTitle() : undefined}
                     tagFilter={tagFilter || undefined}
                     sortFilter={sortFilter}
-                    initialBooks={currentInitialBooks}
+                    initialPage={currentInitialPage}
+                    filterBar={
+                        <FilterBar
+                            embedded={true}
+                            selectedAge={ageFilter}
+                            onAgeChange={handleAgeChange}
+                            onFilterClick={openIntegratedFilter}
+                            showFilterButton={!!searchQuery || !!authorFilter}
+                            isTextbook={isTextbook}
+                            selectedTag={tagFilter}
+                            onTagChange={handleTagChange}
+                            disabledAges={disabledAges}
+                        />
+                    }
                 />
             </div>
 

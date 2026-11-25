@@ -4,17 +4,25 @@ import { useState, useRef, useEffect } from 'react'
 import { useLibrary, LibraryName } from '@/context/LibraryContext'
 import { ChevronDown, MapPin, Check, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
+import { sendGAEvent } from '@/lib/analytics'
 
 export default function LibrarySelector({ 
     whiteMode = false, 
     autoOpen = false,
-    customTrigger
+    customTrigger,
+    displayLibrary,
+    onTriggerClick,
+    onClose,
 }: { 
     whiteMode?: boolean
     autoOpen?: boolean 
     customTrigger?: (open: () => void) => React.ReactNode
+    displayLibrary?: LibraryName | null
+    onTriggerClick?: () => void
+    onClose?: () => void
 }) {
     const { selectedLibrary, setSelectedLibrary, availableLibraries } = useLibrary()
+    const activeLibrary = displayLibrary !== undefined ? displayLibrary : selectedLibrary
     const [isOpen, setIsOpen] = useState(autoOpen)
     const [isAnimating, setIsAnimating] = useState(false)
 
@@ -30,6 +38,9 @@ export default function LibrarySelector({
         if (isOpen) {
             setIsAnimating(true)
             document.body.style.overflow = 'hidden' // 스크롤 방지
+            return () => {
+                document.body.style.overflow = ''
+            }
         } else {
             const timer = setTimeout(() => setIsAnimating(false), 300) // 애니메이션 시간 대기
             document.body.style.overflow = ''
@@ -37,31 +48,49 @@ export default function LibrarySelector({
         }
     }, [isOpen])
 
-    const handleSelect = (lib: string) => {
-        setSelectedLibrary(lib as LibraryName)
+    const handleClose = () => {
         setIsOpen(false)
+        onClose?.()
     }
 
-    const displayLibraryName = selectedLibrary
-        ? (selectedLibrary.length > 15 ? `${selectedLibrary.slice(0, 15)}...` : selectedLibrary)
+    const handleSelect = (lib: string) => {
+        setSelectedLibrary(lib as LibraryName)
+        sendGAEvent('select_library', { library: lib })
+        handleClose()
+    }
+
+    const displayLibraryName = activeLibrary
+        ? (activeLibrary.length > 15 ? `${activeLibrary.slice(0, 15)}...` : activeLibrary)
         : '도서관을 선택해주세요'
 
     return (
         <>
             {/* Trigger Button */}
             {customTrigger ? (
-                customTrigger(() => setIsOpen(true))
+                customTrigger(() => {
+                    if (onTriggerClick) {
+                        onTriggerClick()
+                    } else {
+                        setIsOpen(true)
+                    }
+                })
             ) : (
                 <button
-                    onClick={() => setIsOpen(true)}
+                    onClick={() => {
+                        if (onTriggerClick) {
+                            onTriggerClick()
+                        } else {
+                            setIsOpen(true)
+                        }
+                    }}
                     className={`flex items-center gap-1.5 text-sm sm:text-base font-bold py-1 px-0.5 transition-colors shrink-0 max-w-full ${whiteMode
                         ? 'text-white hover:text-white/80'
-                        : selectedLibrary 
+                        : activeLibrary 
                             ? 'text-gray-900 hover:text-gray-700 font-black' 
                             : 'text-gray-400 hover:text-gray-600 font-medium'
                         }`}
                 >
-                    <MapPin className={`w-4 h-4 shrink-0 ${whiteMode ? 'text-white' : selectedLibrary ? 'text-amber-500' : 'text-gray-400'}`} />
+                    <MapPin className={`w-4 h-4 shrink-0 ${whiteMode ? 'text-white' : activeLibrary ? 'text-amber-500' : 'text-gray-400'}`} />
                     <span className="truncate underline decoration-gray-300 underline-offset-4">
                         {displayLibraryName}
                     </span>
@@ -75,7 +104,7 @@ export default function LibrarySelector({
                     {/* Overlay */}
                     <div
                         className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto ${isOpen ? 'opacity-100' : 'opacity-0'}`}
-                        onClick={() => setIsOpen(false)}
+                        onClick={handleClose}
                     />
 
                     {/* Sheet */}
@@ -86,7 +115,7 @@ export default function LibrarySelector({
                         <div className="p-6 pb-7 relative">
                             {/* 우상단 X 닫기 버튼 */}
                             <button
-                                onClick={() => setIsOpen(false)}
+                                onClick={handleClose}
                                 aria-label="닫기"
                                 className="absolute top-5 right-5 p-2 text-gray-400 hover:text-gray-600 active:scale-95 rounded-full hover:bg-gray-100 transition-all"
                             >

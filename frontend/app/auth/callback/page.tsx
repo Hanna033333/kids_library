@@ -31,8 +31,7 @@ const NOUNS = [
 function generateRandomNickname() {
     const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
     const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
-    const randNum = Math.floor(100 + Math.random() * 900)
-    return `${adj}${noun}${randNum}`
+    return `${adj}${noun}`
 }
 
 function AuthCallbackContent() {
@@ -141,7 +140,7 @@ function AuthCallbackContent() {
                 const token = sessionData?.session?.access_token || ''
 
                 // 백엔드 응답이 지연돼도 로더에 갇히지 않도록 8초 타임아웃을 건다
-                const registerMember = async (): Promise<{ ok: boolean; status: number; reason: string }> => {
+                const registerMember = async (targetNickname: string): Promise<{ ok: boolean; status: number; reason: string }> => {
                     const controller = new AbortController()
                     const timer = setTimeout(() => controller.abort(), 8000)
                     try {
@@ -155,7 +154,7 @@ function AuthCallbackContent() {
                                 agreed_to_terms: true,
                                 agreed_to_privacy: true,
                                 agreed_to_marketing: false,
-                                nickname
+                                nickname: targetNickname
                             }),
                             signal: controller.signal
                         })
@@ -174,9 +173,15 @@ function AuthCallbackContent() {
                     }
                 }
 
-                // 일시적인 네트워크 오류로 가입이 통째로 유실되지 않도록 1회 재시도
-                let result = await registerMember()
-                if (!result.ok) result = await registerMember()
+                // 일시적인 네트워크 오류 또는 닉네임 중복(409)으로 가입이 유실되지 않도록 1회 재시도
+                let result = await registerMember(nickname)
+                if (!result.ok) {
+                    const retryNickname = result.status === 409 ? generateRandomNickname() : nickname
+                    if (result.status === 409) {
+                        sessionStorage.setItem('generatedNickname', retryNickname)
+                    }
+                    result = await registerMember(retryNickname)
+                }
                 registered = result.ok
 
                 if (!result.ok) {
@@ -189,12 +194,18 @@ function AuthCallbackContent() {
                         has_token: token ? 'yes' : 'no'
                     })
                 }
+            }
 
-                // 등록에 성공한 '진짜 신규 계정'에만 축하 모달을 띄운다.
-                // 닉네임이 비어 뒤늦게 채워진 기존 회원에게는 띄우지 않는다.
-                if (registered && isBrandNewAccount) {
-                    sessionStorage.setItem('showSignupComplete', 'true')
-                    sessionStorage.setItem('pendingSignupMethod', provider || 'unknown')
+            // DB 트리거(024)가 auth.users 생성 시 members 행과 nickname까지 자동 생성하므로
+            // needsProfile이 false여도 방금 생성된 신규 계정이면 축하 모달과 sign_up 이벤트를 정상 트리거한다.
+            const hasRegisteredMember = !needsProfile || registered
+            const welcomeKey = `signup_welcomed_${user.id}`
+            if (hasRegisteredMember && isBrandNewAccount && !localStorage.getItem(welcomeKey)) {
+                localStorage.setItem(welcomeKey, 'true')
+                sessionStorage.setItem('showSignupComplete', 'true')
+                sessionStorage.setItem('pendingSignupMethod', provider || 'unknown')
+                if (!needsProfile && member?.nickname) {
+                    sessionStorage.setItem('generatedNickname', member.nickname)
                 }
             }
 

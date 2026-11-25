@@ -19,6 +19,11 @@ description: Rules for maintaining consistency across planning, design, and deve
 - **버튼 4종 체계**: 기본 높이 `48px` (`h-12`)의 Primary(`#F59E0B`), Secondary(`#F3F4F6`), Outline, Kakao(`#FEE500`) 및 바텀 고정 CTA `56px` (`h-14`)로 단순화하며 파괴적(Red) 버튼을 전면 배제합니다.
 - **팝업 및 모달**: 중앙 팝업은 좌측 정렬(`text-left`) 및 `타이틀(18~20px Bold)` ➔ `설명(14px Regular)` ➔ `버튼`의 플랫한 위계를 유지하고 상단 이모지 장식을 배제합니다.
 - **도서 카드 규격**: `@/components/BookItem.tsx` 세로형 단일 카드를 사용하며, 상단 표지(1:1.1) + 연령 캡슐 ➔ 하단 제목 ➔ 출판사 ➔ 태그 ➔ 청구기호/대출배지가 4~8px의 콤팩트한 여백으로 연결되도록 합니다.
+- **모바일 가로 슬라이더 Peek(다음 카드 귀퉁이 노출) 원칙**:
+  - 모바일(360px 기준)에서 유저가 가로 스크롤 가능함을 즉시 인지할 수 있도록, 다음 카드(1단 슬라이더는 3번째 책, 2단 슬라이더는 2번째 열)가 화면 우측에 **최소 30px 이상** 삐죽(Peek) 보여야 합니다.
+  - 좌측 패딩(`pl-*`), 카드 너비(`w-*`), 카드 간격(`gap-*`) 중 하나라도 수정할 때는 반드시 누적합 공식 `pl + (카드너비 × 노출개수) + (간격 × 노출개수) ≤ 330px`을 검증합니다. (소폭 증가가 누적되어 360~390px 화면 밖으로 밀리는 회귀 방지)
+  - **1단 도서 슬라이더 표준** (`CurationSection`, `ThemeCurationShowcase`, `RecommendationSlider`, `BookDetailClient`): `pl-6`(24px) + `w-[140px] sm:w-[190px]` + `gap-2.5 sm:gap-4` (3번째 카드 시작 `324px`, 360px에서 `36px` 노출). `BookItem` 하단 정보 영역은 `140px` 폭에 맞춰 `p-3 sm:p-4`, 제목 `text-[15px] sm:text-base`를 유지합니다.
+  - **2단 교과서 슬라이더 표준** (`TextbookCurationShowcase`): `pl-6`(24px) + `w-[288px] sm:w-[370px] lg:w-[455px]` + `gap-2.5 sm:gap-4` (2번째 열 시작 `322px`, 360px에서 `38px` 노출).
 - **단일 로딩 경험**: 모든 로딩 화면은 `/children-book.gif`(`w-24 h-24`)를 사용하는 `@/components/ui/PageLoader.tsx`만 단독 노출하며, 텍스트나 스켈레톤 카드를 배제합니다.
 - **바텀시트**: 모바일 도서관 변경 전용 `@/components/LibrarySelector.tsx`(`rounded-t-[28px]`) 시트 규격을 따릅니다.
 - **네비게이션 헤더**: `@/components/PageHeader.tsx`는 좌측(`w-[84px]`: 뒤로가기+홈) + 중앙(`flex-1`: 11자 이내 타이틀) + 우측(`w-[84px]`: 검색/마이) 3분할 구조를 유지하며, 타이틀에는 이모티콘 없이 순수 텍스트만 표시합니다.

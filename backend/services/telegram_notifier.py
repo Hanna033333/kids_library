@@ -1,7 +1,7 @@
 import os
 import html
 import httpx
-from typing import List
+from typing import List, Optional
 
 async def send_threads_preview(caption: str, image_urls: List[str], confirm_url: str) -> bool:
     """
@@ -149,9 +149,14 @@ async def send_threads_text_preview(caption: str, books: List[dict], confirm_url
             print(f"❌ [Telegram] 텍스트 시안 전송 중 에러 발생: {e}")
             return False
 
-async def send_telegram_message(text: str) -> bool:
+async def send_telegram_message(
+    text: str,
+    button_text: Optional[str] = None,
+    button_url: Optional[str] = None,
+) -> bool:
     """
     단순 텍스트 알림 메시지를 텔레그램으로 전송합니다.
+    button_text와 button_url이 함께 전달되면 하단에 인라인 링크 버튼을 포함합니다.
     """
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
@@ -159,17 +164,36 @@ async def send_telegram_message(text: str) -> bool:
         return False
     
     api_base = f"https://api.telegram.org/bot{bot_token}"
+    payload = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+    }
+    if button_text and button_url:
+        payload["reply_markup"] = {
+            "inline_keyboard": [
+                [
+                    {
+                        "text": button_text,
+                        "url": button_url,
+                    }
+                ]
+            ]
+        }
+
     async with httpx.AsyncClient() as client:
         try:
-            await client.post(
+            response = await client.post(
                 f"{api_base}/sendMessage",
-                json={
-                    "chat_id": chat_id,
-                    "text": text,
-                    "parse_mode": "HTML"
-                },
+                json=payload,
                 timeout=10.0
             )
+            res_json = response.json()
+            if not res_json.get("ok"):
+                print(f"❌ [Telegram] 메시지 전송 실패: {res_json}")
+                return False
             return True
-        except Exception:
+        except Exception as e:
+            print(f"❌ [Telegram] 메시지 전송 중 에러 발생: {e}")
             return False

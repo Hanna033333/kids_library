@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 interface FilterBarProps {
   selectedAge: string;
   onAgeChange: (age: string) => void;
@@ -7,6 +9,8 @@ interface FilterBarProps {
   selectedTag?: string;
   onTagChange?: (tag: string) => void;
   disabledAges?: string[];
+  rightSlot?: ReactNode;
+  embedded?: boolean;
 }
 
 const AGE_OPTIONS = [
@@ -33,7 +37,9 @@ export default function FilterBar({
   isTextbook = false,
   selectedTag = "",
   onTagChange,
-  disabledAges = []
+  disabledAges = [],
+  rightSlot,
+  embedded = false
 }: FilterBarProps) {
 
   const handleAgeToggle = (ageVal: string) => {
@@ -55,8 +61,8 @@ export default function FilterBar({
   };
 
   return (
-    <div className="w-full px-4 pt-2 pb-2 mb-4">
-      <div className="w-full max-w-[1200px] mx-auto flex items-center justify-between gap-3">
+    <div className={embedded ? "w-full" : "w-full px-4 pt-1.5 pb-1.5 mb-2"}>
+      <div className={embedded ? "w-full flex items-center justify-between gap-3" : "w-full max-w-[1200px] mx-auto flex items-center justify-between gap-3"}>
 
         {/* Left Side: Scrollable Filters (Horizontal scroll under the thumb) */}
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1 flex-1">
@@ -121,6 +127,13 @@ export default function FilterBar({
             })
           )}
         </div>
+
+        {/* Right Side: Optional Slot (e.g., Share button) */}
+        {rightSlot && (
+          <div className="shrink-0 flex items-center">
+            {rightSlot}
+          </div>
+        )}
       </div>
     </div>
   );

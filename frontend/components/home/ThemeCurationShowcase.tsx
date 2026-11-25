@@ -11,6 +11,7 @@ import BookCard from './BookCard'
 import { sendGAEvent } from '@/lib/analytics'
 import { isValidCoverImage } from '@/lib/utils/image'
 import { getCurationMoreLink } from '@/lib/utils/curation-link'
+import { sortBooksByAgePreference } from '@/lib/utils/age'
 
 export interface ThemeTab {
   id: string
@@ -33,12 +34,14 @@ interface ThemeCurationShowcaseProps {
   initialTab?: string
   initialBooks?: Book[]
   bgColor?: string
+  preferredAge?: string | null
 }
 
 export default function ThemeCurationShowcase({
   initialTab = 'eco',
   initialBooks,
-  bgColor = 'bg-muted-bg'
+  bgColor = 'bg-muted-bg',
+  preferredAge
 }: ThemeCurationShowcaseProps) {
   const { user } = useAuth()
   const userId = user?.id
@@ -71,7 +74,7 @@ export default function ThemeCurationShowcase({
     }
 
     setLoading(true)
-    getBooksByTag(currentTab.tag, 7, undefined, !!userId)
+    getBooksByTag(currentTab.tag, 14, undefined, !!userId)
       .then(books => {
         if (!isCancelled) {
           setCache(prev => ({ ...prev, [currentTab.id]: books }))
@@ -114,7 +117,8 @@ export default function ThemeCurationShowcase({
     })
   }
 
-  const currentBooks = (cache[currentTab.id] || []).filter(b => isValidCoverImage(b.image_url))
+  const rawBooks = (cache[currentTab.id] || []).filter(b => isValidCoverImage(b.image_url))
+  const currentBooks = sortBooksByAgePreference(rawBooks, preferredAge, 7)
 
   return (
     <section className={`py-8 px-4 ${bgColor}`}>
@@ -185,11 +189,11 @@ export default function ThemeCurationShowcase({
                 ref={sliderRef}
                 className="overflow-x-auto scrollbar-hide -mx-4 scroll-smooth"
               >
-                <div className="flex gap-4 pb-4 items-stretch pl-6 w-max min-w-full">
+                <div className="flex gap-2.5 sm:gap-4 pb-4 items-stretch pl-6 w-max min-w-full">
                   {currentBooks.map((book) => (
                     <div
                       key={book.id}
-                      className="flex-shrink-0 w-[165px] sm:w-[190px]"
+                      className="flex-shrink-0 w-[140px] sm:w-[190px]"
                     >
                       <BookCard
                         book={book}
@@ -197,8 +201,8 @@ export default function ThemeCurationShowcase({
                       />
                     </div>
                   ))}
-                  {/* 우측 끝 스크롤 마진 확보용 스페이서 (gap-4: 16px 유지) */}
-                  <div className="shrink-0 w-0" aria-hidden="true" />
+                  {/* 우측 끝 스크롤 마진 확보용 스페이서 */}
+                  <div className="shrink-0 w-2 sm:w-0" aria-hidden="true" />
                 </div>
               </div>
 
@@ -215,7 +219,7 @@ export default function ThemeCurationShowcase({
             {/* 책 목록 하단: 디자인 시스템 표준 미니멀 텍스트 링크 */}
             <div className="mt-3 text-center">
               <Link
-                href={getCurationMoreLink({ curation: currentTab.tag })}
+                href={getCurationMoreLink({ curation: currentTab.tag, age: preferredAge })}
                 onClick={() => sendGAEvent('click_theme_showcase_bottom_cta', { section: currentTab.tag })}
                 className="inline-flex items-center gap-1 text-[13.5px] font-bold text-gray-500 active:text-gray-900 transition-colors py-1 group cursor-pointer"
               >
