@@ -52,7 +52,7 @@ export default function BookList({
   const { user } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loginModalConfig, setLoginModalConfig] = useState({
-    title: "도서관 헛걸음 끝! 대출 가능한 책만 1초 스캔",
+    title: "도서관 헛걸음 끝!\n대출 가능한 책만 1초 스캔",
     description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요.",
   });
   const [shouldAutoOpenLibrary, setShouldAutoOpenLibrary] = useState(false);
@@ -459,6 +459,8 @@ export default function BookList({
     );
   }
 
+  const isLibraryBannerMode = !user || !selectedLibrary;
+
   const libraryControl = !user ? (
     <button
       type="button"
@@ -469,16 +471,22 @@ export default function BookList({
         }
         sendGAEvent("click_library_cta_unauth", { source: "book_list" });
         setLoginModalConfig({
-          title: "도서관 헛걸음 끝! 대출 가능한 책만 1초 스캔",
+          title: "도서관 헛걸음 끝!\n대출 가능한 책만 1초 스캔",
           description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요.",
         });
         setIsLoginModalOpen(true);
       }}
-      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white border border-amber-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-[13px] font-bold text-gray-900 active:bg-amber-50 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none shrink-0"
+      className="w-full min-h-[48px] flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl bg-white border-[1.5px] border-brand-primary shadow-[0_1px_4px_rgba(0,0,0,0.04)] active:bg-amber-50/70 active:scale-[0.99] transition-all cursor-pointer outline-none focus:outline-none"
     >
-      <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
-      <span>우리 동네 도서관 대출 확인</span>
-      <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+      <div className="flex items-center gap-2 min-w-0 text-left">
+        <span className="w-7 h-7 rounded-full bg-amber-50 text-brand-primary flex items-center justify-center shrink-0">
+          <MapPin className="w-4 h-4" />
+        </span>
+        <span className="text-[13.5px] sm:text-[14px] font-bold text-gray-900 leading-snug break-keep">
+          우리 동네 도서관에서 빌릴 수 있는지 확인하기
+        </span>
+      </div>
+      <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
     </button>
   ) : !selectedLibrary ? (
     <LibrarySelector
@@ -488,11 +496,17 @@ export default function BookList({
         <button
           type="button"
           onClick={open}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white border border-amber-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] text-[13px] font-bold text-gray-900 active:bg-amber-50 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none shrink-0"
+          className="w-full min-h-[48px] flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl bg-white border-[1.5px] border-brand-primary shadow-[0_1px_4px_rgba(0,0,0,0.04)] active:bg-amber-50/70 active:scale-[0.99] transition-all cursor-pointer outline-none focus:outline-none"
         >
-          <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
-          <span>내 도서관 설정하기</span>
-          <ChevronRight className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+          <div className="flex items-center gap-2 min-w-0 text-left">
+            <span className="w-7 h-7 rounded-full bg-amber-50 text-brand-primary flex items-center justify-center shrink-0">
+              <MapPin className="w-4 h-4" />
+            </span>
+            <span className="text-[13.5px] sm:text-[14px] font-bold text-gray-900 leading-snug break-keep">
+              내 도서관 설정하고 빌릴 수 있는지 확인하기
+            </span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
         </button>
       )}
     />
@@ -509,18 +523,26 @@ export default function BookList({
     <div className="w-full px-4">
       <div className="w-full max-w-[1200px] mx-auto">
         {!isSearchWaitingState && filterBar ? (
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3 pt-0.5 pb-1.5 mb-2">
-            <div className="w-full md:w-auto min-w-0 md:flex-1">
+          <div
+            className={
+              isLibraryBannerMode
+                ? "flex flex-col gap-2.5 pt-0.5 pb-1.5 mb-2.5"
+                : "flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3 pt-0.5 pb-1.5 mb-2"
+            }
+          >
+            <div className={isLibraryBannerMode ? "w-full min-w-0" : "w-full md:w-auto min-w-0 md:flex-1"}>
               {filterBar}
             </div>
-            <div className="w-full md:w-auto shrink-0 flex items-center justify-end md:pl-1">
-              {libraryControl}
-            </div>
+            {isLibraryBannerMode && (
+              <div className="w-full">
+                {libraryControl}
+              </div>
+            )}
           </div>
         ) : (
           <>
-            {!isSearchWaitingState && (
-              <div className="flex items-center justify-end mt-0 mb-2.5 px-1">
+            {!isSearchWaitingState && isLibraryBannerMode && (
+              <div className="w-full mt-0 mb-3">
                 {libraryControl}
               </div>
             )}

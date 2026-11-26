@@ -65,7 +65,7 @@ export default function LoginPromptModal({
     return (
         <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-[344px]">
             <div className="p-6 text-left">
-                <h3 className="text-[19px] font-bold text-gray-900 leading-snug mb-2 pr-6 tracking-tight break-keep">
+                <h3 className="text-[19px] font-bold text-gray-900 leading-snug mb-2 pr-6 tracking-tight break-keep whitespace-pre-line">
                     {title}
                 </h3>
                 <p className="text-gray-600 text-[14px] mb-6 leading-relaxed tracking-tight break-keep whitespace-pre-line font-normal">

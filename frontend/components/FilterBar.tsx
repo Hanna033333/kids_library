@@ -65,7 +65,7 @@ export default function FilterBar({
       <div className={embedded ? "w-full flex items-center justify-between gap-3" : "w-full max-w-[1200px] mx-auto flex items-center justify-between gap-3"}>
 
         {/* Left Side: Scrollable Filters (Horizontal scroll under the thumb) */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1 flex-1">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1 flex-1 min-w-0">
           {/* 통합 필터 (정렬 등) 버튼 */}
           {showFilterButton && (
             <button
@@ -130,7 +130,7 @@ export default function FilterBar({
 
         {/* Right Side: Optional Slot (e.g., Share button) */}
         {rightSlot && (
-          <div className="shrink-0 flex items-center">
+          <div className={`shrink-0 flex items-center ${isTextbook ? "pl-2 border-l border-gray-200/70" : ""}`}>
             {rightSlot}
           </div>
         )}

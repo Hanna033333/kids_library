@@ -315,7 +315,7 @@ export default function BookDetailClient({
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
     const [shouldAutoOpenLibrary, setShouldAutoOpenLibrary] = useState(false)
     const [loginModalProps, setLoginModalProps] = useState({
-        title: "도서관 헛걸음 끝! 대출 가능한 책만 1초 스캔",
+        title: "도서관 헛걸음 끝!\n대출 가능한 책만 1초 스캔",
         description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요."
     })
 
@@ -328,7 +328,7 @@ export default function BookDetailClient({
             holding_library_count: holdingLibraryCount,
         })
         setLoginModalProps({
-            title: "도서관 헛걸음 끝! 대출 가능한 책만 1초 스캔",
+            title: "도서관 헛걸음 끝!\n대출 가능한 책만 1초 스캔",
             description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요."
         })
         setIsLoginModalOpen(true)
