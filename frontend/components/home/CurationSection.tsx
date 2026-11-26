@@ -43,8 +43,12 @@ export default function CurationSection({
   return (
     <section className={`py-8 px-4 ${bgColor}`}>
       <div className="max-w-[1200px] mx-auto">
-        <div className="flex items-end justify-between mb-8 px-2">
-          <div className="flex flex-col gap-1">
+        <Link
+          href={href}
+          onClick={onViewMore}
+          className="flex items-end justify-between gap-2 mb-8 px-2 cursor-pointer active:opacity-70 transition-opacity outline-none focus:outline-none"
+        >
+          <div className="flex flex-col gap-1 min-w-0">
             <span className="text-[13px] font-semibold text-gray-500 tracking-tight">
               {subtitle}
             </span>
@@ -52,14 +56,10 @@ export default function CurationSection({
               {title}
             </h2>
           </div>
-          <Link
-            href={href}
-            className="text-gray-900 p-1 mb-0.5"
-            onClick={onViewMore}
-          >
+          <span className="text-gray-900 p-1 mb-0.5 shrink-0" aria-hidden="true">
             <ChevronRight className="w-6 h-6" />
-          </Link>
-        </div>
+          </span>
+        </Link>
 
         {books.length > 0 ? (
           <div className="overflow-x-auto scrollbar-hide -mx-4">

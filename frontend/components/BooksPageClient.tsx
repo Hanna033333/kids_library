@@ -382,25 +382,14 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                 showHome={true}
                 rightSlot={
                     <div className="flex items-center gap-3">
-                        {curationFilter ? (
-                            <button
-                                type="button"
-                                onClick={handleShareCuration}
-                                className="text-gray-500 active:text-gray-900 active:scale-95 transition-all p-1 cursor-pointer outline-none focus:outline-none"
-                                aria-label="큐레이션 리스트 공유하기"
-                            >
-                                <Share2 className="w-[22px] h-[22px]" />
-                            </button>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={() => setIsSearchVisible(!isSearchVisible)}
-                                className="text-gray-500 active:text-gray-900 active:scale-95 transition-all p-1 cursor-pointer outline-none focus:outline-none"
-                                aria-label="검색 열기"
-                            >
-                                <Search className="w-6 h-6" />
-                            </button>
-                        )}
+                        <button
+                            type="button"
+                            onClick={() => setIsSearchVisible(!isSearchVisible)}
+                            className="text-gray-500 active:text-gray-900 active:scale-95 transition-all p-1 cursor-pointer outline-none focus:outline-none"
+                            aria-label="검색 열기"
+                        >
+                            <Search className="w-6 h-6" />
+                        </button>
                         {user ? (
                             <button
                                 onClick={() => router.push('/my-page')}
@@ -466,6 +455,18 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                             selectedTag={tagFilter}
                             onTagChange={handleTagChange}
                             disabledAges={disabledAges}
+                            rightSlot={
+                                curationFilter ? (
+                                    <button
+                                        type="button"
+                                        onClick={handleShareCuration}
+                                        className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-gray-600 border border-gray-200/80 active:bg-gray-100 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none"
+                                        aria-label="큐레이션 리스트 공유하기"
+                                    >
+                                        <Share2 className="w-[18px] h-[18px]" />
+                                    </button>
+                                ) : undefined
+                            }
                         />
                     }
                 />

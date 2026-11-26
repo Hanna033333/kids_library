@@ -91,6 +91,10 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
     ? nonGradeTags.filter((t) => t !== excludeTag).slice(0, 2)
     : nonGradeTags.slice(0, 2);
 
+  const showLoanBadge = Boolean(
+    showLibraryInfo && user && selectedLibrary && normalizedStatus && normalizedStatus.status !== "확인중"
+  );
+
   return (
     <Link
       href={`/book/${book.id}`}
@@ -153,23 +157,23 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
           {book.title}
         </h3>
 
-        {/* 바닥 영역: 큐레이션 태그(좌) + 대출 가능 상태 배지(우) */}
-        {(tags.length > 0 || (showLibraryInfo && user && selectedLibrary && normalizedStatus && normalizedStatus.status !== "확인중")) && (
-          <div className={`mt-auto pt-2.5 sm:pt-3 flex items-center gap-2 w-full ${tags.length > 0 ? "justify-between" : "justify-start"}`}>
-            {/* 태그 (공간이 좁으면 자연스럽게 2줄로 줄바꿈) */}
+        {/* 바닥 영역: 큐레이션 태그(상) + 대출 가능 상태 배지(하) 2단 배치 */}
+        {(tags.length > 0 || showLoanBadge) && (
+          <div className="mt-auto pt-2.5 sm:pt-3 flex flex-col items-start gap-2 w-full">
+            {/* 1단: 큐레이션 태그 (전체 가로폭 사용) */}
             {tags.length > 0 && (
-              <div className="flex items-center gap-x-1.5 gap-y-0.5 sm:gap-x-2 text-[12.5px] sm:text-[13px] font-medium text-gray-500 flex-wrap flex-1 min-w-0 leading-[1.35]">
+              <div className="flex items-center gap-x-1.5 gap-y-0.5 sm:gap-x-2 text-[12.5px] sm:text-[13px] font-medium text-gray-500 flex-wrap w-full min-w-0 leading-[1.35]">
                 {tags.map((tag, idx) => (
-                  <span key={idx} className="text-gray-500">
+                  <span key={idx} className="text-gray-500 whitespace-nowrap">
                     #{formatCurationTag(tag)}
                   </span>
                 ))}
               </div>
             )}
 
-            {/* 대출 가능 상태 배지 (선호 도서관 설정 시에만 노출 — 청구기호는 도서 상세에서 제공) */}
-            {showLibraryInfo && user && selectedLibrary && normalizedStatus && normalizedStatus.status !== "확인중" && (
-              <span className={`shrink-0 inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
+            {/* 2단: 대출 가능 상태 배지 (선호 도서관 설정 시에만 노출 — 청구기호는 도서 상세에서 제공) */}
+            {showLoanBadge && normalizedStatus && (
+              <span className={`self-end shrink-0 inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
                 ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
                 : normalizedStatus.available === false
                   ? "bg-red-50 text-red-600 border border-red-200"
