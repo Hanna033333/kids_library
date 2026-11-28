@@ -255,7 +255,7 @@ export default function LibrarySelector({
                                     disabled={isLocating}
                                     className={`w-full min-h-[48px] px-4 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all outline-none focus:outline-none ${coords
                                         ? 'bg-brand-primary text-white active:bg-brand-primary-dark'
-                                        : 'bg-amber-50 text-amber-800 border border-amber-200 active:bg-amber-100'
+                                        : 'bg-surface-sub text-gray-700 border border-transparent active:bg-gray-200'
                                         } disabled:opacity-50`}
                                 >
                                     <Navigation className="w-4 h-4 shrink-0" />
