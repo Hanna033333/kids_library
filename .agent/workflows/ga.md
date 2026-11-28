@@ -193,3 +193,11 @@ def query_ga4(start_date, end_date, dimensions, metrics, dimension_filter=None, 
 * `@.agent/rules/marketing.md` — 마케팅 KPI 및 전환 최적화 정책
 * `@.agent/rules/growth_hacker.md` — 데이터 기반 그로스 가설 검증
 * `@.agent/skills/marketing/ga4_integration/SKILL.md` — GA4 상세 스킬 문서
+
+
+---
+
+## 💾 [Step 5] 주간 지표 누적 및 배포 검증 연동
+* 주간 정기 분석(`/ga 저번주`) 수행 시 핵심 수치를 [weekly_metrics.csv](file:///Users/1004823/Desktop/kids_library/docs/metrics/weekly_metrics.csv)에 누적 기록하여 시계열 추이를 보존합니다.
+* 배포 전후 비교(`/ga 배포 YYYY-MM-DD`) 결과를 [releases.md](file:///Users/1004823/Desktop/kids_library/docs/releases.md)와 Notion 칸반보드(`notion_kanban.py update --verdict ...`)에 반영합니다.
+* 자동 리포트는 AWS Lightsail 백엔드(`weekly_report_scheduler`)가 **매주 월요일 오전 9시(KST)**에 텔레그램으로 발송합니다.

@@ -68,11 +68,9 @@ export default function BookDetailClient({
         initialBook.image_url ? getOptimizedImageUrl(initialBook.image_url, 'detail') : null
     )
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false)
-    const { selectedLibrary } = useLibrary()
-    // 미로그인 상태에서는 특정 도서관을 강제 노출하지 않고, 내 도서관 확인 CTA를 노출한다
-    const effectiveLibrary: LibraryName | null = isAuthLoading
-        ? selectedLibrary
-        : (user ? selectedLibrary : null)
+    const { selectedLibrary, selectedLibraryCode } = useLibrary()
+    // 전국 도서관 비로그인 전면 개방: 도서관만 선택하면 로그인 없이도 실시간 대출 여부와 청구기호 확인 가능
+    const effectiveLibrary: LibraryName | null = selectedLibrary
 
     // Handle book navigation
     useEffect(() => {
@@ -163,7 +161,25 @@ export default function BookDetailClient({
         return uniqueLibraries.size
     }, [effectiveLibraryInfo])
 
-    // 청구기호 결정 로직 (book_library_info 단일 테이블 기준)
+    // React Query for Loan Status (전국 도서관 On-Demand 실시간 대출 + 단건 청구기호 조회)
+    const { data: loanStatuses, isError: isLoanError, isFetching: isLoanFetching } = useQuery({
+        queryKey: ['book-loan-status', book.id, effectiveLibrary, selectedLibraryCode],
+        queryFn: async () => {
+            if (!effectiveLibrary) return {};
+            return await fetchLoanStatuses([book.id], effectiveLibrary, {
+                libCode: selectedLibraryCode,
+                includeCallno: true,
+            });
+        },
+        enabled: !!effectiveLibrary,
+        staleTime: 5 * 60 * 1000,
+        retry: 1,
+        refetchOnWindowFocus: false,
+    });
+
+    const rawLoanStatus = loanStatuses?.[book.id];
+
+    // 청구기호 결정 로직 (DB book_library_info 우선, 없으면 On-Demand itemSrch 결과 활용)
     let displayCallNo = '청구기호 없음'
     if (!effectiveLibrary) {
         displayCallNo = '도서관을 선택해주세요'
@@ -173,44 +189,32 @@ export default function BookDetailClient({
         )
         if (info && info.callno && info.callno !== '없음') {
             displayCallNo = info.callno
+        } else if (rawLoanStatus?.callno && rawLoanStatus.callno !== '없음') {
+            displayCallNo = rawLoanStatus.callno
         } else {
             displayCallNo = '보유 정보 없음'
         }
     }
 
-    // React Query for Loan Status
-    const { data: loanStatuses, isError: isLoanError } = useQuery({
-        queryKey: ['book-loan-status', book.id, effectiveLibrary],
-        queryFn: async () => {
-            if (!effectiveLibrary) return {};
-            return await fetchLoanStatuses([book.id], effectiveLibrary);
-        },
-        enabled: !!effectiveLibrary && !isCheckingLibraryInfo && !!displayCallNo && displayCallNo !== '청구기호 없음' && displayCallNo !== '보유 정보 없음' && displayCallNo !== '도서관을 선택해주세요',
-        staleTime: 3 * 60 * 1000,
-        retry: 1,
-        refetchOnWindowFocus: false,
-    });
-
-    // Derive final status
+    // Derive final status (전국 도서관 실시간 결과 우선)
     const normalizedStatus = (() => {
-        if (isCheckingLibraryInfo) {
-            return undefined;
-        }
-        // 1. 청구기호 없으면 무조건 '미소장'
-        if (!effectiveLibrary || !displayCallNo || displayCallNo === '청구기호 없음' || displayCallNo === '보유 정보 없음' || displayCallNo === '도서관을 선택해주세요') {
+        if (!effectiveLibrary) {
             return { status: "미소장", available: null };
         }
 
-        const rawStatus = loanStatuses?.[book.id];
-        if (rawStatus) {
-            const status = rawStatus.status;
+        if (rawLoanStatus) {
+            const status = rawLoanStatus.status;
             if (status === "시간초과" || status === "확인불가" || status === "확인중") {
-                return { ...rawStatus, status: "확인중", available: null };
+                return { ...rawLoanStatus, status: "확인중", available: null };
             }
             if (status === "정보없음" || status === "미소장") {
-                return { ...rawStatus, status: "미소장", available: null };
+                return { ...rawLoanStatus, status: "미소장", available: null };
             }
-            return rawStatus;
+            return rawLoanStatus;
+        }
+
+        if (isLoanFetching || isCheckingLibraryInfo) {
+            return undefined;
         }
 
         if (isLoanError) {
@@ -219,6 +223,14 @@ export default function BookDetailClient({
 
         return undefined;
     })();
+
+    const isCheckingStatus = Boolean(effectiveLibrary && !rawLoanStatus && (isLoanFetching || isCheckingLibraryInfo));
+    const isOwnedWithoutCallno = Boolean(
+        normalizedStatus &&
+        (normalizedStatus.status === '대출가능' || normalizedStatus.status === '대출중') &&
+        (displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음')
+    );
+    const libraryHomepage = rawLoanStatus?.library_homepage || '';
 
     // 맥락적 CTA 분기 구조 설계
     const getPurchaseButtonProps = () => {
@@ -314,10 +326,6 @@ export default function BookDetailClient({
 
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
     const [shouldAutoOpenLibrary, setShouldAutoOpenLibrary] = useState(false)
-    const [loginModalProps, setLoginModalProps] = useState({
-        title: "도서관 헛걸음 끝!\n대출 가능한 책만 1초 스캔",
-        description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요."
-    })
 
     const handleGuestLibraryChange = () => {
         sessionStorage.setItem('returnUrl', window.location.pathname + window.location.search)
@@ -327,10 +335,6 @@ export default function BookDetailClient({
             source: 'book_detail_unauth_cta',
             holding_library_count: holdingLibraryCount,
         })
-        setLoginModalProps({
-            title: "도서관 헛걸음 끝!\n대출 가능한 책만 1초 스캔",
-            description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요."
-        })
         setIsLoginModalOpen(true)
     }
 
@@ -339,10 +343,6 @@ export default function BookDetailClient({
             sessionStorage.setItem('returnUrl', window.location.pathname + window.location.search)
             sessionStorage.setItem('pendingAction', `like_book_${book.id}`)
             sendGAEvent('click_bookmark_unauth', { book_id: book.id })
-            setLoginModalProps({
-                title: "도서관 갈 때 까먹지 않게 내 책장에 쏙!",
-                description: "3초 간편 로그인으로 내 책장에 모아두고, 대출 가능 여부까지 한눈에 관리해 보세요."
-            })
             setIsLoginModalOpen(true)
             return
         }
@@ -624,7 +624,6 @@ export default function BookDetailClient({
                                             <LibrarySelector
                                                 autoOpen={shouldAutoOpenLibrary}
                                                 displayLibrary={effectiveLibrary}
-                                                onTriggerClick={!user ? handleGuestLibraryChange : undefined}
                                                 onClose={() => setShouldAutoOpenLibrary(false)}
                                             />
                                         </div>
@@ -632,14 +631,20 @@ export default function BookDetailClient({
                                         {/* 2행: 청구기호 & 대출 상태 뱃지 (모바일: 하단 제보 버튼, PC: 우측 제보 버튼) */}
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between sm:flex-wrap gap-2 pt-0.5">
                                             <div className="flex items-center gap-3 flex-wrap">
-                                                {isCheckingLibraryInfo ? (
+                                                {isCheckingStatus ? (
                                                     <span className="inline-block w-36 h-7 bg-gray-100 rounded-md animate-pulse" />
                                                 ) : (
                                                     <>
-                                                        <span className={`tracking-tight ${displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'font-black text-xl md:text-2xl text-gray-400' : 'font-black text-xl md:text-2xl text-gray-900'
-                                                            }`}>
-                                                            {displayCallNo}{book.vol && effectiveLibrary && !PLACEHOLDER_CALL_NOS.includes(displayCallNo) ? `-${book.vol}` : ''}
-                                                        </span>
+                                                        {isOwnedWithoutCallno ? (
+                                                            <span className="font-bold text-base sm:text-lg text-gray-800 tracking-tight">
+                                                                청구기호 미제공
+                                                            </span>
+                                                        ) : (
+                                                            <span className={`tracking-tight ${displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'font-black text-xl md:text-2xl text-gray-400' : 'font-black text-xl md:text-2xl text-gray-900'
+                                                                }`}>
+                                                                {displayCallNo}{book.vol && effectiveLibrary && !PLACEHOLDER_CALL_NOS.includes(displayCallNo) ? `-${book.vol}` : ''}
+                                                            </span>
+                                                        )}
                                                         {normalizedStatus && normalizedStatus.status !== "확인중" && (
                                                             <span className={`inline-flex items-center justify-center px-3 py-1.5 rounded-full text-xs font-bold leading-none text-center ${normalizedStatus.available === true
                                                                 ? "bg-[#ECFDF5] text-[#059669] border border-emerald-200"
@@ -651,6 +656,16 @@ export default function BookDetailClient({
                                                                 }`}>
                                                                 {normalizedStatus.status}
                                                             </span>
+                                                        )}
+                                                        {isOwnedWithoutCallno && libraryHomepage && (
+                                                            <a
+                                                                href={libraryHomepage}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-xs font-semibold text-amber-700 underline underline-offset-4"
+                                                            >
+                                                                도서관 홈페이지 확인 ↗
+                                                            </a>
                                                         )}
                                                     </>
                                                 )}
@@ -668,7 +683,7 @@ export default function BookDetailClient({
                                         </div>
                                     </>
                                 ) : (
-                                    /* 미로그인 또는 도서관 미선택 상태 -> 플랫 리스트 행 + 우측 미니 액션 필 */
+                                    /* 도서관 미선택 상태 -> 클릭 시 전국 도서관 선택 바텀시트 즉시 오픈 (비로그인 전면 개방) */
                                     <LibrarySelector
                                         autoOpen={shouldAutoOpenLibrary}
                                         onClose={() => setShouldAutoOpenLibrary(false)}
@@ -676,10 +691,7 @@ export default function BookDetailClient({
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    if (!user) {
-                                                        handleGuestLibraryChange();
-                                                        return;
-                                                    }
+                                                    sendGAEvent('click_library_cta', { source: 'book_detail', authenticated: Boolean(user) });
                                                     open();
                                                 }}
                                                 className="-mx-2 px-2 py-2.5 w-[calc(100%+1rem)] min-h-[52px] text-left flex items-center justify-between rounded-xl active:bg-gray-50 active:scale-[0.99] transition-all cursor-pointer outline-none focus:outline-none"
@@ -691,7 +703,7 @@ export default function BookDetailClient({
                                                             우리 동네 도서관에 지금 있을까?
                                                         </div>
                                                         <p className="text-xs text-gray-500 font-normal leading-snug break-keep">
-                                                            내 도서관 대출 여부 확인하기
+                                                            전국 1,600+ 공공도서관 실시간 대출 확인
                                                         </p>
                                                     </div>
                                                 </div>
@@ -940,8 +952,6 @@ export default function BookDetailClient({
                         sessionStorage.removeItem('returnUrl')
                     }
                 }}
-                title={loginModalProps.title}
-                description={loginModalProps.description}
             />
 
             {/* WIP 미리보기 모달 (미노출 처리) */}

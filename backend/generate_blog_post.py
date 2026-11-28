@@ -214,17 +214,7 @@ def generate_blog_content(tag: str, books: List[dict], card_paths: List[str]) ->
         sys.exit(1)
 
     genai.configure(api_key=api_key)
-    
-    # 모델 정의
-    for model_name in ('gemini-3.5-flash', 'gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-flash-latest'):
-        try:
-            model = genai.GenerativeModel(model_name)
-            break
-        except Exception:
-            continue
-    else:
-        print("❌ GenerativeModel 초기화 에러: 사용 가능한 모델이 없습니다.")
-        sys.exit(1)
+    candidate_models = ('gemini-3-flash-preview', 'gemini-3.5-flash', 'gemini-flash-latest')
 
     # 도서 리스트 가공
     books_info = []
@@ -358,13 +348,20 @@ def generate_blog_content(tag: str, books: List[dict], card_paths: List[str]) ->
         
         return text.strip()
 
-    try:
-        response = model.generate_content(prompt)
-        cleaned_text = clean_for_naver_editor(response.text, tag, card_paths)
-        return cleaned_text
-    except Exception as e:
-        print(f"❌ Gemini API를 통한 글 생성 중 오류 발생: {e}")
-        sys.exit(1)
+    last_error = None
+    for model_name in candidate_models:
+        try:
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(prompt, request_options={"timeout": 60})
+            cleaned_text = clean_for_naver_editor(response.text, tag, card_paths)
+            return cleaned_text
+        except Exception as e:
+            print(f"⚠️ 모델 {model_name} 생성 실패 ({e}), 다음 모델로 폴백 시도...")
+            last_error = e
+            continue
+
+    print(f"❌ Gemini API를 통한 글 생성 중 오류 발생: {last_error}")
+    sys.exit(1)
 
 def main():
     parser = argparse.ArgumentParser(description="네이버 블로그용 큐레이션 원고 생성기")

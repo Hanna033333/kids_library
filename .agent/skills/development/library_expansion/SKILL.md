@@ -3,21 +3,31 @@ name: library_expansion
 description: Guidelines and checklists for expanding/adding new libraries to the platform (front/back/crawler)
 ---
 
-# 도서관 확장 가이드: 신규 도서관 추가 및 연동 절차
+# 도서관 확장 가이드: 전국 공공도서관 마스터 갱신 및 청구기호 표준
 
-이 가이드는 '책자리' 서비스에 신규 공공도서관을 추가하여 실시간 대출 상태 조회 및 도서 청구기호 정보를 제공하는 개발 표준 절차를 안내합니다.
-
----
-
-## 🎯 사용 사례
-
-### 언제 사용하나요?
-- 도서관 인프라 서비스 지역을 확장하기 위해 새로운 공공도서관을 추가할 때
-- 정보나루(Data4Library) API 조회가 활성화되는 타겟 지역 도서관을 신규 연동할 때
+> [!IMPORTANT]
+> **전국 1,600+ 공공도서관 전면 개방 완료 (2026.11)**
+> 이제 개별 도서관을 추가하기 위해 `LIBRARY_CODE_MAP`·`AVAILABLE_LIBRARIES`를 하드코딩하거나 Selenium 크롤러를 별도 작성할 필요가 없습니다. 전국 모든 공공도서관은 `backend/data/libraries.json` 마스터 + 실시간 `bookExist` / On-Demand `itemSrch` 구조로 자동 지원됩니다.
 
 ---
 
-## 🛠️ 단계별 구현 절차
+## 🚀 기본 절차: 전국 공공도서관 마스터 데이터 갱신
+
+신규 개관 도서관 반영 또는 도서관 주소/위경도/홈페이지 정보 최신화가 필요할 때 실행합니다.
+
+1. **수집 스크립트 실행** (`backend/scripts/fetch_national_libraries.py`):
+   ```bash
+   ./backend/venv/bin/python backend/scripts/fetch_national_libraries.py
+   ```
+2. **출력 결과**: `backend/data/libraries.json` 갱신 (`code`, `name`, `official_name`, `address`, `region`, `lat`, `lng`, `homepage`, `has_callno_db`)
+3. **API 안정성 규격**:
+   - 정보나루 `libSrch` 호출 시 `pageSize=500`은 서버가 연결을 끊는(`ConnectionResetError: [Errno 54]`) 현상이 발생하므로 반드시 **`pageSize=100` + 3회 재시도** 규격을 유지합니다.
+4. **배포 확인**: AWS 백엔드 배포 시 `backend/data/libraries.json`이 서버에 함께 동기화되어야 `GET /api/libraries` 검색 API가 정상 동작합니다.
+
+---
+
+## 📦 [레거시 참고] 개별 도서관 대량 청구기호 사전 적재 절차
+특정 도서관의 청구기호를 사전에 대량으로 DB(`book_library_info`)에 미리 채워두고 싶을 때만 아래 절차를 참고합니다.
 
 ### 1단계: 정보나루(Data4Library) 기관 코드 및 청구기호 수집 API 엔드포인트 확인
 새로운 도서관을 추가하기 전, 도서관 실시간 대출 여부를 쿼리하기 위한 **정보나루 6자리 기관 코드**를 확보해야 합니다.

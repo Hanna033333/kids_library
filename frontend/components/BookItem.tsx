@@ -55,22 +55,9 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
   const gradeTag = rawCurationTags.find((t) => isGradeTag(t));
   const displayBadge = gradeTag ? formatCurationTag(gradeTag) : getAgeDisplayLabel(book.age);
 
-  // 선호 도서관 소장 여부 판별 (showLibraryInfo이고 선호 도서관이 설정되었을 때만 연산 — book_library_info 단일 테이블 기준)
-  const hasHolding = (() => {
-    if (!showLibraryInfo || !selectedLibrary) return false;
-    const info = book.library_info?.find(
-      (l) => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary)
-    );
-    return Boolean(info && info.callno && info.callno !== '없음');
-  })();
-
-  // Normalize loan status (showLibraryInfo 및 selectedLibrary 존재 시에만 사용)
+  // Normalize loan status (전국 도서관 On-Demand 실시간 결과 우선 반영, 비로그인 전면 개방)
   const normalizedStatus = (() => {
     if (!showLibraryInfo || !selectedLibrary) return null;
-
-    if (!hasHolding) {
-      return { status: "미소장", available: null };
-    }
 
     if (loanStatus) {
       const status = loanStatus.status;
@@ -82,6 +69,8 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
       }
       return loanStatus;
     }
+
+    // 아직 배치 조회 응답이 오기 전에는 로딩 중('확인중')으로 두어 전국 도서관이 순간 '미소장'으로 깜빡이지 않게 함
     return { status: "확인중", available: null };
   })();
 
@@ -92,7 +81,7 @@ export default function BookItem({ book, loanStatus, showLibraryInfo = false, pr
     : nonGradeTags.slice(0, 2);
 
   const showLoanBadge = Boolean(
-    showLibraryInfo && user && selectedLibrary && normalizedStatus && normalizedStatus.status !== "확인중"
+    showLibraryInfo && selectedLibrary && normalizedStatus && normalizedStatus.status !== "확인중"
   );
 
   return (

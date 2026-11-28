@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-const AVAILABLE_LIBRARIES = [
+export const VERIFIED_LIBRARIES = [
     '광주광역시립무등도서관',
     '부산광역시 강서기적의도서관',
     '서울특별시교육청서울시립어린이도서관',
@@ -17,50 +17,79 @@ const AVAILABLE_LIBRARIES = [
     '하남시 위례도서관',
     '한밭도서관'
 ] as const
-export type LibraryName = typeof AVAILABLE_LIBRARIES[number]
+
+export type LibraryName = string
 
 export function getStoredPreferredLibrary(): LibraryName | null {
     if (typeof window === 'undefined') return null
     const stored = localStorage.getItem('preferred_library')
-    if (stored && AVAILABLE_LIBRARIES.includes(stored as LibraryName)) {
-        return stored as LibraryName
+    if (stored && stored.trim()) {
+        return stored.trim()
+    }
+    return null
+}
+
+export function getStoredPreferredLibraryCode(): string | null {
+    if (typeof window === 'undefined') return null
+    const stored = localStorage.getItem('preferred_library_code')
+    if (stored && stored.trim()) {
+        return stored.trim()
     }
     return null
 }
 
 interface LibraryContextType {
     selectedLibrary: LibraryName | null
-    setSelectedLibrary: (library: LibraryName) => void
+    selectedLibraryCode: string | null
+    setSelectedLibrary: (library: LibraryName, code?: string | null) => void
     availableLibraries: readonly string[]
 }
 
 export const LibraryContext = createContext<LibraryContextType | undefined>(undefined)
 
 export function LibraryProvider({ children }: { children: ReactNode }) {
-    // 기본값은 미선택 (null)
     const [selectedLibrary, setSelectedLibraryState] = useState<LibraryName | null>(null)
-    const [isLoaded, setIsLoaded] = useState(false)
+    const [selectedLibraryCode, setSelectedLibraryCodeState] = useState<string | null>(null)
 
     useEffect(() => {
-        // 클라이언트 사이드에서만 실행
         const stored = getStoredPreferredLibrary()
+        const storedCode = getStoredPreferredLibraryCode()
         if (stored) {
             setSelectedLibraryState(stored)
         }
-        setIsLoaded(true)
+        if (storedCode) {
+            setSelectedLibraryCodeState(storedCode)
+        }
+
+        const handleSignOut = () => {
+            setSelectedLibraryState(null)
+            setSelectedLibraryCodeState(null)
+        }
+        window.addEventListener('checkjari:signout', handleSignOut)
+        return () => window.removeEventListener('checkjari:signout', handleSignOut)
     }, [])
 
-    const setSelectedLibrary = (library: LibraryName) => {
+    const setSelectedLibrary = (library: LibraryName, code?: string | null) => {
         setSelectedLibraryState(library)
         localStorage.setItem('preferred_library', library)
+        if (code) {
+            setSelectedLibraryCodeState(code)
+            localStorage.setItem('preferred_library_code', code)
+        } else {
+            setSelectedLibraryCodeState(null)
+            localStorage.removeItem('preferred_library_code')
+        }
     }
 
-    // Hydration mismatch 방지를 위해 로드되기 전에는 렌더링 하지 않거나 기본값 사용
-    // 여기서는 간단히 그냥 리턴 (children은 서버 사이드 렌더링된 내용과 일치해야 하므로 주의)
-    // 하지만 Context Provider는 클라이언트 컴포넌트 최상위에 위치하므로 괜찮음.
-
     return (
-        <LibraryContext.Provider value={{ selectedLibrary, setSelectedLibrary, availableLibraries: AVAILABLE_LIBRARIES }}>
+        <LibraryContext.Provider
+            value={{
+                selectedLibrary,
+                selectedLibraryCode,
+                setSelectedLibrary,
+                availableLibraries: VERIFIED_LIBRARIES,
+            }}
+        >
             {children}
         </LibraryContext.Provider>
     )

@@ -98,3 +98,17 @@ git push origin main
 
 > [!CAUTION]
 > 상용 배포 완료 직후에는 [verify_prod.py](file:///Users/1004823/Desktop/kids_library/backend/verify_prod.py) 스크립트를 실제 프로덕션 서버 도메인을 향해 추가 구동하여 배포 무결성을 실시간 최종 확정 지으십시오. 오류 발생 시 즉시 최근 정상 커밋 버전으로 롤백 조치를 준비합니다.
+
+
+---
+
+## 📋 [Phase 6] 릴리즈 로그 & Notion 칸반 자동 갱신 (Post-Release Tracking)
+
+상용 배포 완료 후, 지표 추적과 로드맵 정합성을 위해 아래 2단계를 수행합니다:
+
+1. **[docs/releases.md](file:///Users/1004823/Desktop/kids_library/docs/releases.md)** 최상단에 이번 배포 항목(배포일, 가설, 타겟 KPI, 검증 예정일 +7일) 1행을 추가합니다.
+2. **Notion 칸반보드**의 해당 과제 상태를 `✅ 완료`로 전환하고 `배포일`을 기록한 뒤 `docs/roadmap.md`를 동기화합니다:
+   ```bash
+   ./backend/venv/bin/python backend/scripts/notion_kanban.py update \
+     --title "<과제 키워드>" --status "✅ 완료" --deployed-at "$(date +%Y-%m-%d)"
+   ```

@@ -455,19 +455,19 @@ export default function BooksPageClient({ overrideCuration, overrideAge, initial
                             selectedTag={tagFilter}
                             onTagChange={handleTagChange}
                             disabledAges={disabledAges}
-                            rightSlot={
-                                curationFilter ? (
-                                    <button
-                                        type="button"
-                                        onClick={handleShareCuration}
-                                        className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-gray-600 border border-gray-200/80 active:bg-gray-100 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none"
-                                        aria-label="큐레이션 리스트 공유하기"
-                                    >
-                                        <Share2 className="w-[18px] h-[18px]" />
-                                    </button>
-                                ) : undefined
-                            }
                         />
+                    }
+                    toolbarRightSlot={
+                        curationFilter ? (
+                            <button
+                                type="button"
+                                onClick={handleShareCuration}
+                                className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-gray-700 border border-gray-200/90 active:bg-gray-50 active:scale-95 transition-all cursor-pointer outline-none focus:outline-none"
+                                aria-label="큐레이션 리스트 공유하기"
+                            >
+                                <Share2 className="w-4 h-4" />
+                            </button>
+                        ) : undefined
                     }
                 />
             </div>

@@ -2,15 +2,16 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, MapPin } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { sendGAEvent } from '@/lib/analytics'
-import { useLibrary, LibraryName } from '@/context/LibraryContext'
+import { useLibrary } from '@/context/LibraryContext'
 import { useAuth } from '@/context/AuthContext'
+import LibrarySelector from '@/components/LibrarySelector'
 
 const ADJECTIVES = [
-    '지혜로운', '따스한', '포근한', '정겨운', '행복한', '다정한', '꿈꾸는', '다독이는', '슬기로운', '다복한', 
-    '마음넓은', '빛나는', '즐거운', '상냥한', '반짝이는', '용감한', '푸른', '희망찬', '해맑은', '고마운', 
+    '지혜로운', '따스한', '포근한', '정겨운', '행복한', '다정한', '꿈꾸는', '다독이는', '슬기로운', '다복한',
+    '마음넓은', '빛나는', '즐거운', '상냥한', '반짝이는', '용감한', '푸른', '희망찬', '해맑은', '고마운',
     '포근포근', '싱그러운', '너그러운', '새싹같은', '옹달샘', '보드라운', '초롱초롱', '알록달록', '은은한', '산뜻한',
     '사랑스런', '명랑한', '슬기찬', '어질고', '호기심찬', '눈부신', '도란도란', '달콤한', '미소짓는', '소담한',
     '재치있는', '기운찬', '활기찬', '따사로운', '아늑한', '별처럼', '구름같은', '무지개빛', '정다운', '온화한',
@@ -36,8 +37,6 @@ const AGE_OPTIONS = [
     { key: '13+', label: '13세 이상' },
 ] as const
 
-const DEFAULT_LIBRARY: LibraryName = '서울특별시교육청서울시립어린이도서관'
-
 function generateRandomNickname() {
     const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
     const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
@@ -51,17 +50,10 @@ export default function SignupWelcomeModal() {
     const [isDuplicate, setIsDuplicate] = useState(false)
     const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false)
     const [selectedAge, setSelectedAge] = useState<string>('')
-    const [selectedLib, setSelectedLib] = useState<string>(DEFAULT_LIBRARY)
     const [isSaving, setIsSaving] = useState(false)
     const router = useRouter()
-    const { selectedLibrary, setSelectedLibrary, availableLibraries } = useLibrary()
+    const { selectedLibrary } = useLibrary()
     const { preferredChildAge, updatePreferredChildAge } = useAuth()
-
-    useEffect(() => {
-        if (selectedLibrary) {
-            setSelectedLib(selectedLibrary)
-        }
-    }, [selectedLibrary])
 
     useEffect(() => {
         if (typeof window === 'undefined') return
@@ -127,7 +119,7 @@ export default function SignupWelcomeModal() {
                     window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
                 )
                 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (isLocal ? 'http://127.0.0.1:8000' : 'https://api.checkjari.com')
-                
+
                 const { data: sessionData } = await supabase.auth.getSession()
                 const token = sessionData?.session?.access_token || ''
 
@@ -160,8 +152,7 @@ export default function SignupWelcomeModal() {
         setIsSaving(true)
 
         try {
-            if (selectedLib) {
-                setSelectedLibrary(selectedLib as LibraryName)
+            if (selectedLibrary) {
                 if (sessionStorage.getItem('pendingAction') === 'open_library_selector') {
                     sessionStorage.removeItem('pendingAction')
                     sessionStorage.removeItem('returnUrl')
@@ -170,9 +161,9 @@ export default function SignupWelcomeModal() {
 
             sendGAEvent('complete_onboarding', {
                 has_age: !!selectedAge,
-                has_library: !!selectedLib,
+                has_library: !!selectedLibrary,
                 age: selectedAge || 'none',
-                library: selectedLib || 'none',
+                library: selectedLibrary || 'none',
             })
 
             const isQaMode = localStorage.getItem('supabase.auth.token') === 'TEST_QA_TOKEN'
@@ -238,7 +229,7 @@ export default function SignupWelcomeModal() {
                     aria-label="닫기"
                 >
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                        <path d="M2 2L16 16M16 2L2 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                        <path d="M2 2L16 16M16 2L2 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                     </svg>
                 </button>
 
@@ -265,23 +256,21 @@ export default function SignupWelcomeModal() {
                         }}
                         maxLength={10}
                         autoFocus
-                        className={`w-full h-[46px] px-4 bg-gray-50 border rounded-xl focus:outline-none transition-all text-[15px] text-gray-900 ${
-                            isDuplicate
+                        className={`w-full h-[46px] px-4 bg-gray-50 border rounded-xl focus:outline-none transition-all text-[15px] text-gray-900 ${isDuplicate
                                 ? 'border-red-400 focus:border-red-500 focus:bg-white'
                                 : 'border-gray-200 focus:border-brand-primary focus:bg-white'
-                        }`}
+                            }`}
                         placeholder="2~10자, 한글·영문·숫자"
                     />
-                    <p className={`text-[12px] px-1 mt-1.5 h-4 leading-4 ${
-                        nickname.length === 0 || (!isUserEdited && !isDuplicate) ? 'text-transparent' :
-                        !nicknameValidation.isFormatValid || !nicknameValidation.isLengthValid || isDuplicate ? 'text-red-500 font-medium' :
-                        'text-[#10B981] font-medium'
-                    }`}>
+                    <p className={`text-[12px] px-1 mt-1.5 h-4 leading-4 ${nickname.length === 0 || (!isUserEdited && !isDuplicate) ? 'text-transparent' :
+                            !nicknameValidation.isFormatValid || !nicknameValidation.isLengthValid || isDuplicate ? 'text-red-500 font-medium' :
+                                'text-[#10B981] font-medium'
+                        }`}>
                         {!nicknameValidation.isFormatValid ? '특수문자나 공백은 사용할 수 없어요' :
-                         !nicknameValidation.isLengthValid ? '2자 이상 10자 이하로 입력해주세요' :
-                         isCheckingDuplicate ? '중복 확인 중...' :
-                         isDuplicate ? '이미 사용 중인 닉네임이에요' :
-                         isUserEdited ? '사용 가능한 닉네임이에요' : ''}
+                            !nicknameValidation.isLengthValid ? '2자 이상 10자 이하로 입력해주세요' :
+                                isCheckingDuplicate ? '중복 확인 중...' :
+                                    isDuplicate ? '이미 사용 중인 닉네임이에요' :
+                                        isUserEdited ? '사용 가능한 닉네임이에요' : ''}
                     </p>
                 </div>
 
@@ -298,11 +287,10 @@ export default function SignupWelcomeModal() {
                                     key={opt.key}
                                     type="button"
                                     onClick={() => setSelectedAge(isSelected ? '' : opt.key)}
-                                    className={`h-10 rounded-xl text-xs transition-all outline-none focus:outline-none ${
-                                        isSelected
+                                    className={`h-10 rounded-xl text-xs transition-all outline-none focus:outline-none ${isSelected
                                             ? 'bg-brand-primary text-white font-bold shadow-xs active:bg-brand-primary-dark'
                                             : 'bg-white text-gray-700 font-medium border border-gray-200/80 active:bg-gray-100'
-                                    }`}
+                                        }`}
                                 >
                                     {opt.label}
                                 </button>
@@ -311,26 +299,28 @@ export default function SignupWelcomeModal() {
                     </div>
                 </div>
 
-                {/* 3. 자주 가는 도서관 */}
+                {/* 3. 자주 가는 도서관 (전국 1,600+ 공공도서관 공용 선택기) */}
                 <div className="mb-5">
                     <label className="block text-[13px] font-bold text-gray-700 mb-1.5">
                         자주 가는 도서관
                     </label>
-                    <div className="relative">
-                        <select
-                            value={selectedLib}
-                            onChange={(e) => setSelectedLib(e.target.value)}
-                            className="w-full h-[46px] pl-4 pr-10 bg-gray-50 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:border-brand-primary focus:bg-white transition-all text-[14px] text-gray-900 cursor-pointer"
-                        >
-                            <option value="">나중에 선택할게요</option>
-                            {availableLibraries.map((lib) => (
-                                <option key={lib} value={lib}>
-                                    {lib}
-                                </option>
-                            ))}
-                        </select>
-                        <ChevronDown className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    </div>
+                    <LibrarySelector
+                        customTrigger={(open) => (
+                            <button
+                                type="button"
+                                onClick={open}
+                                className="w-full h-[46px] px-4 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between gap-2 text-left active:bg-gray-100 transition-all outline-none focus:outline-none focus:border-brand-primary"
+                            >
+                                <span className="flex items-center gap-2 min-w-0">
+                                    <MapPin className={`w-4 h-4 shrink-0 ${selectedLibrary ? 'text-amber-500' : 'text-gray-400'}`} />
+                                    <span className={`text-[14px] truncate ${selectedLibrary ? 'text-gray-900 font-semibold' : 'text-gray-400'}`}>
+                                        {selectedLibrary || '우리 동네 도서관 검색하기 (선택)'}
+                                    </span>
+                                </span>
+                                <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                            </button>
+                        )}
+                    />
                 </div>
 
                 {/* 하단 버튼 */}

@@ -13,6 +13,8 @@ from api.auth import router as auth_router
 from api.wishlists import router as wishlists_router
 from api.threads import router as threads_router
 from api.reviews import router as reviews_router
+from api.reports import router as reports_router, weekly_report_scheduler
+from api.libraries import router as libraries_router
 
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -26,14 +28,16 @@ async def lifespan(app: FastAPI):
     ensure_threads_admin_token()
     scheduler_task = asyncio.create_task(weekly_threads_scheduler())
     listener_task = asyncio.create_task(telegram_feedback_listener())
+    report_scheduler_task = asyncio.create_task(weekly_report_scheduler())
     
     yield
     
     # Shutdown: 백그라운드 태스크 취소 및 리소스 정리
     scheduler_task.cancel()
     listener_task.cancel()
+    report_scheduler_task.cancel()
     try:
-        await asyncio.gather(scheduler_task, listener_task, return_exceptions=True)
+        await asyncio.gather(scheduler_task, listener_task, report_scheduler_task, return_exceptions=True)
     except Exception as e:
         print(f"Error during background task cancellation: {e}")
 
@@ -97,6 +101,8 @@ app.include_router(sync_router)
 app.include_router(auth_router)
 app.include_router(wishlists_router)
 app.include_router(threads_router)
+app.include_router(reports_router)
+app.include_router(libraries_router)
 
 @app.get("/")
 def read_root():

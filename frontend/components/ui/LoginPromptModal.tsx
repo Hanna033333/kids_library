@@ -18,7 +18,7 @@ export default function LoginPromptModal({
     isOpen,
     onClose,
     title = '마음에 드는 책, 책장에 쏙!',
-    description = '3초 간편 로그인으로 내 책장에 모아두고 언제든 꺼내 보세요.'
+    description = '3초 간편 로그인으로 내 책장에 모아두고\n도서관 갈 때 꺼내 보세요.'
 }: LoginPromptModalProps) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);

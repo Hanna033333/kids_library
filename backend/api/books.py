@@ -1,6 +1,6 @@
 """책 검색 및 조회 API 라우터"""
 from fastapi import APIRouter, Query, Body, HTTPException, status, BackgroundTasks
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Dict
 from datetime import datetime
 import logging
 from services.search import search_books_service
@@ -51,31 +51,64 @@ from pydantic import BaseModel
 class LoanStatusRequest(BaseModel):
     book_ids: List[int]
     library_name: Optional[str] = "판교도서관"
+    lib_code: Optional[str] = None
+    include_callno: bool = False
+
+
+def _cache_callno_to_db(book_id: int, library_name: str, callno: str) -> None:
+    """On-Demand로 조회된 전국 도서관 청구기호를 book_library_info에 백그라운드 캐싱"""
+    try:
+        supabase.table("book_library_info").upsert(
+            {
+                "book_id": book_id,
+                "library_name": library_name,
+                "callno": callno,
+            },
+            on_conflict="book_id,library_name",
+        ).execute()
+    except Exception as e:
+        logger.warning(f"Failed to cache on-demand callno ({library_name}, book {book_id}): {e}")
 
 
 @router.post("/loan-status")
-async def get_loan_status(req: Union[LoanStatusRequest, List[int]] = Body(..., description="대출 정보 조회 요청")):
+async def get_loan_status(
+    background_tasks: BackgroundTasks,
+    req: Union[LoanStatusRequest, List[int]] = Body(..., description="대출 정보 조회 요청"),
+):
     """
-    여러 책의 특정 도서관 대출 정보를 병렬로 조회 (청구기호가 없으면 API 조회 없이 '미소장'으로 즉시 응답)
-    
-    Args:
-        req: book_ids 리스트와 library_name이 담긴 요청 객체 혹은 raw book_ids 리스트
-        
-    Returns:
-        {book_id: loan_info} 형태의 딕셔너리
+    여러 책의 특정 도서관 대출 정보를 병렬로 조회 (전국 1,600+ 공공도서관 단일 실시간 구조)
+    - 모든 도서관에 대해 정보나루 bookExist 실시간 조회 (소장 10분 / 미소장 24시간 캐싱)
+    - DB book_library_info에 청구기호가 이미 있으면 우선 첨부
+    - 단건 상세(include_callno=True)에서 소장 확인 + DB 청구기호 누락 시 itemSrch On-Demand 조회 및 DB 자동 캐싱
     """
+    from services.library_registry import find_library
+    from services.loan_status import LIBRARY_CODE_MAP, fetch_callno_on_demand
+
     if isinstance(req, list):
         book_ids = req
         library_name = "판교도서관"
+        lib_code = None
+        include_callno = False
     else:
         book_ids = req.book_ids
         library_name = req.library_name or "판교도서관"
+        lib_code = req.lib_code
+        include_callno = bool(req.include_callno)
 
     if len(book_ids) > 50:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="한 번에 최대 50개의 도서 ID만 요청할 수 있습니다."
         )
+
+    target_lib = find_library(library_name=library_name, lib_code=lib_code)
+    resolved_lib_code = (
+        (target_lib["code"] if target_lib else None)
+        or lib_code
+        or LIBRARY_CODE_MAP.get(library_name)
+    )
+    resolved_lib_name = (target_lib["name"] if target_lib else None) or library_name
+    library_homepage = target_lib.get("homepage", "") if target_lib else ""
 
     # DB에서 책 정보 및 청구기호 정보를 단일 쿼리로 비동기(스레드풀) 조회
     import asyncio
@@ -93,37 +126,63 @@ async def get_loan_status(req: Union[LoanStatusRequest, List[int]] = Body(..., d
     if not books_data.data:
         return {}
 
-    # 각 도서별 선택 도서관 청구기호 소유 여부 판별 (book_library_info 단일 테이블 기준)
-    has_callno_map = {}
+    # 각 도서별 선택 도서관 청구기호 소유 여부 및 캐시된 청구기호 매핑
+    callno_map: Dict[int, str] = {}
     for book in books_data.data:
         b_id = book["id"]
-        has_callno = False
-        if library_name:
+        if resolved_lib_name:
             for info in (book.get("book_library_info") or []):
                 lib_name = info.get("library_name") or ""
-                callno = info.get("callno") or ""
-                if library_name.lower() in lib_name.lower() and callno and callno != "없음" and callno.strip():
-                    has_callno = True
+                callno = (info.get("callno") or "").strip()
+                if (
+                    callno
+                    and callno != "없음"
+                    and (
+                        resolved_lib_name.lower() == lib_name.lower()
+                        or resolved_lib_name.lower() in lib_name.lower()
+                    )
+                ):
+                    callno_map[b_id] = callno
                     break
-        has_callno_map[b_id] = has_callno
 
-    # 청구기호가 존재하는 책들만 대출 현황 조회 대상으로 분류
-    books_to_fetch = [{"id": b["id"], "isbn": b.get("isbn")} for b in books_data.data if has_callno_map.get(b["id"])]
-    
+    # 전국 모든 도서관 동일하게 bookExist 실시간 병렬 조회
+    books_to_fetch = [{"id": b["id"], "isbn": b.get("isbn")} for b in books_data.data]
+
     loan_statuses = {}
     if books_to_fetch:
-        loan_statuses = await fetch_loan_status_batch(books_to_fetch, library_name)
-        
-    # 청구기호가 없는 책들은 API 콜과 상관없이 '미소장'으로 덮어씀
+        loan_statuses = await fetch_loan_status_batch(
+            books_to_fetch,
+            library_name=resolved_lib_name,
+            lib_code=resolved_lib_code,
+        )
+
+    # 결과 누락 책 폴백 + DB에 이미 캐싱된 청구기호 및 도서관 홈페이지 정보 첨부
     for book in books_data.data:
-        b_id = book['id']
-        if not has_callno_map.get(b_id):
+        b_id = book["id"]
+        if b_id not in loan_statuses:
             loan_statuses[b_id] = {
                 "available": None,
                 "status": "미소장",
                 "updated_at": datetime.now().isoformat()
             }
-            
+        # DB에 이미 있는 청구기호와 도서관 홈페이지 정보 첨부
+        if b_id in callno_map:
+            loan_statuses[b_id] = {**loan_statuses[b_id], "callno": callno_map[b_id]}
+        if library_homepage:
+            loan_statuses[b_id] = {**loan_statuses[b_id], "library_homepage": library_homepage}
+
+    # On-Demand 청구기호 조회 (안 2): 단건/소수 상세 요청(<= 3권) + 소장 확인 + DB 청구기호 없음
+    if include_callno and resolved_lib_code and len(books_data.data) <= 3:
+        for book in books_data.data:
+            b_id = book["id"]
+            isbn = (book.get("isbn") or "").strip()
+            st = loan_statuses.get(b_id, {}).get("status")
+            if isbn and st in ("대출가능", "대출중") and b_id not in callno_map:
+                on_demand_callno = await fetch_callno_on_demand(isbn, resolved_lib_code)
+                if on_demand_callno:
+                    loan_statuses[b_id] = {**loan_statuses[b_id], "callno": on_demand_callno}
+                    background_tasks.add_task(_cache_callno_to_db, b_id, resolved_lib_name, on_demand_callno)
+
     return loan_statuses
 
 

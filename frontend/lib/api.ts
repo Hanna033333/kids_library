@@ -1,4 +1,4 @@
-import type { Book, BooksResponse, LoanStatus, ReviewsResponse, MyReviewsResponse } from "./types";
+import type { Book, BooksResponse, LoanStatus, NationalLibrary, ReviewsResponse, MyReviewsResponse } from "./types";
 
 const isLocal = typeof window !== 'undefined'
   ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -161,9 +161,33 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
+export async function fetchLibraries(params: {
+  q?: string;
+  region?: string;
+  lat?: number;
+  lng?: number;
+  limit?: number;
+}): Promise<{ libraries: NationalLibrary[]; total: number }> {
+  const search = new URLSearchParams();
+  if (params.q && params.q.trim()) search.append("q", params.q.trim());
+  if (params.region && params.region !== "전체") search.append("region", params.region);
+  if (params.lat !== undefined && params.lng !== undefined) {
+    search.append("lat", params.lat.toString());
+    search.append("lng", params.lng.toString());
+  }
+  search.append("limit", (params.limit ?? 30).toString());
+
+  const response = await apiFetch(`/api/libraries?${search.toString()}`, {
+    errorMessage: "도서관 목록을 불러오지 못했습니다.",
+    timeoutMs: 10000,
+  });
+  return response.json();
+}
+
 export async function fetchLoanStatuses(
   bookIds: number[],
-  libraryName?: string
+  libraryName?: string,
+  options?: { libCode?: string | null; includeCallno?: boolean }
 ): Promise<Record<number, LoanStatus>> {
   const chunks = dedupeAndChunkIds(bookIds);
   if (chunks.length === 0) return {};
@@ -178,6 +202,8 @@ export async function fetchLoanStatuses(
         body: {
           book_ids: chunk,
           library_name: targetLibrary,
+          ...(options?.libCode ? { lib_code: options.libCode } : {}),
+          ...(options?.includeCallno ? { include_callno: true } : {}),
         },
         errorMessage: "Failed to fetch loan statuses",
       });

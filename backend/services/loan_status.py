@@ -1,5 +1,6 @@
 """도서 대출 정보 조회 서비스 (병렬 처리)"""
 import asyncio
+import re
 import aiohttp
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
@@ -20,10 +21,15 @@ def get_warning_lock() -> asyncio.Lock:
     return WARNING_LOCK
 
 
-# 인메모리 캐시 (3분 TTL)
+# 인메모리 캐시 (소장 10분 TTL / 미소장 24시간 TTL — 전국 개방 시 정보나루 API 호출량 절감)
 LOAN_CACHE: Dict[str, tuple[Dict, datetime]] = {}
-CACHE_TTL = timedelta(minutes=3)
+CACHE_TTL = timedelta(minutes=10)
+NOT_HELD_CACHE_TTL = timedelta(hours=24)
 LAST_GC_RUN_AT: datetime = datetime.now()
+
+# On-Demand 청구기호 메모리 캐시 (24시간 TTL)
+CALLNO_CACHE: Dict[str, tuple[Optional[str], datetime]] = {}
+CALLNO_CACHE_TTL = timedelta(hours=24)
 
 # 도서관 코드 매핑 (전국 대표 도서관 - ㄱㄴㄷ 순)
 LIBRARY_CODE_MAP = {
@@ -57,25 +63,34 @@ def get_semaphore() -> asyncio.Semaphore:
     return GLOBAL_SEMAPHORE
 
 
+def _ttl_for_loan(data: Dict) -> timedelta:
+    return NOT_HELD_CACHE_TTL if data.get("status") == "미소장" else CACHE_TTL
+
+
 def clean_expired_cache():
-    """만료된 (30분 초과) 대출 캐시 항목을 메모리에서 제거합니다. (가비지 컬렉션)"""
+    """만료된 대출/청구기호 캐시 항목을 메모리에서 제거합니다. (가비지 컬렉션)"""
     global LAST_GC_RUN_AT
     now = datetime.now()
-    # GC 실행은 3분에 한 번씩만 수행하여 오버헤드 최소화
     if now - LAST_GC_RUN_AT < timedelta(minutes=3):
         return
-        
+
     LAST_GC_RUN_AT = now
     expired_keys = [
-        key for key, (_, timestamp) in LOAN_CACHE.items()
-        if now - timestamp >= CACHE_TTL
+        key for key, (data, timestamp) in LOAN_CACHE.items()
+        if now - timestamp >= _ttl_for_loan(data)
     ]
-    
     for key in expired_keys:
         LOAN_CACHE.pop(key, None)
-        
-    if expired_keys:
-        logger.info(f"🧹 Cleaned {len(expired_keys)} expired items from LOAN_CACHE")
+
+    expired_callno = [
+        key for key, (_, timestamp) in CALLNO_CACHE.items()
+        if now - timestamp >= CALLNO_CACHE_TTL
+    ]
+    for key in expired_callno:
+        CALLNO_CACHE.pop(key, None)
+
+    if expired_keys or expired_callno:
+        logger.info(f"🧹 Cleaned {len(expired_keys)} loan & {len(expired_callno)} callno cache items")
 
 
 def get_cached_loan(lib_code: str, isbn: str) -> Optional[Dict]:
@@ -83,7 +98,7 @@ def get_cached_loan(lib_code: str, isbn: str) -> Optional[Dict]:
     cache_key = f"{lib_code}:{isbn}"
     if cache_key in LOAN_CACHE:
         data, timestamp = LOAN_CACHE[cache_key]
-        if datetime.now() - timestamp < CACHE_TTL:
+        if datetime.now() - timestamp < _ttl_for_loan(data):
             return data
     return None
 
@@ -92,6 +107,73 @@ def set_cached_loan(lib_code: str, isbn: str, data: Dict):
     """캐시에 도서관별 대출 정보 저장"""
     cache_key = f"{lib_code}:{isbn}"
     LOAN_CACHE[cache_key] = (data, datetime.now())
+
+
+async def fetch_callno_on_demand(isbn: str, lib_code: str) -> Optional[str]:
+    """
+    정보나루 itemSrch API를 통해 단건 도서의 실물 서가 청구기호를 On-Demand 조회 (24시간 메모리 캐싱)
+    """
+    if not DATA4LIBRARY_KEY or not isbn or not lib_code:
+        return None
+
+    cache_key = f"{lib_code}:{isbn}"
+    if cache_key in CALLNO_CACHE:
+        cached_val, ts = CALLNO_CACHE[cache_key]
+        if datetime.now() - ts < CALLNO_CACHE_TTL:
+            return cached_val
+
+    url = "http://data4library.kr/api/itemSrch"
+    params = {
+        "authKey": DATA4LIBRARY_KEY,
+        "libCode": lib_code,
+        "type": "ALL",
+        "isbn13": isbn,
+        "format": "json",
+    }
+
+    callno_result: Optional[str] = None
+    try:
+        timeout = aiohttp.ClientTimeout(total=6)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(url, params=params, allow_redirects=False) as response:
+                if response.status != 200:
+                    return None
+                data = await response.json()
+                docs = data.get("response", {}).get("docs", [])
+                if docs:
+                    doc = docs[0].get("doc", {})
+                    doc_class_no = str(doc.get("class_no", "") or "").strip()
+                    call_numbers = doc.get("callNumbers") or []
+                    for cn_wrap in call_numbers:
+                        cn = cn_wrap.get("callNumber", cn_wrap) if isinstance(cn_wrap, dict) else {}
+                        if not isinstance(cn, dict):
+                            continue
+                        class_no = str(cn.get("class_no", "") or doc_class_no).strip()
+                        book_code = str(cn.get("book_code", "") or "").strip()
+                        if not class_no:
+                            continue
+                        shelf_name = str(cn.get("separate_shelf_name", "") or "").strip()
+                        shelf_code = str(cn.get("separate_shelf_code", "") or "").strip()
+                        # 별치기호가 짧은 기호(예: '그', '아', '유')면 name 우선, 긴 설명문(예: '엄마와어린이(별치 JM)')이면 code 사용
+                        if shelf_name and len(shelf_name) <= 4:
+                            separate_shelf = shelf_name
+                        else:
+                            separate_shelf = shelf_code or shelf_name
+                        # 내부 영문 접두어(E그, E아, E유 등) 정제
+                        separate_shelf = re.sub(r"^E([가-힣])", r"\1", separate_shelf)
+                        copy_code = str(cn.get("copy_code", "") or "").strip()
+
+                        base = f"{class_no}-{book_code}" if book_code else class_no
+                        if copy_code:
+                            base = f"{base}={copy_code}"
+                        callno_result = f"{separate_shelf} {base}".strip() if separate_shelf else base
+                        break
+    except Exception as e:
+        logger.debug(f"On-demand itemSrch failed ({lib_code}, {isbn}): {e}")
+        return None
+
+    CALLNO_CACHE[cache_key] = (callno_result, datetime.now())
+    return callno_result
 
 
 async def fetch_loan_status_single(
@@ -182,13 +264,18 @@ async def fetch_loan_status_single(
         }
 
 
-async def fetch_loan_status_batch(books: List[Dict], library_name: Optional[str] = None) -> Dict[int, Dict]:
+async def fetch_loan_status_batch(
+    books: List[Dict],
+    library_name: Optional[str] = None,
+    lib_code: Optional[str] = None,
+) -> Dict[int, Dict]:
     """
     여러 책의 특정 도서관 대출 정보를 병렬로 조회
     
     Args:
         books: 책 리스트 (각 책은 id, isbn 필드 필요)
         library_name: 조회 대상 도서관 명칭 (기본: 판교도서관)
+        lib_code: 정보나루 6자리 도서관 코드 (제공 시 최우선 사용)
         
     Returns:
         {book_id: loan_info} 형태의 딕셔너리
@@ -200,10 +287,16 @@ async def fetch_loan_status_batch(books: List[Dict], library_name: Optional[str]
         # API 키가 없으면 빈 결과 반환
         return {}
     
-    # 도서관 코드 확인
-    lib_code = PANGYO_LIB_CODE
-    if library_name and library_name in LIBRARY_CODE_MAP:
-        lib_code = LIBRARY_CODE_MAP[library_name]
+    # 도서관 코드 확인 (lib_code -> 전국 레지스트리 -> 기존 13개 맵 -> 판교 기본값)
+    resolved_code = lib_code
+    if not resolved_code and library_name:
+        from services.library_registry import find_library
+        found = find_library(library_name=library_name)
+        if found:
+            resolved_code = found.get("code")
+        elif library_name in LIBRARY_CODE_MAP:
+            resolved_code = LIBRARY_CODE_MAP[library_name]
+    lib_code = resolved_code or PANGYO_LIB_CODE
     
     # ISBN이 있는 책만 필터링
     books_with_isbn = [

@@ -191,6 +191,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await supabase.auth.signOut()
         localStorage.removeItem('supabase.auth.token') // Clear mock token too
         localStorage.removeItem('preferred_child_age')
+        localStorage.removeItem('preferred_library')
+        localStorage.removeItem('preferred_library_code')
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('checkjari:signout'))
+        }
         sessionStorage.removeItem('qa_mode')
         sessionStorage.removeItem('qa_member_state')
         sessionStorage.removeItem('qa_saved_nickname')

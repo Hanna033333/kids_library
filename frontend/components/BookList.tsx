@@ -13,7 +13,7 @@ import { sendGAEvent } from "@/lib/analytics";
 import { useAuth } from "@/context/AuthContext";
 import LoginPromptModal from "@/components/ui/LoginPromptModal";
 import { useRouter } from "next/navigation";
-import { MapPin, ChevronRight, Info } from "lucide-react";
+import { MapPin, ChevronDown, Info } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { saveBook, unsaveBook, getSavedBookIds } from "@/lib/supabase-api";
 
@@ -35,6 +35,7 @@ interface BookListProps {
   sortFilter?: string;
   initialPage?: BooksResponse;
   filterBar?: ReactNode;
+  toolbarRightSlot?: ReactNode;
 }
 
 export default function BookList({
@@ -46,18 +47,15 @@ export default function BookList({
   sortFilter = "title",
   initialPage,
   filterBar,
+  toolbarRightSlot,
 }: BookListProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [loginModalConfig, setLoginModalConfig] = useState({
-    title: "도서관 헛걸음 끝!\n대출 가능한 책만 1초 스캔",
-    description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요.",
-  });
   const [shouldAutoOpenLibrary, setShouldAutoOpenLibrary] = useState(false);
   const [savedBookIds, setSavedBookIds] = useState<Set<number>>(new Set());
-  const { selectedLibrary } = useLibrary();
+  const { selectedLibrary, selectedLibraryCode } = useLibrary();
   const [isMobile, setIsMobile] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -153,10 +151,6 @@ export default function BookList({
         sessionStorage.setItem("pendingAction", `like_book_${book.id}`);
       }
       sendGAEvent("click_bookmark_unauth", { book_id: book.id, source: "book_list" });
-      setLoginModalConfig({
-        title: "도서관 갈 때 까먹지 않게 내 책장에 쏙!",
-        description: "마음에 드는 책을 장바구니에 담아두면 도서관에서 청구기호와 대출 가능 여부를 1초 만에 꺼내볼 수 있어요.",
-      });
       setIsLoginModalOpen(true);
       return;
     }
@@ -392,19 +386,23 @@ export default function BookList({
   const bookIds = visibleBooksForLoan.map(b => b.id).join(',');
 
   const { data: loanStatuses } = useQuery({
-    queryKey: ['batch-loan-status', bookIds, selectedLibrary],
+    queryKey: ['batch-loan-status', bookIds, selectedLibrary, selectedLibraryCode],
     queryFn: async () => {
       if (visibleBooksForLoan.length === 0 || !selectedLibrary) return {};
       try {
         const { fetchLoanStatuses } = await import("@/lib/api");
-        return await fetchLoanStatuses(visibleBooksForLoan.map(b => b.id), selectedLibrary);
+        return await fetchLoanStatuses(
+          visibleBooksForLoan.map(b => b.id),
+          selectedLibrary,
+          { libCode: selectedLibraryCode }
+        );
       } catch (err) {
         console.warn('Batch loan status fetch failed:', err);
         throw err;
       }
     },
     enabled: !!selectedLibrary && visibleBooksForLoan.length > 0,
-    staleTime: 3 * 60 * 1000, // 3 minutes cache
+    staleTime: 5 * 60 * 1000,
     retry: 1,
     placeholderData: keepPreviousData,
   });
@@ -459,62 +457,42 @@ export default function BookList({
     );
   }
 
-  const isLibraryBannerMode = !user || !selectedLibrary;
-
-  const libraryControl = !user ? (
-    <button
-      type="button"
-      onClick={() => {
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem("returnUrl", window.location.pathname + window.location.search);
-          sessionStorage.setItem("pendingAction", "open_library_selector");
-        }
-        sendGAEvent("click_library_cta_unauth", { source: "book_list" });
-        setLoginModalConfig({
-          title: "도서관 헛걸음 끝!\n대출 가능한 책만 1초 스캔",
-          description: "우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요.",
-        });
-        setIsLoginModalOpen(true);
-      }}
-      className="w-full min-h-[48px] flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl bg-white border-[1.5px] border-brand-primary shadow-[0_1px_4px_rgba(0,0,0,0.04)] active:bg-amber-50/70 active:scale-[0.99] transition-all cursor-pointer outline-none focus:outline-none"
-    >
-      <div className="flex items-center gap-2 min-w-0 text-left">
-        <span className="w-7 h-7 rounded-full bg-amber-50 text-brand-primary flex items-center justify-center shrink-0">
-          <MapPin className="w-4 h-4" />
-        </span>
-        <span className="text-[13.5px] sm:text-[14px] font-bold text-gray-900 leading-snug break-keep">
-          우리 동네 도서관에서 빌릴 수 있는지 확인하기
-        </span>
-      </div>
-      <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
-    </button>
-  ) : !selectedLibrary ? (
-    <LibrarySelector
-      autoOpen={shouldAutoOpenLibrary}
-      onClose={() => setShouldAutoOpenLibrary(false)}
-      customTrigger={(open) => (
-        <button
-          type="button"
-          onClick={open}
-          className="w-full min-h-[48px] flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl bg-white border-[1.5px] border-brand-primary shadow-[0_1px_4px_rgba(0,0,0,0.04)] active:bg-amber-50/70 active:scale-[0.99] transition-all cursor-pointer outline-none focus:outline-none"
-        >
-          <div className="flex items-center gap-2 min-w-0 text-left">
-            <span className="w-7 h-7 rounded-full bg-amber-50 text-brand-primary flex items-center justify-center shrink-0">
-              <MapPin className="w-4 h-4" />
-            </span>
-            <span className="text-[13.5px] sm:text-[14px] font-bold text-gray-900 leading-snug break-keep">
-              내 도서관 설정하고 빌릴 수 있는지 확인하기
-            </span>
-          </div>
-          <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
-        </button>
-      )}
-    />
-  ) : (
-    <div className="max-w-full flex items-center">
+  const libraryControl = (
+    <div className="min-w-0 max-w-full flex items-center">
       <LibrarySelector
         autoOpen={shouldAutoOpenLibrary}
         onClose={() => setShouldAutoOpenLibrary(false)}
+        customTrigger={(open) =>
+          selectedLibrary ? (
+            <button
+              type="button"
+              onClick={() => {
+                sendGAEvent("click_library_cta", { source: "book_list_change", authenticated: Boolean(user) });
+                open();
+              }}
+              aria-label={`선택된 도서관: ${selectedLibrary}. 클릭하여 변경`}
+              className="inline-flex items-center gap-1.5 max-w-full h-9 px-3 rounded-full bg-white border border-gray-200/90 text-[13.5px] font-semibold text-gray-800 active:bg-gray-50 active:scale-[0.98] transition-all cursor-pointer outline-none focus:outline-none"
+            >
+              <MapPin className="w-3.5 h-3.5 text-brand-primary shrink-0" />
+              <span className="truncate">{selectedLibrary}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                sendGAEvent("click_library_cta", { source: "book_list", authenticated: Boolean(user) });
+                open();
+              }}
+              aria-label="내 도서관 설정"
+              className="inline-flex items-center gap-1.5 max-w-full h-9 px-3 rounded-full bg-white border border-brand-primary/60 text-[13.5px] font-semibold text-gray-800 active:bg-amber-50/70 active:scale-[0.98] transition-all cursor-pointer outline-none focus:outline-none"
+            >
+              <MapPin className="w-3.5 h-3.5 text-brand-primary shrink-0" />
+              <span className="truncate">내 도서관 설정</span>
+              <ChevronDown className="w-3.5 h-3.5 text-brand-primary/70 shrink-0" />
+            </button>
+          )
+        }
       />
     </div>
   );
@@ -522,36 +500,33 @@ export default function BookList({
   return (
     <div className="w-full px-4">
       <div className="w-full max-w-[1200px] mx-auto">
-        {!isSearchWaitingState && filterBar ? (
-          <div
-            className={
-              isLibraryBannerMode
-                ? "flex flex-col gap-2.5 pt-0.5 pb-1.5 mb-2.5"
-                : "flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3 pt-0.5 pb-1.5 mb-2"
-            }
-          >
-            <div className={isLibraryBannerMode ? "w-full min-w-0" : "w-full md:w-auto min-w-0 md:flex-1"}>
+        {!isSearchWaitingState ? (
+          <div className="flex items-center justify-between gap-2 pt-0.5 pb-1.5 mb-2.5">
+            <div className="flex items-center gap-1.5 shrink-0">
               {filterBar}
+              {toolbarRightSlot && (
+                <div className="shrink-0 flex items-center">
+                  {toolbarRightSlot}
+                </div>
+              )}
             </div>
-            {isLibraryBannerMode && (
-              <div className="w-full">
-                {libraryControl}
-              </div>
-            )}
+            <div className="min-w-0 flex items-center justify-end">
+              {libraryControl}
+            </div>
           </div>
         ) : (
-          <>
-            {!isSearchWaitingState && isLibraryBannerMode && (
-              <div className="w-full mt-0 mb-3">
-                {libraryControl}
-              </div>
-            )}
-            {filterBar && (
-              <div className="pt-0.5 pb-1.5 mb-2">
+          filterBar && (
+            <div className="flex items-center justify-between gap-2 pt-0.5 pb-1.5 mb-2">
+              <div className="flex items-center gap-1.5 shrink-0">
                 {filterBar}
+                {toolbarRightSlot && (
+                  <div className="shrink-0 flex items-center">
+                    {toolbarRightSlot}
+                  </div>
+                )}
               </div>
-            )}
-          </>
+            </div>
+          )
         )}
         {/* Loading (first page only) */}
         {isListLoading ? (
@@ -573,13 +548,20 @@ export default function BookList({
             {searchWaitingRecommendedBooks.length > 0 && (
               <div className="p-6 bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
                 {/* 2단 타이틀 구조 (서브 타이틀 위, 메인 타이틀 아래) */}
-                <div className="mb-6">
-                  <span className="text-[13px] text-gray-500 font-semibold block mb-1">
-                    가장 많이 찾는 그림책
-                  </span>
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">
-                    인기 추천 도서
-                  </h3>
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2.5">
+                  <div>
+                    <span className="text-[13px] text-gray-500 font-semibold block mb-1">
+                      가장 많이 찾는 그림책
+                    </span>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">
+                      인기 추천 도서
+                    </h3>
+                  </div>
+                  {selectedLibrary && (
+                    <div className="self-start sm:self-auto max-w-full">
+                      {libraryControl}
+                    </div>
+                  )}
                 </div>
 
                 {/* 도서 그리드 */}
@@ -732,8 +714,6 @@ export default function BookList({
               sessionStorage.removeItem("returnUrl");
             }
           }}
-          title={loginModalConfig.title}
-          description={loginModalConfig.description}
         />
       </div>
     </div>

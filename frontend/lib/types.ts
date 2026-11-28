@@ -36,6 +36,18 @@ export interface LoanStatus {
   available: boolean | null;
   status: string;
   updated_at?: string;
+  callno?: string | null;
+  library_homepage?: string | null;
+}
+
+export interface NationalLibrary {
+  code: string;
+  name: string;
+  address: string;
+  region: string;
+  homepage?: string;
+  has_callno_db: boolean;
+  distance_km?: number;
 }
 
 export interface BooksResponse {

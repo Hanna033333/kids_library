@@ -22,7 +22,7 @@ import { sendGAEvent } from '@/lib/analytics'
 
 export default function MyLibraryPage() {
     const { user, isLoading: authLoading } = useAuth()
-    const { selectedLibrary } = useLibrary()
+    const { selectedLibrary, selectedLibraryCode } = useLibrary()
     const router = useRouter()
     const queryClient = useQueryClient()
 
@@ -51,27 +51,23 @@ export default function MyLibraryPage() {
         gcTime: 10 * 60 * 1000,
     })
 
-    // 선택된 도서관에 실제로 청구기호(소장 정보)가 존재하는 책 ID만 추출하여 대출 상태 조회
-    const ownedBookIds = useMemo(() => {
+    // 전국 도서관 On-Demand 지원: 저장된 모든 도서에 대해 실시간 대출 상태 조회
+    const savedBookIds = useMemo(() => {
         if (!selectedLibrary || baseSavedBooks.length === 0) return []
-        return baseSavedBooks
-            .filter((book) => {
-                const info = book.library_info?.find(
-                    (l) => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary)
-                )
-                return Boolean(info?.callno && info.callno !== '없음' && info.callno.trim())
-            })
-            .map((book) => book.id)
+        return baseSavedBooks.map((book) => book.id)
     }, [baseSavedBooks, selectedLibrary])
 
-    const ownedBookIdsKey = ownedBookIds.join(',')
+    const savedBookIdsKey = savedBookIds.join(',')
 
     // 실시간 대출 상태 (도서 목록 렌더링을 블로킹하지 않고 비동기 병렬 조회)
     const { data: loanStatuses = {} } = useQuery<Record<number, LoanStatus>>({
-        queryKey: ['batch-loan-status', ownedBookIdsKey, selectedLibrary],
-        queryFn: () => fetchLoanStatuses(ownedBookIds, selectedLibrary!),
-        enabled: !!user?.id && !!selectedLibrary && ownedBookIds.length > 0,
-        staleTime: 3 * 60 * 1000,
+        queryKey: ['batch-loan-status', savedBookIdsKey, selectedLibrary, selectedLibraryCode],
+        queryFn: () =>
+            fetchLoanStatuses(savedBookIds, selectedLibrary!, {
+                libCode: selectedLibraryCode,
+            }),
+        enabled: !!user?.id && !!selectedLibrary && savedBookIds.length > 0,
+        staleTime: 5 * 60 * 1000,
         retry: 1,
         placeholderData: keepPreviousData,
     })
@@ -129,8 +125,14 @@ export default function MyLibraryPage() {
                     l => l.library_name === selectedLibrary || l.library_name.includes(selectedLibrary)
                 )
                 : null
-            const callno = info?.callno && info.callno !== '없음' ? info.callno : '청구기호 미소장'
-            const status = b.loan_status?.status ? ` (${b.loan_status.status})` : ''
+            const resolvedCallno = (info?.callno && info.callno !== '없음')
+                ? info.callno
+                : (b.loan_status?.callno && b.loan_status.callno !== '없음' ? b.loan_status.callno : null)
+            const statusText = b.loan_status?.status || ''
+            const callno = resolvedCallno
+                ? resolvedCallno
+                : (statusText === '대출가능' || statusText === '대출중' ? '청구기호 미제공' : '미소장')
+            const status = statusText ? ` (${statusText})` : ''
             return `${idx + 1}. ${b.title} - ${callno}${status}`
         })
 
@@ -215,8 +217,6 @@ export default function MyLibraryPage() {
             <LoginPromptModal
                 isOpen={showLoginModal}
                 onClose={() => router.push('/')}
-                title={"도서관 헛걸음 끝!\n대출 가능한 책만 1초 스캔"}
-                description={"우리 동네 도서관만 등록하면,\n지금 빌릴 수 있는 책과 책장 위치가 바로 보여요."}
             />
 
             {/* 우측 하단 플로팅 공유 버튼 (FAB) */}
