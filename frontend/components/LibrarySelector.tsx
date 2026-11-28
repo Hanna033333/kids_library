@@ -136,8 +136,12 @@ export default function LibrarySelector({
                 setIsLocating(false)
                 sendGAEvent('click_nearby_libraries', {})
             },
-            () => {
-                setLocationError('위치 권한을 허용하면 가까운 도서관을 바로 찾을 수 있어요.')
+            (err) => {
+                if (err.code === err.PERMISSION_DENIED) {
+                    setLocationError('위치 권한을 허용하면 가까운 도서관을 바로 찾을 수 있어요.')
+                } else {
+                    setLocationError('현재 위치를 확인하지 못했어요. 잠시 후 다시 시도하거나 도서관 이름을 검색해주세요.')
+                }
                 setIsLocating(false)
             },
             { enableHighAccuracy: false, timeout: 8000 }
