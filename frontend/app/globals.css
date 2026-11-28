@@ -1,4 +1,4 @@
-@import url('https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/variable/SUIT-Variable.min.css');
+@import url('https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -69,7 +69,7 @@ body {
 body {
   color: hsl(var(--foreground));
   background: hsl(var(--background));
-  font-family: 'SUIT Variable', 'SUIT', -apple-system, sans-serif;
+  font-family: 'SUIT Variable', 'SUIT', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
 }
 
 @layer utilities {

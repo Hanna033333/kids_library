@@ -636,11 +636,11 @@ export default function BookDetailClient({
                                                 ) : (
                                                     <>
                                                         {isOwnedWithoutCallno ? (
-                                                            <span className="font-bold text-base sm:text-lg text-gray-800 tracking-tight">
+                                                            <span className="font-black text-xl md:text-2xl text-gray-800 tracking-tight">
                                                                 청구기호 미제공
                                                             </span>
                                                         ) : (
-                                                            <span className={`tracking-tight ${displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'font-black text-xl md:text-2xl text-gray-400' : 'font-black text-xl md:text-2xl text-gray-900'
+                                                            <span className={`font-black text-xl md:text-2xl tracking-tight tabular-nums ${displayCallNo === '보유 정보 없음' || displayCallNo === '청구기호 없음' ? 'text-gray-400' : 'text-gray-900'
                                                                 }`}>
                                                                 {displayCallNo}{book.vol && effectiveLibrary && !PLACEHOLDER_CALL_NOS.includes(displayCallNo) ? `-${book.vol}` : ''}
                                                             </span>
